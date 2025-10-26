@@ -1,0 +1,651 @@
+{
+  "products": [
+    {
+      "id": "prod-001",
+      "code": "CAF-ARB-001",
+      "name": "Café Arábica Orgánico",
+      "description": "Café orgánico de altura, cultivado en la selva central del Perú. Certificado orgánico y comercio justo.",
+      "category": "Café",
+      "unit": "kg",
+      "pricePerUnit": 25.50,
+      "imageUrl": "/images/products/cafe-arabica.jpg",
+      "carbonCreditsPerUnit": 0.5,
+      "status": "active",
+      "createdAt": "2024-01-15T10:00:00Z",
+      "updatedAt": "2024-10-20T14:30:00Z"
+    },
+    {
+      "id": "prod-002",
+      "code": "CAC-ORG-001",
+      "name": "Cacao Orgánico",
+      "description": "Cacao fino de aroma, certificado orgánico. Cultivado en comunidades de la selva peruana.",
+      "category": "Cacao",
+      "unit": "kg",
+      "pricePerUnit": 18.00,
+      "imageUrl": "/images/products/cacao.jpg",
+      "carbonCreditsPerUnit": 0.4,
+      "status": "active",
+      "createdAt": "2024-02-10T09:00:00Z",
+      "updatedAt": "2024-10-21T11:00:00Z"
+    },
+    {
+      "id": "prod-003",
+      "code": "AGP-BAN-001",
+      "name": "Banano Orgánico",
+      "description": "Banano orgánico de comercio justo, cultivado de manera sostenible.",
+      "category": "Frutas",
+      "unit": "racimo",
+      "pricePerUnit": 12.00,
+      "imageUrl": "/images/products/banano.jpg",
+      "carbonCreditsPerUnit": 0.2,
+      "status": "active",
+      "createdAt": "2024-03-05T08:00:00Z",
+      "updatedAt": "2024-10-22T16:45:00Z"
+    },
+    {
+      "id": "prod-004",
+      "code": "CAF-ROB-001",
+      "name": "Café Robusta",
+      "description": "Café robusta de alta calidad, ideal para espresso.",
+      "category": "Café",
+      "unit": "kg",
+      "pricePerUnit": 20.00,
+      "imageUrl": "/images/products/cafe-robusta.jpg",
+      "carbonCreditsPerUnit": 0.45,
+      "status": "active",
+      "createdAt": "2024-04-12T10:00:00Z",
+      "updatedAt": "2024-10-23T09:15:00Z"
+    },
+    {
+      "id": "prod-005",
+      "code": "AGP-AGP-001",
+      "name": "Aguaymanto",
+      "description": "Aguaymanto orgánico, fruta andina rica en vitamina C.",
+      "category": "Frutas",
+      "unit": "kg",
+      "pricePerUnit": 15.50,
+      "imageUrl": "/images/products/aguaymanto.jpg",
+      "carbonCreditsPerUnit": 0.3,
+      "status": "active",
+      "createdAt": "2024-05-20T11:30:00Z",
+      "updatedAt": "2024-10-24T14:00:00Z"
+    },
+    {
+      "id": "prod-006",
+      "code": "HRB-MNT-001",
+      "name": "Menta Orgánica",
+      "description": "Menta fresca orgánica, cultivada en la sierra peruana.",
+      "category": "Hierbas",
+      "unit": "atado",
+      "pricePerUnit": 3.50,
+      "imageUrl": "/images/products/menta.jpg",
+      "carbonCreditsPerUnit": 0.1,
+      "status": "inactive",
+      "createdAt": "2024-06-01T08:00:00Z",
+      "updatedAt": "2024-10-25T10:30:00Z"
+    }
+  ],
+  "companies": [
+    {
+      "id": "comp-001",
+      "ruc": "20123456789",
+      "businessName": "Agroindustrias Pachamama S.A.C.",
+      "tradeName": "Pachamama",
+      "address": "Av. Los Incas 123, Cusco, Perú",
+      "phone": "+51 984 123 456",
+      "email": "contacto@pachamama.com",
+      "website": "https://www.pachamama.com",
+      "adminUserId": "user-001",
+      "logoUrl": "/images/logo/logo.svg",
+      "status": "active",
+      "createdAt": "2023-06-01T00:00:00Z",
+      "updatedAt": "2024-10-20T12:00:00Z"
+    },
+    {
+      "id": "comp-002",
+      "ruc": "20987654321",
+      "businessName": "Cooperativa Cafetalera del Sur E.I.R.L.",
+      "tradeName": "Café del Sur",
+      "address": "Jr. Comercio 456, Puno, Perú",
+      "phone": "+51 951 987 654",
+      "email": "info@cafedelsur.com",
+      "website": "https://www.cafedelsur.com",
+      "adminUserId": "user-002",
+      "logoUrl": null,
+      "status": "active",
+      "createdAt": "2023-08-15T00:00:00Z",
+      "updatedAt": "2024-10-21T15:30:00Z"
+    },
+    {
+      "id": "comp-003",
+      "ruc": "20555888999",
+      "businessName": "Cacao Amazónico S.R.L.",
+      "tradeName": "Cacao Amazónico",
+      "address": "Av. La Marina 789, Ucayali, Perú",
+      "phone": "+51 965 444 555",
+      "email": "ventas@cacaoamazonico.com",
+      "website": null,
+      "adminUserId": "user-006",
+      "logoUrl": null,
+      "status": "active",
+      "createdAt": "2024-01-10T00:00:00Z",
+      "updatedAt": "2024-10-22T09:00:00Z"
+    }
+  ],
+  "communities": [
+    {
+      "id": "comm-001",
+      "code": "COM-CUSH-001",
+      "name": "Comunidad Campesina Huasao",
+      "region": "Cusco",
+      "province": "Quispicanchi",
+      "district": "Huasao",
+      "address": "Centro Poblado Huasao, Cusco",
+      "totalFamilies": 150,
+      "totalHectares": 450,
+      "mainProducts": ["café", "cacao", "plátano"],
+      "contactPerson": "Juan Mamani Quispe",
+      "contactPhone": "+51 984 111 222",
+      "contactEmail": "comunidad.huasao@gmail.com",
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-71.9675, -13.5211],
+          [-71.9675, -13.5311],
+          [-71.9575, -13.5311],
+          [-71.9575, -13.5211],
+          [-71.9675, -13.5211]
+        ]]
+      },
+      "status": "active",
+      "createdAt": "2024-01-10T00:00:00Z",
+      "updatedAt": "2024-10-20T16:00:00Z"
+    },
+    {
+      "id": "comm-002",
+      "code": "COM-JUMN-001",
+      "name": "Comunidad Nativa Asháninka",
+      "region": "Junín",
+      "province": "Satipo",
+      "district": "Río Tambo",
+      "address": "Río Tambo, Satipo, Junín",
+      "totalFamilies": 80,
+      "totalHectares": 320,
+      "mainProducts": ["cacao", "plátano", "yuca"],
+      "contactPerson": "María Fernández Pérez",
+      "contactPhone": "+51 965 333 444",
+      "contactEmail": null,
+      "geojson": null,
+      "status": "active",
+      "createdAt": "2024-02-05T00:00:00Z",
+      "updatedAt": "2024-10-21T10:30:00Z"
+    },
+    {
+      "id": "comm-003",
+      "code": "COM-PUNO-001",
+      "name": "Comunidad Campesina Chucuito",
+      "region": "Puno",
+      "province": "Puno",
+      "district": "Chucuito",
+      "address": "Chucuito, Puno",
+      "totalFamilies": 200,
+      "totalHectares": 600,
+      "mainProducts": ["quinua", "papa", "cañihua"],
+      "contactPerson": "Roberto Condori",
+      "contactPhone": "+51 951 222 333",
+      "contactEmail": "chucuito.comunidad@outlook.com",
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-69.8850, -16.2610],
+          [-69.8850, -16.2710],
+          [-69.8750, -16.2710],
+          [-69.8750, -16.2610],
+          [-69.8850, -16.2610]
+        ]]
+      },
+      "status": "active",
+      "createdAt": "2024-03-01T00:00:00Z",
+      "updatedAt": "2024-10-22T14:20:00Z"
+    }
+  ],
+  "brigades": [
+    {
+      "id": "brig-001",
+      "code": "BRIG-2024-001",
+      "name": "Brigada Café Cusco 2024",
+      "communityId": "comm-001",
+      "leaderId": "user-003",
+      "members": [
+        {
+          "userId": "user-003",
+          "name": "Pedro Quispe Huamán",
+          "dni": "12345678",
+          "role": "leader",
+          "phone": "+51 984 555 666",
+          "joinedAt": "2024-01-15T00:00:00Z"
+        },
+        {
+          "userId": "user-004",
+          "name": "Rosa Huamán Ccahuana",
+          "dni": "87654321",
+          "role": "member",
+          "phone": "+51 965 777 888",
+          "joinedAt": "2024-01-20T00:00:00Z"
+        },
+        {
+          "userId": "user-005",
+          "name": "Carlos Ccahuana Quispe",
+          "dni": "11223344",
+          "role": "member",
+          "phone": "+51 951 999 000",
+          "joinedAt": "2024-01-22T00:00:00Z"
+        }
+      ],
+      "startDate": "2024-01-15",
+      "endDate": "2024-12-31",
+      "isActive": true,
+      "createdAt": "2024-01-15T00:00:00Z",
+      "updatedAt": "2024-10-20T11:00:00Z"
+    },
+    {
+      "id": "brig-002",
+      "code": "BRIG-2024-002",
+      "name": "Brigada Cacao Junín 2024",
+      "communityId": "comm-002",
+      "leaderId": "user-007",
+      "members": [
+        {
+          "userId": "user-007",
+          "name": "Luis Fernández Rojas",
+          "dni": "55667788",
+          "role": "leader",
+          "phone": "+51 965 111 222",
+          "joinedAt": "2024-02-10T00:00:00Z"
+        },
+        {
+          "userId": "user-008",
+          "name": "Ana Torres Vega",
+          "dni": "99887766",
+          "role": "member",
+          "phone": "+51 984 333 444",
+          "joinedAt": "2024-02-15T00:00:00Z"
+        }
+      ],
+      "startDate": "2024-02-10",
+      "endDate": "2024-11-30",
+      "isActive": true,
+      "createdAt": "2024-02-10T00:00:00Z",
+      "updatedAt": "2024-10-21T13:45:00Z"
+    },
+    {
+      "id": "brig-003",
+      "code": "BRIG-2024-003",
+      "name": "Brigada Quinua Puno 2024",
+      "communityId": "comm-003",
+      "leaderId": "user-009",
+      "members": [
+        {
+          "userId": "user-009",
+          "name": "Javier Condori Mamani",
+          "dni": "44556677",
+          "role": "leader",
+          "phone": "+51 951 444 555",
+          "joinedAt": "2024-03-05T00:00:00Z"
+        }
+      ],
+      "startDate": "2024-03-05",
+      "endDate": "2024-10-31",
+      "isActive": false,
+      "createdAt": "2024-03-05T00:00:00Z",
+      "updatedAt": "2024-10-25T16:00:00Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-001",
+      "code": "PROJ-2024-001",
+      "name": "Reforestación Valle Sagrado",
+      "companyId": "comp-001",
+      "communityId": "comm-001",
+      "description": "Proyecto de reforestación y captura de carbono en el Valle Sagrado de los Incas. Incluye plantación de árboles nativos y monitoreo continuo.",
+      "startDate": "2024-01-01",
+      "endDate": "2025-12-31",
+      "totalHectares": 100,
+      "targetTrees": 50000,
+      "currentTrees": 12500,
+      "estimatedCarbonCapture": 2500,
+      "status": "in_progress",
+      "geomalla": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [[
+                [-71.9675, -13.5211],
+                [-71.9675, -13.5251],
+                [-71.9635, -13.5251],
+                [-71.9635, -13.5211],
+                [-71.9675, -13.5211]
+              ]]
+            },
+            "properties": {
+              "area_id": "A-001",
+              "name": "Sector Norte",
+              "hectares": 25,
+              "planted_trees": 3000,
+              "target_trees": 12500,
+              "status": "active"
+            }
+          },
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [[
+                [-71.9635, -13.5211],
+                [-71.9635, -13.5251],
+                [-71.9595, -13.5251],
+                [-71.9595, -13.5211],
+                [-71.9635, -13.5211]
+              ]]
+            },
+            "properties": {
+              "area_id": "A-002",
+              "name": "Sector Sur",
+              "hectares": 25,
+              "planted_trees": 2500,
+              "target_trees": 12500,
+              "status": "active"
+            }
+          },
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [[
+                [-71.9675, -13.5251],
+                [-71.9675, -13.5291],
+                [-71.9635, -13.5291],
+                [-71.9635, -13.5251],
+                [-71.9675, -13.5251]
+              ]]
+            },
+            "properties": {
+              "area_id": "A-003",
+              "name": "Sector Este",
+              "hectares": 25,
+              "planted_trees": 4000,
+              "target_trees": 12500,
+              "status": "active"
+            }
+          },
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [[
+                [-71.9635, -13.5251],
+                [-71.9635, -13.5291],
+                [-71.9595, -13.5291],
+                [-71.9595, -13.5251],
+                [-71.9635, -13.5251]
+              ]]
+            },
+            "properties": {
+              "area_id": "A-004",
+              "name": "Sector Oeste",
+              "hectares": 25,
+              "planted_trees": 3000,
+              "target_trees": 12500,
+              "status": "planning"
+            }
+          }
+        ]
+      },
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-10-20T15:30:00Z"
+    },
+    {
+      "id": "proj-002",
+      "code": "PROJ-2024-002",
+      "name": "Agroforestería Selva Central",
+      "companyId": "comp-002",
+      "communityId": "comm-002",
+      "description": "Sistema agroforestal combinando cacao con especies forestales nativas.",
+      "startDate": "2024-02-01",
+      "endDate": "2026-01-31",
+      "totalHectares": 80,
+      "targetTrees": 40000,
+      "currentTrees": 8000,
+      "estimatedCarbonCapture": 2000,
+      "status": "in_progress",
+      "geomalla": null,
+      "createdAt": "2024-02-01T00:00:00Z",
+      "updatedAt": "2024-10-21T12:00:00Z"
+    },
+    {
+      "id": "proj-003",
+      "code": "PROJ-2024-003",
+      "name": "Conservación Bosque Altiplánico",
+      "companyId": "comp-001",
+      "communityId": "comm-003",
+      "description": "Proyecto de conservación de bosques nativos en el altiplano puneño.",
+      "startDate": "2024-03-01",
+      "endDate": "2025-02-28",
+      "totalHectares": 120,
+      "targetTrees": 30000,
+      "currentTrees": 30000,
+      "estimatedCarbonCapture": 1500,
+      "status": "completed",
+      "geomalla": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [[
+                [-69.8850, -16.2610],
+                [-69.8850, -16.2650],
+                [-69.8810, -16.2650],
+                [-69.8810, -16.2610],
+                [-69.8850, -16.2610]
+              ]]
+            },
+            "properties": {
+              "area_id": "B-001",
+              "name": "Zona 1",
+              "hectares": 60,
+              "planted_trees": 15000,
+              "target_trees": 15000,
+              "status": "completed"
+            }
+          },
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [[
+                [-69.8810, -16.2610],
+                [-69.8810, -16.2650],
+                [-69.8770, -16.2650],
+                [-69.8770, -16.2610],
+                [-69.8810, -16.2610]
+              ]]
+            },
+            "properties": {
+              "area_id": "B-002",
+              "name": "Zona 2",
+              "hectares": 60,
+              "planted_trees": 15000,
+              "target_trees": 15000,
+              "status": "completed"
+            }
+          }
+        ]
+      },
+      "createdAt": "2024-03-01T00:00:00Z",
+      "updatedAt": "2024-10-22T10:00:00Z"
+    }
+  ],
+  "inventorySettings": [
+    {
+      "id": "inv-001",
+      "projectId": "proj-001",
+      "isEnabled": true,
+      "startDate": "2024-01-15",
+      "endDate": "2024-12-31",
+      "allowedProducts": ["prod-001", "prod-002"],
+      "responsibleUserId": "user-001",
+      "settings": {
+        "requiresApproval": true,
+        "maxDailyCollections": 100,
+        "autoCalculateCarbonCredits": true,
+        "notifyOnLowStock": true,
+        "minStockThreshold": 10
+      },
+      "createdAt": "2024-01-15T10:00:00Z",
+      "updatedAt": "2024-10-20T14:00:00Z"
+    },
+    {
+      "id": "inv-002",
+      "projectId": "proj-002",
+      "isEnabled": true,
+      "startDate": "2024-02-01",
+      "endDate": "2025-01-31",
+      "allowedProducts": ["prod-002", "prod-003"],
+      "responsibleUserId": "user-002",
+      "settings": {
+        "requiresApproval": false,
+        "maxDailyCollections": 50,
+        "autoCalculateCarbonCredits": true,
+        "notifyOnLowStock": false,
+        "minStockThreshold": 5
+      },
+      "createdAt": "2024-02-01T09:00:00Z",
+      "updatedAt": "2024-10-21T11:30:00Z"
+    },
+    {
+      "id": "inv-003",
+      "projectId": "proj-003",
+      "isEnabled": false,
+      "startDate": "2024-03-01",
+      "endDate": "2024-10-31",
+      "allowedProducts": [],
+      "responsibleUserId": "user-001",
+      "settings": {
+        "requiresApproval": true,
+        "maxDailyCollections": 0,
+        "autoCalculateCarbonCredits": false,
+        "notifyOnLowStock": false,
+        "minStockThreshold": 0
+      },
+      "createdAt": "2024-03-01T08:00:00Z",
+      "updatedAt": "2024-10-25T16:00:00Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "user-001",
+      "email": "admin@pachamama.com",
+      "name": "Admin Pachamama",
+      "dni": "43216789",
+      "phone": "+51 984 123 456",
+      "role": "company_admin",
+      "companyId": "comp-001",
+      "status": "active",
+      "createdAt": "2023-06-01T00:00:00Z"
+    },
+    {
+      "id": "user-002",
+      "email": "admin@cafedelsur.com",
+      "name": "Admin Café del Sur",
+      "dni": "87654320",
+      "phone": "+51 951 987 654",
+      "role": "company_admin",
+      "companyId": "comp-002",
+      "status": "active",
+      "createdAt": "2023-08-15T00:00:00Z"
+    },
+    {
+      "id": "user-003",
+      "email": "pedro.quispe@huasao.com",
+      "name": "Pedro Quispe Huamán",
+      "dni": "12345678",
+      "phone": "+51 984 555 666",
+      "role": "brigade_leader",
+      "communityId": "comm-001",
+      "status": "active",
+      "createdAt": "2024-01-10T00:00:00Z"
+    },
+    {
+      "id": "user-004",
+      "email": "rosa.huaman@huasao.com",
+      "name": "Rosa Huamán Ccahuana",
+      "dni": "87654321",
+      "phone": "+51 965 777 888",
+      "role": "brigade_member",
+      "communityId": "comm-001",
+      "status": "active",
+      "createdAt": "2024-01-15T00:00:00Z"
+    },
+    {
+      "id": "user-005",
+      "email": "carlos.ccahuana@huasao.com",
+      "name": "Carlos Ccahuana Quispe",
+      "dni": "11223344",
+      "phone": "+51 951 999 000",
+      "role": "brigade_member",
+      "communityId": "comm-001",
+      "status": "active",
+      "createdAt": "2024-01-18T00:00:00Z"
+    },
+    {
+      "id": "user-006",
+      "email": "admin@cacaoamazonico.com",
+      "name": "Admin Cacao Amazónico",
+      "dni": "55443322",
+      "phone": "+51 965 444 555",
+      "role": "company_admin",
+      "companyId": "comp-003",
+      "status": "active",
+      "createdAt": "2024-01-10T00:00:00Z"
+    },
+    {
+      "id": "user-007",
+      "email": "luis.fernandez@ashaninka.com",
+      "name": "Luis Fernández Rojas",
+      "dni": "55667788",
+      "phone": "+51 965 111 222",
+      "role": "brigade_leader",
+      "communityId": "comm-002",
+      "status": "active",
+      "createdAt": "2024-02-01T00:00:00Z"
+    },
+    {
+      "id": "user-008",
+      "email": "ana.torres@ashaninka.com",
+      "name": "Ana Torres Vega",
+      "dni": "99887766",
+      "phone": "+51 984 333 444",
+      "role": "brigade_member",
+      "communityId": "comm-002",
+      "status": "active",
+      "createdAt": "2024-02-10T00:00:00Z"
+    },
+    {
+      "id": "user-009",
+      "email": "javier.condori@chucuito.com",
+      "name": "Javier Condori Mamani",
+      "dni": "44556677",
+      "phone": "+51 951 444 555",
+      "role": "brigade_leader",
+      "communityId": "comm-003",
+      "status": "inactive",
+      "createdAt": "2024-03-01T00:00:00Z"
+    }
+  ]
+}

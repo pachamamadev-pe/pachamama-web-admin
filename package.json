@@ -9,6 +9,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "format": "prettier --write src/**/*.{ts,scss,html}",
+    "format:check": "prettier --check src/**/*.{ts,scss,html}",
+    "mock:server": "json-server --watch .project-docs/mock/db.json --port 3000",
     "prepare": "husky"
   },
   "prettier": {
@@ -51,6 +53,7 @@
     "eslint": "^9.38.0",
     "husky": "^9.1.7",
     "jasmine-core": "~5.9.0",
+    "json-server": "^1.0.0-beta.3",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",

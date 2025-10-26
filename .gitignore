@@ -41,5 +41,7 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
-# Documentación interna del proyecto
+
+# Documentación interna del proyecto (excepto mocks)
 .project-docs/
+!.project-docs/mock/

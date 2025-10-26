@@ -1,0 +1,42 @@
+# Imágenes de Productos
+
+Esta carpeta contiene las imágenes de los productos agrícolas.
+
+## 📁 Estructura
+
+```
+products/
+├── cafe-arabica.jpg
+├── cafe-robusta.jpg
+├── cacao.jpg
+├── banano.jpg
+├── aguaymanto.jpg
+└── menta.jpg
+```
+
+## 📸 Placeholder Temporal
+
+Mientras no tengamos imágenes reales, puedes usar servicios de placeholder:
+
+- **Unsplash Source**: `https://source.unsplash.com/300x300/?coffee`
+- **Picsum Photos**: `https://picsum.photos/300/300`
+- **Placeholder.com**: `https://via.placeholder.com/300x300`
+
+## 🎨 Especificaciones
+
+- **Formato**: JPG o PNG
+- **Dimensiones recomendadas**: 300x300px (cuadrado)
+- **Peso máximo**: 100KB por imagen
+- **Fondo**: Preferiblemente blanco o transparente
+
+## 🔗 Referencias en db.json
+
+Las imágenes se referencian en `db.json` con rutas relativas:
+
+```json
+{
+  "imageUrl": "/images/products/cafe-arabica.jpg"
+}
+```
+
+Angular las servirá desde `public/images/products/`.
