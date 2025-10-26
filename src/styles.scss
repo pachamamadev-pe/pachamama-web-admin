@@ -1,1 +1,81 @@
-/* You can add global styles to this file, and also import other style files */
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// Importar fuente Inter de Google Fonts
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+// Angular Material Theme
+@import 'theme.scss';
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-gray-50 text-primary-black font-sans text-body;
+  }
+
+  // Títulos responsivos
+  h1,
+  h2,
+  h3 {
+    @apply text-accent-titles font-bold;
+  }
+
+  h1 {
+    /* Mobile-first: más pequeño por defecto, crece en pantallas grandes */
+    @apply text-xl sm:text-2xl lg:text-title;
+  }
+
+  h2 {
+    @apply text-lg sm:text-xl;
+  }
+
+  h3 {
+    @apply text-base sm:text-lg;
+  }
+
+  // Botones base
+  button {
+    @apply text-button;
+  }
+
+  // Subtítulos
+  .subtitle {
+    @apply text-subtitle;
+  }
+}
+
+@layer components {
+  // Botón primario
+  .btn-primary {
+    @apply bg-secondary text-primary-white px-4 py-2 rounded hover:bg-secondary/90 transition-colors;
+  }
+
+  // Botón secundario
+  .btn-secondary {
+    @apply bg-primary-white text-secondary border border-secondary px-4 py-2 rounded hover:bg-secondary-light transition-colors;
+  }
+
+  // Icon button (solo icono)
+  .icon-btn {
+    @apply inline-flex items-center justify-center size-9 rounded-lg border border-neutral-border bg-primary-white text-accent-titles hover:bg-secondary-light transition-colors;
+  }
+
+  // Badge pequeño
+  .badge {
+    @apply inline-flex items-center h-5 rounded-full px-2 text-subtitle bg-neutral-border/60 text-accent-titles;
+  }
+
+  // Link de navegación lateral
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-body text-neutral-subheading hover:bg-accent-hover/10 hover:text-accent-titles transition-colors;
+  }
+
+  // Estado activo del link de navegación
+  .nav-link-active {
+    @apply bg-secondary-light text-secondary font-medium;
+  }
+}

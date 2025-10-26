@@ -1,0 +1,93 @@
+@use '@angular/material' as mat;
+
+// Include the common styles for Angular Material
+@include mat.core();
+
+// Define custom Pachamama color palette based on design system
+$pachamama-primary: (
+  50: #f4fbf6,
+  100: #e8f7ed,
+  200: #c7ecd1,
+  300: #9eddb0,
+  400: #6bcb8a,
+  500: #218358,
+  // Main brand green
+  600: #1d7450,
+  700: #196347,
+  800: #14523d,
+  900: #104131,
+  contrast: (
+    50: #0a0a0a,
+    100: #0a0a0a,
+    200: #0a0a0a,
+    300: #0a0a0a,
+    400: #0a0a0a,
+    500: #ffffff,
+    600: #ffffff,
+    700: #ffffff,
+    800: #ffffff,
+    900: #ffffff,
+  ),
+);
+
+$pachamama-accent: (
+  50: #fff4f0,
+  100: #fee9e1,
+  200: #fdd3c4,
+  300: #fcb9a0,
+  400: #fe9575,
+  500: #fe714b,
+  // Price orange
+  600: #e55a32,
+  700: #cc4724,
+  800: #b3371a,
+  900: #992a13,
+  contrast: (
+    50: #0a0a0a,
+    100: #0a0a0a,
+    200: #0a0a0a,
+    300: #0a0a0a,
+    400: #0a0a0a,
+    500: #ffffff,
+    600: #ffffff,
+    700: #ffffff,
+    800: #ffffff,
+    900: #ffffff,
+  ),
+);
+
+// Define the theme object
+$pachamama-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$green-palette,
+      tertiary: mat.$orange-palette,
+    ),
+    typography: (
+      brand-family: 'Inter',
+      plain-family: 'Inter',
+    ),
+    density: (
+      scale: 0,
+    ),
+  )
+);
+
+// Include theme styles for core and each component
+html {
+  @include mat.all-component-themes($pachamama-theme);
+}
+
+// Custom overrides to match design system
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+// Ensure form fields match design system
+.mat-mdc-form-field {
+  font-family: 'Inter', sans-serif;
+}
