@@ -1,4 +1,4 @@
-import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { AbstractControl, FormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 /**
  * Validator para códigos únicos.
@@ -80,7 +80,7 @@ export function positiveNumberValidator(): ValidatorFn {
  */
 export function dateRangeValidator(startDateKey: string, endDateKey: string): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const formGroup = control as any;
+    const formGroup = control as FormGroup;
     const startDate = formGroup.get(startDateKey)?.value;
     const endDate = formGroup.get(endDateKey)?.value;
 

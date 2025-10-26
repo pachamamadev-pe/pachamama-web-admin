@@ -5,17 +5,18 @@ Este directorio contiene datos ficticios (mock data) para desarrollo y testing d
 ## 📋 Contenido
 
 ### `db.json`
+
 Base de datos fake en formato JSON con las siguientes colecciones:
 
-| Colección | Registros | Descripción |
-|-----------|-----------|-------------|
-| `products` | 6 | Productos agrícolas con códigos únicos, precios y créditos de carbono |
-| `companies` | 3 | Empresas con RUC, razón social y administradores |
-| `communities` | 3 | Comunidades campesinas/nativas con ubicación y datos geográficos |
-| `brigades` | 3 | Brigadas de recolección con miembros y vigencia |
-| `projects` | 3 | Proyectos de reforestación con geomallas (GeoJSON) |
-| `inventorySettings` | 3 | Configuraciones de inventario por proyecto |
-| `users` | 9 | Usuarios del sistema (admins, líderes, miembros) |
+| Colección           | Registros | Descripción                                                           |
+| ------------------- | --------- | --------------------------------------------------------------------- |
+| `products`          | 6         | Productos agrícolas con códigos únicos, precios y créditos de carbono |
+| `companies`         | 3         | Empresas con RUC, razón social y administradores                      |
+| `communities`       | 3         | Comunidades campesinas/nativas con ubicación y datos geográficos      |
+| `brigades`          | 3         | Brigadas de recolección con miembros y vigencia                       |
+| `projects`          | 3         | Proyectos de reforestación con geomallas (GeoJSON)                    |
+| `inventorySettings` | 3         | Configuraciones de inventario por proyecto                            |
+| `users`             | 9         | Usuarios del sistema (admins, líderes, miembros)                      |
 
 ## 🚀 Uso
 
@@ -38,6 +39,7 @@ Esto levantará una API REST en `http://localhost:3000` con endpoints completos:
 #### Endpoints Disponibles
 
 **Products:**
+
 ```bash
 GET    http://localhost:3000/products          # Listar todos
 GET    http://localhost:3000/products/prod-001 # Ver uno
@@ -48,6 +50,7 @@ DELETE http://localhost:3000/products/prod-001 # Eliminar
 ```
 
 **Filtros y Búsqueda:**
+
 ```bash
 # Filtrar por campo
 GET http://localhost:3000/products?status=active
@@ -68,6 +71,7 @@ GET http://localhost:3000/brigades?_expand=community
 ```
 
 **Otros recursos:**
+
 - `http://localhost:3000/companies`
 - `http://localhost:3000/communities`
 - `http://localhost:3000/brigades`
@@ -137,12 +141,10 @@ export const handlers = [
   http.get('/api/products', () => {
     return HttpResponse.json(mockData.products);
   }),
-  
+
   http.get('/api/products/:id', ({ params }) => {
-    const product = mockData.products.find(p => p.id === params.id);
-    return product 
-      ? HttpResponse.json(product)
-      : new HttpResponse(null, { status: 404 });
+    const product = mockData.products.find((p) => p.id === params.id);
+    return product ? HttpResponse.json(product) : new HttpResponse(null, { status: 404 });
   }),
 ];
 ```
@@ -153,22 +155,23 @@ export const handlers = [
 
 ```typescript
 interface Product {
-  id: string;              // Identificador único
-  code: string;            // Código único (CAT-PRO-NNN)
-  name: string;            // Nombre del producto
-  description: string;     // Descripción detallada
-  category: string;        // Categoría (Café, Cacao, Frutas, etc.)
-  unit: string;            // Unidad (kg, racimo, atado)
-  pricePerUnit: number;    // Precio por unidad en soles (S/)
-  imageUrl: string;        // URL de la imagen
-  carbonCreditsPerUnit: number;  // Créditos de carbono por unidad
+  id: string; // Identificador único
+  code: string; // Código único (CAT-PRO-NNN)
+  name: string; // Nombre del producto
+  description: string; // Descripción detallada
+  category: string; // Categoría (Café, Cacao, Frutas, etc.)
+  unit: string; // Unidad (kg, racimo, atado)
+  pricePerUnit: number; // Precio por unidad en soles (S/)
+  imageUrl: string; // URL de la imagen
+  carbonCreditsPerUnit: number; // Créditos de carbono por unidad
   status: 'active' | 'inactive';
-  createdAt: string;       // ISO 8601 timestamp
-  updatedAt: string;       // ISO 8601 timestamp
+  createdAt: string; // ISO 8601 timestamp
+  updatedAt: string; // ISO 8601 timestamp
 }
 ```
 
 **Validaciones a considerar:**
+
 - `code` debe ser único en el sistema
 - `pricePerUnit` debe ser mayor a 0
 - `carbonCreditsPerUnit` debe ser >= 0
@@ -178,14 +181,14 @@ interface Product {
 ```typescript
 interface Company {
   id: string;
-  ruc: string;             // RUC de 11 dígitos (validar formato)
-  businessName: string;    // Razón social
-  tradeName: string;       // Nombre comercial
+  ruc: string; // RUC de 11 dígitos (validar formato)
+  businessName: string; // Razón social
+  tradeName: string; // Nombre comercial
   address: string;
   phone: string;
   email: string;
   website: string | null;
-  adminUserId: string;     // FK a users
+  adminUserId: string; // FK a users
   logoUrl: string | null;
   status: 'active' | 'inactive';
   createdAt: string;
@@ -194,6 +197,7 @@ interface Company {
 ```
 
 **Validaciones a considerar:**
+
 - `ruc` debe tener exactamente 11 dígitos numéricos
 - `email` debe ser válido
 - `adminUserId` debe referenciar a un usuario con rol `company_admin`
@@ -203,19 +207,19 @@ interface Company {
 ```typescript
 interface Community {
   id: string;
-  code: string;            // Código único (COM-REGION-NNN)
+  code: string; // Código único (COM-REGION-NNN)
   name: string;
-  region: string;          // Región del Perú
+  region: string; // Región del Perú
   province: string;
   district: string;
   address: string;
   totalFamilies: number;
   totalHectares: number;
-  mainProducts: string[];  // Array de productos principales
+  mainProducts: string[]; // Array de productos principales
   contactPerson: string;
   contactPhone: string;
   contactEmail: string | null;
-  geojson: GeoJSON.Polygon | null;  // Perímetro de la comunidad
+  geojson: GeoJSON.Polygon | null; // Perímetro de la comunidad
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
@@ -223,6 +227,7 @@ interface Community {
 ```
 
 **Notas:**
+
 - `geojson` es opcional (algunas comunidades no tienen perímetro definido)
 - `mainProducts` es un array de strings con los nombres de productos
 
@@ -231,14 +236,14 @@ interface Community {
 ```typescript
 interface Brigade {
   id: string;
-  code: string;            // Código único (BRIG-YYYY-NNN)
+  code: string; // Código único (BRIG-YYYY-NNN)
   name: string;
-  communityId: string;     // FK a communities
-  leaderId: string;        // FK a users (debe ser brigade_leader)
+  communityId: string; // FK a communities
+  leaderId: string; // FK a users (debe ser brigade_leader)
   members: BrigadeMember[];
-  startDate: string;       // YYYY-MM-DD
-  endDate: string;         // YYYY-MM-DD
-  isActive: boolean;       // Si la brigada está vigente
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  isActive: boolean; // Si la brigada está vigente
   createdAt: string;
   updatedAt: string;
 }
@@ -246,7 +251,7 @@ interface Brigade {
 interface BrigadeMember {
   userId: string;
   name: string;
-  dni: string;             // 8 dígitos
+  dni: string; // 8 dígitos
   role: 'leader' | 'member';
   phone: string;
   joinedAt: string;
@@ -254,6 +259,7 @@ interface BrigadeMember {
 ```
 
 **Validaciones a considerar:**
+
 - `endDate` debe ser mayor a `startDate`
 - `members` debe incluir al líder (leaderId)
 - `dni` debe tener 8 dígitos
@@ -263,25 +269,26 @@ interface BrigadeMember {
 ```typescript
 interface Project {
   id: string;
-  code: string;            // PROJ-YYYY-NNN
+  code: string; // PROJ-YYYY-NNN
   name: string;
-  companyId: string;       // FK a companies
-  communityId: string;     // FK a communities
+  companyId: string; // FK a companies
+  communityId: string; // FK a communities
   description: string;
-  startDate: string;       // YYYY-MM-DD
-  endDate: string;         // YYYY-MM-DD
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
   totalHectares: number;
-  targetTrees: number;     // Meta de árboles a plantar
-  currentTrees: number;    // Árboles plantados actualmente
-  estimatedCarbonCapture: number;  // Toneladas de CO2
+  targetTrees: number; // Meta de árboles a plantar
+  currentTrees: number; // Árboles plantados actualmente
+  estimatedCarbonCapture: number; // Toneladas de CO2
   status: 'planning' | 'in_progress' | 'completed' | 'cancelled';
-  geomalla: GeoJSON.FeatureCollection | null;  // Áreas del proyecto
+  geomalla: GeoJSON.FeatureCollection | null; // Áreas del proyecto
   createdAt: string;
   updatedAt: string;
 }
 ```
 
 **Estructura de la geomalla:**
+
 ```json
 {
   "type": "FeatureCollection",
@@ -310,12 +317,12 @@ interface Project {
 ```typescript
 interface InventorySetting {
   id: string;
-  projectId: string;       // FK a projects
+  projectId: string; // FK a projects
   isEnabled: boolean;
-  startDate: string;       // YYYY-MM-DD
-  endDate: string;         // YYYY-MM-DD
-  allowedProducts: string[];  // Array de product IDs
-  responsibleUserId: string;  // FK a users
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  allowedProducts: string[]; // Array de product IDs
+  responsibleUserId: string; // FK a users
   settings: {
     requiresApproval: boolean;
     maxDailyCollections: number;
@@ -335,17 +342,18 @@ interface User {
   id: string;
   email: string;
   name: string;
-  dni: string;             // 8 dígitos
+  dni: string; // 8 dígitos
   phone: string;
   role: 'company_admin' | 'brigade_leader' | 'brigade_member';
-  companyId?: string;      // Solo para company_admin
-  communityId?: string;    // Solo para brigade_leader/member
+  companyId?: string; // Solo para company_admin
+  communityId?: string; // Solo para brigade_leader/member
   status: 'active' | 'inactive';
   createdAt: string;
 }
 ```
 
 **Roles:**
+
 - `company_admin`: Administrador de empresa
 - `brigade_leader`: Líder de brigada
 - `brigade_member`: Miembro de brigada
@@ -392,6 +400,7 @@ cp .project-docs/mock/db.backup.json .project-docs/mock/db.json
 ### 4. Datos Adicionales
 
 Para agregar más registros, simplemente edita `db.json` y agrega objetos al array correspondiente. Asegúrate de:
+
 - Usar IDs únicos
 - Mantener la consistencia en las foreign keys
 - Seguir el formato de fechas ISO 8601

@@ -108,7 +108,7 @@ export class HeaderComponent {
 
   placeholder = input('Buscar…');
 
-  search = output<string>();
+  searchQuery = output<string>();
   action = output<'notifications'>();
   profile = output<void>();
 
@@ -143,6 +143,6 @@ export class HeaderComponent {
 
   onSearch(evt: Event) {
     const term = (evt.target as HTMLInputElement)?.value ?? '';
-    this.search.emit(term);
+    this.searchQuery.emit(term);
   }
 }

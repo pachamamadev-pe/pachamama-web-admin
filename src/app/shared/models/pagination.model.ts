@@ -24,7 +24,7 @@ export interface FilterParams {
   status?: string;
   dateFrom?: string;
   dateTo?: string;
-  [key: string]: any;
+  [key: string]: string | undefined;
 }
 
 /**

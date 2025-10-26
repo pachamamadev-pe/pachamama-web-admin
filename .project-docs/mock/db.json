@@ -7,7 +7,7 @@
       "description": "Café orgánico de altura, cultivado en la selva central del Perú. Certificado orgánico y comercio justo.",
       "category": "Café",
       "unit": "kg",
-      "pricePerUnit": 25.50,
+      "pricePerUnit": 25.5,
       "imageUrl": "/images/products/cafe-arabica.jpg",
       "carbonCreditsPerUnit": 0.5,
       "status": "active",
@@ -21,7 +21,7 @@
       "description": "Cacao fino de aroma, certificado orgánico. Cultivado en comunidades de la selva peruana.",
       "category": "Cacao",
       "unit": "kg",
-      "pricePerUnit": 18.00,
+      "pricePerUnit": 18.0,
       "imageUrl": "/images/products/cacao.jpg",
       "carbonCreditsPerUnit": 0.4,
       "status": "active",
@@ -35,7 +35,7 @@
       "description": "Banano orgánico de comercio justo, cultivado de manera sostenible.",
       "category": "Frutas",
       "unit": "racimo",
-      "pricePerUnit": 12.00,
+      "pricePerUnit": 12.0,
       "imageUrl": "/images/products/banano.jpg",
       "carbonCreditsPerUnit": 0.2,
       "status": "active",
@@ -49,7 +49,7 @@
       "description": "Café robusta de alta calidad, ideal para espresso.",
       "category": "Café",
       "unit": "kg",
-      "pricePerUnit": 20.00,
+      "pricePerUnit": 20.0,
       "imageUrl": "/images/products/cafe-robusta.jpg",
       "carbonCreditsPerUnit": 0.45,
       "status": "active",
@@ -63,7 +63,7 @@
       "description": "Aguaymanto orgánico, fruta andina rica en vitamina C.",
       "category": "Frutas",
       "unit": "kg",
-      "pricePerUnit": 15.50,
+      "pricePerUnit": 15.5,
       "imageUrl": "/images/products/aguaymanto.jpg",
       "carbonCreditsPerUnit": 0.3,
       "status": "active",
@@ -77,7 +77,7 @@
       "description": "Menta fresca orgánica, cultivada en la sierra peruana.",
       "category": "Hierbas",
       "unit": "atado",
-      "pricePerUnit": 3.50,
+      "pricePerUnit": 3.5,
       "imageUrl": "/images/products/menta.jpg",
       "carbonCreditsPerUnit": 0.1,
       "status": "inactive",
@@ -149,13 +149,15 @@
       "contactEmail": "comunidad.huasao@gmail.com",
       "geojson": {
         "type": "Polygon",
-        "coordinates": [[
-          [-71.9675, -13.5211],
-          [-71.9675, -13.5311],
-          [-71.9575, -13.5311],
-          [-71.9575, -13.5211],
-          [-71.9675, -13.5211]
-        ]]
+        "coordinates": [
+          [
+            [-71.9675, -13.5211],
+            [-71.9675, -13.5311],
+            [-71.9575, -13.5311],
+            [-71.9575, -13.5211],
+            [-71.9675, -13.5211]
+          ]
+        ]
       },
       "status": "active",
       "createdAt": "2024-01-10T00:00:00Z",
@@ -196,13 +198,15 @@
       "contactEmail": "chucuito.comunidad@outlook.com",
       "geojson": {
         "type": "Polygon",
-        "coordinates": [[
-          [-69.8850, -16.2610],
-          [-69.8850, -16.2710],
-          [-69.8750, -16.2710],
-          [-69.8750, -16.2610],
-          [-69.8850, -16.2610]
-        ]]
+        "coordinates": [
+          [
+            [-69.885, -16.261],
+            [-69.885, -16.271],
+            [-69.875, -16.271],
+            [-69.875, -16.261],
+            [-69.885, -16.261]
+          ]
+        ]
       },
       "status": "active",
       "createdAt": "2024-03-01T00:00:00Z",
@@ -323,13 +327,15 @@
             "type": "Feature",
             "geometry": {
               "type": "Polygon",
-              "coordinates": [[
-                [-71.9675, -13.5211],
-                [-71.9675, -13.5251],
-                [-71.9635, -13.5251],
-                [-71.9635, -13.5211],
-                [-71.9675, -13.5211]
-              ]]
+              "coordinates": [
+                [
+                  [-71.9675, -13.5211],
+                  [-71.9675, -13.5251],
+                  [-71.9635, -13.5251],
+                  [-71.9635, -13.5211],
+                  [-71.9675, -13.5211]
+                ]
+              ]
             },
             "properties": {
               "area_id": "A-001",
@@ -344,13 +350,15 @@
             "type": "Feature",
             "geometry": {
               "type": "Polygon",
-              "coordinates": [[
-                [-71.9635, -13.5211],
-                [-71.9635, -13.5251],
-                [-71.9595, -13.5251],
-                [-71.9595, -13.5211],
-                [-71.9635, -13.5211]
-              ]]
+              "coordinates": [
+                [
+                  [-71.9635, -13.5211],
+                  [-71.9635, -13.5251],
+                  [-71.9595, -13.5251],
+                  [-71.9595, -13.5211],
+                  [-71.9635, -13.5211]
+                ]
+              ]
             },
             "properties": {
               "area_id": "A-002",
@@ -365,13 +373,15 @@
             "type": "Feature",
             "geometry": {
               "type": "Polygon",
-              "coordinates": [[
-                [-71.9675, -13.5251],
-                [-71.9675, -13.5291],
-                [-71.9635, -13.5291],
-                [-71.9635, -13.5251],
-                [-71.9675, -13.5251]
-              ]]
+              "coordinates": [
+                [
+                  [-71.9675, -13.5251],
+                  [-71.9675, -13.5291],
+                  [-71.9635, -13.5291],
+                  [-71.9635, -13.5251],
+                  [-71.9675, -13.5251]
+                ]
+              ]
             },
             "properties": {
               "area_id": "A-003",
@@ -386,13 +396,15 @@
             "type": "Feature",
             "geometry": {
               "type": "Polygon",
-              "coordinates": [[
-                [-71.9635, -13.5251],
-                [-71.9635, -13.5291],
-                [-71.9595, -13.5291],
-                [-71.9595, -13.5251],
-                [-71.9635, -13.5251]
-              ]]
+              "coordinates": [
+                [
+                  [-71.9635, -13.5251],
+                  [-71.9635, -13.5291],
+                  [-71.9595, -13.5291],
+                  [-71.9595, -13.5251],
+                  [-71.9635, -13.5251]
+                ]
+              ]
             },
             "properties": {
               "area_id": "A-004",
@@ -447,13 +459,15 @@
             "type": "Feature",
             "geometry": {
               "type": "Polygon",
-              "coordinates": [[
-                [-69.8850, -16.2610],
-                [-69.8850, -16.2650],
-                [-69.8810, -16.2650],
-                [-69.8810, -16.2610],
-                [-69.8850, -16.2610]
-              ]]
+              "coordinates": [
+                [
+                  [-69.885, -16.261],
+                  [-69.885, -16.265],
+                  [-69.881, -16.265],
+                  [-69.881, -16.261],
+                  [-69.885, -16.261]
+                ]
+              ]
             },
             "properties": {
               "area_id": "B-001",
@@ -468,13 +482,15 @@
             "type": "Feature",
             "geometry": {
               "type": "Polygon",
-              "coordinates": [[
-                [-69.8810, -16.2610],
-                [-69.8810, -16.2650],
-                [-69.8770, -16.2650],
-                [-69.8770, -16.2610],
-                [-69.8810, -16.2610]
-              ]]
+              "coordinates": [
+                [
+                  [-69.881, -16.261],
+                  [-69.881, -16.265],
+                  [-69.877, -16.265],
+                  [-69.877, -16.261],
+                  [-69.881, -16.261]
+                ]
+              ]
             },
             "properties": {
               "area_id": "B-002",

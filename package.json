@@ -7,7 +7,10 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless --code-coverage",
+    "test:headless": "ng test --watch=false --browsers=ChromeHeadless",
     "lint": "ng lint",
+    "lint:fix": "ng lint --fix",
     "format": "prettier --write src/**/*.{ts,scss,html}",
     "format:check": "prettier --check src/**/*.{ts,scss,html}",
     "mock:server": "json-server --watch .project-docs/mock/db.json --port 3000",
@@ -42,15 +45,17 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
-    "@angular-eslint/schematics": "^20.4.0",
     "@angular/build": "^20.3.7",
     "@angular/cli": "^20.3.7",
     "@angular/compiler-cli": "^20.3.0",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@types/jasmine": "~5.1.0",
+    "angular-eslint": "20.4.0",
     "autoprefixer": "^10.4.21",
-    "eslint": "^9.38.0",
+    "eslint": "^9.37.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "husky": "^9.1.7",
     "jasmine-core": "~5.9.0",
     "json-server": "^1.0.0-beta.3",
@@ -63,9 +68,16 @@
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "tailwindcss": "^3.4.18",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "typescript-eslint": "8.46.0"
   },
   "lint-staged": {
-    "src/**/*.{ts,scss,html}": "prettier --write"
+    "src/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.{html,scss}": [
+      "prettier --write"
+    ]
   }
 }

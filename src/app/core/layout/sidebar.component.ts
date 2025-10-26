@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LayoutService } from './layout.service';
 
-export type NavItem = {
+export interface NavItem {
   label: string;
   icon?: string; // reserved for future icon component
   to?: string;
   badge?: string;
-};
+}
 
 @Component({
   standalone: true,

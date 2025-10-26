@@ -87,7 +87,7 @@ export function getControlErrors(control: AbstractControl | null, fieldName = 'C
 /**
  * Resetea un formulario a su estado inicial.
  */
-export function resetForm(formGroup: FormGroup, defaultValues?: any): void {
+export function resetForm(formGroup: FormGroup, defaultValues?: Record<string, unknown>): void {
   formGroup.reset(defaultValues || {});
   formGroup.markAsUntouched();
   formGroup.markAsPristine();

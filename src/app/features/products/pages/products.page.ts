@@ -39,7 +39,7 @@ import { MatButtonModule } from '@angular/material/button';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductsPage {
-  products = signal<any[]>([]);
+  products = signal<unknown[]>([]);
 
   onCreate(): void {
     console.log('Crear producto');
