@@ -41,7 +41,7 @@ import { LayoutService } from './layout.service';
             />
           </svg>
         </button>
-        <h1 class="truncate font-bold text-accent-titles">{{ title() }}</h1>
+        <h2 class="truncate font-bold text-accent-titles">{{ title() }}</h2>
       </div>
 
       <!-- Right side: Search + Actions -->

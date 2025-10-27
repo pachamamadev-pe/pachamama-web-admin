@@ -80,6 +80,7 @@ export class SidebarComponent {
   items = input<NavItem[]>([
     { label: 'Inicio', to: '/home', icon: '🏠' },
     { label: 'Mis productos', to: '/products', icon: '🌱' },
+    { label: 'Empresas', to: '/companies', icon: '🏢' },
     { label: 'Reportes', to: '/projects', icon: '📊' },
     { label: 'Mapa recolección aprobada', to: '/communities', icon: '🗺️' },
     { label: 'Configuración', to: '/brigades', icon: '⚙️' },

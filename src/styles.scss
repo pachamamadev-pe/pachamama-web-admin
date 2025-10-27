@@ -5,8 +5,23 @@
 // Importar fuente Inter de Google Fonts
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-// Angular Material Theme
+// Angular Material Theme (debe ir después de Tailwind)
 @import 'theme.scss';
+
+// Fix: Ocultar la línea divisoria vertical que aparece después del icono prefix
+// Tailwind establece border-style: solid en todos los elementos, causando esta línea
+.mat-mdc-form-field-icon-prefix,
+.mat-mdc-form-field-icon-prefix > *,
+.mdc-text-field__icon--leading {
+  border-right: none !important;
+  border-left: none !important;
+}
+
+// También asegurar que no haya bordes en las piezas internas del notch
+.mdc-text-field--outlined .mdc-notched-outline__leading,
+.mdc-text-field--outlined .mdc-notched-outline__notch {
+  border-right: none !important;
+}
 
 @layer base {
   :root {

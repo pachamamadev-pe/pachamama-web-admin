@@ -19,6 +19,12 @@ export const appRoutes: Routes = [
           import('./features/products/pages/products.page').then((m) => m.ProductsPage),
       },
       {
+        path: 'companies',
+        title: 'Empresas',
+        loadComponent: () =>
+          import('./features/companies/pages/companies.page').then((m) => m.CompaniesPage),
+      },
+      {
         path: 'communities',
         title: 'Mapa recolección aprobada',
         loadComponent: () =>
