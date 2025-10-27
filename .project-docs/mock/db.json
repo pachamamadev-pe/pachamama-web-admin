@@ -21,7 +21,7 @@
       "description": "Cacao fino de aroma, certificado orgánico. Cultivado en comunidades de la selva peruana.",
       "category": "Cacao",
       "unit": "kg",
-      "pricePerUnit": 18.0,
+      "pricePerUnit": 18,
       "imageUrl": "/images/products/cacao.jpg",
       "carbonCreditsPerUnit": 0.4,
       "status": "active",
@@ -35,7 +35,7 @@
       "description": "Banano orgánico de comercio justo, cultivado de manera sostenible.",
       "category": "Frutas",
       "unit": "racimo",
-      "pricePerUnit": 12.0,
+      "pricePerUnit": 12,
       "imageUrl": "/images/products/banano.jpg",
       "carbonCreditsPerUnit": 0.2,
       "status": "active",
@@ -49,7 +49,7 @@
       "description": "Café robusta de alta calidad, ideal para espresso.",
       "category": "Café",
       "unit": "kg",
-      "pricePerUnit": 20.0,
+      "pricePerUnit": 20,
       "imageUrl": "/images/products/cafe-robusta.jpg",
       "carbonCreditsPerUnit": 0.45,
       "status": "active",
@@ -95,11 +95,11 @@
       "phone": "+51 984 123 456",
       "email": "contacto@pachamama.com",
       "website": "https://www.pachamama.com",
-      "adminUserId": "user-001",
+      "adminUserId": "user-1",
       "logoUrl": "/images/logo/logo.svg",
       "status": "active",
       "createdAt": "2023-06-01T00:00:00Z",
-      "updatedAt": "2024-10-20T12:00:00Z"
+      "updatedAt": "2025-10-27T03:08:06.889Z"
     },
     {
       "id": "comp-002",
@@ -143,7 +143,11 @@
       "address": "Centro Poblado Huasao, Cusco",
       "totalFamilies": 150,
       "totalHectares": 450,
-      "mainProducts": ["café", "cacao", "plátano"],
+      "mainProducts": [
+        "café",
+        "cacao",
+        "plátano"
+      ],
       "contactPerson": "Juan Mamani Quispe",
       "contactPhone": "+51 984 111 222",
       "contactEmail": "comunidad.huasao@gmail.com",
@@ -151,11 +155,26 @@
         "type": "Polygon",
         "coordinates": [
           [
-            [-71.9675, -13.5211],
-            [-71.9675, -13.5311],
-            [-71.9575, -13.5311],
-            [-71.9575, -13.5211],
-            [-71.9675, -13.5211]
+            [
+              -71.9675,
+              -13.5211
+            ],
+            [
+              -71.9675,
+              -13.5311
+            ],
+            [
+              -71.9575,
+              -13.5311
+            ],
+            [
+              -71.9575,
+              -13.5211
+            ],
+            [
+              -71.9675,
+              -13.5211
+            ]
           ]
         ]
       },
@@ -173,7 +192,11 @@
       "address": "Río Tambo, Satipo, Junín",
       "totalFamilies": 80,
       "totalHectares": 320,
-      "mainProducts": ["cacao", "plátano", "yuca"],
+      "mainProducts": [
+        "cacao",
+        "plátano",
+        "yuca"
+      ],
       "contactPerson": "María Fernández Pérez",
       "contactPhone": "+51 965 333 444",
       "contactEmail": null,
@@ -192,7 +215,11 @@
       "address": "Chucuito, Puno",
       "totalFamilies": 200,
       "totalHectares": 600,
-      "mainProducts": ["quinua", "papa", "cañihua"],
+      "mainProducts": [
+        "quinua",
+        "papa",
+        "cañihua"
+      ],
       "contactPerson": "Roberto Condori",
       "contactPhone": "+51 951 222 333",
       "contactEmail": "chucuito.comunidad@outlook.com",
@@ -200,11 +227,26 @@
         "type": "Polygon",
         "coordinates": [
           [
-            [-69.885, -16.261],
-            [-69.885, -16.271],
-            [-69.875, -16.271],
-            [-69.875, -16.261],
-            [-69.885, -16.261]
+            [
+              -69.885,
+              -16.261
+            ],
+            [
+              -69.885,
+              -16.271
+            ],
+            [
+              -69.875,
+              -16.271
+            ],
+            [
+              -69.875,
+              -16.261
+            ],
+            [
+              -69.885,
+              -16.261
+            ]
           ]
         ]
       },
@@ -329,11 +371,26 @@
               "type": "Polygon",
               "coordinates": [
                 [
-                  [-71.9675, -13.5211],
-                  [-71.9675, -13.5251],
-                  [-71.9635, -13.5251],
-                  [-71.9635, -13.5211],
-                  [-71.9675, -13.5211]
+                  [
+                    -71.9675,
+                    -13.5211
+                  ],
+                  [
+                    -71.9675,
+                    -13.5251
+                  ],
+                  [
+                    -71.9635,
+                    -13.5251
+                  ],
+                  [
+                    -71.9635,
+                    -13.5211
+                  ],
+                  [
+                    -71.9675,
+                    -13.5211
+                  ]
                 ]
               ]
             },
@@ -352,11 +409,26 @@
               "type": "Polygon",
               "coordinates": [
                 [
-                  [-71.9635, -13.5211],
-                  [-71.9635, -13.5251],
-                  [-71.9595, -13.5251],
-                  [-71.9595, -13.5211],
-                  [-71.9635, -13.5211]
+                  [
+                    -71.9635,
+                    -13.5211
+                  ],
+                  [
+                    -71.9635,
+                    -13.5251
+                  ],
+                  [
+                    -71.9595,
+                    -13.5251
+                  ],
+                  [
+                    -71.9595,
+                    -13.5211
+                  ],
+                  [
+                    -71.9635,
+                    -13.5211
+                  ]
                 ]
               ]
             },
@@ -375,11 +447,26 @@
               "type": "Polygon",
               "coordinates": [
                 [
-                  [-71.9675, -13.5251],
-                  [-71.9675, -13.5291],
-                  [-71.9635, -13.5291],
-                  [-71.9635, -13.5251],
-                  [-71.9675, -13.5251]
+                  [
+                    -71.9675,
+                    -13.5251
+                  ],
+                  [
+                    -71.9675,
+                    -13.5291
+                  ],
+                  [
+                    -71.9635,
+                    -13.5291
+                  ],
+                  [
+                    -71.9635,
+                    -13.5251
+                  ],
+                  [
+                    -71.9675,
+                    -13.5251
+                  ]
                 ]
               ]
             },
@@ -398,11 +485,26 @@
               "type": "Polygon",
               "coordinates": [
                 [
-                  [-71.9635, -13.5251],
-                  [-71.9635, -13.5291],
-                  [-71.9595, -13.5291],
-                  [-71.9595, -13.5251],
-                  [-71.9635, -13.5251]
+                  [
+                    -71.9635,
+                    -13.5251
+                  ],
+                  [
+                    -71.9635,
+                    -13.5291
+                  ],
+                  [
+                    -71.9595,
+                    -13.5291
+                  ],
+                  [
+                    -71.9595,
+                    -13.5251
+                  ],
+                  [
+                    -71.9635,
+                    -13.5251
+                  ]
                 ]
               ]
             },
@@ -461,11 +563,26 @@
               "type": "Polygon",
               "coordinates": [
                 [
-                  [-69.885, -16.261],
-                  [-69.885, -16.265],
-                  [-69.881, -16.265],
-                  [-69.881, -16.261],
-                  [-69.885, -16.261]
+                  [
+                    -69.885,
+                    -16.261
+                  ],
+                  [
+                    -69.885,
+                    -16.265
+                  ],
+                  [
+                    -69.881,
+                    -16.265
+                  ],
+                  [
+                    -69.881,
+                    -16.261
+                  ],
+                  [
+                    -69.885,
+                    -16.261
+                  ]
                 ]
               ]
             },
@@ -484,11 +601,26 @@
               "type": "Polygon",
               "coordinates": [
                 [
-                  [-69.881, -16.261],
-                  [-69.881, -16.265],
-                  [-69.877, -16.265],
-                  [-69.877, -16.261],
-                  [-69.881, -16.261]
+                  [
+                    -69.881,
+                    -16.261
+                  ],
+                  [
+                    -69.881,
+                    -16.265
+                  ],
+                  [
+                    -69.877,
+                    -16.265
+                  ],
+                  [
+                    -69.877,
+                    -16.261
+                  ],
+                  [
+                    -69.881,
+                    -16.261
+                  ]
                 ]
               ]
             },
@@ -514,7 +646,10 @@
       "isEnabled": true,
       "startDate": "2024-01-15",
       "endDate": "2024-12-31",
-      "allowedProducts": ["prod-001", "prod-002"],
+      "allowedProducts": [
+        "prod-001",
+        "prod-002"
+      ],
       "responsibleUserId": "user-001",
       "settings": {
         "requiresApproval": true,
@@ -532,7 +667,10 @@
       "isEnabled": true,
       "startDate": "2024-02-01",
       "endDate": "2025-01-31",
-      "allowedProducts": ["prod-002", "prod-003"],
+      "allowedProducts": [
+        "prod-002",
+        "prod-003"
+      ],
       "responsibleUserId": "user-002",
       "settings": {
         "requiresApproval": false,

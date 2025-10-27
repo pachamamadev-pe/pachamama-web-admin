@@ -127,7 +127,7 @@ interface UserSearchResult {
         <!-- Info Message -->
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div class="flex items-start gap-2">
-            <mat-icon class="text-blue-600">info</mat-icon>
+            <mat-icon class="text-blue-600 overflow-visible">info</mat-icon>
             <div class="text-subtitle text-blue-600">
               <p class="font-bold mb-1">Nota sobre la funcionalidad</p>
               <p>
@@ -163,7 +163,9 @@ interface UserSearchResult {
         padding: 24px;
         min-width: 500px;
       }
-
+      .overflow-visible {
+        overflow: visible !important;
+      }
       @media (max-width: 640px) {
         .assign-admin-dialog {
           padding: 16px;
