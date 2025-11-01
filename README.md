@@ -1,11 +1,19 @@
 # 🌿 Pachamama - Web Admin
 
+[![Deploy to QA](https://github.com/pachamamadev-pe/pachamama-web-admin/actions/workflows/deploy-qa.yml/badge.svg)](https://github.com/pachamamadev-pe/pachamama-web-admin/actions/workflows/deploy-qa.yml)
+[![Vercel](https://img.shields.io/badge/Vercel-QA-black?logo=vercel)](https://pachamama-web-admin.vercel.app)
+
 Panel de administración para la plataforma Pachamama, un sistema de gestión de recolección y trazabilidad de productos agrícolas en comunidades peruanas.
 
 ![Angular](https://img.shields.io/badge/Angular-20.x-red?logo=angular)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript)
 ![Material](https://img.shields.io/badge/Material-20.x-blue?logo=material-design)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind-3.x-38bdf8?logo=tailwind-css)
+
+## 🚀 Environments
+
+- **QA Environment:** [https://pachamama-web-admin.vercel.app](https://pachamama-web-admin.vercel.app)
+- **Status:** Automated deployments from `main` branch
 
 ## 📋 Tabla de Contenidos
 
@@ -58,7 +66,39 @@ Pachamama Web Admin es una aplicación web empresarial diseñada para gestionar:
 - 📄 Generación de reportes en PDF/Excel
 - 🌐 Internacionalización (i18n) ES/EN
 
-## 🛠 Tecnologías
+## � CI/CD & Deployment
+
+### Deployment Process
+
+El proyecto utiliza **GitHub Actions** + **Vercel** para despliegues automáticos:
+
+#### Push a `main` → Deploy automático a QA
+```bash
+git push origin main
+# ✅ Ejecuta lint, tests y build
+# ✅ Despliega a: https://pachamama-web-admin.vercel.app
+```
+
+#### Pull Requests → Preview deployments
+```bash
+git push origin feature/my-feature
+# Crea PR en GitHub
+# ✅ GitHub Actions crea preview temporal
+# ✅ URL única: https://pachamama-web-admin-git-feature-pr123.vercel.app
+```
+
+### Quality Gates
+
+Todos los deployments requieren:
+- ✅ **ESLint:** Sin errores de linting
+- ✅ **Tests:** Todos los tests deben pasar
+- ✅ **Build:** Compilación exitosa sin errores
+
+### Rollback
+
+Si algo falla en QA, puedes hacer rollback en 1 clic desde el dashboard de Vercel o desde GitHub Actions.
+
+## �🛠 Tecnologías
 
 ### Core
 
