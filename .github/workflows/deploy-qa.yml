@@ -84,11 +84,11 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `## 🚀 Deploy Preview Ready!
-            
+
             ✅ **Preview URL:** ${{ steps.deploy.outputs.preview_url }}
-            
+
             🔍 This is a temporary environment for reviewing this PR.
-            
+
             _Deployed from commit: \`${context.sha.substring(0, 7)}\`_`
             })
 

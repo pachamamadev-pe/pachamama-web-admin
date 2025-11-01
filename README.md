@@ -73,6 +73,7 @@ Pachamama Web Admin es una aplicación web empresarial diseñada para gestionar:
 El proyecto utiliza **GitHub Actions** + **Vercel** para despliegues automáticos:
 
 #### Push a `main` → Deploy automático a QA
+
 ```bash
 git push origin main
 # ✅ Ejecuta lint, tests y build
@@ -80,6 +81,7 @@ git push origin main
 ```
 
 #### Pull Requests → Preview deployments
+
 ```bash
 git push origin feature/my-feature
 # Crea PR en GitHub
@@ -90,6 +92,7 @@ git push origin feature/my-feature
 ### Quality Gates
 
 Todos los deployments requieren:
+
 - ✅ **ESLint:** Sin errores de linting
 - ✅ **Tests:** Todos los tests deben pasar
 - ✅ **Build:** Compilación exitosa sin errores

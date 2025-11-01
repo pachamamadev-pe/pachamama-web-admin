@@ -45,3 +45,4 @@ Thumbs.db
 # Documentación interna del proyecto (excepto mocks)
 .project-docs/
 !.project-docs/mock/
+.vercel
