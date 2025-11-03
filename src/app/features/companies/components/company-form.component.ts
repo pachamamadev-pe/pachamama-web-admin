@@ -1,13 +1,23 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
 import { Company, CreateCompanyDto, UpdateCompanyDto } from '../models/company.model';
 import { CompaniesService } from '../services/companies.service';
 import { rucValidator } from '../../../shared/utils/validators';
+import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload.component';
+import { CompanyDocument } from '../models/company-document.model';
 
 export interface CompanyFormData {
   mode: 'create' | 'edit';
@@ -23,6 +33,8 @@ export interface CompanyFormData {
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    MatDividerModule,
+    FileUploadComponent,
   ],
   template: `
     <div class="company-form-dialog">
@@ -130,6 +142,63 @@ export interface CompanyFormData {
           }
         </mat-form-field>
 
+        <!-- Document Uploads Section -->
+        <mat-divider class="my-6"></mat-divider>
+
+        <div class="space-y-4">
+          <h3 class="text-subtitle font-bold text-accent-titles">Documentos de Respaldo</h3>
+
+          <!-- RUC Document (Required) -->
+          <app-file-upload
+            [companyId]="companyId()"
+            documentType="ruc"
+            accept=".pdf"
+            [multiple]="false"
+            [maxSize]="10"
+            label="Documento RUC (obligatorio)"
+            [required]="data.mode === 'create'"
+            (fileUploaded)="onRucDocumentUploaded($event)"
+            (fileDeleted)="onRucDocumentDeleted($event)"
+            (uploadError)="onUploadError($event)"
+          />
+
+          @if (data.mode === 'create' && !hasRucDocument()) {
+            <p class="text-sm text-red-600 mt-1">
+              * Debes adjuntar el documento RUC antes de crear la empresa
+            </p>
+          }
+
+          <!-- Business Licenses (Optional, Multiple) -->
+          <app-file-upload
+            [companyId]="companyId()"
+            documentType="license"
+            accept=".pdf,.jpg,.jpeg,.png"
+            [multiple]="true"
+            [maxSize]="10"
+            label="Licencias y Permisos (opcional)"
+            [required]="false"
+            (fileUploaded)="onDocumentUploaded($event)"
+            (fileDeleted)="onDocumentDeleted($event)"
+            (uploadError)="onUploadError($event)"
+          />
+
+          <!-- Powers of Attorney (Optional, Multiple) -->
+          <app-file-upload
+            [companyId]="companyId()"
+            documentType="power_of_attorney"
+            accept=".pdf"
+            [multiple]="true"
+            [maxSize]="10"
+            label="Poderes y Autorizaciones (opcional)"
+            [required]="false"
+            (fileUploaded)="onDocumentUploaded($event)"
+            (fileDeleted)="onDocumentDeleted($event)"
+            (uploadError)="onUploadError($event)"
+          />
+        </div>
+
+        <mat-divider class="my-6"></mat-divider>
+
         <!-- Actions -->
         <div class="flex justify-end gap-3 pt-4">
           <button mat-stroked-button type="button" mat-dialog-close class="btn-secondary">
@@ -140,7 +209,9 @@ export interface CompanyFormData {
             mat-raised-button
             color="primary"
             type="submit"
-            [disabled]="form.invalid || submitting()"
+            [disabled]="
+              form.invalid || submitting() || (data.mode === 'create' && !hasRucDocument())
+            "
             class="btn-primary"
           >
             {{
@@ -159,13 +230,19 @@ export interface CompanyFormData {
     `
       .company-form-dialog {
         padding: 24px;
-        min-width: 500px;
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        box-sizing: border-box;
       }
 
-      @media (max-width: 640px) {
+      @media (max-width: 768px) {
         .company-form-dialog {
           padding: 16px;
-          min-width: auto;
+          max-width: 100%;
+          max-height: 100vh;
         }
       }
     `,
@@ -182,8 +259,22 @@ export class CompanyFormComponent implements OnInit {
   submitting = signal(false);
   form!: FormGroup;
 
+  // Document upload state
+  hasRucDocument = signal(false);
+  uploadedDocuments = signal<CompanyDocument[]>([]);
+
+  // Company ID for file uploads (temporary ID for new companies, actual ID for editing)
+  companyId = computed(() => {
+    return this.data.company?.id || `temp-${Date.now()}`;
+  });
+
   ngOnInit(): void {
     this.initForm();
+
+    // If editing, we assume RUC document exists
+    if (this.data.mode === 'edit') {
+      this.hasRucDocument.set(true);
+    }
   }
 
   private initForm(): void {
@@ -263,5 +354,42 @@ export class CompanyFormComponent implements OnInit {
         // Error handling will be done in the parent component
       },
     });
+  }
+
+  // Document upload event handlers
+  onRucDocumentUploaded(document: CompanyDocument): void {
+    this.hasRucDocument.set(true);
+    this.uploadedDocuments.update((docs) => [...docs, document]);
+    console.log('RUC document uploaded:', document);
+  }
+
+  onRucDocumentDeleted(documentId: string): void {
+    // Check if this was the last RUC document
+    const remainingRucDocs = this.uploadedDocuments().filter(
+      (doc) => doc.documentType === 'ruc' && doc.id !== documentId,
+    );
+
+    if (remainingRucDocs.length === 0) {
+      this.hasRucDocument.set(false);
+    }
+
+    this.uploadedDocuments.update((docs) => docs.filter((doc) => doc.id !== documentId));
+    console.log('RUC document deleted:', documentId);
+  }
+
+  onDocumentUploaded(document: CompanyDocument): void {
+    this.uploadedDocuments.update((docs) => [...docs, document]);
+    console.log('Document uploaded:', document);
+  }
+
+  onDocumentDeleted(documentId: string): void {
+    this.uploadedDocuments.update((docs) => docs.filter((doc) => doc.id !== documentId));
+    console.log('Document deleted:', documentId);
+  }
+
+  onUploadError(error: string): void {
+    console.error('Upload error:', error);
+    // TODO: Show error message to user (e.g., using MatSnackBar)
+    // For now, just log to console
   }
 }

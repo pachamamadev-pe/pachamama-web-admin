@@ -1,0 +1,128 @@
+<div class="file-upload-container">
+  <!-- Label del campo -->
+  <div class="upload-label" [class.required]="required()">
+    {{ label() }}
+    @if (required()) {
+      <span class="required-asterisk">*</span>
+    }
+  </div>
+
+  <!-- Zona de drop -->
+  <div
+    class="drop-zone"
+    role="button"
+    tabindex="0"
+    [class.drag-over]="isDragOver()"
+    [class.has-files]="hasFiles()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+    (click)="fileInput.click()"
+    (keydown.enter)="fileInput.click()"
+    (keydown.space)="fileInput.click(); $event.preventDefault()"
+  >
+    @if (!hasFiles() && !isUploading()) {
+      <!-- Estado idle: sin archivos -->
+      <div class="drop-zone-content">
+        <mat-icon class="upload-icon">cloud_upload</mat-icon>
+        <p class="drop-zone-text">{{ label() }}</p>
+        <p class="drop-zone-hint">Formatos: {{ accept() }} • Tamaño máximo: {{ maxSize() }} MB</p>
+      </div>
+    }
+
+    <!-- Input oculto para seleccionar archivos -->
+    <input
+      #fileInput
+      type="file"
+      [accept]="accept()"
+      [multiple]="multiple()"
+      (change)="onFileInputChange($event)"
+      style="display: none"
+    />
+  </div>
+
+  <!-- Archivos en proceso de subida -->
+  @if (uploadingFiles().length > 0) {
+    <div class="uploading-files">
+      @for (file of uploadingFiles(); track file.file.name) {
+        <mat-card class="file-card uploading">
+          <div class="file-info">
+            <mat-icon class="file-icon">description</mat-icon>
+            <div class="file-details">
+              <p class="file-name">{{ file.file.name }}</p>
+              <p class="file-size">{{ formatFileSize(file.file.size) }}</p>
+            </div>
+          </div>
+
+          <div class="file-progress">
+            <mat-progress-bar mode="determinate" [value]="file.progress"></mat-progress-bar>
+            <span class="progress-text">{{ file.progress }}%</span>
+          </div>
+
+          @if (file.status === 'success') {
+            <div class="file-status success">
+              <mat-icon>check_circle</mat-icon>
+              <span>Subido correctamente</span>
+            </div>
+          }
+
+          @if (file.status === 'error') {
+            <div class="file-status error">
+              <mat-icon>error</mat-icon>
+              <span>{{ file.errorMessage || 'Error al subir' }}</span>
+            </div>
+          }
+        </mat-card>
+      }
+    </div>
+  }
+
+  <!-- Archivos subidos exitosamente -->
+  @if (uploadedDocuments().length > 0) {
+    <div class="uploaded-files">
+      <h4 class="uploaded-title">Archivos subidos ({{ uploadedDocuments().length }})</h4>
+
+      @for (document of uploadedDocuments(); track document.id) {
+        <mat-card class="file-card uploaded">
+          <div class="file-info">
+            <mat-icon class="file-icon success">check_circle</mat-icon>
+            <div class="file-details">
+              <p class="file-name">{{ document.originalFileName }}</p>
+              <p class="file-meta">
+                {{ formatFileSize(document.fileSize) }} • Subido el
+                {{ document.uploadedAt | date: 'dd/MM/yyyy HH:mm' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="file-actions">
+            <button mat-icon-button (click)="onViewDocument(document)" title="Ver documento">
+              <mat-icon>visibility</mat-icon>
+            </button>
+
+            <button mat-icon-button (click)="onDownloadDocument(document)" title="Descargar">
+              <mat-icon>download</mat-icon>
+            </button>
+
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="onDeleteDocument(document.id)"
+              title="Eliminar"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
+
+  <!-- Botón para agregar más archivos (cuando ya hay archivos subidos) -->
+  @if (hasFiles() && multiple()) {
+    <button mat-stroked-button color="primary" class="add-more-button" (click)="fileInput.click()">
+      <mat-icon>add</mat-icon>
+      Agregar más archivos
+    </button>
+  }
+</div>

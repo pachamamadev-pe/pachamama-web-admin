@@ -39,7 +39,9 @@
     "@angular/material": "^20.2.10",
     "@angular/platform-browser": "^20.3.0",
     "@angular/router": "^20.3.0",
+    "@azure/storage-blob": "^12.29.1",
     "@ngrx/component-store": "^20.1.0",
+    "file-saver": "^2.0.5",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -50,6 +52,7 @@
     "@angular/compiler-cli": "^20.3.0",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
+    "@types/file-saver": "^2.0.7",
     "@types/jasmine": "~5.1.0",
     "angular-eslint": "20.4.0",
     "autoprefixer": "^10.4.21",

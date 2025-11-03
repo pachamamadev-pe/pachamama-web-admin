@@ -63,8 +63,8 @@ export interface NavItem {
       <!-- Footer (optional) -->
       <div class="shrink-0 border-t border-neutral-border p-3">
         <div class="text-xs text-neutral-subheading">
-          <p class="font-medium">Empresa Demo</p>
-          <p class="mt-0.5">Sprint 1 • v0.1.0</p>
+          <p class="font-medium">Pachamama</p>
+          <p class="mt-0.5">2025 • v0.1.0</p>
         </div>
       </div>
     </div>
