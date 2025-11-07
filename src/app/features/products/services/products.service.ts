@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Product, CreateProductDto, UpdateProductDto, ProductStatus } from '../models';
-import { SimplePaginatedResponse, PageRequest } from '../../../shared/models/pagination.model';
+import { SimplePaginatedResponse, PageRequest } from '@shared/models/pagination.model';
 import { environment } from '@environments/environment';
 /**
  * Servicio para gestionar productos

@@ -15,7 +15,7 @@ import {
   ProductFormDialogComponent,
   type ProductFormDialogData,
 } from '../components/product-form-dialog.component';
-import { NotificationService } from '../../../core/services/notification.service';
+import { NotificationService } from '@core/services/notification.service';
 
 /**
  * Página principal de gestión de productos
