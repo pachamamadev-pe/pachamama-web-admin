@@ -98,3 +98,28 @@
 .mat-icon {
   overflow: visible !important;
 }
+
+// Snackbar customization
+.snackbar-success {
+  --mdc-snackbar-container-color: #10b981 !important;
+  --mdc-snackbar-supporting-text-color: #ffffff !important;
+  --mat-snack-bar-button-color: #ffffff !important;
+}
+
+.snackbar-error {
+  --mdc-snackbar-container-color: #ef4444 !important;
+  --mdc-snackbar-supporting-text-color: #ffffff !important;
+  --mat-snack-bar-button-color: #ffffff !important;
+}
+
+.snackbar-warning {
+  --mdc-snackbar-container-color: #f59e0b !important;
+  --mdc-snackbar-supporting-text-color: #ffffff !important;
+  --mat-snack-bar-button-color: #ffffff !important;
+}
+
+.snackbar-info {
+  --mdc-snackbar-container-color: #3b82f6 !important;
+  --mdc-snackbar-supporting-text-color: #ffffff !important;
+  --mat-snack-bar-button-color: #ffffff !important;
+}
