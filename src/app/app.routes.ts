@@ -2,6 +2,14 @@
 import { ShellComponent } from './core/layout/shell.component';
 
 export const appRoutes: Routes = [
+  // Rutas públicas (sin layout)
+  {
+    path: 'login',
+    title: 'Iniciar sesión - Pachamama',
+    loadComponent: () => import('./features/auth/pages/login.page'),
+  },
+
+  // Rutas protegidas (con layout)
   {
     path: '',
     component: ShellComponent,
