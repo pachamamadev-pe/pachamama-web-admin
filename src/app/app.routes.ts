@@ -1,5 +1,6 @@
 ﻿import { Routes } from '@angular/router';
 import { ShellComponent } from './core/layout/shell.component';
+import { authGuard, loginGuard } from './core/auth/auth.guard';
 
 export const appRoutes: Routes = [
   // Rutas públicas (sin layout)
@@ -7,12 +8,14 @@ export const appRoutes: Routes = [
     path: 'login',
     title: 'Iniciar sesión - Pachamama',
     loadComponent: () => import('./features/auth/pages/login.page'),
+    canActivate: [loginGuard], // Redirige a /home si ya está autenticado
   },
 
   // Rutas protegidas (con layout)
   {
     path: '',
     component: ShellComponent,
+    canActivate: [authGuard], // Protege todas las rutas hijas
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'home' },
       {

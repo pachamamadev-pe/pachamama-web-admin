@@ -10,90 +10,115 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
 import { LayoutService } from './layout.service';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   standalone: true,
   selector: 'app-header',
+  imports: [
+    MatIconModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatBadgeModule,
+    MatMenuModule,
+    MatDividerModule,
+  ],
+  styleUrl: './header.component.scss',
   template: `
     <header
-      class="sticky top-0 z-10 flex h-14 items-center justify-between gap-2 border-b border-neutral-border bg-primary-white/95 px-3 backdrop-blur-sm sm:h-16 sm:gap-4 sm:px-4 md:px-6"
+      class="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-neutral-border bg-primary-white/95 px-4 backdrop-blur-sm md:px-6"
     >
       <!-- Left side: Menu button + Title -->
-      <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+      <div class="flex min-w-0 flex-1 items-center gap-3">
         <button
+          mat-icon-button
           (click)="layoutService.toggleSidebar()"
-          class="flex size-9 shrink-0 items-center justify-center rounded-lg text-accent-titles hover:bg-secondary-light lg:hidden"
+          class="menu-button"
           aria-label="Abrir menú de navegación"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="h-5 w-5"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-            />
-          </svg>
+          <mat-icon>menu</mat-icon>
         </button>
-        <h2 class="truncate font-bold text-accent-titles">{{ title() }}</h2>
+        <h2 class="truncate text-lg font-bold text-accent-titles md:text-xl">{{ title() }}</h2>
       </div>
 
       <!-- Right side: Search + Actions -->
-      <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+      <div class="flex shrink-0 items-center gap-3">
         <!-- Search (hidden on mobile) -->
-        <div class="hidden w-full max-w-[280px] lg:block">
-          <label class="relative block">
-            <span class="absolute inset-y-0 left-2.5 flex items-center text-neutral-subheading">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="h-4 w-4"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                />
-              </svg>
-            </span>
-            <input
-              type="search"
-              class="w-full rounded-lg border border-neutral-border bg-primary-white py-1.5 pl-8 pr-3 text-sm transition-colors focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
-              [placeholder]="placeholder()"
-              (input)="onSearch($event)"
-            />
-          </label>
-        </div>
+        <mat-form-field
+          appearance="outline"
+          class="hidden w-[280px] lg:block"
+          subscriptSizing="dynamic"
+        >
+          <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+          <input
+            matInput
+            type="search"
+            [placeholder]="placeholder()"
+            (input)="onSearch($event)"
+            class="text-sm"
+          />
+        </mat-form-field>
 
         <!-- Action buttons -->
-        <div class="flex items-center gap-1.5 sm:gap-2">
+        <div class="flex items-center gap-2">
+          <!-- Notifications Button -->
           <button
-            class="flex size-9 items-center justify-center rounded-lg border border-neutral-border bg-primary-white text-lg transition-colors hover:bg-secondary-light active:scale-95"
+            mat-icon-button
+            [matBadge]="notificationCount()"
+            matBadgeColor="warn"
+            [matBadgeHidden]="notificationCount() === 0"
+            matBadgeSize="small"
             aria-label="Notificaciones"
             (click)="action.emit('notifications')"
           >
-            <span class="text-base">🔔</span>
+            <mat-icon>notifications</mat-icon>
           </button>
+
+          <!-- User Profile Button with Menu -->
           <button
-            class="flex items-center gap-2 rounded-lg transition-colors hover:bg-secondary-light active:scale-95 sm:px-2 sm:py-1"
-            (click)="profile.emit()"
-            aria-label="Perfil de usuario"
+            mat-icon-button
+            [matMenuTriggerFor]="userMenu"
+            aria-label="Menú de usuario"
+            class="overflow-hidden"
           >
             <img
-              class="size-8 rounded-full ring-2 ring-neutral-border"
-              src="https://i.pravatar.cc/32"
+              class="h-full w-full rounded-full object-cover"
+              src="https://i.pravatar.cc/40"
               alt="Avatar"
             />
           </button>
+
+          <!-- User Menu -->
+          <mat-menu #userMenu="matMenu" xPosition="before">
+            <div class="px-4 py-3 border-b border-neutral-border">
+              <p class="text-sm font-semibold text-accent-titles">
+                {{ authService.currentUser()?.email || 'Usuario' }}
+              </p>
+              <p class="text-xs text-neutral-subheading mt-1">Pachamama Platform</p>
+            </div>
+            <button mat-menu-item (click)="onProfile()">
+              <mat-icon>person</mat-icon>
+              <span>Mi perfil</span>
+            </button>
+            <button mat-menu-item (click)="onSettings()">
+              <mat-icon>settings</mat-icon>
+              <span>Configuración</span>
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="onLogout()">
+              <mat-icon class="text-red-600">logout</mat-icon>
+              <span class="text-red-600">Cerrar sesión</span>
+            </button>
+          </mat-menu>
         </div>
       </div>
     </header>
@@ -103,6 +128,7 @@ import { LayoutService } from './layout.service';
 })
 export class HeaderComponent {
   readonly layoutService = inject(LayoutService);
+  readonly authService = inject(AuthService);
   readonly router = inject(Router);
   readonly destroyRef = inject(DestroyRef);
 
@@ -113,6 +139,7 @@ export class HeaderComponent {
   profile = output<void>();
 
   title = signal('Inicio');
+  notificationCount = signal(3); // TODO: Conectar con servicio de notificaciones real
 
   constructor() {
     // Suscribirse a los cambios de navegación
@@ -144,5 +171,26 @@ export class HeaderComponent {
   onSearch(evt: Event) {
     const term = (evt.target as HTMLInputElement)?.value ?? '';
     this.searchQuery.emit(term);
+  }
+
+  /**
+   * Navigate to user profile
+   */
+  onProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  /**
+   * Navigate to settings
+   */
+  onSettings(): void {
+    this.router.navigate(['/settings']);
+  }
+
+  /**
+   * Logout user and redirect to login page
+   */
+  async onLogout(): Promise<void> {
+    await this.authService.logout();
   }
 }

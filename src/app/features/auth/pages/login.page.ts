@@ -8,9 +8,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { AuthService } from '../../../core/auth/auth.service';
 
 /**
  * Página de Login - Pachamama Platform
+ * Autenticación con Firebase Auth
  */
 @Component({
   selector: 'app-login-page',
@@ -31,6 +33,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 export default class LoginPage {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   // Estado
   isLoading = signal(false);
@@ -45,7 +48,7 @@ export default class LoginPage {
   });
 
   /**
-   * Intenta iniciar sesión
+   * Intenta iniciar sesión con Firebase Auth
    */
   async onLogin(): Promise<void> {
     if (this.loginForm.invalid) {
@@ -56,29 +59,20 @@ export default class LoginPage {
     this.isLoading.set(true);
     this.loginError.set(null);
 
-    try {
-      // TODO: Implementar autenticación real con Azure AD B2C
-      const { email, password } = this.loginForm.getRawValue();
+    const { email, password } = this.loginForm.getRawValue();
 
-      // Simulación temporal
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Mock: Validar credenciales
-      if (email === 'admin@pachamama.pe' && password === 'Pachamama2025') {
-        // Guardar token (mock)
-        localStorage.setItem('auth_token', 'mock_token_' + Date.now());
-
-        // Redirigir al dashboard
-        this.router.navigate(['/projects']);
-      } else {
-        this.loginError.set('Credenciales inválidas. Por favor, intenta nuevamente.');
-      }
-    } catch (error) {
-      this.loginError.set('Error al iniciar sesión. Verifica tu conexión e intenta nuevamente.');
-      console.error('Login error:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+    this.authService.login({ email, password }).subscribe({
+      next: () => {
+        // Login exitoso, redirigir a home
+        this.isLoading.set(false);
+        this.router.navigate(['/home']);
+      },
+      error: (error: Error) => {
+        // Mostrar error de autenticación
+        this.loginError.set(error.message);
+        this.isLoading.set(false);
+      },
+    });
   }
 
   /**

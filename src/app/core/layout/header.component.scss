@@ -1,0 +1,119 @@
+// Header Component Styles
+@use '@angular/material' as mat;
+
+:host {
+  display: block;
+}
+
+// Estilos para el search field compacto
+::ng-deep {
+  mat-form-field.mat-mdc-form-field {
+    // Reducir altura del campo
+    .mat-mdc-text-field-wrapper {
+      padding-bottom: 0;
+    }
+
+    // Ajustar tamaño del input
+    .mat-mdc-form-field-infix {
+      padding-top: 8px;
+      padding-bottom: 8px;
+      min-height: 40px;
+    }
+
+    // Ajustar label si se usa
+    .mat-mdc-floating-label {
+      top: 20px;
+    }
+
+    // Hacer el borde más delgado y suave
+    .mdc-notched-outline {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #e5e5e5;
+        border-width: 1px;
+      }
+    }
+
+    // Color verde al hacer focus
+    &.mat-focused {
+      .mdc-notched-outline {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: #218358;
+          border-width: 2px;
+        }
+      }
+    }
+
+    // Hover suave
+    &:hover:not(.mat-focused) {
+      .mdc-notched-outline {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: rgba(33, 131, 88, 0.3);
+        }
+      }
+    }
+
+    // Ajustar icono prefix
+    .mat-mdc-form-field-icon-prefix {
+      padding-left: 12px;
+      padding-right: 8px;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #737373;
+      }
+    }
+
+    // Ocultar subscript (hint/error space)
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+}
+
+// Ocultar botón de menú en desktop (lg: 1024px+)
+.menu-button {
+  @media (min-width: 1024px) {
+    display: none !important;
+  }
+}
+
+// Botón de notificaciones con badge
+button[mat-icon-button] {
+  &:has([matBadge]) {
+    position: relative;
+  }
+}
+
+// Avatar en botón circular
+button[mat-icon-button] {
+  img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  // Centrar perfectamente el avatar
+  &:has(img) {
+    padding: 0;
+
+    img {
+      display: block;
+    }
+  }
+}
+
+// Responsive: ajustar tamaños en móvil
+@media (max-width: 640px) {
+  h2 {
+    font-size: 1rem;
+  }
+}

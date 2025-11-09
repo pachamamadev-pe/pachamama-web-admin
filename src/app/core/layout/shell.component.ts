@@ -9,10 +9,10 @@ import { LayoutService } from './layout.service';
   selector: 'app-shell',
   imports: [RouterOutlet, SidebarComponent, HeaderComponent],
   template: `
-    <div class="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[260px_1fr]">
+    <div class="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[280px_1fr]">
       <!-- Sidebar -->
       <aside
-        class="fixed inset-y-0 left-0 z-20 w-64 -translate-x-full transform shadow-xl transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:shadow-none"
+        class="fixed inset-y-0 left-0 z-20 w-72 -translate-x-full transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0"
         [class.translate-x-0]="layoutService.isSidebarVisible()"
       >
         <app-sidebar />
@@ -22,15 +22,16 @@ import { LayoutService } from './layout.service';
       @if (layoutService.isSidebarVisible()) {
         <div
           (click)="layoutService.hideSidebar()"
-          class="fixed inset-0 z-10 bg-primary-black/60 backdrop-blur-sm lg:hidden"
+          class="fixed inset-0 z-10 bg-primary-black/50 backdrop-blur-sm transition-opacity lg:hidden"
           role="button"
           tabindex="0"
+          (keydown.escape)="layoutService.hideSidebar()"
           aria-label="Cerrar menú"
         ></div>
       }
 
       <!-- Main content -->
-      <main class="flex min-h-screen flex-col bg-primary-white">
+      <main class="flex min-h-screen flex-col bg-gray-50">
         <app-header />
         <section class="flex-1 p-4 sm:p-6 lg:p-8">
           <router-outlet />

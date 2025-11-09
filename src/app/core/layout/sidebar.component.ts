@@ -1,10 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatRippleModule } from '@angular/material/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { LayoutService } from './layout.service';
 
 export interface NavItem {
   label: string;
-  icon?: string; // reserved for future icon component
+  icon: string; // Material icon name
   to?: string;
   badge?: string;
 }
@@ -12,59 +16,67 @@ export interface NavItem {
 @Component({
   standalone: true,
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    MatIconModule,
+    MatButtonModule,
+    MatRippleModule,
+    MatTooltipModule,
+  ],
+  styleUrl: './sidebar.component.scss',
   template: `
-    <div class="flex h-full flex-col bg-nav-bg">
-      <!-- Header with logo and close button (mobile) -->
-      <div
-        class="flex h-14 shrink-0 items-center justify-between border-b border-neutral-border px-4 sm:h-16"
-      >
-        <div class="flex min-w-0 flex-1 items-center">
-          <img src="/images/logo/logo.svg" alt="Pachamama" class="h-6 w-auto sm:h-7" />
+    <div class="sidebar-container">
+      <!-- Header -->
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <img src="/images/logo/logo.svg" alt="Pachamama" />
         </div>
+        <!-- Close button (mobile only) -->
         <button
+          mat-icon-button
           (click)="layoutService.hideSidebar()"
-          class="ml-2 flex size-8 shrink-0 items-center justify-center rounded-lg text-neutral-subheading hover:bg-primary-black/5 lg:hidden"
+          class="close-button"
           aria-label="Cerrar menú"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="h-5 w-5"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-          </svg>
+          <mat-icon>close</mat-icon>
         </button>
       </div>
 
       <!-- Navigation -->
-      <nav class="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-        @for (i of items(); track i.label) {
-          <a
-            [routerLink]="i.to"
-            routerLinkActive="nav-link-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            class="nav-link"
-            [attr.aria-label]="i.label"
-            (click)="onNavItemClick()"
-          >
-            <span class="w-6 text-center text-lg">{{ i.icon }}</span>
-            <span class="truncate">{{ i.label }}</span>
-            @if (i.badge) {
-              <span class="badge ml-auto">{{ i.badge }}</span>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-items">
+            @for (item of items(); track item.label) {
+              <a
+                [routerLink]="item.to"
+                routerLinkActive="nav-link-active"
+                [routerLinkActiveOptions]="{ exact: item.to === '/home' }"
+                class="nav-link"
+                matRipple
+                [matRippleColor]="'rgba(33, 131, 88, 0.1)'"
+                [attr.aria-label]="item.label"
+                (click)="onNavItemClick()"
+              >
+                <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+                <span class="nav-label">{{ item.label }}</span>
+                @if (item.badge) {
+                  <span class="nav-badge">{{ item.badge }}</span>
+                }
+              </a>
             }
-          </a>
-        }
+          </div>
+        </div>
       </nav>
 
-      <!-- Footer (optional) -->
-      <div class="shrink-0 border-t border-neutral-border p-3">
-        <div class="text-xs text-neutral-subheading">
-          <p class="font-medium">Pachamama</p>
-          <p class="mt-0.5">2025 • v0.1.0</p>
+      <!-- Footer -->
+      <div class="sidebar-footer">
+        <div class="footer-content">
+          <div class="footer-avatar">P</div>
+          <div class="footer-info">
+            <div class="footer-name">Pachamama</div>
+            <div class="footer-version">v0.1.0 • 2025</div>
+          </div>
         </div>
       </div>
     </div>
@@ -78,12 +90,12 @@ export class SidebarComponent {
   readonly layoutService = inject(LayoutService);
 
   items = input<NavItem[]>([
-    { label: 'Inicio', to: '/home', icon: '🏠' },
-    { label: 'Mis productos', to: '/products', icon: '🌱' },
-    { label: 'Empresas', to: '/companies', icon: '🏢' },
-    { label: 'Reportes', to: '/projects', icon: '📊' },
-    { label: 'Mapa recolección aprobada', to: '/communities', icon: '🗺️' },
-    { label: 'Configuración', to: '/brigades', icon: '⚙️' },
+    { label: 'Inicio', to: '/home', icon: 'home' },
+    { label: 'Mis productos', to: '/products', icon: 'eco' },
+    { label: 'Empresas', to: '/companies', icon: 'business' },
+    { label: 'Reportes', to: '/projects', icon: 'assessment' },
+    { label: 'Mapa recolección', to: '/communities', icon: 'map' },
+    { label: 'Configuración', to: '/brigades', icon: 'settings' },
   ]);
 
   onNavItemClick(): void {

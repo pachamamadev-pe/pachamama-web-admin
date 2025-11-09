@@ -1,201 +1,207 @@
 <!-- Login Container - Full Height con Split Design -->
 <div class="login-container">
-  <!-- Panel Izquierdo: Formulario -->
-  <div class="login-panel">
-    <div class="login-content">
-      <!-- Logo y Branding -->
-      <div class="login-header">
-        <div class="logo-container">
-          <img src="/images/logo/logo.svg" alt="Pachamama" class="logo" />
+  <!-- Floating Card Wrapper -->
+  <div class="login-card">
+    <!-- Panel Izquierdo: Formulario -->
+    <div class="login-panel">
+      <div class="login-content">
+        <!-- Logo y Branding -->
+        <div class="login-header">
+          <div class="logo-container">
+            <img src="/images/logo/logo.svg" alt="Pachamama" class="logo" />
+          </div>
+          <h1 class="welcome-title">Bienvenido de vuelta</h1>
+          <p class="welcome-subtitle">
+            Plataforma de trazabilidad sostenible para la Amazonía peruana
+          </p>
         </div>
-        <h1 class="welcome-title">Bienvenido de vuelta</h1>
-        <p class="welcome-subtitle">
-          Plataforma de trazabilidad sostenible para la Amazonía peruana
-        </p>
-      </div>
 
-      <!-- Formulario de Login -->
-      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
-        <!-- Email Field -->
-        <mat-form-field appearance="outline" class="form-field">
-          <mat-label>Correo electrónico</mat-label>
-          <input
-            matInput
-            type="email"
-            formControlName="email"
-            placeholder="tu@empresa.com"
-            autocomplete="email"
-            [disabled]="isLoading()"
-          />
-          <mat-icon matPrefix class="field-icon">email</mat-icon>
-          @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
-            <mat-error>
-              @if (loginForm.controls.email.hasError('required')) {
-                El correo es obligatorio
-              }
-              @if (loginForm.controls.email.hasError('email')) {
-                Ingresa un correo válido
-              }
-            </mat-error>
+        <!-- Formulario de Login -->
+        <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
+          <!-- Email Field -->
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Correo electrónico</mat-label>
+            <input
+              matInput
+              type="email"
+              formControlName="email"
+              placeholder="tu@empresa.com"
+              autocomplete="email"
+              [disabled]="isLoading()"
+            />
+            <mat-icon matPrefix class="field-icon">email</mat-icon>
+            @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
+              <mat-error>
+                @if (loginForm.controls.email.hasError('required')) {
+                  El correo es obligatorio
+                }
+                @if (loginForm.controls.email.hasError('email')) {
+                  Ingresa un correo válido
+                }
+              </mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Password Field -->
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Contraseña</mat-label>
+            <input
+              matInput
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              [disabled]="isLoading()"
+            />
+            <mat-icon matPrefix class="field-icon">lock</mat-icon>
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="'Mostrar contraseña'"
+              [disabled]="isLoading()"
+            >
+              <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
+              <mat-error>
+                @if (loginForm.controls.password.hasError('required')) {
+                  La contraseña es obligatoria
+                }
+                @if (loginForm.controls.password.hasError('minlength')) {
+                  Mínimo 8 caracteres
+                }
+              </mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Remember Me & Forgot Password -->
+          <div class="form-options">
+            <mat-checkbox formControlName="rememberMe" color="primary" [disabled]="isLoading()">
+              Recordarme
+            </mat-checkbox>
+            <button
+              type="button"
+              class="link-button"
+              (click)="goToForgotPassword()"
+              [disabled]="isLoading()"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+
+          <!-- Error Message -->
+          @if (loginError()) {
+            <div class="error-message" role="alert">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ loginError() }}</span>
+            </div>
           }
-        </mat-form-field>
 
-        <!-- Password Field -->
-        <mat-form-field appearance="outline" class="form-field">
-          <mat-label>Contraseña</mat-label>
-          <input
-            matInput
-            [type]="showPassword() ? 'text' : 'password'"
-            formControlName="password"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            [disabled]="isLoading()"
-          />
-          <mat-icon matPrefix class="field-icon">lock</mat-icon>
+          <!-- Login Button -->
           <button
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="togglePasswordVisibility()"
-            [attr.aria-label]="'Mostrar contraseña'"
+            mat-raised-button
+            color="primary"
+            type="submit"
+            class="login-button"
             [disabled]="isLoading()"
           >
-            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            @if (isLoading()) {
+              <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+              <span>Iniciando sesión...</span>
+            } @else {
+              <ng-container>
+                <span>Iniciar sesión</span>
+                <mat-icon>arrow_forward</mat-icon>
+              </ng-container>
+            }
           </button>
-          @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
-            <mat-error>
-              @if (loginForm.controls.password.hasError('required')) {
-                La contraseña es obligatoria
-              }
-              @if (loginForm.controls.password.hasError('minlength')) {
-                Mínimo 8 caracteres
-              }
-            </mat-error>
-          }
-        </mat-form-field>
 
-        <!-- Remember Me & Forgot Password -->
-        <div class="form-options">
-          <mat-checkbox formControlName="rememberMe" color="primary" [disabled]="isLoading()">
-            Recordarme
-          </mat-checkbox>
-          <button
-            type="button"
-            class="link-button"
-            (click)="goToForgotPassword()"
-            [disabled]="isLoading()"
-          >
-            ¿Olvidaste tu contraseña?
-          </button>
+          <!-- Sign Up Link -->
+          <div class="signup-link">
+            <span class="text-muted">¿Aún no tienes cuenta?</span>
+            <button
+              type="button"
+              class="link-button primary"
+              (click)="goToSignUp()"
+              [disabled]="isLoading()"
+            >
+              Regístrate aquí
+            </button>
+          </div>
+        </form>
+
+        <!-- Footer -->
+        <div class="login-footer">
+          <p class="footer-text">
+            Al iniciar sesión, aceptas nuestros
+            <a href="/terms" class="footer-link">Términos de Servicio</a>
+            y
+            <a href="/privacy" class="footer-link">Política de Privacidad</a>
+          </p>
         </div>
-
-        <!-- Error Message -->
-        @if (loginError()) {
-          <div class="error-message" role="alert">
-            <mat-icon>error_outline</mat-icon>
-            <span>{{ loginError() }}</span>
-          </div>
-        }
-
-        <!-- Login Button -->
-        <button
-          mat-raised-button
-          color="primary"
-          type="submit"
-          class="login-button"
-          [disabled]="isLoading()"
-        >
-          @if (isLoading()) {
-            <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
-            <span>Iniciando sesión...</span>
-          } @else {
-            <span>Iniciar sesión</span>
-            <mat-icon>arrow_forward</mat-icon>
-          }
-        </button>
-
-        <!-- Sign Up Link -->
-        <div class="signup-link">
-          <span class="text-muted">¿Aún no tienes cuenta?</span>
-          <button
-            type="button"
-            class="link-button primary"
-            (click)="goToSignUp()"
-            [disabled]="isLoading()"
-          >
-            Regístrate aquí
-          </button>
-        </div>
-      </form>
-
-      <!-- Footer -->
-      <div class="login-footer">
-        <p class="footer-text">
-          Al iniciar sesión, aceptas nuestros
-          <a href="/terms" class="footer-link">Términos de Servicio</a>
-          y
-          <a href="/privacy" class="footer-link">Política de Privacidad</a>
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Panel Derecho: Visual de Naturaleza -->
-  <div class="nature-panel">
-    <!-- Overlay con gradiente sutil -->
-    <div class="nature-overlay"></div>
-
-    <!-- Contenido sobre la imagen -->
-    <div class="nature-content">
-      <!-- Logo alternativo (blanco) -->
-      <div class="nature-logo">
-        <img src="/images/logo/Pachamama_blanco.svg" alt="Pachamama" />
-      </div>
-
-      <!-- Mensaje inspirador -->
-      <div class="nature-message">
-        <h2 class="nature-title">Conectando la Amazonía con el mundo</h2>
-        <p class="nature-subtitle">
-          Tecnología al servicio de la recolección sostenible y trazabilidad transparente
-        </p>
-
-        <!-- Stats animados -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <mat-icon>forest</mat-icon>
-            </div>
-            <div class="stat-value">2,500+</div>
-            <div class="stat-label">Árboles trazados</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon">
-              <mat-icon>groups</mat-icon>
-            </div>
-            <div class="stat-value">150+</div>
-            <div class="stat-label">Recolectores activos</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon">
-              <mat-icon>verified</mat-icon>
-            </div>
-            <div class="stat-value">100%</div>
-            <div class="stat-label">Trazabilidad</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Decoración orgánica -->
-      <div class="organic-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
       </div>
     </div>
 
-    <!-- Imagen de fondo: Hojas tropicales -->
-    <div class="nature-background"></div>
+    <!-- Panel Derecho: Visual de Naturaleza -->
+    <div class="nature-panel">
+      <!-- Overlay con gradiente sutil -->
+      <div class="nature-overlay"></div>
+
+      <!-- Contenido sobre la imagen -->
+      <div class="nature-content">
+        <!-- Logo alternativo (blanco) -->
+        <div class="nature-logo">
+          <img src="/images/logo/Pachamama_blanco.svg" alt="Pachamama" />
+        </div>
+
+        <!-- Mensaje inspirador -->
+        <div class="nature-message">
+          <h2 class="nature-title">Conectando la Amazonía con el mundo</h2>
+          <p class="nature-subtitle">
+            Tecnología al servicio de la recolección sostenible y trazabilidad transparente
+          </p>
+
+          <!-- Stats animados -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <mat-icon>forest</mat-icon>
+              </div>
+              <div class="stat-value">2,500+</div>
+              <div class="stat-label">Árboles trazados</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">
+                <mat-icon>groups</mat-icon>
+              </div>
+              <div class="stat-value">150+</div>
+              <div class="stat-label">Recolectores activos</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">
+                <mat-icon>verified</mat-icon>
+              </div>
+              <div class="stat-value">100%</div>
+              <div class="stat-label">Trazabilidad</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Decoración orgánica -->
+        <div class="organic-shapes">
+          <div class="shape shape-1"></div>
+          <div class="shape shape-2"></div>
+          <div class="shape shape-3"></div>
+        </div>
+      </div>
+
+      <!-- Imagen de fondo: Hojas tropicales -->
+      <div class="nature-background"></div>
+    </div>
+    <!-- End Floating Card -->
   </div>
 </div>

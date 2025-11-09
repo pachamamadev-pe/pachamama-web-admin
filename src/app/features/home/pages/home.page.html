@@ -1,0 +1,190 @@
+<!-- Home Page - Pachamama Admin Dashboard -->
+<div class="home-container">
+  <!-- Hero Section with Welcome Message -->
+  <section class="hero-section">
+    <mat-card class="hero-card">
+      <mat-card-content class="hero-content">
+        <div class="hero-text">
+          <h1 class="hero-title">Novedades</h1>
+          <p class="hero-subtitle">Construyendo un futuro sostenible</p>
+        </div>
+        <div class="hero-image">
+          <img
+            src="/images/illustrations/amazon-forest.jpg"
+            alt="Amazonía peruana"
+            class="rounded-xl object-cover"
+          />
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </section>
+
+  <!-- Impact Metric Tabs -->
+  <div class="metric-tabs">
+    @for (metric of impactMetrics(); track metric.label) {
+      <button mat-button [class.active]="metric.active" class="metric-tab">
+        <mat-icon>{{ metric.icon }}</mat-icon>
+        <span>{{ metric.label }}</span>
+      </button>
+    }
+
+    <!-- Download Button -->
+    <button mat-button class="download-button ml-auto">
+      <mat-icon>download</mat-icon>
+      <span>Descargar</span>
+    </button>
+  </div>
+
+  <!-- Stats Cards Grid -->
+  <div class="stats-grid">
+    @for (stat of stats(); track stat.title) {
+      <mat-card class="stat-card" [class]="'stat-card-' + stat.color">
+        <mat-card-content>
+          <div class="stat-header">
+            <span class="stat-title">{{ stat.title }}</span>
+            <mat-icon class="stat-icon">{{ stat.icon }}</mat-icon>
+          </div>
+
+          <div class="stat-value">{{ stat.value }}</div>
+
+          <div class="stat-change" [class.positive]="stat.trend === 'up'">
+            <mat-icon class="change-icon">
+              {{ stat.trend === 'up' ? 'trending_up' : 'trending_down' }}
+            </mat-icon>
+            <span>{{ stat.change }} con respecto al mes pasado</span>
+          </div>
+
+          <!-- Sparkline Chart (Professional mini chart) -->
+          <div class="mini-chart">
+            <app-sparkline-chart
+              [values]="stat.sparklineData"
+              [color]="stat.color === 'accent' ? '#fe714b' : '#218358'"
+            />
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+
+  <!-- Charts Section -->
+  <div class="charts-grid">
+    <!-- Evolution Chart -->
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title>{{ evolutionTitle }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <!-- Chart.js Line Chart -->
+        <app-line-chart
+          [data]="evolutionChartData()"
+          [height]="280"
+          [showGrid]="true"
+          color="#218358"
+        />
+        <p class="chart-note">
+          <mat-icon class="text-sm">info</mat-icon>
+          Gráfico generado con Chart.js - TODO: Conectar con API real
+        </p>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Species Chart -->
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title>{{ speciesTitle }}</mat-card-title>
+        <mat-card-subtitle>{{ speciesSubtitle }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <!-- Chart.js Bar Chart -->
+        <app-bar-chart
+          [data]="speciesChartData()"
+          [height]="280"
+          [horizontal]="false"
+          [showGrid]="true"
+        />
+        <p class="chart-note">
+          <mat-icon class="text-sm">info</mat-icon>
+          Datos de biodiversidad - TODO: Conectar con API real
+        </p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Distribution Map & Activity Section -->
+  <div class="bottom-grid">
+    <!-- Project Distribution Map -->
+    <mat-card class="map-card">
+      <mat-card-header>
+        <mat-card-title>Distribución de proyectos</mat-card-title>
+        <mat-card-subtitle>Todos los productos</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="map-placeholder">
+          <img src="/images/maps/peru-regions.svg" alt="Mapa de Perú" class="peru-map" />
+          <div class="map-legend">
+            <div class="legend-item">
+              <div class="legend-color high"></div>
+              <span>Alta actividad</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color medium"></div>
+              <span>Media actividad</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color low"></div>
+              <span>Baja actividad</span>
+            </div>
+          </div>
+        </div>
+        <p class="chart-note">
+          <mat-icon class="text-sm">info</mat-icon>
+          Mapa interactivo - Integración con API geográfica pendiente
+        </p>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Activity Feed -->
+    <mat-card class="activity-card">
+      <mat-card-header>
+        <mat-card-title>Actividad reciente</mat-card-title>
+        <button mat-icon-button>
+          <mat-icon>more_vert</mat-icon>
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="activity-list">
+          @for (activity of recentActivities(); track activity.title) {
+            <div class="activity-item">
+              <div class="activity-icon" [class]="'activity-icon-' + activity.color">
+                <mat-icon>{{ activity.icon }}</mat-icon>
+              </div>
+              <div class="activity-content">
+                <h4 class="activity-title">{{ activity.title }}</h4>
+                <p class="activity-description">{{ activity.description }}</p>
+                <span class="activity-time">{{ activity.time }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- View All Button -->
+        <button mat-button color="primary" class="view-all-button">
+          Ver todas las actividades
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Permissions Card -->
+    <mat-card class="permissions-card">
+      <mat-card-content>
+        <div class="permissions-content">
+          <mat-icon class="permissions-icon">verified</mat-icon>
+          <div class="permissions-value">100%</div>
+          <div class="permissions-label">% de permisos al día</div>
+          <mat-progress-bar mode="determinate" value="100" color="primary"></mat-progress-bar>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
