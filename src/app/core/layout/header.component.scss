@@ -5,9 +5,11 @@
   display: block;
 }
 
-// Estilos para el search field compacto
-::ng-deep {
-  mat-form-field.mat-mdc-form-field {
+// Estilos para el search field compacto (SOLO dentro del header)
+// :host ::ng-deep asegura que estos estilos NO se escapen fuera del componente
+:host ::ng-deep {
+  // IMPORTANTE: Solo aplicar a .header-search-field para no afectar otros form-fields
+  mat-form-field.header-search-field.mat-mdc-form-field {
     // Reducir altura del campo
     .mat-mdc-text-field-wrapper {
       padding-bottom: 0;

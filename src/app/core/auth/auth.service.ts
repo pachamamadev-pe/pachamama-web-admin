@@ -9,7 +9,7 @@ import {
   UserCredential,
   authState,
 } from '@angular/fire/auth';
-import { Observable, from, map, catchError } from 'rxjs';
+import { Observable, from, map, catchError, switchMap } from 'rxjs';
 import { User, LoginCredentials, AUTH_ERROR_MESSAGES } from './auth.models';
 
 /**
@@ -57,8 +57,11 @@ export class AuthService {
     return from(
       signInWithEmailAndPassword(this.auth, credentials.email, credentials.password),
     ).pipe(
-      map((userCredential) => {
+      switchMap(async (userCredential: UserCredential) => {
         this.currentUserSignal.set(this.mapFirebaseUser(userCredential.user));
+        // Guardar token inmediatamente después del login
+        const token = await userCredential.user.getIdToken();
+        localStorage.setItem('pachamama_auth_token', token);
         this.loadingSignal.set(false);
         return userCredential;
       }),
@@ -79,6 +82,8 @@ export class AuthService {
     try {
       await signOut(this.auth);
       this.currentUserSignal.set(null);
+      // Limpiar token del localStorage
+      localStorage.removeItem('pachamama_auth_token');
       this.router.navigate(['/login']);
     } catch (error) {
       console.error('Error during logout:', error);
@@ -109,7 +114,10 @@ export class AuthService {
     try {
       const currentUser = this.auth.currentUser;
       if (currentUser) {
-        return await currentUser.getIdToken();
+        const token = await currentUser.getIdToken();
+        // Guardar token en localStorage para testing con Postman
+        localStorage.setItem('pachamama_auth_token', token);
+        return token;
       }
       return null;
     } catch (error) {

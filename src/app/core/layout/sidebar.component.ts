@@ -93,8 +93,8 @@ export class SidebarComponent {
     { label: 'Inicio', to: '/home', icon: 'home' },
     { label: 'Mis productos', to: '/products', icon: 'eco' },
     { label: 'Empresas', to: '/companies', icon: 'business' },
-    { label: 'Reportes', to: '/projects', icon: 'assessment' },
-    { label: 'Mapa recolección', to: '/communities', icon: 'map' },
+    { label: 'Proyectos', to: '/projects', icon: 'assessment' },
+    { label: 'Comunidades', to: '/communities', icon: 'map' },
     { label: 'Configuración', to: '/brigades', icon: 'settings' },
   ]);
 

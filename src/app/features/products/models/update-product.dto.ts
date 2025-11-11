@@ -1,4 +1,4 @@
-import { ProductStatus } from './product.model';
+import { ProductStatus, ProductUnit } from './product.model';
 
 /**
  * DTO para actualizar un producto existente
@@ -8,7 +8,9 @@ import { ProductStatus } from './product.model';
  * {
  *   "name": "string",
  *   "description": "string",
- *   "status": "ACTIVE" | "INACTIVE"
+ *   "status": "ACTIVE" | "INACTIVE",
+ *   "unit": "kg" | "ton" | "units" | "liters" | "bunches",
+ *   "icon": "string"
  * }
  */
 export interface UpdateProductDto {
@@ -23,6 +25,21 @@ export interface UpdateProductDto {
    * Opcional, longitud máxima 500 caracteres
    */
   description?: string;
+
+  /**
+   * Unidad de medida del producto
+   * Opcional
+   */
+  unit?: ProductUnit;
+
+  /**
+   * Path relativo del icono en Azure Storage
+   * Opcional
+   * - string: actualizar con nueva ruta
+   * - null: eliminar imagen del producto
+   * - undefined: no modificar
+   */
+  icon?: string | null;
 
   /**
    * Estado del producto
@@ -41,6 +58,13 @@ export const UPDATE_PRODUCT_VALIDATIONS = {
     maxLength: 200,
   },
   description: {
+    required: false,
+    maxLength: 500,
+  },
+  unit: {
+    required: false,
+  },
+  icon: {
     required: false,
     maxLength: 500,
   },

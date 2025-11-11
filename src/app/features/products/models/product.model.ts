@@ -7,6 +7,17 @@ export enum ProductStatus {
 }
 
 /**
+ * Enum para unidades de medida del producto
+ */
+export enum ProductUnit {
+  KG = 'kg',
+  TON = 'ton',
+  UNITS = 'units',
+  LITERS = 'liters',
+  BUNCHES = 'bunches',
+}
+
+/**
  * Interfaz principal del producto
  */
 export interface Product {
@@ -16,16 +27,54 @@ export interface Product {
   id: string;
 
   /**
+   * Código único del producto
+   * Opcional, generado por el backend
+   */
+  code?: string;
+
+  /**
    * Nombre del producto
    * Requerido, longitud mínima 3 caracteres
    */
   name: string;
 
   /**
+   * Nombre científico del producto
+   * Opcional
+   */
+  scientificName?: string;
+
+  /**
    * Descripción detallada del producto
    * Opcional
    */
-  description: string;
+  description?: string;
+
+  /**
+   * Path relativo del icono/imagen en Azure Storage
+   * Ejemplo: "products/1731234567-abc123.png"
+   * Opcional
+   */
+  icon?: string;
+
+  /**
+   * Color del producto en formato hex
+   * Ejemplo: "#218358"
+   * Opcional
+   */
+  color?: string;
+
+  /**
+   * Unidad de medida del producto
+   * Por defecto: kg
+   */
+  unit: ProductUnit;
+
+  /**
+   * Metadata adicional en formato JSON
+   * Opcional
+   */
+  metadata?: string;
 
   /**
    * Estado del producto (ACTIVE | INACTIVE)

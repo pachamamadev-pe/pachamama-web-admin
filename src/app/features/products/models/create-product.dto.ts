@@ -1,10 +1,14 @@
+import { ProductUnit } from './product.model';
+
 /**
  * DTO para crear un nuevo producto
  *
  * Body requerido:
  * {
  *   "name": "string",        // Requerido
- *   "description": "string"  // Opcional
+ *   "description": "string", // Opcional
+ *   "unit": "kg",            // Opcional (default: kg)
+ *   "icon": "string"         // Opcional (path relativo)
  * }
  */
 export interface CreateProductDto {
@@ -23,6 +27,22 @@ export interface CreateProductDto {
    * Ejemplo: "Granos seleccionados de altura"
    */
   description?: string;
+
+  /**
+   * Unidad de medida del producto
+   * Opcional, por defecto: kg
+   *
+   * Ejemplo: "kg", "ton", "units", "liters", "bunches"
+   */
+  unit?: ProductUnit;
+
+  /**
+   * Path relativo del icono en Azure Storage
+   * Opcional
+   *
+   * Ejemplo: "products/1731234567-abc123.png"
+   */
+  icon?: string;
 }
 
 /**
@@ -35,6 +55,14 @@ export const CREATE_PRODUCT_VALIDATIONS = {
     maxLength: 200,
   },
   description: {
+    required: false,
+    maxLength: 500,
+  },
+  unit: {
+    required: false,
+    default: ProductUnit.KG,
+  },
+  icon: {
     required: false,
     maxLength: 500,
   },

@@ -7,13 +7,20 @@ import { getAuth, provideAuth } from '@angular/fire/auth';
 import { appRoutes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { httpErrorInterceptor } from './core/http/http-error.interceptor';
+import { loadingInterceptor } from './core/http/loading.interceptor';
 import { environment } from '../environments/environment';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(appRoutes, withPreloading(PreloadAllModules)),
-    provideHttpClient(withInterceptors([authInterceptor, httpErrorInterceptor])),
+    provideHttpClient(
+      withInterceptors([
+        authInterceptor,
+        loadingInterceptor, // Loading interceptor ANTES de error interceptor
+        httpErrorInterceptor,
+      ]),
+    ),
     provideAnimations(),
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),

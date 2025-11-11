@@ -1,0 +1,407 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="text-title font-bold text-accent-titles">Productos</h1>
+        <p class="text-subtitle text-neutral-subheading">Gestiona los productos de recolección</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          <span class="hidden sm:inline">Añadir producto</span>
+          <span class="sm:hidden">Añadir</span>
+        </button>
+
+        <!-- View toggle (desktop only) -->
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="viewMenu"
+          class="hidden md:flex"
+          matTooltip="Cambiar vista"
+        >
+          <mat-icon>{{ viewMode() === 'grid' ? 'grid_view' : 'view_list' }}</mat-icon>
+        </button>
+
+        <mat-menu #viewMenu="matMenu">
+          <button mat-menu-item (click)="viewMode.set('grid')">
+            <mat-icon>grid_view</mat-icon>
+            <span>Vista en cards</span>
+          </button>
+          <button mat-menu-item (click)="viewMode.set('list')">
+            <mat-icon>view_list</mat-icon>
+            <span>Vista en lista</span>
+          </button>
+        </mat-menu>
+
+        <!-- More options menu -->
+        <button mat-icon-button [matMenuTriggerFor]="moreMenu" matTooltip="Más opciones">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+
+        <mat-menu #moreMenu="matMenu">
+          <button mat-menu-item (click)="refreshProducts()">
+            <mat-icon>refresh</mat-icon>
+            <span>Actualizar</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-container">
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+        <input
+          matInput
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar productos..."
+          class="text-body"
+        />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()" matTooltip="Limpiar búsqueda">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="page-content">
+    @if (loading()) {
+      <!-- Loading state -->
+      <div class="loading-container">
+        <mat-spinner diameter="48" />
+        <p class="text-body text-neutral-subheading mt-4">Cargando productos...</p>
+      </div>
+    } @else if (error()) {
+      <!-- Error state -->
+      <div class="error-container">
+        <mat-icon class="error-icon">error_outline</mat-icon>
+        <h3 class="text-body font-bold text-accent-titles">Error al cargar productos</h3>
+        <p class="text-subtitle text-neutral-subheading">{{ error() }}</p>
+        <button mat-raised-button class="btn-secondary mt-4" (click)="loadProducts()">
+          <mat-icon>refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    } @else if (filteredProducts().length === 0) {
+      <!-- Empty state -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <mat-icon>inventory_2</mat-icon>
+        </div>
+        @if (searchTerm()) {
+          <h3 class="text-body font-bold text-accent-titles">No se encontraron productos</h3>
+          <p class="text-subtitle text-neutral-subheading">
+            Intenta con otros términos de búsqueda
+          </p>
+          <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
+        } @else {
+          <h3 class="text-body font-bold text-accent-titles">No hay productos registrados</h3>
+          <p class="text-subtitle text-neutral-subheading mb-4">
+            Comienza agregando tu primer producto de recolección
+          </p>
+          <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+            <mat-icon>add</mat-icon>
+            Añadir primer producto
+          </button>
+        }
+      </div>
+    } @else {
+      <!-- Products grid (mobile-first design from Figma) -->
+      @if (viewMode() === 'grid') {
+        <div class="products-grid">
+          @for (product of filteredProducts(); track product.id) {
+            <div
+              class="product-card"
+              role="button"
+              tabindex="0"
+              (click)="openEditDialog(product)"
+              (keydown.enter)="openEditDialog(product)"
+              (keydown.space)="openEditDialog(product); $event.preventDefault()"
+            >
+              <!-- Product illustration (like Figma design) -->
+              <div class="product-illustration">
+                @if (product.icon) {
+                  @if (getProductImageUrl(product.icon)) {
+                    <!-- Imagen real del producto con SAS token -->
+                    <img
+                      [src]="getProductImageUrl(product.icon)!"
+                      [alt]="product.name"
+                      class="product-image fade-in"
+                    />
+                  } @else {
+                    <!-- Skeleton mientras carga la URL con SAS token -->
+                    <div class="skeleton-loader"></div>
+                  }
+                } @else {
+                  <!-- Icono por defecto (si no hay imagen) -->
+                  <mat-icon class="product-icon">eco</mat-icon>
+                }
+              </div>
+
+              <!-- Product info -->
+              <div class="product-info">
+                <span class="product-label text-subtitle text-secondary">Producto</span>
+                <h3 class="product-name text-body font-bold text-accent-titles">
+                  {{ product.name }}
+                </h3>
+                @if (product.description) {
+                  <p class="product-description text-subtitle text-neutral-subheading">
+                    {{ product.description }}
+                  </p>
+                }
+
+                <!-- Status badge -->
+                <div class="product-status mt-2">
+                  <span
+                    class="status-badge text-subtitle rounded px-2 py-1"
+                    [class]="getStatusClass(product.status)"
+                  >
+                    {{ getStatusLabel(product.status) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Card actions (hover) -->
+              <div class="card-actions">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="cardMenu"
+                  (click)="$event.stopPropagation()"
+                  matTooltip="Opciones"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #cardMenu="matMenu">
+                  <button mat-menu-item (click)="openEditDialog(product)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <button mat-menu-item (click)="toggleStatus(product)">
+                    <mat-icon>
+                      {{ product.status === 'ACTIVE' ? 'block' : 'check_circle' }}
+                    </mat-icon>
+                    <span>
+                      {{ product.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
+                    </span>
+                  </button>
+                  <button mat-menu-item class="text-red-600" (click)="confirmDelete(product)">
+                    <mat-icon class="text-red-600">delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- List/Table view (responsive) -->
+        <div class="products-list">
+          <!-- Mobile: Cards compactos -->
+          <div class="products-list-mobile md:hidden">
+            @for (product of filteredProducts(); track product.id) {
+              <div
+                class="list-item-mobile"
+                role="button"
+                tabindex="0"
+                (click)="openEditDialog(product)"
+                (keydown.enter)="openEditDialog(product)"
+                (keydown.space)="openEditDialog(product); $event.preventDefault()"
+              >
+                <!-- Imagen miniatura -->
+                <div class="list-item-thumbnail">
+                  @if (product.icon) {
+                    @if (getProductImageUrl(product.icon)) {
+                      <img
+                        [src]="getProductImageUrl(product.icon)!"
+                        [alt]="product.name"
+                        class="thumbnail-image fade-in"
+                      />
+                    } @else {
+                      <div class="skeleton-loader-small"></div>
+                    }
+                  } @else {
+                    <mat-icon class="thumbnail-icon">eco</mat-icon>
+                  }
+                </div>
+
+                <!-- Info principal -->
+                <div class="list-item-info">
+                  <h4 class="text-body font-bold text-accent-titles">
+                    {{ product.name }}
+                  </h4>
+                  <p class="text-subtitle text-neutral-subheading">
+                    {{ getUnitLabel(product.unit) }}
+                  </p>
+                  <span
+                    class="status-badge-small text-subtitle rounded px-2 py-0.5 mt-1 inline-block"
+                    [class]="getStatusClass(product.status)"
+                  >
+                    {{ getStatusLabel(product.status) }}
+                  </span>
+                </div>
+
+                <!-- Acciones -->
+                <div class="list-item-actions">
+                  <button
+                    mat-icon-button
+                    [matMenuTriggerFor]="mobileMenu"
+                    (click)="$event.stopPropagation()"
+                  >
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+
+                  <mat-menu #mobileMenu="matMenu">
+                    <button mat-menu-item (click)="openEditDialog(product)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar</span>
+                    </button>
+                    <button mat-menu-item (click)="toggleStatus(product)">
+                      <mat-icon>
+                        {{ product.status === 'ACTIVE' ? 'block' : 'check_circle' }}
+                      </mat-icon>
+                      <span>
+                        {{ product.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
+                      </span>
+                    </button>
+                    <button mat-menu-item class="text-red-600" (click)="confirmDelete(product)">
+                      <mat-icon class="text-red-600">delete</mat-icon>
+                      <span>Eliminar</span>
+                    </button>
+                  </mat-menu>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Desktop: Tabla -->
+          <div class="products-table hidden md:block">
+            <table class="table-auto w-full">
+              <thead class="table-header">
+                <tr>
+                  <th class="table-th text-left w-16"></th>
+                  <th class="table-th text-left">Producto</th>
+                  <th class="table-th text-left hidden lg:table-cell">Descripción</th>
+                  <th class="table-th text-left">Unidad</th>
+                  <th class="table-th text-left">Estado</th>
+                  <th class="table-th text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="table-body">
+                @for (product of filteredProducts(); track product.id) {
+                  <tr
+                    class="table-row"
+                    (click)="openEditDialog(product)"
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="openEditDialog(product)"
+                  >
+                    <!-- Imagen miniatura -->
+                    <td class="table-td">
+                      <div class="table-thumbnail">
+                        @if (product.icon) {
+                          @if (getProductImageUrl(product.icon)) {
+                            <img
+                              [src]="getProductImageUrl(product.icon)!"
+                              [alt]="product.name"
+                              class="thumbnail-image fade-in"
+                            />
+                          } @else {
+                            <div class="skeleton-loader-small"></div>
+                          }
+                        } @else {
+                          <mat-icon class="thumbnail-icon-small">eco</mat-icon>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- Nombre -->
+                    <td class="table-td">
+                      <div class="flex flex-col">
+                        <span class="text-body font-bold text-accent-titles">
+                          {{ product.name }}
+                        </span>
+                        <span class="text-subtitle text-neutral-subheading lg:hidden">
+                          {{
+                            product.description
+                              ? (product.description | slice: 0 : 50) +
+                                (product.description.length > 50 ? '...' : '')
+                              : '-'
+                          }}
+                        </span>
+                      </div>
+                    </td>
+
+                    <!-- Descripción (solo desktop grande) -->
+                    <td class="table-td hidden lg:table-cell">
+                      <span class="text-subtitle text-neutral-subheading">
+                        {{ product.description || '-' }}
+                      </span>
+                    </td>
+
+                    <!-- Unidad -->
+                    <td class="table-td">
+                      <span class="text-body text-accent-titles">
+                        {{ getUnitLabel(product.unit) }}
+                      </span>
+                    </td>
+
+                    <!-- Estado -->
+                    <td class="table-td">
+                      <span
+                        class="status-badge-small text-subtitle rounded px-2 py-1"
+                        [class]="getStatusClass(product.status)"
+                      >
+                        {{ getStatusLabel(product.status) }}
+                      </span>
+                    </td>
+
+                    <!-- Acciones -->
+                    <td class="table-td text-right">
+                      <button
+                        mat-icon-button
+                        [matMenuTriggerFor]="tableMenu"
+                        (click)="$event.stopPropagation()"
+                      >
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+
+                      <mat-menu #tableMenu="matMenu">
+                        <button mat-menu-item (click)="openEditDialog(product)">
+                          <mat-icon>edit</mat-icon>
+                          <span>Editar</span>
+                        </button>
+                        <button mat-menu-item (click)="toggleStatus(product)">
+                          <mat-icon>
+                            {{ product.status === 'ACTIVE' ? 'block' : 'check_circle' }}
+                          </mat-icon>
+                          <span>
+                            {{ product.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
+                          </span>
+                        </button>
+                        <button mat-menu-item class="text-red-600" (click)="confirmDelete(product)">
+                          <mat-icon class="text-red-600">delete</mat-icon>
+                          <span>Eliminar</span>
+                        </button>
+                      </mat-menu>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Results info -->
+      <div class="results-info text-subtitle text-neutral-subheading mt-4">
+        Mostrando {{ filteredProducts().length }} de {{ totalElements() }} productos
+      </div>
+    }
+  </div>
+</div>

@@ -35,7 +35,7 @@ import { AuthService } from '../auth/auth.service';
   styleUrl: './header.component.scss',
   template: `
     <header
-      class="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-neutral-border bg-primary-white/95 px-4 backdrop-blur-sm md:px-6"
+      class="sticky top-0 header-container z-10 flex h-16 items-center justify-between gap-4 border-b border-neutral-border bg-primary-white/95 px-4 backdrop-blur-sm md:px-6"
     >
       <!-- Left side: Menu button + Title -->
       <div class="flex min-w-0 flex-1 items-center gap-3">
@@ -55,7 +55,7 @@ import { AuthService } from '../auth/auth.service';
         <!-- Search (hidden on mobile) -->
         <mat-form-field
           appearance="outline"
-          class="hidden w-[280px] lg:block"
+          class="header-search-field hidden w-[280px] lg:block"
           subscriptSizing="dynamic"
         >
           <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>

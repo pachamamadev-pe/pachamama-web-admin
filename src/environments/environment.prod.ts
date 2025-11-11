@@ -3,7 +3,9 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://api.pachamama.pe',
+  apiUrl: 'https://pachamama-api-admin-java-480f89dc7333.herokuapp.com',
+  azureSasUrl: 'https://pachamama-sas-func.azurewebsites.net/api/sas',
+  azureStorageBaseUrl: 'https://sapachamama001.blob.core.windows.net/admin-uploads',
   firebase: {
     apiKey: 'AIzaSyDxZshF6sa_oB8SmE3OygU6Zi9EnQ30RWg',
     authDomain: 'pachamama-mvp.firebaseapp.com',

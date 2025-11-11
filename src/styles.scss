@@ -8,8 +8,11 @@
 // Angular Material Theme (debe ir después de Tailwind)
 @import 'theme.scss';
 
-// Fix: Ocultar la línea divisoria vertical que aparece después del icono prefix
-// Tailwind establece border-style: solid en todos los elementos, causando esta línea
+// ============================================================================
+// FIX: Angular Material - Línea divisoria en iconos prefix
+// ============================================================================
+// Tailwind establece border-style: solid en todos los elementos,
+// causando una línea vertical no deseada después del icono prefix
 .mat-mdc-form-field-icon-prefix,
 .mat-mdc-form-field-icon-prefix > *,
 .mdc-text-field__icon--leading {

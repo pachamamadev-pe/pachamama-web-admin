@@ -2,12 +2,13 @@
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from './sidebar.component';
 import { HeaderComponent } from './header.component';
+import { LoadingComponent } from './loading.component';
 import { LayoutService } from './layout.service';
 
 @Component({
   standalone: true,
   selector: 'app-shell',
-  imports: [RouterOutlet, SidebarComponent, HeaderComponent],
+  imports: [RouterOutlet, SidebarComponent, HeaderComponent, LoadingComponent],
   template: `
     <div class="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[280px_1fr]">
       <!-- Sidebar -->
@@ -38,6 +39,9 @@ import { LayoutService } from './layout.service';
         </section>
       </main>
     </div>
+
+    <!-- Global Loading Spinner -->
+    <app-loading />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
