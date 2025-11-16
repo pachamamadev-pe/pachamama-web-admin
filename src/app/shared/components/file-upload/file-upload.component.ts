@@ -118,10 +118,6 @@ export class FileUploadComponent {
       };
 
       this.uploadingFiles.update((files) => [...files, uploadingFile]);
-
-      // TODO: Aquí se llamará al service para subir el archivo
-      // Por ahora simulamos la subida
-      this.simulateUpload(uploadingFile);
     }
   }
 
@@ -155,58 +151,6 @@ export class FileUploadComponent {
     }
 
     return { valid: true };
-  }
-
-  /**
-   * MOCK: Simula la subida de un archivo
-   * TODO: Reemplazar con llamada al CompanyDocumentsService
-   */
-  private simulateUpload(uploadingFile: UploadingFile): void {
-    const interval = setInterval(() => {
-      this.uploadingFiles.update((files) =>
-        files.map((f) =>
-          f.file === uploadingFile.file ? { ...f, progress: Math.min(f.progress + 10, 100) } : f,
-        ),
-      );
-
-      const current = this.uploadingFiles().find((f) => f.file === uploadingFile.file);
-
-      if (current && current.progress >= 100) {
-        clearInterval(interval);
-
-        // Simular documento subido
-        const mockDocument: CompanyDocument = {
-          id: `doc-${Date.now()}`,
-          companyId: this.companyId(),
-          fileName: `${this.companyId()}/${uploadingFile.file.name}`,
-          originalFileName: uploadingFile.file.name,
-          documentType: this.documentType(),
-          fileSize: uploadingFile.file.size,
-          mimeType: uploadingFile.file.type,
-          blobUrl: `https://example.com/${uploadingFile.file.name}`,
-          uploadedBy: 'user-123',
-          uploadedAt: new Date(),
-          status: 'uploaded',
-        };
-
-        // Actualizar estado
-        this.uploadingFiles.update((files) =>
-          files.map((f) =>
-            f.file === uploadingFile.file
-              ? { ...f, status: 'success' as const, uploadedDocument: mockDocument }
-              : f,
-          ),
-        );
-
-        this.uploadedDocuments.update((docs) => [...docs, mockDocument]);
-        this.fileUploaded.emit(mockDocument);
-
-        // Remover de uploadingFiles después de 1 segundo
-        setTimeout(() => {
-          this.uploadingFiles.update((files) => files.filter((f) => f.file !== uploadingFile.file));
-        }, 1000);
-      }
-    }, 300);
   }
 
   /**

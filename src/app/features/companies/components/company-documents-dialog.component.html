@@ -1,0 +1,196 @@
+<div class="documents-dialog">
+  <!-- Header -->
+  <div class="dialog-header">
+    <div>
+      <h2 class="text-title font-bold text-accent-titles">Documentos de Empresa</h2>
+      <p class="text-subtitle text-neutral-subheading mt-1">
+        {{ data.company.businessName }}
+      </p>
+    </div>
+    <button mat-icon-button mat-dialog-close aria-label="Cerrar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Compliance Progress -->
+  <div class="compliance-section">
+    <div class="compliance-header">
+      <div>
+        <h3 class="text-body font-bold text-primary-black">Estado de Documentación</h3>
+        <p class="text-subtitle text-neutral-subheading">
+          {{ compliance()?.providedCount || 0 }} de
+          {{ compliance()?.requiredCount || 0 }} documentos obligatorios
+        </p>
+      </div>
+      <div class="compliance-badge" [ngClass]="isCompliant() ? 'compliant' : 'incomplete'">
+        <mat-icon>{{ isCompliant() ? 'check_circle' : 'warning' }}</mat-icon>
+        <span>{{ isCompliant() ? 'Completo' : 'Incompleto' }}</span>
+      </div>
+    </div>
+
+    <mat-progress-bar
+      mode="determinate"
+      [value]="compliancePercentage()"
+      [color]="isCompliant() ? 'primary' : 'warn'"
+      class="compliance-progress"
+    ></mat-progress-bar>
+
+    @if (
+      !isCompliant() && compliance()?.missingDocuments && compliance()!.missingDocuments.length > 0
+    ) {
+      <div class="missing-docs-alert">
+        <mat-icon class="alert-icon">info</mat-icon>
+        <div>
+          <p class="text-sm font-bold">Documentos faltantes:</p>
+          <ul class="missing-docs-list">
+            @for (doc of compliance()!.missingDocuments; track doc.id) {
+              <li>{{ doc.name }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+    }
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-icon class="animate-spin text-secondary">refresh</mat-icon>
+      <span class="ml-2 text-body text-neutral-subheading">Cargando documentos...</span>
+    </div>
+  }
+
+  <!-- Documents List -->
+  @else {
+    <div class="documents-list">
+      <h3 class="text-body font-bold text-primary-black mb-3">Tipos de Documentos</h3>
+
+      @for (docType of documentTypes(); track docType.id) {
+        <div
+          class="document-item"
+          [class.required]="docType.isRequired"
+          [class.uploaded]="isDocumentUploaded(docType.id)"
+        >
+          <!-- Document Type Info (siempre visible) -->
+          <div class="doc-info">
+            <div class="doc-icon-wrapper">
+              <mat-icon [class.uploaded]="isDocumentUploaded(docType.id)">
+                {{ isDocumentUploaded(docType.id) ? 'check_circle' : 'description' }}
+              </mat-icon>
+            </div>
+
+            <div class="doc-details">
+              <div class="doc-name">
+                {{ docType.name }}
+                @if (docType.isRequired) {
+                  <span class="required-badge">Obligatorio</span>
+                }
+              </div>
+
+              @if (docType.description) {
+                <p class="doc-description">{{ docType.description }}</p>
+              }
+
+              <div class="doc-constraints">
+                @if (docType.maxFileSizeMb) {
+                  <span class="constraint">
+                    <mat-icon>data_usage</mat-icon>
+                    Máx. {{ docType.maxFileSizeMb }} MB
+                  </span>
+                }
+                @if (docType.allowedMimeTypes && docType.allowedMimeTypes.length > 0) {
+                  <span class="constraint">
+                    <mat-icon>insert_drive_file</mat-icon>
+                    {{ getFileTypesLabel(docType.allowedMimeTypes) }}
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload/Download Actions -->
+          <div class="doc-actions">
+            @if (uploadingDocId() === docType.id) {
+              <!-- Uploading -->
+              <div class="uploading-indicator">
+                <mat-icon class="animate-spin">sync</mat-icon>
+                <span>Subiendo...</span>
+              </div>
+            } @else if (isDocumentUploaded(docType.id)) {
+              <!-- Uploaded - Solo botones -->
+              @if (getUploadedDocument(docType.id); as doc) {
+                <button
+                  mat-icon-button
+                  (click)="downloadDocument(doc)"
+                  [disabled]="downloadingDocId() === doc.id || deletingDocId() === doc.id"
+                  matTooltip="Descargar"
+                  class="action-btn"
+                >
+                  @if (downloadingDocId() === doc.id) {
+                    <mat-icon class="animate-spin">sync</mat-icon>
+                  } @else {
+                    <mat-icon>download</mat-icon>
+                  }
+                </button>
+
+                <button
+                  mat-icon-button
+                  (click)="deleteDocument(doc)"
+                  [disabled]="downloadingDocId() === doc.id || deletingDocId() === doc.id"
+                  matTooltip="Eliminar"
+                  class="action-btn delete-btn"
+                >
+                  @if (deletingDocId() === doc.id) {
+                    <mat-icon class="animate-spin">sync</mat-icon>
+                  } @else {
+                    <mat-icon>delete</mat-icon>
+                  }
+                </button>
+              }
+            } @else {
+              <!-- Upload Button -->
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="triggerFileInput(docType.id)"
+                class="upload-btn"
+              >
+                <mat-icon>upload</mat-icon>
+                Subir
+              </button>
+            }
+          </div>
+
+          <!-- Uploaded File Info (nueva sección debajo) -->
+          @if (isDocumentUploaded(docType.id)) {
+            @if (getUploadedDocument(docType.id); as doc) {
+              <div class="uploaded-file-section">
+                <mat-icon class="file-icon">attach_file</mat-icon>
+                <div class="file-details">
+                  <span class="file-name" [title]="doc.fileName">{{ doc.fileName }}</span>
+                  <span class="file-meta">
+                    Subido el {{ doc.uploadedAt | date: 'dd/MM/yyyy' }}
+                  </span>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Footer Actions -->
+  <div class="dialog-footer">
+    <button mat-stroked-button (click)="close()" class="btn-secondary">Cerrar</button>
+
+    @if (isCompliant()) {
+      <button mat-raised-button color="primary" (click)="close()" class="btn-primary">
+        <mat-icon>check_circle</mat-icon>
+        Documentación Completa
+      </button>
+    }
+  </div>
+</div>

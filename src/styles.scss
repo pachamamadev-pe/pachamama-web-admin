@@ -126,3 +126,17 @@
   --mdc-snackbar-supporting-text-color: #ffffff !important;
   --mat-snack-bar-button-color: #ffffff !important;
 }
+
+.btn-primary {
+  background-color: #218358 !important; // secondary
+  color: white !important;
+
+  &:hover:not(:disabled) {
+    background-color: #1a6b47 !important; // Darker green
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

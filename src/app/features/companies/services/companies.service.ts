@@ -1,66 +1,94 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Company, CreateCompanyDto, UpdateCompanyDto } from '../models/company.model';
+import { environment } from '../../../../environments/environment';
+import { Company } from '../models/company.model';
+import { CreateCompanyDto } from '../models/create-company.dto';
+import { UpdateCompanyDto } from '../models/update-company.dto';
 
+/**
+ * Parámetros de paginación para listar empresas.
+ */
+export interface CompanyListParams {
+  page?: number; // Número de página (0-indexed)
+  size?: number; // Tamaño de página (default: 10)
+  search?: string; // Búsqueda por code, businessName, ruc
+  status?: string; // Filtro por estado (ACTIVE, INACTIVE, etc.)
+  licenseType?: string; // Filtro por tipo de licencia
+}
+
+/**
+ * Respuesta paginada del backend.
+ */
+export interface PaginatedCompanies {
+  items: Company[]; // Array de empresas
+  total: number; // Total de elementos
+  page: number; // Página actual (0-indexed)
+  size: number; // Tamaño de página
+}
+
+/**
+ * Servicio para gestionar empresas (CRUD + documentos).
+ * Implementa el flujo de 2 pasos:
+ * 1. Crear empresa con datos básicos (status: PENDING_DOCUMENTS)
+ * 2. Subir documentos obligatorios (auto-cambia a ACTIVE cuando completo)
+ */
 @Injectable({ providedIn: 'root' })
 export class CompaniesService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/companies';
+  private readonly baseUrl = `${environment.apiUrl}/api/v1/admin/companies`;
 
   /**
-   * Obtener todas las empresas.
+   * Obtener lista paginada de empresas.
+   * Soporta búsqueda y filtros.
    */
-  getCompanies(): Observable<Company[]> {
-    return this.http.get<Company[]>(this.apiUrl);
+  getCompanies(params: CompanyListParams = {}): Observable<PaginatedCompanies> {
+    let httpParams = new HttpParams()
+      .set('page', (params.page ?? 0).toString())
+      .set('size', (params.size ?? 10).toString());
+
+    if (params.search) {
+      httpParams = httpParams.set('search', params.search);
+    }
+    if (params.status) {
+      httpParams = httpParams.set('status', params.status);
+    }
+    if (params.licenseType) {
+      httpParams = httpParams.set('licenseType', params.licenseType);
+    }
+
+    return this.http.get<PaginatedCompanies>(this.baseUrl, { params: httpParams });
   }
 
   /**
-   * Obtener una empresa por ID.
+   * Obtener detalle de una empresa por ID.
    */
   getCompany(id: string): Observable<Company> {
-    return this.http.get<Company>(`${this.apiUrl}/${id}`);
+    return this.http.get<Company>(`${this.baseUrl}/${id}`);
   }
 
   /**
    * Crear nueva empresa.
+   * Estado inicial: PENDING_DOCUMENTS.
+   * Retorna la empresa creada (incluye ID generado).
    */
   createCompany(dto: CreateCompanyDto): Observable<Company> {
-    const company: Partial<Company> = {
-      ...dto,
-      status: 'active',
-      adminUserId: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    return this.http.post<Company>(this.apiUrl, company);
+    return this.http.post<Company>(this.baseUrl, dto);
   }
 
   /**
    * Actualizar empresa existente.
+   * Permite cambiar cualquier campo, incluido el status.
    */
   updateCompany(id: string, dto: UpdateCompanyDto): Observable<Company> {
-    const update = {
-      ...dto,
-      updatedAt: new Date().toISOString(),
-    };
-    return this.http.patch<Company>(`${this.apiUrl}/${id}`, update);
+    return this.http.patch<Company>(`${this.baseUrl}/${id}`, dto);
   }
 
   /**
-   * Eliminar empresa.
+   * Eliminar empresa (soft delete).
+   * El backend puede cambiar status a INACTIVE en lugar de borrar físicamente.
    */
   deleteCompany(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
-  /**
-   * Asignar administrador a empresa.
-   */
-  assignAdmin(companyId: string, userId: string): Observable<Company> {
-    return this.http.patch<Company>(`${this.apiUrl}/${companyId}`, {
-      adminUserId: userId,
-      updatedAt: new Date().toISOString(),
-    });
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 }

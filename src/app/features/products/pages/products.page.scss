@@ -227,7 +227,8 @@
 }
 
 .table-header {
-  @apply bg-secondary-light border-b border-neutral-border;
+  @apply border-b border-neutral-border;
+  background-color: #f9faf3;
 }
 
 .table-th {

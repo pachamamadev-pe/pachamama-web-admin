@@ -99,6 +99,120 @@ Material components will automatically use these colors.
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
 
+## Notifications & Dialogs Best Practices
+
+### ✅ Use Centralized Services (DO)
+
+**Always use `NotificationService` for user feedback** instead of `MatSnackBar` directly:
+
+```typescript
+// ✅ CORRECT - Use NotificationService
+import { NotificationService } from '@core/services/notification.service';
+
+export class MyComponent {
+  private notification = inject(NotificationService);
+
+  saveData(): void {
+    this.service.save().subscribe({
+      next: () => this.notification.success('Datos guardados correctamente'),
+      error: () => this.notification.error('Error al guardar datos'),
+    });
+  }
+}
+```
+
+```typescript
+// ❌ INCORRECT - Don't use MatSnackBar directly
+import { MatSnackBar } from '@angular/material/snack-bar';
+
+export class MyComponent {
+  private snackBar = inject(MatSnackBar);
+
+  saveData(): void {
+    this.snackBar.open('Datos guardados', 'Cerrar', { duration: 3000 }); // ❌ NO
+  }
+}
+```
+
+**NotificationService API**:
+
+- `notification.success(message)` - Success notifications (green, 4s)
+- `notification.error(message)` - Error notifications (red, 6s)
+- `notification.warning(message)` - Warning notifications (orange, 5s)
+- `notification.info(message)` - Info notifications (blue, 4s)
+
+### ✅ Use ConfirmDialogComponent for Confirmations (DO)
+
+**Always use `ConfirmDialogComponent`** for delete/destructive actions instead of `confirm()`:
+
+```typescript
+// ✅ CORRECT - Use ConfirmDialogComponent
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+
+export class MyComponent {
+  private dialog = inject(MatDialog);
+  private notification = inject(NotificationService);
+
+  deleteItem(item: Item): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Eliminar elemento?',
+        message: `Esta acción eliminará permanentemente "${item.name}".`,
+        confirmText: 'Eliminar',
+        type: 'danger', // 'danger' | 'warning' | 'info'
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.service.delete(item.id).subscribe({
+          next: () => this.notification.success('Elemento eliminado'),
+          error: () => this.notification.error('Error al eliminar'),
+        });
+      }
+    });
+  }
+}
+```
+
+```typescript
+// ❌ INCORRECT - Don't use native confirm()
+deleteItem(item: Item): void {
+  if (confirm('¿Estás seguro?')) { // ❌ NO - Not styled, no control
+    this.service.delete(item.id).subscribe();
+  }
+}
+```
+
+**Why?**
+
+- ✅ Consistent UI/UX across the app
+- ✅ Styled with Material Design
+- ✅ Customizable (title, message, button text)
+- ✅ Different types for different severities
+- ✅ Accessible and responsive
+
+### Import Checklist
+
+When working with notifications and dialogs:
+
+```typescript
+// Required imports
+import { MatDialog } from '@angular/material/dialog';
+import { NotificationService } from '@core/services/notification.service';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+
+export class MyComponent {
+  private dialog = inject(MatDialog);
+  private notification = inject(NotificationService);
+}
+```
+
+**Never import**:
+
+- ❌ `MatSnackBar` or `MatSnackBarModule` - Use `NotificationService` instead
+- ❌ Don't use `window.confirm()` or `window.alert()` - Use `ConfirmDialogComponent`
+
 ## Design System & UX Guidelines
 
 ### Color Palette

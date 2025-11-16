@@ -1,0 +1,305 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="text-title font-bold text-accent-titles">Empresas</h1>
+        <p class="text-subtitle text-neutral-subheading">
+          Gestiona las empresas registradas en la plataforma
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          <span class="hidden sm:inline">Añadir empresa</span>
+          <span class="sm:hidden">Añadir</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-container">
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+        <input
+          matInput
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar empresas..."
+          class="text-body"
+        />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()" matTooltip="Limpiar búsqueda">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="page-content">
+    @if (loading()) {
+      <!-- Loading state -->
+      <div class="loading-container">
+        <mat-spinner diameter="48" />
+        <p class="text-body text-neutral-subheading mt-4">Cargando empresas...</p>
+      </div>
+    } @else if (companies().length === 0 && !searchTerm()) {
+      <!-- Empty state -->
+      <app-empty-state
+        icon="business"
+        [useMaterialIcon]="true"
+        title="No hay empresas registradas"
+        description="Comienza creando tu primera empresa para gestionar inventarios y proyectos"
+        actionLabel="Crear primera empresa"
+        (action)="openCreateDialog()"
+      />
+    } @else if (filteredCompanies().length === 0 && searchTerm()) {
+      <!-- No Results State -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <mat-icon>search_off</mat-icon>
+        </div>
+        <h3 class="text-body font-bold text-accent-titles">No se encontraron empresas</h3>
+        <p class="text-subtitle text-neutral-subheading">Intenta con otros términos de búsqueda</p>
+        <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
+      </div>
+    } @else {
+      <!-- Companies Table (Desktop only) -->
+      <div class="companies-table">
+        <div class="products-table hidden md:block">
+          <table class="table-auto w-full">
+            <thead class="table-header">
+              <tr>
+                <th class="table-th text-left">RUC</th>
+                <th class="table-th text-left">Razón Social</th>
+                <th class="table-th text-left hidden lg:table-cell">Nombre Comercial</th>
+                <th class="table-th text-left">Licencia</th>
+                <th class="table-th text-left">Administradores</th>
+                <th class="table-th text-left">Estado</th>
+                <th class="table-th text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="table-body">
+              @for (company of filteredCompanies(); track company.id) {
+                <tr class="table-row">
+                  <!-- RUC -->
+                  <td class="table-td">
+                    <span class="text-body text-accent-titles font-mono">{{ company.ruc }}</span>
+                  </td>
+
+                  <!-- Razón Social -->
+                  <td class="table-td">
+                    <div class="flex flex-col">
+                      <span class="text-body font-bold text-accent-titles">
+                        {{ company.businessName }}
+                      </span>
+                      <span class="text-subtitle text-neutral-subheading lg:hidden">
+                        {{ company.tradeName || '-' }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <!-- Nombre Comercial (solo desktop grande) -->
+                  <td class="table-td hidden lg:table-cell">
+                    <span class="text-subtitle text-neutral-subheading">
+                      {{ company.tradeName || '-' }}
+                    </span>
+                  </td>
+
+                  <!-- Licencia -->
+                  <td class="table-td">
+                    <span class="text-body text-accent-titles">
+                      {{ getLicenseTypeLabel(company.licenseType) }}
+                    </span>
+                  </td>
+
+                  <!-- Administradores -->
+                  <td class="table-td">
+                    <button
+                      mat-button
+                      class="admin-badge"
+                      (click)="openAssignAdminDialog(company); $event.stopPropagation()"
+                      [matTooltip]="
+                        getAdminCount(company) > 0
+                          ? 'Click para gestionar administradores'
+                          : 'Sin administradores - Click para asignar'
+                      "
+                    >
+                      <mat-icon class="admin-icon">group</mat-icon>
+                      <span class="admin-count">{{ getAdminCount(company) }}</span>
+                    </button>
+                  </td>
+
+                  <!-- Estado -->
+                  <td class="table-td">
+                    <span
+                      class="status-badge-small text-subtitle rounded px-2 py-1"
+                      [ngClass]="getCompanyStatusClass(company.status)"
+                    >
+                      {{ getCompanyStatusLabel(company.status) }}
+                    </span>
+                  </td>
+
+                  <!-- Acciones -->
+                  <td class="table-td text-right">
+                    <button
+                      mat-icon-button
+                      [matMenuTriggerFor]="tableMenu"
+                      (click)="$event.stopPropagation()"
+                    >
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+
+                    <mat-menu #tableMenu="matMenu">
+                      <button mat-menu-item (click)="openEditDialog(company)">
+                        <mat-icon>edit</mat-icon>
+                        <span>Editar</span>
+                      </button>
+
+                      <button mat-menu-item (click)="openDocumentsDialog(company)">
+                        <mat-icon>upload_file</mat-icon>
+                        <span>Gestionar documentos</span>
+                      </button>
+
+                      <button mat-menu-item (click)="openAssignAdminDialog(company)">
+                        <mat-icon>group</mat-icon>
+                        <span>Gestionar administradores</span>
+                      </button>
+
+                      <button mat-menu-item (click)="toggleStatus(company)">
+                        <mat-icon>{{
+                          company.status === CompanyStatus.ACTIVE ? 'block' : 'check_circle'
+                        }}</mat-icon>
+                        <span>{{
+                          company.status === CompanyStatus.ACTIVE ? 'Desactivar' : 'Activar'
+                        }}</span>
+                      </button>
+
+                      <button mat-menu-item (click)="deleteCompany(company)" class="text-red-600">
+                        <mat-icon class="text-red-600">delete</mat-icon>
+                        <span>Eliminar</span>
+                      </button>
+                    </mat-menu>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (Desktop only) -->
+        <mat-paginator
+          [length]="totalElements()"
+          [pageSize]="pageSize()"
+          [pageIndex]="currentPage()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+        />
+      </div>
+
+      <!-- Mobile Cards (visible only on mobile) -->
+      <div class="mobile-cards">
+        @for (company of filteredCompanies(); track company.id) {
+          <div class="company-card bg-primary-white rounded-lg shadow p-4">
+            <!-- Header with status and menu -->
+            <div class="card-header">
+              <div class="card-title">
+                <h3 class="text-body font-bold text-primary-black">
+                  {{ company.businessName }}
+                </h3>
+                @if (company.tradeName) {
+                  <p class="text-subtitle text-neutral-subheading">{{ company.tradeName }}</p>
+                }
+              </div>
+
+              <div class="card-actions">
+                <span class="status-badge-mobile" [ngClass]="getCompanyStatusClass(company.status)">
+                  {{ getCompanyStatusLabel(company.status) }}
+                </span>
+
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="mobileMenu"
+                  aria-label="Menú de acciones"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #mobileMenu="matMenu">
+                  <button mat-menu-item (click)="openEditDialog(company)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+
+                  <button mat-menu-item (click)="openDocumentsDialog(company)">
+                    <mat-icon>upload_file</mat-icon>
+                    <span>Gestionar documentos</span>
+                  </button>
+
+                  <button mat-menu-item (click)="openAssignAdminDialog(company)">
+                    <mat-icon>group</mat-icon>
+                    <span>Gestionar administradores</span>
+                  </button>
+
+                  <button mat-menu-item (click)="toggleStatus(company)">
+                    <mat-icon>{{
+                      company.status === CompanyStatus.ACTIVE ? 'block' : 'check_circle'
+                    }}</mat-icon>
+                    <span>{{
+                      company.status === CompanyStatus.ACTIVE ? 'Desactivar' : 'Activar'
+                    }}</span>
+                  </button>
+
+                  <button mat-menu-item (click)="deleteCompany(company)" class="text-red-600">
+                    <mat-icon class="text-red-600">delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
+
+            <!-- Company Details -->
+            <div class="card-details">
+              <!-- RUC -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">badge</mat-icon>
+                <span class="detail-label">RUC:</span>
+                <span class="detail-value font-mono">{{ company.ruc }}</span>
+              </div>
+
+              <!-- Licencia -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">workspace_premium</mat-icon>
+                <span class="detail-label">Licencia:</span>
+                <span class="detail-value">{{ getLicenseTypeLabel(company.licenseType) }}</span>
+              </div>
+
+              <!-- Administradores -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">group</mat-icon>
+                <span class="detail-label">Administradores:</span>
+                <span class="detail-value">{{ getAdminCount(company) }}</span>
+              </div>
+            </div>
+
+            <!-- Admin Button -->
+            <div class="card-admin-section">
+              <button
+                mat-stroked-button
+                class="admin-button w-full"
+                (click)="openAssignAdminDialog(company)"
+              >
+                <mat-icon>group_add</mat-icon>
+                Gestionar administradores
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
