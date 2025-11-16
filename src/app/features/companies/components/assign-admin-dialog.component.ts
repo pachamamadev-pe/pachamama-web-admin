@@ -1,33 +1,33 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogModule,
+  MatDialog,
+} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSelectModule } from '@angular/material/select';
 import { Company } from '../models/company.model';
-import { CompaniesService } from '../services/companies.service';
+import { UsersService } from '@shared/services/users.service';
+import { NotificationService } from '@core/services/notification.service';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import {
+  CreateUserRequest,
+  User,
+  RoleScope,
+  DocumentType,
+  ParamRole,
+} from '@shared/models/create-user.dto';
 
 export interface AssignAdminDialogData {
   company: Company;
   maxAdmins?: number; // Parametrizable, default 4
-}
-
-interface UserSearchResult {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-}
-
-interface CompanyAdmin {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  assignedAt?: string;
 }
 
 @Component({
@@ -41,6 +41,7 @@ interface CompanyAdmin {
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatSelectModule,
   ],
   template: `
     <div class="assign-admin-dialog">
@@ -82,14 +83,14 @@ interface CompanyAdmin {
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="text-body font-bold text-primary-black truncate">
-                      {{ admin.firstName }} {{ admin.lastName }}
+                      {{ getUserDisplayName(admin) }}
                     </p>
                     <p class="text-subtitle text-neutral-subheading truncate">
                       {{ admin.email }}
                     </p>
-                    @if (admin.assignedAt) {
+                    @if (admin.documentType && admin.documentNumber) {
                       <p class="text-subtitle text-neutral-subheading">
-                        Asignado: {{ formatDate(admin.assignedAt) }}
+                        {{ getDocumentTypeLabel(admin.documentType) }}: {{ admin.documentNumber }}
                       </p>
                     }
                   </div>
@@ -127,97 +128,99 @@ interface CompanyAdmin {
 
         <!-- Add New Admin Form -->
         <div>
-          <h3 class="text-body font-bold text-primary-black mb-4">Agregar nuevo administrador</h3>
+          <h3 class="text-body font-bold text-primary-black mb-4">Crear nuevo administrador</h3>
 
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
-            <!-- User Email Search -->
+            <!-- Fila 1: Nombres y Apellidos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <mat-form-field appearance="outline">
+                <mat-label>Nombres</mat-label>
+                <mat-icon matPrefix>person</mat-icon>
+                <input matInput formControlName="firstName" placeholder="Ej: Juan Carlos" />
+                @if (form.get('firstName')?.hasError('required')) {
+                  <mat-error>Los nombres son obligatorios</mat-error>
+                }
+                @if (form.get('firstName')?.hasError('minlength')) {
+                  <mat-error>Mínimo 2 caracteres</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Apellidos</mat-label>
+                <mat-icon matPrefix>person</mat-icon>
+                <input matInput formControlName="lastName" placeholder="Ej: Pérez García" />
+                @if (form.get('lastName')?.hasError('required')) {
+                  <mat-error>Los apellidos son obligatorios</mat-error>
+                }
+                @if (form.get('lastName')?.hasError('minlength')) {
+                  <mat-error>Mínimo 2 caracteres</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <!-- Fila 2: Email (full width) -->
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Email del administrador</mat-label>
-              <mat-icon matPrefix>person_search</mat-icon>
+              <mat-label>Email</mat-label>
+              <mat-icon matPrefix>email</mat-icon>
               <input
                 matInput
-                formControlName="userEmail"
+                formControlName="email"
                 type="email"
                 placeholder="admin@empresa.com"
-                (blur)="searchUser()"
               />
-
-              @if (form.get('userEmail')?.hasError('required')) {
+              @if (form.get('email')?.hasError('required')) {
                 <mat-error>El email es obligatorio</mat-error>
               }
-              @if (form.get('userEmail')?.hasError('email')) {
+              @if (form.get('email')?.hasError('email')) {
                 <mat-error>Ingrese un email válido</mat-error>
               }
-
-              <mat-hint>Buscaremos al usuario al salir del campo</mat-hint>
             </mat-form-field>
 
-            <!-- Search Results / Messages -->
-            @if (searching()) {
-              <div class="flex items-center gap-2 p-4 bg-gray-50 rounded-lg">
-                <mat-spinner diameter="20"></mat-spinner>
-                <span class="text-body text-neutral-subheading">Buscando usuario...</span>
-              </div>
-            }
+            <!-- Fila 3: Tipo Doc + Número Doc -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <mat-form-field appearance="outline">
+                <mat-label>Tipo de documento</mat-label>
+                <mat-icon matPrefix>badge</mat-icon>
+                <mat-select formControlName="documentType">
+                  <mat-option value="DNI">DNI</mat-option>
+                  <mat-option value="CE">Carnet de Extranjería</mat-option>
+                  <mat-option value="RUC">RUC</mat-option>
+                </mat-select>
+              </mat-form-field>
 
-            @if (searchResult()) {
-              <div class="bg-secondary-light border border-secondary rounded-lg p-4">
-                <div class="flex items-start gap-3">
-                  <div
-                    class="bg-secondary text-primary-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0"
-                  >
-                    <mat-icon>person</mat-icon>
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-body font-bold text-primary-black">
-                      {{ searchResult()!.firstName }} {{ searchResult()!.lastName }}
-                    </p>
-                    <p class="text-subtitle text-neutral-subheading">
-                      {{ searchResult()!.email }}
-                    </p>
-                  </div>
-                  <mat-icon class="text-secondary">check_circle</mat-icon>
-                </div>
-              </div>
-            }
+              <mat-form-field appearance="outline" class="md:col-span-2">
+                <mat-label>Número de documento</mat-label>
+                <mat-icon matPrefix>tag</mat-icon>
+                <input
+                  matInput
+                  formControlName="documentNumber"
+                  [placeholder]="
+                    form.get('documentType')?.value === 'DNI'
+                      ? 'Ej: 12345678'
+                      : form.get('documentType')?.value === 'CE'
+                        ? 'Ej: ABC123456'
+                        : 'Ej: 20123456789'
+                  "
+                />
+                @if (form.get('documentNumber')?.hasError('required')) {
+                  <mat-error>El número de documento es obligatorio</mat-error>
+                }
+                @if (form.get('documentNumber')?.hasError('pattern')) {
+                  <mat-error>{{
+                    getDocumentErrorMessage(form.get('documentType')?.value)
+                  }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
 
-            @if (notFoundMessage()) {
-              <div class="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <mat-icon class="text-red-600">error</mat-icon>
-                <div class="flex-1">
-                  <p class="text-body font-bold text-red-600">Usuario no encontrado</p>
-                  <p class="text-subtitle text-red-600">
-                    {{ notFoundMessage() }}
-                  </p>
-                </div>
-              </div>
-            }
-
-            @if (alreadyAssignedMessage()) {
-              <div
-                class="flex items-start gap-2 p-4 bg-orange-50 border border-orange-200 rounded-lg"
-              >
-                <mat-icon class="text-orange-600">warning</mat-icon>
-                <div class="flex-1">
-                  <p class="text-body font-bold text-orange-600">Usuario ya asignado</p>
-                  <p class="text-subtitle text-orange-600">
-                    {{ alreadyAssignedMessage() }}
-                  </p>
-                </div>
-              </div>
-            }
-
-            <!-- Info Message -->
+            <!-- Info box -->
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div class="flex items-start gap-2">
-                <mat-icon class="text-blue-600 overflow-visible">info</mat-icon>
-                <div class="text-subtitle text-blue-600">
-                  <p class="font-bold mb-1">Nota sobre la funcionalidad</p>
-                  <p>
-                    Por ahora, esta funcionalidad simula la búsqueda de usuarios. En la versión
-                    final, se integrará con el backend para buscar y asignar administradores reales.
-                  </p>
-                </div>
+                <mat-icon class="text-blue-600 flex-shrink-0">info</mat-icon>
+                <p class="text-subtitle text-blue-600">
+                  El mantenimiento del usuario creado se tendrá que realizar desde el módulo de
+                  usuarios de la empresa.
+                </p>
               </div>
             </div>
 
@@ -236,15 +239,15 @@ interface CompanyAdmin {
                 mat-raised-button
                 color="primary"
                 type="submit"
-                [disabled]="
-                  form.invalid ||
-                  !searchResult() ||
-                  submitting() ||
-                  alreadyAssignedMessage() !== null
-                "
+                [disabled]="form.invalid || submitting()"
                 class="btn-primary"
               >
-                {{ submitting() ? 'Asignando...' : 'Agregar Administrador' }}
+                @if (submitting()) {
+                  <mat-spinner diameter="20" class="inline-block mr-2"></mat-spinner>
+                  <span>Creando...</span>
+                } @else {
+                  <span>Crear Administrador</span>
+                }
               </button>
             </div>
           </form>
@@ -295,208 +298,143 @@ interface CompanyAdmin {
 })
 export class AssignAdminDialogComponent {
   private fb = inject(FormBuilder);
-  private companiesService = inject(CompaniesService);
+  private usersService = inject(UsersService);
+  private notification = inject(NotificationService);
+  private dialog = inject(MatDialog);
   private dialogRef = inject(MatDialogRef<AssignAdminDialogComponent>);
 
   data = inject<AssignAdminDialogData>(MAT_DIALOG_DATA);
 
-  searching = signal(false);
   submitting = signal(false);
   removingAdminId = signal<string | null>(null);
-  searchResult = signal<UserSearchResult | null>(null);
-  notFoundMessage = signal<string | null>(null);
-  alreadyAssignedMessage = signal<string | null>(null);
-  currentAdmins = signal<CompanyAdmin[]>([]);
+  currentAdmins = signal<User[]>([]);
 
   maxAdmins: number;
   form: FormGroup;
+
+  // Validadores para cada tipo de documento
+  private readonly DOC_VALIDATORS = {
+    [DocumentType.DNI]: [Validators.required, Validators.pattern(/^\d{8}$/)],
+    [DocumentType.CE]: [Validators.required, Validators.pattern(/^[A-Z0-9]{9,12}$/)],
+    [DocumentType.RUC]: [Validators.required, Validators.pattern(/^\d{11}$/)],
+  };
 
   constructor() {
     this.maxAdmins = this.data.maxAdmins ?? 4; // Default to 4, parametrizable
 
     this.form = this.fb.group({
-      userEmail: ['', [Validators.required, Validators.email]],
+      firstName: ['', [Validators.required, Validators.minLength(2)]],
+      lastName: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.required, Validators.email]],
+      documentType: [DocumentType.DNI, Validators.required],
+      documentNumber: ['', this.DOC_VALIDATORS[DocumentType.DNI]],
     });
 
-    // Load current admins (mock data for now)
+    // Validación dinámica del número de documento según el tipo
+    this.form.get('documentType')?.valueChanges.subscribe((type: DocumentType) => {
+      const docNumberControl = this.form.get('documentNumber');
+      docNumberControl?.setValidators(this.DOC_VALIDATORS[type]);
+      docNumberControl?.updateValueAndValidity();
+    });
+
+    // Cargar administradores actuales
     this.loadCurrentAdmins();
   }
 
   private loadCurrentAdmins(): void {
-    // TODO: Replace with real API call
-    // this.companiesService.getCompanyAdmins(this.data.company.id).subscribe(...)
-
-    // Mock data for demonstration - Using RUC as key for consistency with table
-    const mockAdminsByRuc: Record<string, CompanyAdmin[]> = {
-      '20123456789': [
-        // Agroindustrias Pachamama S.A.C.
-        {
-          id: 'user-1',
-          email: 'admin@pachamama.com',
-          firstName: 'Juan',
-          lastName: 'Pérez',
-          assignedAt: '2025-01-15T10:30:00Z',
-        },
-        {
-          id: 'user-2',
-          email: 'maria@empresa.com',
-          firstName: 'María',
-          lastName: 'García',
-          assignedAt: '2025-02-20T14:45:00Z',
-        },
-      ],
-      '20987654321': [
-        {
-          id: 'user-1',
-          email: 'carlos@empresa.com',
-          firstName: 'Carlos',
-          lastName: 'López',
-          assignedAt: '2025-01-10T09:00:00Z',
-        },
-        {
-          id: 'user-2',
-          email: 'ana@empresa.com',
-          firstName: 'Ana',
-          lastName: 'Rodríguez',
-          assignedAt: '2025-02-05T11:20:00Z',
-        },
-        {
-          id: 'user-3',
-          email: 'pedro@empresa.com',
-          firstName: 'Pedro',
-          lastName: 'Sánchez',
-          assignedAt: '2025-03-01T15:45:00Z',
-        },
-      ],
-    };
-
-    // Load admins for this company based on RUC
-    const admins = mockAdminsByRuc[this.data.company.ruc] || [];
-    this.currentAdmins.set(admins);
+    this.usersService.getCompanyUsers(this.data.company.id).subscribe({
+      next: (users) => {
+        this.currentAdmins.set(users);
+      },
+      error: (error) => {
+        this.notification.handleError(error, 'Error al cargar administradores');
+      },
+    });
   }
 
-  searchUser(): void {
-    const email = this.form.get('userEmail')?.value?.trim();
+  removeAdmin(admin: User): void {
+    const displayName = this.getUserDisplayName(admin);
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Eliminar administrador?',
+        message: `¿Estás seguro de remover a ${displayName} como administrador de esta empresa?`,
+        confirmText: 'Eliminar',
+        type: 'danger',
+      },
+    });
 
-    if (!email || this.form.get('userEmail')?.invalid) {
-      this.searchResult.set(null);
-      this.notFoundMessage.set(null);
-      this.alreadyAssignedMessage.set(null);
-      return;
-    }
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.notification.success('Falta que Jecri implemente la api de eliminar');
+        /*
+        this.notification.success('Administrador eliminado correctamente');
 
-    // Check if user is already assigned
-    const alreadyAssigned = this.currentAdmins().some(
-      (admin) => admin.email.toLowerCase() === email.toLowerCase(),
-    );
+        TODO: Falta api de eliminar
+        this.removingAdminId.set(admin.id);
 
-    if (alreadyAssigned) {
-      this.searchResult.set(null);
-      this.notFoundMessage.set(null);
-      this.alreadyAssignedMessage.set(
-        `El usuario "${email}" ya está asignado como administrador de esta empresa.`,
-      );
-      return;
-    }
-
-    this.searching.set(true);
-    this.searchResult.set(null);
-    this.notFoundMessage.set(null);
-    this.alreadyAssignedMessage.set(null);
-
-    // Simulate API call with setTimeout
-    // TODO: Replace with real API call
-    // this.companiesService.searchUser(email).subscribe(...)
-    setTimeout(() => {
-      // Mock user data for demonstration
-      const mockUsers: UserSearchResult[] = [
-        { id: 'user-1', email: 'admin@pachamama.com', firstName: 'Juan', lastName: 'Pérez' },
-        { id: 'user-2', email: 'maria@empresa.com', firstName: 'María', lastName: 'García' },
-        { id: 'user-3', email: 'carlos@test.com', firstName: 'Carlos', lastName: 'López' },
-        { id: 'user-4', email: 'ana@demo.com', firstName: 'Ana', lastName: 'Rodríguez' },
-      ];
-
-      const foundUser = mockUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
-
-      if (foundUser) {
-        this.searchResult.set(foundUser);
-        this.notFoundMessage.set(null);
-      } else {
-        this.searchResult.set(null);
-        this.notFoundMessage.set(
-          `No se encontró ningún usuario con el email "${email}". Verifica que el usuario esté registrado en la plataforma.`,
-        );
+        this.usersService.deleteUser(admin.id).subscribe({
+          next: () => {
+            this.loadCurrentAdmins();
+            this.notification.success('Administrador eliminado correctamente');
+            this.removingAdminId.set(null);
+          },
+          error: () => {
+            this.notification.error('Error al eliminar administrador');
+            this.removingAdminId.set(null);
+          },
+        });*/
       }
-
-      this.searching.set(false);
-    }, 800); // Simulate network delay
-  }
-
-  removeAdmin(admin: CompanyAdmin): void {
-    if (this.removingAdminId()) {
-      return; // Already removing another admin
-    }
-
-    this.removingAdminId.set(admin.id);
-
-    // TODO: Replace with real API call
-    // this.companiesService.removeAdmin(this.data.company.id, admin.id).subscribe(...)
-
-    // Simulate API call
-    setTimeout(() => {
-      const updatedAdmins = this.currentAdmins().filter((a) => a.id !== admin.id);
-      this.currentAdmins.set(updatedAdmins);
-      this.removingAdminId.set(null);
-
-      // Clear search if the removed admin was being searched
-      if (this.searchResult()?.id === admin.id) {
-        this.form.reset();
-        this.searchResult.set(null);
-        this.alreadyAssignedMessage.set(null);
-      }
-    }, 600);
+    });
   }
 
   onSubmit(): void {
-    if (
-      this.form.invalid ||
-      !this.searchResult() ||
-      this.currentAdmins().length >= this.maxAdmins
-    ) {
+    if (this.form.invalid || this.currentAdmins().length >= this.maxAdmins) {
       return;
     }
 
     this.submitting.set(true);
 
-    const user = this.searchResult()!;
-    const newAdmin: CompanyAdmin = {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      assignedAt: new Date().toISOString(),
+    const request: CreateUserRequest = {
+      scope: RoleScope.COMPANY,
+      tenantId: this.data.company.id,
+      email: this.form.value.email.trim(),
+      documentType: this.form.value.documentType,
+      documentNumber: this.form.value.documentNumber.trim(),
+      role: ParamRole.ADMIN_EMPRESA,
+      firstName: this.form.value.firstName.trim(),
+      lastName: this.form.value.lastName.trim(),
     };
 
-    // TODO: Replace with real API call
-    // this.companiesService.addAdmin(this.data.company.id, user.id).subscribe(...)
-
-    // Simulate API call
-    setTimeout(() => {
-      const updatedAdmins = [...this.currentAdmins(), newAdmin];
-      this.currentAdmins.set(updatedAdmins);
-      this.submitting.set(false);
-
-      // Clear form and search result
-      this.form.reset();
-      this.searchResult.set(null);
-      this.notFoundMessage.set(null);
-      this.alreadyAssignedMessage.set(null);
-    }, 600);
+    this.usersService.createUser(request).subscribe({
+      next: () => {
+        this.loadCurrentAdmins();
+        this.form.reset({ documentType: DocumentType.DNI }); // Reset con DNI por defecto
+        this.notification.success('Administrador creado correctamente');
+        this.submitting.set(false);
+      },
+      error: (error) => {
+        this.notification.handleError(error, 'Error al crear el administrador');
+        this.submitting.set(false);
+      },
+    });
   }
 
   closeDialog(): void {
-    // Return the updated list of admins
     this.dialogRef.close(this.currentAdmins());
+  }
+
+  getUserDisplayName(user: User): string {
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user.firstName) {
+      return user.firstName;
+    }
+    if (user.lastName) {
+      return user.lastName;
+    }
+    // Si no tiene nombre, mostrar el email sin el dominio
+    return user.email.split('@')[0];
   }
 
   formatDate(isoDate: string): string {
@@ -506,5 +444,25 @@ export class AssignAdminDialogComponent {
       month: 'short',
       day: 'numeric',
     });
+  }
+
+  getDocumentTypeLabel(type: DocumentType | null): string {
+    if (!type) return '';
+    const labels: Record<DocumentType, string> = {
+      [DocumentType.DNI]: 'DNI',
+      [DocumentType.CE]: 'C.E.',
+      [DocumentType.RUC]: 'RUC',
+    };
+    return labels[type] || type;
+  }
+
+  getDocumentErrorMessage(type: DocumentType): string {
+    const messages: Record<DocumentType, string> = {
+      [DocumentType.DNI]: 'El DNI debe tener 8 dígitos',
+      [DocumentType.CE]:
+        'El Carnet de Extranjería debe tener entre 9 y 12 caracteres alfanuméricos',
+      [DocumentType.RUC]: 'El RUC debe tener 11 dígitos',
+    };
+    return messages[type] || 'Formato de documento inválido';
   }
 }

@@ -245,46 +245,6 @@ export class CompaniesPage implements OnInit {
     });
   }
 
-  /**
-   * Get the count of administrators for a company
-   */
-  getAdminCount(company: Company): number {
-    // TODO: Replace with real data from company.admins array
-    // Using RUC as key for mock data (more stable than generated IDs)
-    const mockAdminCounts: Record<string, number> = {
-      '20123456789': 2, // Agroindustrias Pachamama S.A.C.
-      '20987654321': 3,
-      '20555888999': 0,
-    };
-    return mockAdminCounts[company.ruc] || 0;
-  }
-
-  /**
-   * Get preview of first 2 administrators
-   */
-  getAdminPreview(
-    company: Company,
-  ): { id: string; firstName: string; lastName: string; email: string }[] {
-    // TODO: Replace with real data from company.admins array
-    // Using RUC as key for mock data (more stable than generated IDs)
-    const mockAdmins: Record<
-      string,
-      { id: string; firstName: string; lastName: string; email: string }[]
-    > = {
-      '20123456789': [
-        // Agroindustrias Pachamama S.A.C.
-        { id: 'user-1', firstName: 'Juan', lastName: 'Pérez', email: 'admin@pachamama.com' },
-        { id: 'user-2', firstName: 'María', lastName: 'García', email: 'maria@empresa.com' },
-      ],
-      '20987654321': [
-        { id: 'user-1', firstName: 'Carlos', lastName: 'López', email: 'carlos@empresa.com' },
-        { id: 'user-2', firstName: 'Ana', lastName: 'Rodríguez', email: 'ana@empresa.com' },
-        { id: 'user-3', firstName: 'Pedro', lastName: 'Sánchez', email: 'pedro@empresa.com' },
-      ],
-    };
-    return (mockAdmins[company.ruc] || []).slice(0, 2);
-  }
-
   onSearchChange(searchValue: string): void {
     this.searchTerm.set(searchValue);
     // Reset to first page when searching

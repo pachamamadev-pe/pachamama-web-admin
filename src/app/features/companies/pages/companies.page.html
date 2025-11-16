@@ -123,13 +123,15 @@
                       class="admin-badge"
                       (click)="openAssignAdminDialog(company); $event.stopPropagation()"
                       [matTooltip]="
-                        getAdminCount(company) > 0
+                        (company.userCount ? company.userCount : 0) > 0
                           ? 'Click para gestionar administradores'
                           : 'Sin administradores - Click para asignar'
                       "
                     >
                       <mat-icon class="admin-icon">group</mat-icon>
-                      <span class="admin-count">{{ getAdminCount(company) }}</span>
+                      <span class="admin-count">{{
+                        company.userCount ? company.userCount : 0
+                      }}</span>
                     </button>
                   </td>
 
@@ -282,7 +284,7 @@
               <div class="detail-row">
                 <mat-icon class="detail-icon">group</mat-icon>
                 <span class="detail-label">Administradores:</span>
-                <span class="detail-value">{{ getAdminCount(company) }}</span>
+                <span class="detail-value">{{ company.userCount ? company.userCount : 0 }}</span>
               </div>
             </div>
 

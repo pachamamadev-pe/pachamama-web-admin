@@ -102,31 +102,72 @@
   overflow: visible !important;
 }
 
-// Snackbar customization
+// ============================================================================
+// Snackbar (Toast Notifications) Customization
+// ============================================================================
 .snackbar-success {
-  --mdc-snackbar-container-color: #10b981 !important;
+  --mdc-snackbar-container-color: #10b981 !important; // green-500
   --mdc-snackbar-supporting-text-color: #ffffff !important;
   --mat-snack-bar-button-color: #ffffff !important;
+
+  .mdc-snackbar__surface {
+    background-color: #10b981 !important;
+  }
+
+  .mdc-snackbar__label,
+  .mat-mdc-button {
+    color: #ffffff !important;
+  }
 }
 
 .snackbar-error {
-  --mdc-snackbar-container-color: #ef4444 !important;
+  --mdc-snackbar-container-color: #ef4444 !important; // red-500
   --mdc-snackbar-supporting-text-color: #ffffff !important;
   --mat-snack-bar-button-color: #ffffff !important;
+
+  .mdc-snackbar__surface {
+    background-color: #ef4444 !important;
+  }
+
+  .mdc-snackbar__label,
+  .mat-mdc-button {
+    color: #ffffff !important;
+  }
 }
 
 .snackbar-warning {
-  --mdc-snackbar-container-color: #f59e0b !important;
+  --mdc-snackbar-container-color: #f59e0b !important; // amber-500
   --mdc-snackbar-supporting-text-color: #ffffff !important;
   --mat-snack-bar-button-color: #ffffff !important;
+
+  .mdc-snackbar__surface {
+    background-color: #f59e0b !important;
+  }
+
+  .mdc-snackbar__label,
+  .mat-mdc-button {
+    color: #ffffff !important;
+  }
 }
 
 .snackbar-info {
-  --mdc-snackbar-container-color: #3b82f6 !important;
+  --mdc-snackbar-container-color: #3b82f6 !important; // blue-500
   --mdc-snackbar-supporting-text-color: #ffffff !important;
   --mat-snack-bar-button-color: #ffffff !important;
+
+  .mdc-snackbar__surface {
+    background-color: #3b82f6 !important;
+  }
+
+  .mdc-snackbar__label,
+  .mat-mdc-button {
+    color: #ffffff !important;
+  }
 }
 
+// ============================================================================
+// Custom Button Styles
+// ============================================================================
 .btn-primary {
   background-color: #218358 !important; // secondary
   color: white !important;

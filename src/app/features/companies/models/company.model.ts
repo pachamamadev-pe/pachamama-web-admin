@@ -15,7 +15,8 @@ export interface Company {
   licenseType?: LicenseType;
   status: CompanyStatus;
   createdAt: string; // ISO 8601
-  updatedAt?: string; // ISO 8601
+  updatedAt?: string;
+  userCount?: number; // Cantidad de administradores
 }
 
 /**
