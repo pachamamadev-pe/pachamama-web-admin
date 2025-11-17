@@ -84,6 +84,7 @@ export class AuthService {
       this.currentUserSignal.set(null);
       // Limpiar token del localStorage
       localStorage.removeItem('pachamama_auth_token');
+      localStorage.removeItem('sidebarData');
       this.router.navigate(['/login']);
     } catch (error) {
       console.error('Error during logout:', error);

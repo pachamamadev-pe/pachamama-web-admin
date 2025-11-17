@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRippleModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LayoutService } from './layout.service';
+import { SidebarService } from '../services/sidebar.service';
+import { CommonModule } from '@angular/common';
 
 export interface NavItem {
   label: string;
@@ -17,6 +19,7 @@ export interface NavItem {
   standalone: true,
   selector: 'app-sidebar',
   imports: [
+    CommonModule, // Agregado para habilitar *ngIf
     RouterLink,
     RouterLinkActive,
     MatIconModule,
@@ -30,7 +33,13 @@ export interface NavItem {
       <!-- Header -->
       <div class="sidebar-header">
         <div class="logo-container">
-          <img src="/images/logo/logo.svg" alt="Pachamama" />
+          @if (sidebarService.companyName()) {
+            <span class="company-name">
+              {{ sidebarService.companyName() }}
+            </span>
+          } @else {
+            <img src="/images/logo/logo.svg" alt="Pachamama" />
+          }
         </div>
         <!-- Close button (mobile only) -->
         <button
@@ -47,11 +56,11 @@ export interface NavItem {
       <nav class="sidebar-nav">
         <div class="nav-section">
           <div class="nav-items">
-            @for (item of items(); track item.label) {
+            @for (item of sidebarService.menuItems(); track item.id) {
               <a
-                [routerLink]="item.to"
+                [routerLink]="item.path"
                 routerLinkActive="nav-link-active"
-                [routerLinkActiveOptions]="{ exact: item.to === '/home' }"
+                [routerLinkActiveOptions]="{ exact: item.path === '/home' }"
                 class="nav-link"
                 matRipple
                 [matRippleColor]="'rgba(33, 131, 88, 0.1)'"
@@ -88,15 +97,7 @@ export interface NavItem {
 })
 export class SidebarComponent {
   readonly layoutService = inject(LayoutService);
-
-  items = input<NavItem[]>([
-    { label: 'Inicio', to: '/home', icon: 'home' },
-    { label: 'Mis productos', to: '/products', icon: 'eco' },
-    { label: 'Empresas', to: '/companies', icon: 'business' },
-    { label: 'Proyectos', to: '/projects', icon: 'assessment' },
-    { label: 'Comunidades', to: '/communities', icon: 'map' },
-    { label: 'Configuración', to: '/brigades', icon: 'settings' },
-  ]);
+  readonly sidebarService = inject(SidebarService);
 
   onNavItemClick(): void {
     // Close sidebar on mobile after clicking a nav item

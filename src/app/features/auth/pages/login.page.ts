@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/auth/auth.service';
+import { SidebarService } from '../../../core/services/sidebar.service';
 
 /**
  * Página de Login - Pachamama Platform
@@ -34,6 +35,7 @@ export default class LoginPage {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private authService = inject(AuthService);
+  private sidebarService = inject(SidebarService);
 
   // Estado
   isLoading = signal(false);
@@ -62,10 +64,13 @@ export default class LoginPage {
     const { email, password } = this.loginForm.getRawValue();
 
     this.authService.login({ email, password }).subscribe({
-      next: () => {
-        // Login exitoso, redirigir a home
-        this.isLoading.set(false);
-        this.router.navigate(['/home']);
+      next: (userCredential) => {
+        userCredential.user.getIdToken().then((token) => {
+          console.log('Firebase Auth token:', token);
+          this.sidebarService.fetchSidebarData(token); //
+          this.isLoading.set(false);
+          this.router.navigate(['/home']);
+        });
       },
       error: (error: Error) => {
         // Mostrar error de autenticación
