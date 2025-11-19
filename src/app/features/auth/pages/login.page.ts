@@ -10,6 +10,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
+import { NotificationService } from '@app/core/services';
+import { User as FirebaseUser, sendEmailVerification } from '@angular/fire/auth';
+import { UsersService } from '@app/shared/services/users.service';
 
 /**
  * Página de Login - Pachamama Platform
@@ -36,11 +39,14 @@ export default class LoginPage {
   private router = inject(Router);
   private authService = inject(AuthService);
   private sidebarService = inject(SidebarService);
+  private notificationService = inject(NotificationService);
+  private userService = inject(UsersService);
 
   // Estado
   isLoading = signal(false);
   showPassword = signal(false);
   loginError = signal<string | null>(null);
+  passwordChangeSuccess = signal<string | null>(null);
 
   // Formulario
   loginForm = this.fb.nonNullable.group({
@@ -60,17 +66,44 @@ export default class LoginPage {
 
     this.isLoading.set(true);
     this.loginError.set(null);
+    this.passwordChangeSuccess.set(null);
 
     const { email, password } = this.loginForm.getRawValue();
 
     this.authService.login({ email, password }).subscribe({
       next: (userCredential) => {
-        userCredential.user.getIdToken().then((token) => {
-          console.log('Firebase Auth token:', token);
-          this.sidebarService.fetchSidebarData(token); //
-          this.isLoading.set(false);
-          this.router.navigate(['/home']);
-        });
+        const user: FirebaseUser = userCredential.user;
+
+        // Verificar si el correo está validado
+        if (!user.emailVerified) {
+          sendEmailVerification(user)
+            .then(() => {
+              this.isLoading.set(false);
+              this.notificationService.warning(
+                'Tu correo no está verificado. Hemos enviado un enlace de verificación a tu correo electrónico.',
+              );
+            })
+            .catch((error: unknown) => {
+              console.error('Error al enviar el correo de verificación:', error);
+            });
+        } else {
+          user.getIdToken().then((token) => {
+            console.log('Firebase Auth token:', token);
+            this.sidebarService.fetchSidebarData(token, () => {
+              this.userService.verifyEmail().subscribe({
+                next: () => {
+                  console.log('Verification email sent via UsersService');
+                  this.isLoading.set(false);
+                  this.router.navigate(['/home']);
+                },
+                error: (err: unknown) => {
+                  this.isLoading.set(false);
+                  console.error('Error sending verification email via UsersService:', err);
+                },
+              });
+            });
+          });
+        }
       },
       error: (error: Error) => {
         // Mostrar error de autenticación
@@ -99,7 +132,31 @@ export default class LoginPage {
    * Navega a recuperación de contraseña
    */
   goToForgotPassword(): void {
-    // TODO: Implementar recuperación de contraseña
-    console.log('Navigate to forgot password');
+    const email = this.loginForm.get('email')?.value;
+
+    if (!email) {
+      this.loginError.set(
+        'Por favor, ingresa tu correo electrónico para restablecer la contraseña.',
+      );
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.authService
+      .sendPasswordResetEmail(email)
+      .then(() => {
+        this.isLoading.set(false);
+        this.notificationService.success(
+          'Se ha enviado un enlace para restablecer tu contraseña a tu correo electrónico.',
+        );
+        this.passwordChangeSuccess.set(
+          'Se ha enviado un enlace para restablecer tu contraseña a tu correo electrónico.',
+        );
+      })
+      .catch((error) => {
+        this.isLoading.set(false);
+        this.loginError.set('Error al enviar el correo de restablecimiento de contraseña.');
+        console.error('Error:', error);
+      });
   }
 }

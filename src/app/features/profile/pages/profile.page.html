@@ -1,0 +1,295 @@
+<!-- Profile Header -->
+<app-hero-section
+  [title]="'Mi Perfil'"
+  [subtitle]="'Gestiona tu información personal y configuración de seguridad'"
+  [imageUrl]="'/images/illustrations/profile.svg'"
+></app-hero-section>
+<!-- Profile Page - Pachamama Admin -->
+<div class="profile-container">
+  @if (isLoadingProfile()) {
+    <!-- Loading State -->
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Cargando perfil...</p>
+    </div>
+  } @else if (userDetails()) {
+    <!-- Section 1: Avatar and Name -->
+    <mat-card class="avatar-card">
+      <mat-card-content>
+        <div class="avatar-section">
+          <div class="avatar-container">
+            @if (avatarPreview()) {
+              <img [src]="avatarPreview()" alt="Avatar" class="avatar-image" />
+            } @else {
+              <div class="avatar-placeholder">
+                <span class="avatar-initials">{{ getUserInitials() }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="avatar-info">
+            <h2 class="user-name">{{ userDetails()?.firstName }} {{ userDetails()?.lastName }}</h2>
+            <p class="user-email">{{ userDetails()?.email }}</p>
+            <p class="user-company">{{ userDetails()?.companyName }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Section 2: Personal Information -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="section-icon">person</mat-icon>
+          Información Personal
+        </mat-card-title>
+        @if (!isEditingPersonalInfo()) {
+          <button mat-button color="primary" (click)="enableEditing()" class="edit-button">
+            <mat-icon>edit</mat-icon>
+            Editar
+          </button>
+        }
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="personalInfoForm" class="personal-info-form">
+          <div class="form-grid">
+            <!-- Nombre -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="firstName" placeholder="Tu nombre" />
+              <mat-icon matPrefix>person</mat-icon>
+              @if (
+                personalInfoForm.get('firstName')?.hasError('required') &&
+                personalInfoForm.get('firstName')?.touched
+              ) {
+                <mat-error>El nombre es requerido</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Apellido -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Apellido</mat-label>
+              <input matInput formControlName="lastName" placeholder="Tu apellido" />
+              <mat-icon matPrefix>person</mat-icon>
+              @if (
+                personalInfoForm.get('lastName')?.hasError('required') &&
+                personalInfoForm.get('lastName')?.touched
+              ) {
+                <mat-error>El apellido es requerido</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Tipo de Documento -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Tipo de documento</mat-label>
+              <mat-select formControlName="documentType">
+                @for (type of documentTypes; track type.value) {
+                  <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                }
+              </mat-select>
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
+
+            <!-- Número de Documento -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Número de documento</mat-label>
+              <input matInput formControlName="documentNumber" placeholder="Número de documento" />
+              <mat-icon matPrefix>badge</mat-icon>
+              @if (
+                personalInfoForm.get('documentNumber')?.hasError('required') &&
+                personalInfoForm.get('documentNumber')?.touched
+              ) {
+                <mat-error>El número de documento es requerido</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Teléfono -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Teléfono</mat-label>
+              <input matInput formControlName="phone" placeholder="Número de teléfono" />
+              <mat-icon matPrefix>phone</mat-icon>
+            </mat-form-field>
+
+            <!-- Email (Solo lectura) -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Correo electrónico</mat-label>
+              <input matInput [value]="userDetails()?.email" disabled />
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-hint>El correo no se puede modificar</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <!-- Action Buttons -->
+          @if (isEditingPersonalInfo()) {
+            <div class="form-actions">
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="savePersonalInfo()"
+                [disabled]="personalInfoForm.invalid || isSavingPersonalInfo()"
+              >
+                @if (isSavingPersonalInfo()) {
+                  <mat-spinner diameter="20"></mat-spinner>
+                } @else {
+                  Guardar Cambios
+                }
+              </button>
+              <button
+                mat-stroked-button
+                (click)="cancelEditing()"
+                [disabled]="isSavingPersonalInfo()"
+              >
+                Cancelar
+              </button>
+            </div>
+          }
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Section 3: Change Avatar -->
+    <mat-card class="avatar-upload-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="section-icon">photo_camera</mat-icon>
+          Foto de Perfil
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="avatar-upload-section">
+          <p class="section-description mb-4">
+            Personaliza tu perfil con una foto. Formatos aceptados: JPG, PNG, SVG.
+          </p>
+
+          <app-image-upload
+            [maxSizeMB]="5"
+            [allowedTypes]="['image/jpeg', 'image/png', 'image/svg+xml']"
+            [directory]="'users'"
+            [currentImageUrl]="getAvatarImageUrl(userDetails()?.avatarUrl)"
+            (fileUploaded)="onImageUploaded($event)"
+            (fileRemoved)="onImageRemoved()"
+          />
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Section 4: Security -->
+    <mat-card class="security-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="section-icon">lock</mat-icon>
+          Seguridad
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <h3 class="subsection-title">Cambiar Contraseña</h3>
+        <p class="subsection-description">Actualiza tu contraseña para mantener tu cuenta segura</p>
+
+        <form [formGroup]="passwordForm" class="password-form">
+          <!-- Contraseña Actual -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contraseña actual</mat-label>
+            <input
+              matInput
+              [type]="showCurrentPassword() ? 'text' : 'password'"
+              formControlName="currentPassword"
+              placeholder="Ingresa tu contraseña actual"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              (click)="togglePasswordVisibility('current')"
+            >
+              <mat-icon>{{ showCurrentPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            @if (
+              passwordForm.get('currentPassword')?.hasError('required') &&
+              passwordForm.get('currentPassword')?.touched
+            ) {
+              <mat-error>La contraseña actual es requerida</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Nueva Contraseña -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nueva contraseña</mat-label>
+            <input
+              matInput
+              [type]="showNewPassword() ? 'text' : 'password'"
+              formControlName="newPassword"
+              placeholder="Ingresa tu nueva contraseña"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              (click)="togglePasswordVisibility('new')"
+            >
+              <mat-icon>{{ showNewPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            @if (
+              passwordForm.get('newPassword')?.hasError('required') &&
+              passwordForm.get('newPassword')?.touched
+            ) {
+              <mat-error>La nueva contraseña es requerida</mat-error>
+            }
+            @if (passwordForm.get('newPassword')?.hasError('minlength')) {
+              <mat-error>La contraseña debe tener al menos 8 caracteres</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Confirmar Contraseña -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirmar nueva contraseña</mat-label>
+            <input
+              matInput
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              placeholder="Confirma tu nueva contraseña"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              (click)="togglePasswordVisibility('confirm')"
+            >
+              <mat-icon>{{ showConfirmPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            @if (
+              passwordForm.get('confirmPassword')?.hasError('required') &&
+              passwordForm.get('confirmPassword')?.touched
+            ) {
+              <mat-error>Debes confirmar la contraseña</mat-error>
+            }
+            @if (
+              passwordForm.hasError('passwordsMismatch') &&
+              passwordForm.get('confirmPassword')?.touched
+            ) {
+              <mat-error>Las contraseñas no coinciden</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Change Password Button -->
+          <div class="form-actions">
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="changePassword()"
+              [disabled]="passwordForm.invalid || isChangingPassword()"
+            >
+              @if (isChangingPassword()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                Cambiar Contraseña
+              }
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

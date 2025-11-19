@@ -1,23 +1,11 @@
 <!-- Home Page - Pachamama Admin Dashboard -->
 <div class="home-container">
   <!-- Hero Section with Welcome Message -->
-  <section class="hero-section">
-    <mat-card class="hero-card">
-      <mat-card-content class="hero-content">
-        <div class="hero-text">
-          <h1 class="hero-title">Novedades</h1>
-          <p class="hero-subtitle">Construyendo un futuro sostenible</p>
-        </div>
-        <div class="hero-image">
-          <img
-            src="/images/illustrations/amazon-forest.jpg"
-            alt="Amazonía peruana"
-            class="rounded-xl object-cover"
-          />
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </section>
+  <app-hero-section
+    [title]="'Novedades'"
+    [subtitle]="'Construyendo un futuro sostenible'"
+    [imageUrl]="'/images/illustrations/amazon-forest.jpg'"
+  ></app-hero-section>
 
   <!-- Impact Metric Tabs -->
   <div class="metric-tabs">

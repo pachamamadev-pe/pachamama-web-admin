@@ -99,6 +99,13 @@
             </div>
           }
 
+          @if (passwordChangeSuccess()) {
+            <div class="success-message" role="alert">
+              <mat-icon>check_circle</mat-icon>
+              <span>{{ passwordChangeSuccess() }}</span>
+            </div>
+          }
+
           <!-- Login Button -->
           <button
             mat-raised-button

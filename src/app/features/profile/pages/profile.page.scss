@@ -1,0 +1,382 @@
+/**
+ * Profile Page Styles - Pachamama Admin
+ * Mobile-First Responsive Design
+ */
+
+// Variables
+$primary-green: #218358;
+$accent-orange: #fe714b;
+$neutral-dark: #0a0a0a;
+$neutral-gray: #737373;
+$neutral-border: #e5e5e5;
+$neutral-light: #f4fbf6;
+$white: #ffffff;
+$transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ============================================
+// CONTAINER
+// ============================================
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
+}
+
+// ============================================
+// LOADING STATE
+// ============================================
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 1rem;
+  color: $neutral-gray;
+
+  p {
+    font-size: 14px;
+    margin: 0;
+  }
+}
+
+// ============================================
+// PROFILE HEADER
+// ============================================
+.profile-header {
+  margin-bottom: 0.5rem;
+
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: $neutral-dark;
+    margin: 0 0 0.5rem 0;
+
+    @media (min-width: 768px) {
+      font-size: 30px;
+    }
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    color: $neutral-gray;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+// ============================================
+// CARDS
+// ============================================
+mat-card {
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  transition: $transition-smooth;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  mat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 1.5rem 0 1.5rem !important;
+    margin-bottom: 1rem;
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 18px;
+      font-weight: 600;
+      color: $neutral-dark;
+      margin: 0 !important;
+
+      .section-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        color: $primary-green;
+      }
+    }
+
+    .edit-button {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  mat-card-content {
+    padding: 0 1.5rem 1.5rem 1.5rem !important;
+  }
+}
+
+// ============================================
+// AVATAR CARD
+// ============================================
+.avatar-card {
+  background: linear-gradient(135deg, $neutral-light 0%, $white 100%);
+
+  .avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+
+    @media (min-width: 768px) {
+      flex-direction: row;
+      text-align: left;
+    }
+
+    .avatar-container {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      flex-shrink: 0;
+
+      .avatar-image,
+      .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid $white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .avatar-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, $primary-green 0%, darken($primary-green, 10%) 100%);
+        color: $white;
+
+        .avatar-initials {
+          font-size: 48px;
+          font-weight: 700;
+        }
+      }
+
+      .avatar-loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    .avatar-info {
+      flex: 1;
+
+      .user-name {
+        font-size: 24px;
+        font-weight: 700;
+        color: $neutral-dark;
+        margin: 0 0 0.5rem 0;
+
+        @media (min-width: 768px) {
+          font-size: 28px;
+        }
+      }
+
+      .user-email {
+        font-size: 14px;
+        color: $neutral-gray;
+        margin: 0 0 0.25rem 0;
+      }
+
+      .user-company {
+        font-size: 14px;
+        color: $primary-green;
+        font-weight: 500;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// ============================================
+// PERSONAL INFO FORM
+// ============================================
+.personal-info-form {
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .full-width {
+      width: 100%;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+
+    button {
+      min-width: 140px;
+      height: 44px;
+
+      mat-spinner {
+        display: inline-block;
+      }
+    }
+  }
+}
+
+// ============================================
+// AVATAR UPLOAD SECTION
+// ============================================
+.avatar-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .upload-preview {
+    width: 150px;
+    height: 150px;
+    flex-shrink: 0;
+
+    .preview-image {
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .preview-placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      border: 2px dashed $neutral-border;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba($neutral-light, 0.3);
+      color: $neutral-gray;
+
+      mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 0.5rem;
+      }
+
+      p {
+        font-size: 12px;
+        margin: 0;
+      }
+    }
+  }
+
+  .upload-actions {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    button {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .upload-hint {
+      font-size: 12px;
+      color: $neutral-gray;
+      margin: 0;
+    }
+  }
+}
+
+// ============================================
+// SECURITY CARD
+// ============================================
+.security-card {
+  .subsection-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $neutral-dark;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .subsection-description {
+    font-size: 14px;
+    color: $neutral-gray;
+    margin: 0 0 1.5rem 0;
+  }
+
+  .password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .full-width {
+      width: 100%;
+    }
+
+    .form-actions {
+      margin-top: 0.5rem;
+
+      button {
+        min-width: 180px;
+        height: 44px;
+
+        mat-spinner {
+          display: inline-block;
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// MATERIAL OVERRIDES
+// ============================================
+mat-form-field {
+  &.full-width {
+    width: 100%;
+  }
+}

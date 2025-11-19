@@ -1,9 +1,17 @@
-import { ChangeDetectionStrategy, Component, signal, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  computed,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import {
   LineChartComponent,
   type LineChartData,
@@ -13,6 +21,9 @@ import {
   type BarChartData,
 } from '../../../shared/components/bar-chart/bar-chart.component';
 import { SparklineChartComponent } from '../../../shared/components/sparkline-chart/sparkline-chart.component';
+import { HeroSectionComponent } from 'src/app/shared/components/hero-section/hero-section.component';
+import { SidebarService } from '@app/core/services/sidebar.service';
+import { ChangePasswordDialogComponent } from '@app/shared/components/change-password-dialog/change-password-dialog.component';
 
 @Component({
   standalone: true,
@@ -23,15 +34,57 @@ import { SparklineChartComponent } from '../../../shared/components/sparkline-ch
     MatIconModule,
     MatChipsModule,
     MatProgressBarModule,
+    MatDialogModule,
     LineChartComponent,
     BarChartComponent,
     SparklineChartComponent,
+    HeroSectionComponent,
   ],
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomePage {
+export class HomePage implements OnInit {
+  private dialog = inject(MatDialog);
+  private sidebarService = inject(SidebarService);
+  private dialogRef:
+    | import('@angular/material/dialog').MatDialogRef<ChangePasswordDialogComponent>
+    | null = null;
+
+  ngOnInit(): void {
+    // Verificar si necesita cambiar contraseña al cargar la página
+    // Solo abrir el modal si no está ya abierto
+    if (!this.sidebarService.isPasswordChanged() && !this.dialogRef) {
+      this.openChangePasswordDialog();
+    }
+  }
+
+  /**
+   * Abre el modal de cambio de contraseña obligatorio
+   */
+  private openChangePasswordDialog(): void {
+    // Prevenir múltiples aperturas del modal
+    if (this.dialogRef) {
+      return;
+    }
+
+    this.dialogRef = this.dialog.open(ChangePasswordDialogComponent, {
+      disableClose: true, // No se puede cerrar con ESC o click fuera
+      width: '100%',
+      maxWidth: '500px',
+      panelClass: 'change-password-dialog-container',
+    });
+
+    // Limpiar la referencia cuando el modal se cierre
+    this.dialogRef.afterClosed().subscribe((result) => {
+      this.dialogRef = null;
+
+      // Si el cambio fue exitoso, recargar la página o navegar
+      if (result === true) {
+        // Contraseña cambiada exitosamente
+      }
+    });
+  }
   // Mock data - TODO: Replace with real API calls
   stats = signal([
     {

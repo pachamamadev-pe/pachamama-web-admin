@@ -8,6 +8,7 @@ import {
   user,
   UserCredential,
   authState,
+  sendPasswordResetEmail,
 } from '@angular/fire/auth';
 import { Observable, from, map, catchError, switchMap } from 'rxjs';
 import { User, LoginCredentials, AUTH_ERROR_MESSAGES } from './auth.models';
@@ -164,5 +165,20 @@ export class AuthService {
    */
   private getErrorMessage(errorCode: string): string {
     return AUTH_ERROR_MESSAGES[errorCode] || AUTH_ERROR_MESSAGES['auth/unknown'];
+  }
+
+  /**
+   * Enviar correo de restablecimiento de contraseña
+   * @param email Correo electrónico del usuario
+   * @returns Promise<void>
+   */
+  async sendPasswordResetEmail(email: string): Promise<void> {
+    try {
+      await sendPasswordResetEmail(this.auth, email);
+      console.log('Correo de restablecimiento enviado a:', email);
+    } catch (error) {
+      console.error('Error al enviar el correo de restablecimiento:', error);
+      throw new Error('No se pudo enviar el correo de restablecimiento de contraseña.');
+    }
   }
 }

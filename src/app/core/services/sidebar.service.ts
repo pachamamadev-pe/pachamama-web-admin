@@ -19,6 +19,9 @@ interface MenuItem {
 interface SidebarResponse {
   companyName: string;
   menuItems: MenuItem[];
+  emailVerified: boolean;
+  isPasswordChanged: boolean;
+  userId: string;
 }
 
 @Injectable({
@@ -32,6 +35,9 @@ export class SidebarService {
   // Signals
   menuItems = signal<MenuItem[]>([]);
   companyName = signal<string>('');
+  emailVerified = signal<boolean>(false);
+  isPasswordChanged = signal<boolean>(false);
+  userId = signal<string>('');
 
   constructor() {
     this.loadFromLocalStorage();
@@ -41,7 +47,7 @@ export class SidebarService {
    * Obtener el menu de la barra lateral desde el backend
    * @param token Firebase Auth token
    */
-  fetchSidebarData(token: string): void {
+  fetchSidebarData(token: string, callback?: () => void): void {
     const headers = { Authorization: `Bearer ${token}` };
     this.http
       .get<SidebarResponse>(this.uploadApiUrl, { headers })
@@ -49,13 +55,20 @@ export class SidebarService {
         map((response: SidebarResponse) => ({
           companyName: this.truncateCompanyName(response.companyName),
           menuItems: response.menuItems.sort((a: MenuItem, b: MenuItem) => a.order - b.order),
+          emailVerified: response.emailVerified,
+          isPasswordChanged: response.isPasswordChanged,
+          userId: response.userId,
         })),
       )
       .subscribe({
-        next: ({ companyName, menuItems }: { companyName: string; menuItems: MenuItem[] }) => {
+        next: ({ companyName, menuItems, emailVerified, isPasswordChanged, userId }) => {
           this.companyName.set(companyName);
           this.menuItems.set(menuItems);
-          this.saveToLocalStorage(companyName, menuItems);
+          this.emailVerified.set(emailVerified);
+          this.isPasswordChanged.set(isPasswordChanged);
+          this.userId.set(userId);
+          this.saveToLocalStorage(companyName, menuItems, emailVerified, isPasswordChanged, userId);
+          if (callback) callback();
         },
         error: (err: unknown) => {
           console.error('Error fetching sidebar data:', err);
@@ -67,9 +80,18 @@ export class SidebarService {
    * Guarda los datos en localStorage
    * @param companyName Nombre de la empresa
    * @param menuItems Elementos del menú
+   * @param emailVerified Estado de verificación del email
+   * @param isPasswordChanged Estado de cambio de contraseña
+   * @param userId ID del usuario
    */
-  private saveToLocalStorage(companyName: string, menuItems: MenuItem[]): void {
-    const data = { companyName, menuItems };
+  private saveToLocalStorage(
+    companyName: string,
+    menuItems: MenuItem[],
+    emailVerified: boolean,
+    isPasswordChanged: boolean,
+    userId: string,
+  ): void {
+    const data = { companyName, menuItems, emailVerified, isPasswordChanged, userId };
     localStorage.setItem(this.localStorageKey, JSON.stringify(data));
   }
 
@@ -80,9 +102,18 @@ export class SidebarService {
     const data = localStorage.getItem(this.localStorageKey);
     if (data) {
       try {
-        const parsedData = JSON.parse(data) as { companyName: string; menuItems: MenuItem[] };
+        const parsedData = JSON.parse(data) as {
+          companyName: string;
+          menuItems: MenuItem[];
+          emailVerified: boolean;
+          isPasswordChanged: boolean;
+          userId: string;
+        };
         this.companyName.set(parsedData.companyName);
         this.menuItems.set(parsedData.menuItems);
+        this.emailVerified.set(parsedData.emailVerified);
+        this.isPasswordChanged.set(parsedData.isPasswordChanged);
+        this.userId.set(parsedData.userId || '');
       } catch (error) {
         console.error('Error parsing sidebar data from localStorage:', error);
       }

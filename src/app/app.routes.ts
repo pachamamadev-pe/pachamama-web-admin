@@ -54,6 +54,11 @@ export const appRoutes: Routes = [
           import('./features/brigades/pages/brigades.page').then((m) => m.BrigadesPage),
       },
       {
+        path: 'profile',
+        title: 'Mi Perfil',
+        loadComponent: () => import('./features/profile/pages/profile.page'),
+      },
+      {
         path: 'projects/:id/areas/import',
         title: 'Importar áreas',
         loadComponent: () =>
