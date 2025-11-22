@@ -37,13 +37,13 @@ export const appRoutes: Routes = [
       },
       {
         path: 'communities',
-        title: 'Mapa recolección aprobada',
+        title: 'Comunidades',
         loadComponent: () =>
           import('./features/communities/pages/communities.page').then((m) => m.CommunitiesPage),
       },
       {
         path: 'projects',
-        title: 'Reportes',
+        title: 'Proyectos',
         loadComponent: () =>
           import('./features/projects/pages/projects.page').then((m) => m.ProjectsPage),
       },

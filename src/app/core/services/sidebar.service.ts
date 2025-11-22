@@ -18,6 +18,7 @@ interface MenuItem {
 
 interface SidebarResponse {
   companyName: string;
+  tenantId: string;
   menuItems: MenuItem[];
   emailVerified: boolean;
   isPasswordChanged: boolean;
@@ -38,6 +39,7 @@ export class SidebarService {
   emailVerified = signal<boolean>(false);
   isPasswordChanged = signal<boolean>(false);
   userId = signal<string>('');
+  tenantId = signal<string>('');
 
   constructor() {
     this.loadFromLocalStorage();
@@ -54,6 +56,7 @@ export class SidebarService {
       .pipe(
         map((response: SidebarResponse) => ({
           companyName: this.truncateCompanyName(response.companyName),
+          tenantId: response.tenantId,
           menuItems: response.menuItems.sort((a: MenuItem, b: MenuItem) => a.order - b.order),
           emailVerified: response.emailVerified,
           isPasswordChanged: response.isPasswordChanged,
@@ -61,13 +64,21 @@ export class SidebarService {
         })),
       )
       .subscribe({
-        next: ({ companyName, menuItems, emailVerified, isPasswordChanged, userId }) => {
+        next: ({ companyName, tenantId, menuItems, emailVerified, isPasswordChanged, userId }) => {
           this.companyName.set(companyName);
+          this.tenantId.set(tenantId);
           this.menuItems.set(menuItems);
           this.emailVerified.set(emailVerified);
           this.isPasswordChanged.set(isPasswordChanged);
           this.userId.set(userId);
-          this.saveToLocalStorage(companyName, menuItems, emailVerified, isPasswordChanged, userId);
+          this.saveToLocalStorage(
+            companyName,
+            tenantId,
+            menuItems,
+            emailVerified,
+            isPasswordChanged,
+            userId,
+          );
           if (callback) callback();
         },
         error: (err: unknown) => {
@@ -79,6 +90,7 @@ export class SidebarService {
   /**
    * Guarda los datos en localStorage
    * @param companyName Nombre de la empresa
+   * @param tenantId ID del tenant
    * @param menuItems Elementos del menú
    * @param emailVerified Estado de verificación del email
    * @param isPasswordChanged Estado de cambio de contraseña
@@ -86,12 +98,13 @@ export class SidebarService {
    */
   private saveToLocalStorage(
     companyName: string,
+    tenantId: string,
     menuItems: MenuItem[],
     emailVerified: boolean,
     isPasswordChanged: boolean,
     userId: string,
   ): void {
-    const data = { companyName, menuItems, emailVerified, isPasswordChanged, userId };
+    const data = { companyName, tenantId, menuItems, emailVerified, isPasswordChanged, userId };
     localStorage.setItem(this.localStorageKey, JSON.stringify(data));
   }
 
@@ -104,12 +117,14 @@ export class SidebarService {
       try {
         const parsedData = JSON.parse(data) as {
           companyName: string;
+          tenantId: string;
           menuItems: MenuItem[];
           emailVerified: boolean;
           isPasswordChanged: boolean;
           userId: string;
         };
         this.companyName.set(parsedData.companyName);
+        this.tenantId.set(parsedData.tenantId);
         this.menuItems.set(parsedData.menuItems);
         this.emailVerified.set(parsedData.emailVerified);
         this.isPasswordChanged.set(parsedData.isPasswordChanged);

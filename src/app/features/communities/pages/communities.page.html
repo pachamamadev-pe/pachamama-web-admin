@@ -1,0 +1,238 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="text-title font-bold text-accent-titles">Comunidades</h1>
+        <p class="text-subtitle text-neutral-subheading">
+          Gestiona las comunidades nativas y campesinas registradas en la plataforma
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          <span class="hidden sm:inline">Añadir comunidad</span>
+          <span class="sm:hidden">Añadir</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-container">
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+        <input
+          matInput
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar comunidades..."
+          class="text-body"
+        />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()" matTooltip="Limpiar búsqueda">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="page-content">
+    @if (loading()) {
+      <!-- Loading state -->
+      <div class="loading-container">
+        <mat-spinner diameter="48" />
+        <p class="text-body text-neutral-subheading mt-4">Cargando comunidades...</p>
+      </div>
+    } @else if (communities().length === 0 && !searchTerm()) {
+      <!-- Empty state -->
+      <app-empty-state
+        icon="groups"
+        [useMaterialIcon]="true"
+        title="No hay comunidades registradas"
+        description="Comienza creando tu primera comunidad para gestionar sus datos"
+        actionLabel="Crear primera comunidad"
+        (action)="openCreateDialog()"
+      />
+    } @else if (filteredCommunities().length === 0 && searchTerm()) {
+      <!-- No Results State -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <mat-icon>search_off</mat-icon>
+        </div>
+        <h3 class="text-body font-bold text-accent-titles">No se encontraron comunidades</h3>
+        <p class="text-subtitle text-neutral-subheading">Intenta con otros términos de búsqueda</p>
+        <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
+      </div>
+    } @else {
+      <!-- Communities Table (Desktop only) -->
+      <div class="communities-table">
+        <div class="products-table hidden md:block">
+          <table mat-table [dataSource]="filteredCommunities()" class="w-full">
+            <!-- Código Column -->
+            <ng-container matColumnDef="code">
+              <th mat-header-cell *matHeaderCellDef class="table-th text-left">Código</th>
+              <td mat-cell *matCellDef="let community" class="table-td">
+                <span class="text-body text-accent-titles font-mono">{{ community.code }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Nombre Column -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef class="table-th text-left">Nombre</th>
+              <td mat-cell *matCellDef="let community" class="table-td">
+                <div class="flex flex-col">
+                  <span class="text-body font-bold text-accent-titles">
+                    {{ community.name }}
+                  </span>
+                  <span class="text-subtitle text-neutral-subheading lg:hidden">
+                    {{ community.legalAddress }}
+                  </span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- RUC Column -->
+            <ng-container matColumnDef="ruc">
+              <th mat-header-cell *matHeaderCellDef class="table-th text-left">RUC</th>
+              <td mat-cell *matCellDef="let community" class="table-td">
+                <span class="text-body font-mono text-accent-titles">{{ community.ruc }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Dirección Legal Column -->
+            <ng-container matColumnDef="legalAddress">
+              <th mat-header-cell *matHeaderCellDef class="table-th text-left hidden lg:table-cell">
+                Dirección Legal
+              </th>
+              <td mat-cell *matCellDef="let community" class="table-td hidden lg:table-cell">
+                <span class="text-subtitle text-neutral-subheading">
+                  {{ community.legalAddress }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Ubicación Column -->
+            <ng-container matColumnDef="location">
+              <th mat-header-cell *matHeaderCellDef class="table-th text-left">Ubicación</th>
+              <td mat-cell *matCellDef="let community" class="table-td">
+                <div class="flex flex-col">
+                  <span class="text-body text-accent-titles">{{ community.district }}</span>
+                  <span class="text-subtitle text-neutral-subheading">
+                    {{ community.province }}, {{ community.region }}
+                  </span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Acciones Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="table-th text-right">Acciones</th>
+              <td mat-cell *matCellDef="let community" class="table-td text-right">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="tableMenu"
+                  (click)="$event.stopPropagation()"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #tableMenu="matMenu">
+                  <button mat-menu-item (click)="openEditDialog(community)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+
+                  <button mat-menu-item (click)="deleteCommunity(community)" class="text-red-600">
+                    <mat-icon class="text-red-600">delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+          </table>
+        </div>
+
+        <!-- Pagination (Desktop only) -->
+        <mat-paginator
+          [length]="totalElements()"
+          [pageSize]="pageSize()"
+          [pageIndex]="currentPage()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+        />
+      </div>
+
+      <!-- Mobile Cards (visible only on mobile) -->
+      <div class="mobile-cards">
+        @for (community of filteredCommunities(); track community.id) {
+          <div class="community-card bg-primary-white rounded-lg shadow p-4">
+            <!-- Header with menu -->
+            <div class="card-header">
+              <div class="card-title">
+                <h3 class="text-body font-bold text-primary-black">
+                  {{ community.name }}
+                </h3>
+                <p class="text-subtitle text-neutral-subheading">{{ community.code }}</p>
+              </div>
+
+              <div class="card-actions">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="mobileMenu"
+                  aria-label="Menú de acciones"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #mobileMenu="matMenu">
+                  <button mat-menu-item (click)="openEditDialog(community)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+
+                  <button mat-menu-item (click)="deleteCommunity(community)" class="text-red-600">
+                    <mat-icon class="text-red-600">delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
+
+            <!-- Community Details -->
+            <div class="card-details">
+              <!-- RUC -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">badge</mat-icon>
+                <span class="detail-label">RUC:</span>
+                <span class="detail-value font-mono">{{ community.ruc }}</span>
+              </div>
+
+              <!-- Dirección -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">location_on</mat-icon>
+                <span class="detail-label">Dirección:</span>
+                <span class="detail-value">{{ community.legalAddress }}</span>
+              </div>
+
+              <!-- Ubicación -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">place</mat-icon>
+                <span class="detail-label">Ubicación:</span>
+                <span class="detail-value">
+                  {{ community.district }}, {{ community.province }}, {{ community.region }}
+                </span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,243 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="text-title font-bold text-accent-titles">Proyectos</h1>
+        <p class="text-subtitle text-neutral-subheading">
+          Gestiona los proyectos registrados en la plataforma
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          <span class="hidden sm:inline">Añadir proyecto</span>
+          <span class="sm:hidden">Añadir</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-container">
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+        <input
+          matInput
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar proyectos..."
+          class="text-body"
+        />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()" matTooltip="Limpiar búsqueda">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="page-content">
+    @if (loading()) {
+      <!-- Loading state -->
+      <div class="loading-container">
+        <mat-spinner diameter="48" />
+        <p class="text-body text-neutral-subheading mt-4">Cargando proyectos...</p>
+      </div>
+    } @else if (projects().length === 0 && !searchTerm()) {
+      <!-- Empty state -->
+      <app-empty-state
+        icon="folder"
+        [useMaterialIcon]="true"
+        title="No hay proyectos registrados"
+        description="Comienza creando tu primer proyecto para gestionar inventarios y áreas"
+        actionLabel="Crear primer proyecto"
+        (action)="openCreateDialog()"
+      />
+    } @else if (filteredProjects().length === 0 && searchTerm()) {
+      <!-- No Results State -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <mat-icon>search_off</mat-icon>
+        </div>
+        <h3 class="text-body font-bold text-accent-titles">No se encontraron proyectos</h3>
+        <p class="text-subtitle text-neutral-subheading">Intenta con otros términos de búsqueda</p>
+        <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
+      </div>
+    } @else {
+      <!-- Projects Table (Desktop only) -->
+      <div class="projects-table">
+        <div class="products-table hidden md:block">
+          <table class="table-auto w-full">
+            <thead class="table-header">
+              <tr>
+                <th class="table-th text-left">Nombre</th>
+                <th class="table-th text-left">Producto</th>
+                <th class="table-th text-left hidden lg:table-cell">Periodo</th>
+                <th class="table-th text-left">Etapa</th>
+                <th class="table-th text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="table-body">
+              @for (project of filteredProjects(); track project.id) {
+                <tr class="table-row">
+                  <!-- Nombre -->
+                  <td class="table-td">
+                    <div class="flex flex-col">
+                      <span class="text-body font-bold text-accent-titles">
+                        {{ project.name }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <!-- Producto -->
+                  <td class="table-td">
+                    <span class="text-body text-accent-titles">
+                      {{ getProductName(project.productId) }}
+                    </span>
+                  </td>
+
+                  <!-- Periodo (solo desktop grande) -->
+                  <td class="table-td hidden lg:table-cell">
+                    <div class="flex items-center gap-1">
+                      <mat-icon
+                        class="text-neutral-subheading"
+                        style="font-size: 16px; width: 16px; height: 16px"
+                        >event</mat-icon
+                      >
+                      <span class="text-subtitle text-neutral-subheading">
+                        {{ getProjectPeriod(project.startDate, project.endDate) }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <!-- Etapa -->
+                  <td class="table-td">
+                    <mat-chip class="stage-chip" [ngClass]="getProjectStageClass(project.stage)">
+                      {{ getProjectStageLabel(project.stage) }}
+                    </mat-chip>
+                  </td>
+
+                  <!-- Acciones -->
+                  <td class="table-td text-right">
+                    <button
+                      mat-icon-button
+                      [matMenuTriggerFor]="tableMenu"
+                      (click)="$event.stopPropagation()"
+                    >
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+
+                    <mat-menu #tableMenu="matMenu">
+                      <button mat-menu-item (click)="openEditDialog(project)">
+                        <mat-icon>edit</mat-icon>
+                        <span>Editar</span>
+                      </button>
+
+                      <button mat-menu-item (click)="deleteProject(project)" class="text-red-600">
+                        <mat-icon class="text-red-600">delete</mat-icon>
+                        <span>Eliminar</span>
+                      </button>
+                    </mat-menu>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (Desktop only) -->
+        <mat-paginator
+          [length]="totalElements()"
+          [pageSize]="pageSize()"
+          [pageIndex]="currentPage()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+        />
+      </div>
+
+      <!-- Mobile Cards (visible only on mobile) -->
+      <div class="mobile-cards">
+        @for (project of filteredProjects(); track project.id) {
+          <div class="project-card bg-primary-white rounded-lg shadow p-4">
+            <!-- Header with status and menu -->
+            <div class="card-header">
+              <div class="card-title">
+                <h3 class="text-body font-bold text-primary-black">
+                  {{ project.name }}
+                </h3>
+              </div>
+
+              <div class="card-actions">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="mobileMenu"
+                  aria-label="Menú de acciones"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #mobileMenu="matMenu">
+                  <button mat-menu-item (click)="openEditDialog(project)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+
+                  <button mat-menu-item (click)="deleteProject(project)" class="text-red-600">
+                    <mat-icon class="text-red-600">delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
+
+            <!-- Stage Badge -->
+            <div class="mb-2">
+              <mat-chip class="stage-chip" [ngClass]="getProjectStageClass(project.stage)">
+                {{ getProjectStageLabel(project.stage) }}
+              </mat-chip>
+            </div>
+
+            <!-- Project Details -->
+            <div class="card-details">
+              <!-- Producto -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">category</mat-icon>
+                <span class="detail-label">Producto:</span>
+                <span class="detail-value">{{ getProductName(project.productId) }}</span>
+              </div>
+
+              <!-- Periodo -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">event</mat-icon>
+                <span class="detail-label">Periodo:</span>
+                <span class="detail-value">
+                  {{ getProjectPeriod(project.startDate, project.endDate) }}
+                </span>
+              </div>
+
+              <!-- Estado -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">info</mat-icon>
+                <span class="detail-label">Estado:</span>
+                <span class="detail-value">{{ project.status }}</span>
+              </div>
+
+              <!-- Descripción -->
+              @if (project.description) {
+                <div class="detail-row">
+                  <mat-icon class="detail-icon">description</mat-icon>
+                  <span class="detail-label">Descripción:</span>
+                  <span class="detail-value">{{ project.description }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

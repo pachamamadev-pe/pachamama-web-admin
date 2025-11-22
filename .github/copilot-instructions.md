@@ -80,6 +80,545 @@ Material components will automatically use these colors.
 - Do NOT use `ngClass`, use `class` bindings instead
 - Do NOT use `ngStyle`, use `style` bindings instead
 
+### CRUD Pages Standard
+
+For all CRUD list pages, **always define** a `displayedColumns` array that specifies visible table columns:
+
+```typescript
+export class MyFeaturePage {
+  // ✅ REQUIRED: Define columns explicitly
+  displayedColumns: string[] = [
+    'column1',
+    'column2',
+    'column3',
+    'actions', // Always include actions as last column
+  ];
+}
+```
+
+**Example from Companies (the standard):**
+
+```typescript
+displayedColumns: string[] = [
+  'ruc',
+  'businessName',
+  'tradeName',
+  'licenseType',
+  'admins',
+  'status',
+  'actions',
+];
+```
+
+**Example from Communities:**
+
+```typescript
+displayedColumns: string[] = [
+  'code',
+  'name',
+  'ruc',
+  'legalAddress',
+  'location',
+  'actions',
+];
+```
+
+**Why?**
+
+- Makes column management explicit and maintainable
+- Easy to add/remove columns by editing the array
+- Consistent pattern across all CRUDs
+- Clear documentation of table structure
+
+## CRUD Standard Pattern (Based on Companies)
+
+**ALL CRUD modules MUST follow the exact UX/architecture pattern established in `features/companies/`**
+
+This ensures:
+
+- ✅ Consistent user experience across the entire application
+- ✅ Mobile-first responsive design (table → cards)
+- ✅ Predictable navigation and interactions
+- ✅ Maintainable and scalable codebase
+
+### 📋 Required File Structure
+
+```
+features/{feature-name}/
+├── pages/
+│   ├── {feature-name}.page.ts         # Main CRUD page
+│   ├── {feature-name}.page.html       # Separate HTML template
+│   └── {feature-name}.page.scss       # Separate styles (copy from companies)
+├── components/
+│   └── {feature-name}-form.component.ts  # Dialog for create/edit
+├── services/
+│   └── {feature-name}.service.ts      # CRUD service (4 methods)
+└── models/
+    └── {feature-name}.model.ts        # Types and interfaces
+```
+
+### 🎨 HTML Structure (EXACT Pattern)
+
+All CRUD pages MUST follow this structure:
+
+```html
+<div class="page-container">
+  <!-- 1. Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="text-title font-bold text-accent-titles">{Title}</h1>
+        <p class="text-subtitle text-neutral-subheading">{Description}</p>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          <span class="hidden sm:inline">Añadir {entity}</span>
+          <span class="sm:hidden">Añadir</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. Search Bar -->
+    <div class="search-container">
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+        <input
+          matInput
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar {entities}..."
+          class="text-body"
+        />
+        @if (searchTerm()) {
+        <button matSuffix mat-icon-button (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+        }
+      </mat-form-field>
+    </div>
+  </header>
+
+  <!-- 3. Content Area -->
+  <div class="page-content">
+    @if (loading()) {
+    <!-- Loading State -->
+    <div class="loading-container">
+      <mat-spinner diameter="48" />
+      <p class="text-body text-neutral-subheading mt-4">Cargando {entities}...</p>
+    </div>
+    } @else if (items().length === 0 && !searchTerm()) {
+    <!-- Empty State -->
+    <app-empty-state
+      icon="{icon}"
+      [useMaterialIcon]="true"
+      title="No hay {entities} registrados"
+      description="Comienza creando {description}"
+      actionLabel="Crear primer {entity}"
+      (action)="openCreateDialog()"
+    />
+    } @else if (filteredItems().length === 0 && searchTerm()) {
+    <!-- No Results State -->
+    <div class="empty-state">
+      <div class="empty-icon">
+        <mat-icon>search_off</mat-icon>
+      </div>
+      <h3 class="text-body font-bold text-accent-titles">No se encontraron {entities}</h3>
+      <p class="text-subtitle text-neutral-subheading">Intenta con otros términos de búsqueda</p>
+      <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
+    </div>
+    } @else {
+    <!-- 4. Desktop Table (hidden on mobile) -->
+    <div class="{feature}-table">
+      <div class="products-table hidden md:block">
+        <table class="table-auto w-full">
+          <thead class="table-header">
+            <tr>
+              <th class="table-th text-left">{Column 1}</th>
+              <th class="table-th text-left">{Column 2}</th>
+              <!-- More columns -->
+              <th class="table-th text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="table-body">
+            @for (item of filteredItems(); track item.id) {
+            <tr class="table-row">
+              <td class="table-td"><!-- Column content --></td>
+              <!-- More columns -->
+              <td class="table-td text-right">
+                <button mat-icon-button [matMenuTriggerFor]="tableMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #tableMenu="matMenu">
+                  <button mat-menu-item (click)="openEditDialog(item)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <button mat-menu-item (click)="deleteItem(item)">
+                    <mat-icon>delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize()"
+        [pageIndex]="currentPage()"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      />
+    </div>
+
+    <!-- 5. Mobile Cards (hidden on desktop) -->
+    <div class="mobile-cards">
+      @for (item of filteredItems(); track item.id) {
+      <div class="{feature}-card bg-primary-white rounded-lg shadow p-4">
+        <div class="card-header">
+          <div class="card-title">
+            <h3 class="text-body font-bold text-primary-black">{{ item.name }}</h3>
+          </div>
+          <div class="card-actions">
+            <button mat-icon-button [matMenuTriggerFor]="mobileMenu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #mobileMenu="matMenu">
+              <!-- Same actions as desktop -->
+            </mat-menu>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="detail-row">
+            <mat-icon class="detail-icon">{icon}</mat-icon>
+            <span class="detail-label">{Label}:</span>
+            <span class="detail-value">{{ item.field }}</span>
+          </div>
+          <!-- More detail rows -->
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>
+```
+
+### 📝 TypeScript Component Pattern
+
+```typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatTableModule } from '@angular/material/table';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { NotificationService } from '@core/services/notification.service';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+
+@Component({
+  selector: 'app-{feature}-page',
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
+    MatDialogModule,
+    MatTooltipModule,
+    MatProgressSpinnerModule,
+    MatPaginatorModule,
+    MatFormFieldModule,
+    MatInputModule,
+    EmptyStateComponent,
+  ],
+  templateUrl: './{feature}.page.html',
+  styleUrl: './{feature}.page.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class {Feature}Page implements OnInit {
+  private {feature}Service = inject({Feature}Service);
+  private dialog = inject(MatDialog);
+  private notification = inject(NotificationService);
+
+  // Search and filtering
+  searchTerm = signal('');
+
+  // Pagination
+  currentPage = signal(0);
+  pageSize = signal(10);
+  totalElements = signal(0);
+
+  // Data
+  items = signal<{Type}[]>([]);
+  loading = signal(true);
+
+  // Filtered items based on search
+  filteredItems = computed(() => {
+    const search = this.searchTerm().toLowerCase().trim();
+    if (!search) {
+      return this.items();
+    }
+    return this.items().filter((item) => {
+      // Filter logic for multiple fields
+      return (
+        item.field1.toLowerCase().includes(search) ||
+        item.field2.toLowerCase().includes(search)
+      );
+    });
+  });
+
+  // ✅ REQUIRED: displayedColumns array
+  displayedColumns: string[] = ['col1', 'col2', 'col3', 'actions'];
+
+  ngOnInit(): void {
+    this.loadItems();
+  }
+
+  loadItems(): void {
+    this.loading.set(true);
+    this.{feature}Service.get{Items}().subscribe({
+      next: (response) => {
+        this.items.set(response ?? []);
+        this.totalElements.set(response.length ?? 0);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading {items}:', error);
+        this.notification.error('Error al cargar {items}');
+        this.items.set([]);
+        this.totalElements.set(0);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  openCreateDialog(): void {
+    const dialogRef = this.dialog.open({Feature}FormComponent, {
+      width: '100%',
+      maxWidth: '600px',
+      data: { mode: 'create' },
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && result.mode === 'create') {
+        this.createItem(result.data);
+      }
+    });
+  }
+
+  openEditDialog(item: {Type}): void {
+    const dialogRef = this.dialog.open({Feature}FormComponent, {
+      width: '100%',
+      maxWidth: '600px',
+      data: { mode: 'edit', {item}: item },
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && result.mode === 'edit') {
+        this.updateItem(item.id, result.data);
+      }
+    });
+  }
+
+  deleteItem(item: {Type}): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Eliminar {entity}?',
+        message: `Esta acción eliminará permanentemente "${item.name}".`,
+        confirmText: 'Eliminar',
+        type: 'danger',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.performDelete(item.id);
+      }
+    });
+  }
+
+  onSearchChange(term: string): void {
+    this.searchTerm.set(term);
+  }
+
+  clearSearch(): void {
+    this.searchTerm.set('');
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.currentPage.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    // Future: call loadItems() with pagination params
+  }
+
+  private createItem(data: Create{Type}Request): void {
+    this.{feature}Service.create{Item}(data).subscribe({
+      next: () => {
+        this.notification.success('{Entity} creado correctamente');
+        this.loadItems();
+      },
+      error: (error) => {
+        console.error('Error creating {item}:', error);
+        this.notification.error('Error al crear {entity}');
+      },
+    });
+  }
+
+  private updateItem(id: string, data: Update{Type}Request): void {
+    this.{feature}Service.update{Item}(id, data).subscribe({
+      next: () => {
+        this.notification.success('{Entity} actualizado correctamente');
+        this.loadItems();
+      },
+      error: (error) => {
+        console.error('Error updating {item}:', error);
+        this.notification.error('Error al actualizar {entity}');
+      },
+    });
+  }
+
+  private performDelete(id: string): void {
+    this.{feature}Service.delete{Item}(id).subscribe({
+      next: () => {
+        this.notification.success('{Entity} eliminado correctamente');
+        this.loadItems();
+      },
+      error: (error) => {
+        console.error('Error deleting {item}:', error);
+        this.notification.error('Error al eliminar {entity}');
+      },
+    });
+  }
+}
+```
+
+### 🎨 SCSS Pattern (Copy from Companies)
+
+**ALWAYS copy the SCSS from `companies.page.scss` and only change:**
+
+- Class names: `.companies-table` → `.{feature}-table`
+- Class names: `.company-card` → `.{feature}-card`
+
+The SCSS includes:
+
+- ✅ Mobile-first responsive design
+- ✅ Desktop table styles (hidden on mobile)
+- ✅ Mobile cards (hidden on desktop)
+- ✅ Pachamama color scheme
+- ✅ Loading, empty, and error states
+- ✅ Hover effects and transitions
+- ✅ Tailwind @apply utilities
+
+### 🔧 Service Pattern (4 Required Methods)
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class {Feature}Service {
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/{feature-plural}`;
+
+  get{Items}(): Observable<{Type}[]> {
+    return this.http.get<{Type}[]>(this.apiUrl);
+  }
+
+  create{Item}(data: Create{Type}Request): Observable<{Type}> {
+    return this.http.post<{Type}>(this.apiUrl, data);
+  }
+
+  update{Item}(id: string, data: Update{Type}Request): Observable<{Type}> {
+    return this.http.put<{Type}>(`${this.apiUrl}/${id}`, data);
+  }
+
+  delete{Item}(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+}
+```
+
+### 💬 Dialog/Form Component Pattern
+
+- Use `MatDialog` with `maxWidth: '600px'`
+- Pass `{ mode: 'create' | 'edit', item?: T }` as data
+- Use `disableClose: true` to prevent accidental closes
+- Return `{ mode, data }` on close
+- Use Reactive Forms with validation
+- Show loading state with `mat-spinner` on save button
+
+### ✅ CRUD Checklist
+
+Before marking a CRUD as complete, verify:
+
+**Structure:**
+
+- [ ] Files organized: pages/, components/, services/, models/
+- [ ] Page separated into .ts, .html, .scss
+- [ ] SCSS copied from companies.page.scss
+
+**HTML:**
+
+- [ ] Uses `<div class="page-container">` wrapper
+- [ ] Has page-header with title + subtitle + create button
+- [ ] Has search-container with MatFormField
+- [ ] Shows loading state with mat-spinner
+- [ ] Shows empty state with app-empty-state component
+- [ ] Shows "no results" state when search has no matches
+- [ ] Desktop table with `.{feature}-table` class (hidden md:block)
+- [ ] Mobile cards with `.mobile-cards` class (visible on mobile only)
+- [ ] MatPaginator with standard config
+
+**TypeScript:**
+
+- [ ] Uses signals: searchTerm, loading, items, currentPage, pageSize, totalElements
+- [ ] Has computed signal: filteredItems
+- [ ] Has displayedColumns array
+- [ ] Methods: loadItems, openCreateDialog, openEditDialog, deleteItem
+- [ ] Methods: onSearchChange, clearSearch, onPageChange
+- [ ] Private methods with typed parameters (not `any`)
+- [ ] Imports NotificationService, ConfirmDialogComponent, EmptyStateComponent
+- [ ] Uses ChangeDetectionStrategy.OnPush
+
+**Service:**
+
+- [ ] Has all 4 CRUD methods: get, create, update, delete
+- [ ] Methods properly typed (no `any`)
+- [ ] Uses environment.apiUrl
+
+**UX:**
+
+- [ ] Search filters multiple fields with debounce
+- [ ] Delete confirmation uses ConfirmDialogComponent
+- [ ] Success/error notifications via NotificationService
+- [ ] Responsive: table on desktop, cards on mobile
+- [ ] Loading states during operations
+- [ ] Empty states with helpful messages and CTAs
+
+**Reference:** `features/companies/` is the AUTHORITATIVE implementation
+
 ## State Management
 
 - Use signals for local component state
@@ -555,7 +1094,7 @@ shared/
 
 ```typescript
 // shared/components/button/button.component.ts
-// Used in: products/, communities/, brigades/
+// Used in: products/, companies/, brigades/
 @Component({
   selector: 'app-button',
   template: `<button [class]="buttonClasses()">...</button>`,

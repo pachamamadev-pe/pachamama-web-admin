@@ -572,7 +572,7 @@ export class CompanyFormComponent implements OnInit {
     const generatedCode = this.generateCompanyCode(this.form.value.businessName);
 
     const dto: CreateCompanyDto = {
-      code: generatedCode, // ✅ Código generado automáticamente
+      code: generatedCode, //
       ruc: this.form.value.ruc,
       businessName: this.form.value.businessName,
       tradeName: this.form.value.tradeName || undefined,
