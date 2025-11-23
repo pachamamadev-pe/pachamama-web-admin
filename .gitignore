@@ -28,6 +28,9 @@ yarn-error.log
 !.vscode/extensions.json
 .history/*
 
+# Prevenir extensiones no deseadas (añadir a .gitignore si necesario)
+# .vscode/extensions/ ya debería estar ignorado por defecto
+
 # Miscellaneous
 /.angular/cache
 .sass-cache/
