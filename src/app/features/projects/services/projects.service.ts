@@ -46,6 +46,14 @@ export class ProjectsService {
   }
 
   /**
+   * Obtiene el detalle de un proyecto por ID
+   * @param id - UUID del proyecto
+   */
+  getProjectById(id: string): Observable<Project> {
+    return this.http.get<Project>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
    * Actualiza un proyecto existente
    * @param id - UUID del proyecto
    * @param data - Datos del proyecto a actualizar

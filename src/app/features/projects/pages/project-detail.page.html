@@ -1,0 +1,398 @@
+<div class="project-detail-container">
+  @if (loading()) {
+    <!-- Loading State -->
+    <div class="loading-state">
+      <mat-spinner diameter="48" />
+      <p class="text-body text-neutral-subheading mt-4">Cargando proyecto...</p>
+    </div>
+  } @else if (project()) {
+    <!-- Main Content -->
+    <div class="detail-layout">
+      <!-- Sidebar with Stages -->
+      <aside class="stages-sidebar">
+        <h3 class="sidebar-title text-body font-bold text-accent-titles">Etapas del Proyecto</h3>
+        <nav class="stages-list">
+          @for (stage of stages; track stage.number) {
+            <div class="stage-item" [class.stage-active]="isStageActive()(stage.key)">
+              <div class="stage-number">{{ stage.number }}</div>
+              <div class="stage-name">{{ stage.name }}</div>
+            </div>
+          }
+        </nav>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- Project Header -->
+        <header class="project-header">
+          <button mat-icon-button (click)="goBack()" class="back-button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+
+          <div class="header-content-wrapper">
+            <!-- Project Info -->
+            <div class="project-info">
+              <span class="product-label text-subtitle text-neutral-subheading">
+                {{ project()?.productName || 'Producto' }}
+              </span>
+              <h1 class="project-title text-title font-bold text-accent-titles">
+                {{ project()!.name }}
+              </h1>
+
+              <div class="project-meta">
+                <mat-chip class="meta-chip">
+                  <mat-icon class="chip-icon">event</mat-icon>
+                  {{ getProjectPeriod(project()!.startDate, project()!.endDate) }}
+                </mat-chip>
+                <mat-chip class="meta-chip">
+                  <mat-icon class="chip-icon">location_on</mat-icon>
+                  {{ community()?.name || 'Comunidad' }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <!-- Project Image -->
+            <div class="project-image">
+              <img src="/images/illustrations/project.png" alt="Proyecto {{ project()!.name }}" />
+
+              <!-- Download button below image
+              <button
+                mat-raised-button
+                class="btn-primary download-button-header"
+                (click)="downloadReport()"
+              >
+                <mat-icon>download</mat-icon>
+                Descargar
+              </button>-->
+            </div>
+          </div>
+        </header>
+
+        <!-- Tabs Header -->
+        <div class="tabs-header">
+          <mat-tab-group [(selectedIndex)]="selectedTabIndex" class="project-tabs">
+            <mat-tab label="Resumen">
+              <!-- Resumen Content -->
+              <div class="tab-content">
+                <!-- Main Grid Layout -->
+                <div class="summary-grid">
+                  <!-- Left Column -->
+                  <div class="left-column">
+                    <!-- Stage Progress Card -->
+                    <mat-card class="summary-card">
+                      <mat-card-header>
+                        <mat-card-title>Etapa 3: Inventario</mat-card-title>
+                      </mat-card-header>
+                      <mat-card-content>
+                        <div class="progress-section">
+                          <div class="progress-header">
+                            <span class="text-subtitle text-neutral-subheading">Progreso</span>
+                            <span class="text-body font-bold text-accent-titles"
+                              >21% completado</span
+                            >
+                          </div>
+                          <div class="progress-bar">
+                            <div class="progress-fill" style="width: 21%"></div>
+                          </div>
+                        </div>
+                      </mat-card-content>
+                    </mat-card>
+
+                    <!-- Participation Chart -->
+                    <mat-card class="summary-card">
+                      <mat-card-header>
+                        <mat-card-title>Participación por género</mat-card-title>
+                      </mat-card-header>
+                      <mat-card-content>
+                        <div class="participation-chart">
+                          <div class="chart-placeholder">
+                            <div class="pie-chart">
+                              <div class="pie-segment male"></div>
+                              <div class="pie-segment female"></div>
+                              <div class="pie-center">
+                                <span class="pie-value">18</span>
+                                <span class="pie-label">Participantes</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="chart-legend">
+                            <div class="legend-item">
+                              <span class="legend-dot male"></span>
+                              <span class="legend-text">Hombres</span>
+                            </div>
+                            <div class="legend-item">
+                              <span class="legend-dot female"></span>
+                              <span class="legend-text">Mujeres</span>
+                            </div>
+                          </div>
+                        </div>
+                      </mat-card-content>
+                    </mat-card>
+
+                    <!-- Income Chart -->
+                    <mat-card class="summary-card">
+                      <mat-card-header>
+                        <mat-card-title>Ingresos generados para la comunidad (S/.)</mat-card-title>
+                        <mat-card-subtitle>Enero - Junio 2025</mat-card-subtitle>
+                      </mat-card-header>
+                      <mat-card-content>
+                        <div class="income-chart">
+                          <div class="chart-placeholder">
+                            <!-- Mock line chart -->
+                            <svg viewBox="0 0 400 150" class="line-chart">
+                              <polyline
+                                points="0,100 50,80 100,60 150,90 200,70 250,50 300,65 350,55 400,60"
+                                fill="none"
+                                stroke="#218358"
+                                stroke-width="3"
+                              />
+                              <polyline
+                                points="0,100 50,80 100,60 150,90 200,70 250,50 300,65 350,55 400,60"
+                                fill="url(#gradient)"
+                                opacity="0.3"
+                              />
+                              <defs>
+                                <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                  <stop
+                                    offset="0%"
+                                    style="stop-color: #218358; stop-opacity: 0.5"
+                                  />
+                                  <stop
+                                    offset="100%"
+                                    style="stop-color: #218358; stop-opacity: 0"
+                                  />
+                                </linearGradient>
+                              </defs>
+                            </svg>
+                          </div>
+                          <div class="chart-labels">
+                            <span>Ene</span>
+                            <span>Feb</span>
+                            <span>Mar</span>
+                            <span>Abr</span>
+                            <span>May</span>
+                            <span>Jun</span>
+                          </div>
+                        </div>
+                      </mat-card-content>
+                    </mat-card>
+                  </div>
+
+                  <!-- Right Column -->
+                  <div class="right-column">
+                    <!-- Map Section -->
+                    <mat-card class="summary-card map-card">
+                      <mat-card-header>
+                        <mat-card-title>
+                          <mat-icon class="title-icon">map</mat-icon>
+                          Perímetro de {{ project()?.name || 'Proyecto' }}
+                        </mat-card-title>
+                      </mat-card-header>
+                      <mat-card-content>
+                        <!-- Loading Map State -->
+                        @if (loadingMap()) {
+                          <div class="map-loading">
+                            <mat-spinner diameter="40" />
+                            <p class="text-subtitle text-neutral-subheading mt-3">
+                              Verificando mapa...
+                            </p>
+                          </div>
+                        }
+
+                        <!-- No Map - Upload Area -->
+                        @else if (!hasMap() && !uploadingFile()) {
+                          <div class="map-upload-area">
+                            <input
+                              type="file"
+                              id="shapefileInput"
+                              accept=".zip"
+                              (change)="onFileSelected($event)"
+                              style="display: none"
+                            />
+
+                            <div class="upload-content">
+                              <div class="upload-icon">
+                                <mat-icon>cloud_upload</mat-icon>
+                              </div>
+                              <h4 class="upload-title">No hay mapa cargado</h4>
+                              <p class="upload-description">
+                                Sube un archivo shapefile (.zip) para visualizar el perímetro del
+                                proyecto
+                              </p>
+
+                              <button
+                                mat-raised-button
+                                class="btn-primary mt-4"
+                                (click)="triggerFileInput()"
+                              >
+                                <mat-icon>folder_open</mat-icon>
+                                Seleccionar shapefile
+                              </button>
+
+                              <p class="upload-hint">Formato aceptado: .zip (máximo 50MB)</p>
+                            </div>
+                          </div>
+                        }
+
+                        <!-- Uploading State -->
+                        @else if (uploadingFile()) {
+                          <div class="map-uploading">
+                            @if (!uploadError()) {
+                              <div class="upload-progress">
+                                <div class="progress-icon">
+                                  <mat-spinner diameter="48" />
+                                </div>
+
+                                <h4 class="progress-title">Procesando shapefile...</h4>
+
+                                @if (importStatus() === 'PENDING') {
+                                  <p class="progress-text">Preparando archivo...</p>
+                                } @else if (importStatus() === 'PROCESSING') {
+                                  <p class="progress-text">
+                                    Importando coordenadas: {{ uploadProgress() }}%
+                                  </p>
+                                  <mat-progress-bar
+                                    mode="determinate"
+                                    [value]="uploadProgress()"
+                                    class="mt-3"
+                                  />
+                                }
+
+                                <p class="progress-hint">
+                                  Este proceso puede tardar varios minutos...
+                                </p>
+                              </div>
+                            } @else {
+                              <!-- Upload Error State -->
+                              <div class="upload-error">
+                                <div class="error-icon">
+                                  <mat-icon>error_outline</mat-icon>
+                                </div>
+                                <h4 class="error-title">Error al procesar archivo</h4>
+                                <p class="error-message">{{ uploadError() }}</p>
+
+                                <button
+                                  mat-raised-button
+                                  class="btn-primary mt-4"
+                                  (click)="retryUpload()"
+                                >
+                                  <mat-icon>refresh</mat-icon>
+                                  Intentar nuevamente
+                                </button>
+                              </div>
+                            }
+                          </div>
+                        }
+
+                        <!-- Map Loaded Successfully -->
+                        @else if (hasMap()) {
+                          <div class="map-loaded">
+                            <!-- Edit Button (subtle) -->
+                            <button
+                              mat-icon-button
+                              class="map-edit-btn"
+                              (click)="enableEditMode()"
+                              matTooltip="Actualizar mapa"
+                            >
+                              <mat-icon>edit</mat-icon>
+                            </button>
+
+                            <!-- Map Stats -->
+                            <div class="map-stats">
+                              <mat-icon class="stats-icon">terrain</mat-icon>
+                              <span class="stats-text">
+                                {{ currentGeoJSON()?.features?.length || 0 }} área(s) delimitada(s)
+                              </span>
+                            </div>
+
+                            <!-- Map Hint (bottom-left) -->
+                            <div class="map-hint">
+                              <mat-icon class="hint-icon">info</mat-icon>
+                              <span class="hint-text"
+                                >Usa los botones +/- o doble clic para hacer zoom</span
+                              >
+                            </div>
+
+                            <!-- Leaflet Map Container -->
+                            <div #mapContainer class="leaflet-map-container"></div>
+                          </div>
+                        }
+                      </mat-card-content>
+                    </mat-card>
+
+                    <!-- Community Stats -->
+                    <div class="stats-group">
+                      <mat-card class="stat-card">
+                        <mat-card-content>
+                          <div class="stat-icon">
+                            <mat-icon>groups</mat-icon>
+                          </div>
+                          <div class="stat-info">
+                            <div class="stat-label">Empleo de personas con discapacidad</div>
+                            <div class="stat-value">2</div>
+                            <div class="stat-change positive">
+                              <mat-icon>trending_up</mat-icon>
+                              Crecimiento este mes
+                            </div>
+                          </div>
+                        </mat-card-content>
+                      </mat-card>
+
+                      <mat-card class="stat-card">
+                        <mat-card-content>
+                          <div class="stat-icon">
+                            <mat-icon>person_add</mat-icon>
+                          </div>
+                          <div class="stat-info">
+                            <div class="stat-label">Nuevos comuneros</div>
+                            <div class="stat-value">4</div>
+                            <div class="stat-change positive">
+                              <mat-icon>trending_up</mat-icon>
+                              Crecimiento este mes
+                            </div>
+                          </div>
+                        </mat-card-content>
+                      </mat-card>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-tab>
+
+            <mat-tab label="Recolectores">
+              <div class="tab-content">
+                <p class="text-body text-neutral-subheading">
+                  Contenido de Recolectores en desarrollo...
+                </p>
+              </div>
+            </mat-tab>
+
+            <mat-tab label="Evaluación de inventario">
+              <div class="tab-content">
+                <p class="text-body text-neutral-subheading">
+                  Contenido de Evaluación de inventario en desarrollo...
+                </p>
+              </div>
+            </mat-tab>
+
+            <mat-tab label="Documentos">
+              <div class="tab-content">
+                <p class="text-body text-neutral-subheading">
+                  Contenido de Documentos en desarrollo...
+                </p>
+              </div>
+            </mat-tab>
+
+            <mat-tab label="Configuración">
+              <div class="tab-content">
+                <p class="text-body text-neutral-subheading">
+                  Contenido de Configuración en desarrollo...
+                </p>
+              </div>
+            </mat-tab>
+          </mat-tab-group>
+        </div>
+      </main>
+    </div>
+  }
+</div>

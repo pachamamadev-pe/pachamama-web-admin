@@ -31,7 +31,9 @@ export interface Project {
   name: string;
   description?: string;
   companyId: string;
+  companyName?: string;
   productId: string;
+  productName?: string;
   code?: string;
   status: ProjectStatus;
   stage?: string; // 'planning', 'inventory', 'inventory_complete', etc.

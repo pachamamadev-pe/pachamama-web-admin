@@ -48,6 +48,12 @@ export const appRoutes: Routes = [
           import('./features/projects/pages/projects.page').then((m) => m.ProjectsPage),
       },
       {
+        path: 'projects/:id',
+        title: 'Detalle del Proyecto',
+        loadComponent: () =>
+          import('./features/projects/pages/project-detail.page').then((m) => m.ProjectDetailPage),
+      },
+      {
         path: 'brigades',
         title: 'Configuración',
         loadComponent: () =>

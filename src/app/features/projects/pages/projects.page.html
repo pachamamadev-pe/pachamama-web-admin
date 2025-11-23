@@ -131,6 +131,11 @@
                     </button>
 
                     <mat-menu #tableMenu="matMenu">
+                      <button mat-menu-item (click)="viewProjectDetail(project)">
+                        <mat-icon>visibility</mat-icon>
+                        <span>Ver detalle</span>
+                      </button>
+
                       <button mat-menu-item (click)="openEditDialog(project)">
                         <mat-icon>edit</mat-icon>
                         <span>Editar</span>
@@ -181,6 +186,11 @@
                 </button>
 
                 <mat-menu #mobileMenu="matMenu">
+                  <button mat-menu-item (click)="viewProjectDetail(project)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Ver detalle</span>
+                  </button>
+
                   <button mat-menu-item (click)="openEditDialog(project)">
                     <mat-icon>edit</mat-icon>
                     <span>Editar</span>
