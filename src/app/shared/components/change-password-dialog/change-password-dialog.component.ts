@@ -47,7 +47,12 @@ import { AuthService } from '@app/core/auth/auth.service';
       </div>
 
       <mat-dialog-content>
-        <form [formGroup]="passwordForm" class="password-form">
+        <form
+          [formGroup]="passwordForm"
+          class="password-form"
+          (ngSubmit)="onSubmit()"
+          (keydown.enter)="$event.preventDefault(); onSubmit()"
+        >
           <!-- Contraseña Actual -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Contraseña actual</mat-label>
@@ -176,8 +181,19 @@ import { AuthService } from '@app/core/auth/auth.service';
 
       <mat-dialog-actions align="end">
         <button
+          mat-stroked-button
+          type="button"
+          (click)="onLogout()"
+          [disabled]="isLoading()"
+          class="logout-button"
+        >
+          <mat-icon>logout</mat-icon>
+          Cerrar sesión
+        </button>
+        <button
           mat-raised-button
           color="primary"
+          type="submit"
           (click)="onSubmit()"
           [disabled]="passwordForm.invalid || isLoading()"
           class="submit-button"
@@ -261,6 +277,20 @@ export class ChangePasswordDialogComponent {
   }
 
   /**
+   * Cierra sesión y vuelve al login
+   */
+  async onLogout(): Promise<void> {
+    try {
+      await this.authService.logout();
+      this.dialogRef.close(false);
+      this.router.navigate(['/login']);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      this.notificationService.error('Error al cerrar sesión');
+    }
+  }
+
+  /**
    * Envía el formulario y actualiza la contraseña
    */
   async onSubmit(): Promise<void> {
@@ -304,11 +334,9 @@ export class ChangePasswordDialogComponent {
       // 7. Mostrar notificación de éxito
       this.notificationService.success('Contraseña actualizada correctamente');
 
-      // 8. Cerrar el modal después de un breve delay para que el usuario vea el mensaje
+      // 8. Cerrar el modal inmediatamente (el usuario ya vio el mensaje)
       this.isLoading.set(false);
-      setTimeout(() => {
-        this.dialogRef.close(true);
-      }, 1500);
+      this.dialogRef.close(true);
     } catch (error: unknown) {
       console.error(
         ...oo_tx(`2043723079_313_6_313_61_11`, 'Error al actualizar contraseña:', error),

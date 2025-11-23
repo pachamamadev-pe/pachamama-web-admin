@@ -52,11 +52,14 @@ export class HomePage implements OnInit {
     | null = null;
 
   ngOnInit(): void {
-    // Verificar si necesita cambiar contraseña al cargar la página
-    // Solo abrir el modal si no está ya abierto
-    if (!this.sidebarService.isPasswordChanged() && !this.dialogRef) {
-      this.openChangePasswordDialog();
-    }
+    // Pequeño delay para asegurar que sidebar service haya cargado correctamente
+    setTimeout(() => {
+      // Verificar si necesita cambiar contraseña al cargar la página
+      // Solo abrir el modal si no está ya abierto
+      if (!this.sidebarService.isPasswordChanged() && !this.dialogRef) {
+        this.openChangePasswordDialog();
+      }
+    }, 100);
   }
 
   /**
@@ -65,6 +68,15 @@ export class HomePage implements OnInit {
   private openChangePasswordDialog(): void {
     // Prevenir múltiples aperturas del modal
     if (this.dialogRef) {
+      return;
+    }
+
+    // Verificar si ya hay un modal de cambio de contraseña abierto globalmente
+    if (
+      this.dialog.openDialogs.some(
+        (dialog) => dialog.componentInstance instanceof ChangePasswordDialogComponent,
+      )
+    ) {
       return;
     }
 
@@ -79,9 +91,10 @@ export class HomePage implements OnInit {
     this.dialogRef.afterClosed().subscribe((result) => {
       this.dialogRef = null;
 
-      // Si el cambio fue exitoso, recargar la página o navegar
+      // Si el cambio fue exitoso, NO reabrir el modal
+      // El signal isPasswordChanged ya está actualizado
       if (result === true) {
-        // Contraseña cambiada exitosamente
+        // Contraseña cambiada exitosamente - Modal ya no se volverá a abrir
       }
     });
   }
