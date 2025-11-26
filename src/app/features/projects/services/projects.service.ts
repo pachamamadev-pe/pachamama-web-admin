@@ -63,6 +63,15 @@ export class ProjectsService {
   }
 
   /**
+   * Inicia la etapa de inventario del proyecto (transición backend específica)
+   * PATCH /projects/{id}/start-inventory
+   */
+  startInventory(id: string): Observable<Project> {
+    // No body requerido; backend determina cambio de etapa
+    return this.http.patch<Project>(`${this.apiUrl}/${id}/start-inventory`, {});
+  }
+
+  /**
    * Elimina un proyecto
    * @param id - UUID del proyecto
    */

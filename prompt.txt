@@ -1,0 +1,128 @@
+HISTORIAL DE MIEMBROS DE BRIGADA
+
+INSTRUCCIONES
+
+1. En el tab de brigadas, en la tabla
+2. Mostrar diferenciadamente el estado de los miembros de la brigada
+3. Tener en cuenta status active|inactive|archived
+4. Mostrar endDate
+5. Aplica ajustes visuales para dieferenciar correctamente
+
+
+RESPONSE
+
+{
+    "content": [
+        {
+            "id": "e9d02192-e7dc-4395-970f-a9bb6503c842",
+            "projectCommunityCollectorId": "a2c7286c-7bd5-4640-943b-b52b0a7dedce",
+            "collectorId": "7e78d759-b427-41a2-b2fd-0f0b78d0bc7f",
+            "collectorName": "Jorge Vargas",
+            "collectorEmail": "jorge.vargas@example.com",
+            "collectorPhone": "900111006",
+            "brigadeId": "2270e3e9-836a-4bda-a1db-7bb05dc65770",
+            "brigadeName": "BRIGADA A",
+            "projectCommunityId": "cdbce2cd-4c12-4512-a847-e5d47032286d",
+            "startDate": "2025-11-25",
+            "endDate": null,
+            "taskDescription": null,
+            "dailyRate": null,
+            "notes": null,
+            "status": "active",
+            "createdAt": "2025-11-25T10:49:56",
+            "updatedAt": "2025-11-25T10:49:56",
+            "createdBy": null,
+            "updatedBy": null
+        },
+        {
+            "id": "b5f06e11-c1ab-447a-a957-fd8eb1ed1f5d",
+            "projectCommunityCollectorId": "631f8a94-8015-49a4-bba5-2caf3138e4af",
+            "collectorId": "67fca6d6-1169-402f-97f7-3f317b06e010",
+            "collectorName": "Pedro Salazar",
+            "collectorEmail": "pedro.salazar@example.com",
+            "collectorPhone": "900111008",
+            "brigadeId": "2270e3e9-836a-4bda-a1db-7bb05dc65770",
+            "brigadeName": "BRIGADA A",
+            "projectCommunityId": "cdbce2cd-4c12-4512-a847-e5d47032286d",
+            "startDate": "2025-11-25",
+            "endDate": null,
+            "taskDescription": null,
+            "dailyRate": null,
+            "notes": null,
+            "status": "active",
+            "createdAt": "2025-11-25T11:13:15",
+            "updatedAt": "2025-11-25T11:13:15",
+            "createdBy": null,
+            "updatedBy": null
+        },
+        {
+            "id": "7e6d0c9a-89df-4808-9282-708007f2665a",
+            "projectCommunityCollectorId": "515a4189-53f0-4cb4-946c-904db46d27d0",
+            "collectorId": "96de474c-e1ae-4039-a975-f5344a7a0be6",
+            "collectorName": "Ana Ramos",
+            "collectorEmail": "ana.ramos@example.com",
+            "collectorPhone": "900111001",
+            "brigadeId": "2270e3e9-836a-4bda-a1db-7bb05dc65770",
+            "brigadeName": "BRIGADA A",
+            "projectCommunityId": "cdbce2cd-4c12-4512-a847-e5d47032286d",
+            "startDate": "2025-11-25",
+            "endDate": null,
+            "taskDescription": null,
+            "dailyRate": null,
+            "notes": null,
+            "status": "active",
+            "createdAt": "2025-11-25T11:16:01",
+            "updatedAt": "2025-11-25T11:16:01",
+            "createdBy": null,
+            "updatedBy": null
+        },
+        {
+            "id": "ce13ba04-91c3-4b8f-bb25-9d4a11104f1d",
+            "projectCommunityCollectorId": "afd6b60c-bfe5-4c29-9ae5-99d288aeafda",
+            "collectorId": "2c85795f-b98f-4adb-8ea7-8fc722866113",
+            "collectorName": "Carlos Diaz",
+            "collectorEmail": "carlos.diaz@example.com",
+            "collectorPhone": "900111004",
+            "brigadeId": "2270e3e9-836a-4bda-a1db-7bb05dc65770",
+            "brigadeName": "BRIGADA A",
+            "projectCommunityId": "cdbce2cd-4c12-4512-a847-e5d47032286d",
+            "startDate": "2025-11-24",
+            "endDate": "2025-11-24",
+            "taskDescription": null,
+            "dailyRate": null,
+            "notes": null,
+            "status": "archived",
+            "createdAt": "2025-11-25T10:32:53",
+            "updatedAt": "2025-11-25T09:04:16",
+            "createdBy": null,
+            "updatedBy": null
+        },
+        {
+            "id": "d496a691-5d8f-4f1b-ac23-7193dffc1ab9",
+            "projectCommunityCollectorId": "afd6b60c-bfe5-4c29-9ae5-99d288aeafda",
+            "collectorId": "2c85795f-b98f-4adb-8ea7-8fc722866113",
+            "collectorName": "Carlos Diaz",
+            "collectorEmail": "carlos.diaz@example.com",
+            "collectorPhone": "900111004",
+            "brigadeId": "2270e3e9-836a-4bda-a1db-7bb05dc65770",
+            "brigadeName": "BRIGADA A",
+            "projectCommunityId": "cdbce2cd-4c12-4512-a847-e5d47032286d",
+            "startDate": "2025-11-25",
+            "endDate": null,
+            "taskDescription": "Reasignación a nueva brigada",
+            "dailyRate": null,
+            "notes": "Reasignación por cambio de proyecto",
+            "status": "active",
+            "createdAt": "2025-11-25T14:04:16",
+            "updatedAt": "2025-11-25T14:04:16",
+            "createdBy": null,
+            "updatedBy": null
+        }
+    ],
+    "page": 0,
+    "size": 5,
+    "totalElements": 5,
+    "totalPages": 1,
+    "first": true,
+    "last": true
+}

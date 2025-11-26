@@ -846,3 +846,189 @@
     }
   }
 }
+
+/* Collectors Table Styles */
+.collectors-table-container {
+  padding: 20px 0;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.collectors-table {
+  width: 100%;
+  background-color: #ffffff;
+
+  .table-header {
+    background-color: #f9fafb;
+    color: #0a0a0a;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 16px;
+    border-bottom: 2px solid #e5e5e5;
+  }
+
+  .table-cell {
+    padding: 16px;
+    color: #0a0a0a;
+    font-size: 14px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .table-row {
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #f9fafb;
+    }
+
+    &:last-child .table-cell {
+      border-bottom: none;
+    }
+  }
+}
+
+.collectors-paginator {
+  background-color: transparent;
+  margin-top: 16px;
+}
+
+/* Brigade Selector in Collectors Table */
+.brigade-selector {
+  width: 100%;
+  min-width: 180px;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding-bottom: 0;
+  }
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 40px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  ::ng-deep .mat-mdc-select {
+    font-size: 14px;
+  }
+}
+
+/* Brigades Table Styles */
+.brigades-table-container {
+  padding: 20px 0;
+}
+
+.brigades-header-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.create-brigade-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.brigades-table {
+  width: 100%;
+  background-color: #ffffff;
+
+  .table-header {
+    background-color: #f9fafb;
+    color: #0a0a0a;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 16px;
+    border-bottom: 2px solid #e5e5e5;
+  }
+
+  .table-cell {
+    padding: 16px;
+    color: #0a0a0a;
+    font-size: 14px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .table-row {
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #f9fafb;
+    }
+
+    &:last-child .table-cell {
+      border-bottom: none;
+    }
+  }
+}
+
+.brigades-paginator {
+  background-color: transparent;
+  margin-top: 16px;
+}
+
+/* View Members Button in Brigades Table */
+.view-members-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  padding: 6px 16px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Empty State for Collectors */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f4fbf6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+
+    mat-icon {
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      color: #218358;
+    }
+  }
+
+  h3 {
+    margin-bottom: 8px;
+  }
+
+  p {
+    max-width: 400px;
+  }
+}

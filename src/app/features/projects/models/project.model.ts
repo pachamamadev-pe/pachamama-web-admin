@@ -71,6 +71,8 @@ export interface UpdateProjectRequest {
   code?: string;
   startDate?: string;
   endDate?: string;
+  // Etapa del proyecto (stage). Se agrega para permitir transición de etapas desde el frontend.
+  stage?: string; // 'planning' | 'inventory' | 'inventory_complete' | ...
 }
 
 /**

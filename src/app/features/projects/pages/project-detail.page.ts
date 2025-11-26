@@ -20,14 +20,24 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDialog } from '@angular/material/dialog';
 import { forkJoin, interval, Subject, takeUntil, switchMap, takeWhile, catchError, of } from 'rxjs';
 import { ProjectsService } from '../services/projects.service';
 import { ProductsService } from '../../products/services/products.service';
 import { CommunitiesService } from '../../communities/services/communities.service';
 import { AreasService } from '../services/areas.service';
+import { CollectorsService } from '../services/collectors.service';
+import { BrigadesService } from '../services/brigades.service';
+import { BrigadeAssignmentsService } from '../services/brigade-assignments.service';
 import { Project } from '../models/project.model';
 import { Product } from '../../products/models/product.model';
 import { Community } from '../../communities/models/community.model';
+import { Collector } from '../models/collector.model';
+import { Brigade } from '../models/brigade.model';
 import {
   GeoJSONFeatureCollection,
   AreaImportResponse,
@@ -57,6 +67,10 @@ interface ProjectStage {
     MatProgressBarModule,
     MatCardModule,
     MatTooltipModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSelectModule,
+    MatFormFieldModule,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -69,6 +83,10 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   private productsService = inject(ProductsService);
   private communitiesService = inject(CommunitiesService);
   private areasService = inject(AreasService);
+  private collectorsService = inject(CollectorsService);
+  private brigadesService = inject(BrigadesService);
+  private brigadeAssignmentsService = inject(BrigadeAssignmentsService);
+  private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private destroy$ = new Subject<void>();
 
@@ -95,11 +113,74 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   currentImportId = signal<string | null>(null);
   uploadError = signal<string | null>(null);
 
+  // Collectors state
+  collectors = signal<Collector[]>([]);
+  loadingCollectors = signal(false);
+
+  // Pagination state for collectors
+  collectorsPageSize = signal(10);
+  collectorsPageIndex = signal(0);
+
+  // Computed para collectors paginados
+  paginatedCollectors = computed(() => {
+    const allCollectors = this.collectors();
+    const pageSize = this.collectorsPageSize();
+    const pageIndex = this.collectorsPageIndex();
+    const startIndex = pageIndex * pageSize;
+    const endIndex = startIndex + pageSize;
+    return allCollectors.slice(startIndex, endIndex);
+  });
+
+  // Columnas de la tabla de recolectores
+  collectorsDisplayedColumns: string[] = [
+    'name',
+    'lastName',
+    'documentType',
+    'documentNumber',
+    'phone',
+    'assignedBrigade',
+  ];
+
+  // Brigades state (paginación backend)
+  brigades = signal<Brigade[]>([]);
+  loadingBrigades = signal(false);
+  brigadesPageSize = signal(10);
+  brigadesPageIndex = signal(0);
+  brigadesTotalElements = signal(0);
+
+  // Columnas de la tabla de brigadas
+  brigadesDisplayedColumns: string[] = ['code', 'name', 'members'];
+
+  /**
+   * Abre dialogo para crear brigada
+   */
+  openCreateBrigadeDialog(): void {
+    const projectCommunityId = this.project()?.communityLink?.id;
+    if (!projectCommunityId) {
+      this.notification.error('No se puede crear brigada: falta projectCommunityId');
+      return;
+    }
+    import('../components/brigade-form.component').then((m) => {
+      const dialogRef = this.dialog.open(m.BrigadeFormDialogComponent, {
+        width: '600px',
+        maxWidth: '90vw',
+        data: { projectCommunityId },
+        disableClose: true,
+      });
+      dialogRef.afterClosed().subscribe((result) => {
+        if (result?.created) {
+          // Recargar brigadas desde primera página
+          this.loadBrigades(projectCommunityId, 0, this.brigadesPageSize());
+        }
+      });
+    });
+  }
+
   // Etapas del proyecto
   stages: ProjectStage[] = [
     { number: 1, name: 'Relacionamiento Comunitario', key: 'planning' },
-    { number: 2, name: 'Pre-Inventario', key: 'pre_inventory' },
-    { number: 3, name: 'Inventario', key: 'inventory' },
+    { number: 2, name: 'Inventario', key: 'inventory' },
+    { number: 3, name: 'Recolección', key: 'collection' },
     { number: 4, name: 'Elaboración de PMF', key: 'pmf_development' },
     { number: 5, name: 'Evaluación y Aprobación (SERFOR)', key: 'serfor_evaluation' },
     { number: 6, name: 'Recolección', key: 'harvest' },
@@ -159,6 +240,12 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
               (c) => c.id === project.communityLink?.communityId,
             );
             this.community.set(matchedCommunity || null);
+
+            // Cargar recolectores si existe communityLink.id
+            if (project.communityLink?.id) {
+              this.loadCollectors(project.communityLink.id);
+              this.loadBrigades(project.communityLink.id);
+            }
 
             this.loading.set(false);
           },
@@ -533,5 +620,183 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     };
 
     return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  }
+
+  currentStage(): ProjectStage | null {
+    const stageKey = this.project()?.stage;
+    return this.stages.find((stage) => stage.key === stageKey) || null;
+  }
+
+  /**
+   * Inicia la etapa de Inventario si el proyecto está en planificación
+   */
+  startInventoryStage(): void {
+    const proj = this.project();
+    if (!proj) return;
+    if (proj.stage !== 'planning') {
+      this.notification.warning('La etapa actual no permite iniciar inventario');
+      return;
+    }
+    this.projectsService.startInventory(proj.id).subscribe({
+      next: (updated) => {
+        this.project.set(updated);
+        this.notification.success('Inventario iniciado');
+      },
+      error: (error) => {
+        console.error('Error iniciando inventario:', error);
+        this.notification.error('Error al iniciar inventario');
+      },
+    });
+  }
+
+  /**
+   * Carga los recolectores del proyecto
+   */
+  loadCollectors(projectCommunityId: string): void {
+    this.loadingCollectors.set(true);
+    this.collectorsService.getCollectorsByProjectCommunity(projectCommunityId).subscribe({
+      next: (collectors) => {
+        this.collectors.set(collectors);
+        this.loadingCollectors.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading collectors:', error);
+        this.notification.error('Error al cargar recolectores');
+        this.collectors.set([]);
+        this.loadingCollectors.set(false);
+      },
+    });
+  }
+
+  /**
+   * Maneja el cambio de página en la tabla de recolectores
+   */
+  onCollectorsPageChange(event: PageEvent): void {
+    this.collectorsPageIndex.set(event.pageIndex);
+    this.collectorsPageSize.set(event.pageSize);
+  }
+
+  /**
+   * Carga las brigadas del proyecto con paginación backend
+   */
+  loadBrigades(projectCommunityId: string, page = 0, size = 10): void {
+    this.loadingBrigades.set(true);
+    this.brigadesService.getBrigadesByProjectCommunity(projectCommunityId, page, size).subscribe({
+      next: (response) => {
+        this.brigades.set(response.items);
+        this.brigadesTotalElements.set(response.total);
+        this.brigadesPageIndex.set(response.page);
+        this.brigadesPageSize.set(response.size);
+        this.loadingBrigades.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading brigades:', error);
+        this.notification.error('Error al cargar brigadas');
+        this.brigades.set([]);
+        this.brigadesTotalElements.set(0);
+        this.loadingBrigades.set(false);
+      },
+    });
+  }
+
+  /**
+   * Maneja el cambio de página en la tabla de brigadas (paginación backend)
+   */
+  onBrigadesPageChange(event: PageEvent): void {
+    const projectCommunityId = this.project()?.communityLink?.id;
+    if (projectCommunityId) {
+      this.loadBrigades(projectCommunityId, event.pageIndex, event.pageSize);
+    }
+  }
+
+  /**
+   * Asigna un recolector a una brigada
+   */
+  assignCollectorToBrigade(collector: Collector, brigadeId: string): void {
+    // Si no hay brigadeId (seleccionó "Sin asignar"), no hacer nada
+    if (!brigadeId) {
+      this.notification.info('Seleccione una brigada para asignar');
+      return;
+    }
+
+    if (!collector.projectCommunityCollectorId) {
+      this.notification.error('Error: El recolector no tiene ID de comunidad');
+      return;
+    }
+
+    // Fecha actual en formato YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+
+    const projectCommunityId = this.project()?.communityLink?.id;
+
+    // Si ya tiene brigada y selecciona una distinta, se REASIGNA
+    if (collector.currentBrigadeId && collector.currentBrigadeId !== brigadeId) {
+      const reassignRequest = {
+        projectCommunityCollectorId: collector.projectCommunityCollectorId,
+        newBrigadeId: brigadeId,
+        startDate: today,
+        notes: 'Reasignación desde UI',
+      };
+
+      this.brigadeAssignmentsService.reassignBrigade(reassignRequest).subscribe({
+        next: () => {
+          this.notification.success(
+            `${collector.name} ${collector.lastName} reasignado correctamente`,
+          );
+          if (projectCommunityId) {
+            this.loadCollectors(projectCommunityId);
+          }
+        },
+        error: (error) => {
+          console.error('Error reassigning collector:', error);
+          this.notification.error('Error al reasignar recolector');
+        },
+      });
+      return;
+    }
+
+    // Si no tenía brigada asignada, se CREA la asignación
+    if (!collector.currentBrigadeId) {
+      const request = {
+        projectCommunityCollectorId: collector.projectCommunityCollectorId,
+        brigadeId,
+        startDate: today,
+      };
+
+      this.brigadeAssignmentsService.createBrigadeAssignment(request).subscribe({
+        next: (assignment) => {
+          this.notification.success(
+            `${collector.name} ${collector.lastName} asignado a brigada ${assignment.brigadeName}`,
+          );
+          if (projectCommunityId) {
+            this.loadCollectors(projectCommunityId);
+          }
+        },
+        error: (error) => {
+          console.error('Error assigning collector to brigade:', error);
+          this.notification.error('Error al asignar recolector a brigada');
+        },
+      });
+      return;
+    }
+
+    // Si seleccionó la misma brigada que ya tenía, no hacer nada
+    this.notification.info('El recolector ya está asignado a esta brigada');
+  }
+
+  /**
+   * Abre el modal para ver los recolectores de una brigada
+   */
+  viewBrigadeMembers(brigade: Brigade): void {
+    import('../components/brigade-collectors-dialog.component').then((m) => {
+      this.dialog.open(m.BrigadeCollectorsDialogComponent, {
+        width: '600px',
+        maxWidth: '90vw',
+        data: {
+          brigadeId: brigade.id,
+          brigadeName: brigade.name,
+        },
+      });
+    });
   }
 }
