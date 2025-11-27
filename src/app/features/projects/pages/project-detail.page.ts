@@ -92,6 +92,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
   private map: L.Map | null = null;
   private geoJsonLayer: L.GeoJSON | null = null;
+  private areaLabelsLayer: L.LayerGroup | null = null;
 
   @ViewChild('mapContainer', { static: false }) mapContainer?: ElementRef<HTMLDivElement>;
 
@@ -105,6 +106,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   hasMap = signal(false);
   loadingMap = signal(true);
   currentGeoJSON = signal<GeoJSONFeatureCollection | null>(null);
+  isMapFullscreen = signal(false);
 
   // Upload state
   uploadingFile = signal(false);
@@ -557,6 +559,9 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
               .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
               .join('<br>');
             (layer as L.Path).bindPopup(popupContent);
+
+            // Agregar etiqueta con número del área
+            this.addAreaLabel(feature);
           }
         },
       }).addTo(this.map);
@@ -587,6 +592,10 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
    * Destruye el mapa Leaflet
    */
   private destroyMap(): void {
+    if (this.areaLabelsLayer) {
+      this.areaLabelsLayer.clearLayers();
+      this.areaLabelsLayer = null;
+    }
     if (this.geoJsonLayer) {
       this.geoJsonLayer.remove();
       this.geoJsonLayer = null;
@@ -598,12 +607,99 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Agrega una etiqueta con el número del área al mapa
+   */
+  private addAreaLabel(feature: GeoJSON.Feature): void {
+    if (!this.map || !feature.properties) return;
+
+    // Buscar el número del área en las propiedades
+    const areaNumber = this.getAreaNumber(feature.properties);
+
+    if (areaNumber) {
+      // Calcular el centroide del polígono
+      const centroid = this.getCentroid(feature);
+
+      if (centroid) {
+        // Crear marker con el número del área
+        const labelIcon = L.divIcon({
+          className: 'area-label',
+          html: `<div class="area-number">${areaNumber}</div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+        });
+
+        const labelMarker = L.marker(centroid, { icon: labelIcon });
+
+        // Agregar a la layer de labels
+        if (!this.areaLabelsLayer) {
+          this.areaLabelsLayer = L.layerGroup().addTo(this.map);
+        }
+        this.areaLabelsLayer.addLayer(labelMarker);
+      }
+    }
+  }
+
+  /**
+   * Obtiene el número del área de las propiedades del feature
+   */
+  private getAreaNumber(properties: Record<string, unknown>): string | null {
+    // Buscar propiedades comunes que podrían contener el número del área
+    const possibleKeys = ['Numero'];
+
+    for (const key of possibleKeys) {
+      if (properties[key] !== undefined && properties[key] !== null) {
+        return String(properties[key]);
+      }
+    }
+
+    // Si no encuentra ninguna propiedad específica, usar el índice del feature
+    return null;
+  }
+
+  /**
+   * Calcula el centroide de un feature GeoJSON
+   */
+  private getCentroid(feature: GeoJSON.Feature): L.LatLng | null {
+    if (feature.geometry.type === 'Polygon') {
+      const coordinates = feature.geometry.coordinates[0] as [number, number][];
+      let latSum = 0;
+      let lngSum = 0;
+      let count = 0;
+
+      coordinates.forEach((coord) => {
+        lngSum += coord[0];
+        latSum += coord[1];
+        count++;
+      });
+
+      if (count > 0) {
+        return L.latLng(latSum / count, lngSum / count);
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Habilita el modo de edición del mapa (permite cargar nuevo shapefile)
    */
   enableEditMode(): void {
     this.hasMap.set(false);
     this.currentGeoJSON.set(null);
     this.destroyMap();
+  }
+
+  /**
+   * Alterna el modo pantalla completa del mapa
+   */
+  toggleMapFullscreen(): void {
+    this.isMapFullscreen.update((current) => !current);
+    // Redimensionar el mapa después del cambio
+    setTimeout(() => {
+      if (this.map) {
+        this.map.invalidateSize();
+      }
+    }, 100);
   }
 
   getProjectPeriod(startDate?: string, endDate?: string): string {

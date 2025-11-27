@@ -197,12 +197,27 @@
                   <!-- Right Column -->
                   <div class="right-column">
                     <!-- Map Section -->
-                    <mat-card class="summary-card map-card">
+                    <mat-card
+                      class="summary-card map-card"
+                      [class.map-fullscreen]="isMapFullscreen()"
+                    >
                       <mat-card-header>
                         <mat-card-title>
                           <mat-icon class="title-icon">map</mat-icon>
                           Perímetro de {{ project()?.name || 'Proyecto' }}
                         </mat-card-title>
+                        @if (hasMap()) {
+                          <button
+                            mat-icon-button
+                            class="map-fullscreen-btn"
+                            (click)="toggleMapFullscreen()"
+                            matTooltip="Pantalla completa"
+                          >
+                            <mat-icon>{{
+                              isMapFullscreen() ? 'fullscreen_exit' : 'fullscreen'
+                            }}</mat-icon>
+                          </button>
+                        }
                       </mat-card-header>
                       <mat-card-content>
                         <!-- Loading Map State -->
