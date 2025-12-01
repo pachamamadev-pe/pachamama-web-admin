@@ -23,6 +23,16 @@
 
       <!-- Main Content Area -->
       <main class="main-content">
+        <!-- Botón Flotante: Iniciar Inventario (Opción A) -->
+        @if (canStartInventory()) {
+          <div class="floating-action-button">
+            <button mat-raised-button class="btn-primary btn-lg" (click)="startInventoryStage()">
+              <mat-icon>play_arrow</mat-icon>
+              <span>Iniciar Inventario</span>
+            </button>
+          </div>
+        }
+
         <!-- Project Header -->
         <header class="project-header">
           <button mat-icon-button (click)="goBack()" class="back-button">
@@ -91,26 +101,13 @@
                           <div class="progress-header">
                             <span class="text-subtitle text-neutral-subheading">Progreso</span>
                             <span class="text-body font-bold text-accent-titles"
-                              >21% completado</span
+                              >{{ projectProgress() }}% completado</span
                             >
                           </div>
                           <div class="progress-bar">
-                            <div class="progress-fill" style="width: 21%"></div>
+                            <div class="progress-fill" [style.width.%]="projectProgress()"></div>
                           </div>
                         </div>
-                        @if (project()?.stage === 'planning') {
-                          <div class="mt-4 flex">
-                            <button
-                              mat-raised-button
-                              class="btn-primary"
-                              (click)="startInventoryStage()"
-                              matTooltip="Iniciar etapa de Inventario"
-                            >
-                              <mat-icon>play_arrow</mat-icon>
-                              <span>Iniciar Inventario</span>
-                            </button>
-                          </div>
-                        }
                       </mat-card-content>
                     </mat-card>
 
@@ -207,16 +204,26 @@
                           Perímetro de {{ project()?.name || 'Proyecto' }}
                         </mat-card-title>
                         @if (hasMap()) {
-                          <button
-                            mat-icon-button
-                            class="map-fullscreen-btn"
-                            (click)="toggleMapFullscreen()"
-                            matTooltip="Pantalla completa"
-                          >
-                            <mat-icon>{{
-                              isMapFullscreen() ? 'fullscreen_exit' : 'fullscreen'
-                            }}</mat-icon>
-                          </button>
+                          <div class="map-actions">
+                            <button
+                              mat-icon-button
+                              class="map-action-btn"
+                              (click)="downloadGeoJSON()"
+                              matTooltip="Descargar GeoJSON"
+                            >
+                              <mat-icon>download</mat-icon>
+                            </button>
+                            <button
+                              mat-icon-button
+                              class="map-action-btn"
+                              (click)="toggleMapFullscreen()"
+                              matTooltip="Pantalla completa"
+                            >
+                              <mat-icon>{{
+                                isMapFullscreen() ? 'fullscreen_exit' : 'fullscreen'
+                              }}</mat-icon>
+                            </button>
+                          </div>
                         }
                       </mat-card-header>
                       <mat-card-content>
@@ -402,13 +409,26 @@
                   <!-- Empty State -->
                   <div class="empty-state">
                     <div class="empty-icon">
-                      <mat-icon>group</mat-icon>
+                      <mat-icon>group_add</mat-icon>
                     </div>
                     <h3 class="text-body font-bold text-accent-titles">
                       No hay recolectores registrados
                     </h3>
                     <p class="text-subtitle text-neutral-subheading">
-                      Aún no se han registrado recolectores para este proyecto
+                      Para iniciar el proceso de onboarding, genera un código QR o código de
+                      invitación
+                    </p>
+                    <button
+                      mat-raised-button
+                      class="btn-primary mt-4"
+                      (click)="generateOnboardingInvitation()"
+                    >
+                      <mat-icon>qr_code_2</mat-icon>
+                      <span>Generar QR / Código de Onboarding</span>
+                    </button>
+                    <p class="text-subtitle text-neutral-subheading mt-3" style="max-width: 400px">
+                      Los recolectores podrán escanear el QR o ingresar el código en la app móvil
+                      para registrarse
                     </p>
                   </div>
                 } @else {
@@ -512,40 +532,28 @@
                 }
               </div>
             </mat-tab>
-            <mat-tab label="Brigadas">
-              <div class="tab-content">
-                @if (loadingBrigades()) {
-                  <!-- Loading State -->
-                  <div class="loading-state">
-                    <mat-spinner diameter="48" />
-                    <p class="text-body text-neutral-subheading mt-4">Cargando brigadas...</p>
-                  </div>
-                } @else if (brigades().length === 0) {
-                  <!-- Empty State -->
-                  <div class="empty-state">
-                    <div class="empty-icon">
-                      <mat-icon>groups</mat-icon>
+
+            @if (showBrigadesTab()) {
+              <mat-tab label="Brigadas">
+                <div class="tab-content">
+                  @if (loadingBrigades()) {
+                    <!-- Loading State -->
+                    <div class="loading-state">
+                      <mat-spinner diameter="48" />
+                      <p class="text-body text-neutral-subheading mt-4">Cargando brigadas...</p>
                     </div>
-                    <h3 class="text-body font-bold text-accent-titles">
-                      No hay brigadas registradas
-                    </h3>
-                    <p class="text-subtitle text-neutral-subheading">
-                      Aún no se han registrado brigadas para este proyecto
-                    </p>
-                    <button
-                      mat-raised-button
-                      color="primary"
-                      class="create-brigade-button"
-                      (click)="openCreateBrigadeDialog()"
-                    >
-                      <mat-icon>add</mat-icon>
-                      <span>Crear brigada</span>
-                    </button>
-                  </div>
-                } @else {
-                  <!-- Tabla de Brigadas -->
-                  <div class="brigades-table-container">
-                    <div class="brigades-header-actions">
+                  } @else if (brigades().length === 0) {
+                    <!-- Empty State -->
+                    <div class="empty-state">
+                      <div class="empty-icon">
+                        <mat-icon>groups</mat-icon>
+                      </div>
+                      <h3 class="text-body font-bold text-accent-titles">
+                        No hay brigadas registradas
+                      </h3>
+                      <p class="text-subtitle text-neutral-subheading">
+                        Aún no se han registrado brigadas para este proyecto
+                      </p>
                       <button
                         mat-raised-button
                         color="primary"
@@ -556,63 +564,79 @@
                         <span>Crear brigada</span>
                       </button>
                     </div>
-                    <div class="table-wrapper">
-                      <table mat-table [dataSource]="brigades()" class="brigades-table">
-                        <!-- Columna Código -->
-                        <ng-container matColumnDef="code">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">Código</th>
-                          <td mat-cell *matCellDef="let brigade" class="table-cell">
-                            {{ brigade.code }}
-                          </td>
-                        </ng-container>
+                  } @else {
+                    <!-- Tabla de Brigadas -->
+                    <div class="brigades-table-container">
+                      <div class="brigades-header-actions">
+                        <button
+                          mat-raised-button
+                          color="primary"
+                          class="create-brigade-button"
+                          (click)="openCreateBrigadeDialog()"
+                        >
+                          <mat-icon>add</mat-icon>
+                          <span>Crear brigada</span>
+                        </button>
+                      </div>
+                      <div class="table-wrapper">
+                        <table mat-table [dataSource]="brigades()" class="brigades-table">
+                          <!-- Columna Código -->
+                          <ng-container matColumnDef="code">
+                            <th mat-header-cell *matHeaderCellDef class="table-header">Código</th>
+                            <td mat-cell *matCellDef="let brigade" class="table-cell">
+                              {{ brigade.code }}
+                            </td>
+                          </ng-container>
 
-                        <!-- Columna Nombre -->
-                        <ng-container matColumnDef="name">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">Nombre</th>
-                          <td mat-cell *matCellDef="let brigade" class="table-cell">
-                            {{ brigade.name }}
-                          </td>
-                        </ng-container>
+                          <!-- Columna Nombre -->
+                          <ng-container matColumnDef="name">
+                            <th mat-header-cell *matHeaderCellDef class="table-header">Nombre</th>
+                            <td mat-cell *matCellDef="let brigade" class="table-cell">
+                              {{ brigade.name }}
+                            </td>
+                          </ng-container>
 
-                        <!-- Columna Miembros -->
-                        <ng-container matColumnDef="members">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">Miembros</th>
-                          <td mat-cell *matCellDef="let brigade" class="table-cell">
-                            <button
-                              mat-stroked-button
-                              color="primary"
-                              (click)="viewBrigadeMembers(brigade)"
-                              class="view-members-button"
-                            >
-                              <mat-icon>people</mat-icon>
-                              <span>Ver miembros</span>
-                            </button>
-                          </td>
-                        </ng-container>
+                          <!-- Columna Miembros -->
+                          <ng-container matColumnDef="members">
+                            <th mat-header-cell *matHeaderCellDef class="table-header">Miembros</th>
+                            <td mat-cell *matCellDef="let brigade" class="table-cell">
+                              <button
+                                mat-stroked-button
+                                color="primary"
+                                (click)="viewBrigadeMembers(brigade)"
+                                class="view-members-button"
+                              >
+                                <mat-icon>people</mat-icon>
+                                <span>Ver miembros</span>
+                              </button>
+                            </td>
+                          </ng-container>
 
-                        <tr mat-header-row *matHeaderRowDef="brigadesDisplayedColumns"></tr>
-                        <tr
-                          mat-row
-                          *matRowDef="let row; columns: brigadesDisplayedColumns"
-                          class="table-row"
-                        ></tr>
-                      </table>
+                          <tr mat-header-row *matHeaderRowDef="brigadesDisplayedColumns"></tr>
+                          <tr
+                            mat-row
+                            *matRowDef="let row; columns: brigadesDisplayedColumns"
+                            class="table-row"
+                          ></tr>
+                        </table>
+                      </div>
+
+                      <!-- Paginador Backend -->
+                      <mat-paginator
+                        [length]="brigadesTotalElements()"
+                        [pageSize]="brigadesPageSize()"
+                        [pageIndex]="brigadesPageIndex()"
+                        [pageSizeOptions]="[5, 10, 25, 50]"
+                        (page)="onBrigadesPageChange($event)"
+                        showFirstLastButtons
+                        class="brigades-paginator"
+                      />
                     </div>
+                  }
+                </div>
+              </mat-tab>
+            }
 
-                    <!-- Paginador Backend -->
-                    <mat-paginator
-                      [length]="brigadesTotalElements()"
-                      [pageSize]="brigadesPageSize()"
-                      [pageIndex]="brigadesPageIndex()"
-                      [pageSizeOptions]="[5, 10, 25, 50]"
-                      (page)="onBrigadesPageChange($event)"
-                      showFirstLastButtons
-                      class="brigades-paginator"
-                    />
-                  </div>
-                }
-              </div>
-            </mat-tab>
             <mat-tab label="Evaluación de inventario">
               <div class="tab-content">
                 <p class="text-body text-neutral-subheading">

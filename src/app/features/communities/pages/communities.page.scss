@@ -74,30 +74,37 @@
   @apply bg-primary-white border border-neutral-border rounded-lg overflow-hidden;
 }
 
-.table-header {
+.table-th {
+  @apply px-4 py-3 text-subtitle font-bold text-secondary;
   @apply border-b border-neutral-border;
   background-color: #f9faf3;
 }
 
-.table-th {
-  @apply px-4 py-3 text-subtitle font-bold text-secondary;
-}
-
 .table-body {
-  @apply divide-y divide-neutral-border;
+  @apply bg-white divide-y divide-neutral-border;
 }
 
 .table-row {
-  @apply transition-colors duration-150;
+  @apply transition-colors bg-white duration-150 divide-neutral-border !important;
   @apply cursor-pointer;
+}
+
+.mat-mdc-cell {
+  @apply divide-neutral-border;
+}
+
+.table-td {
+  @apply px-4 py-3 text-body divide-neutral-border !important;
+  border-color: rgb(229 229 229 / var(--tw-divide-opacity, 1)) !important;
 }
 
 .table-row:hover {
   @apply bg-secondary-light;
+  background-color: rgb(244 251 246 / var(--tw-bg-opacity, 1)) !important;
 }
 
-.table-td {
-  @apply px-4 py-3 text-body;
+.table-td :hover {
+  @apply bg-secondary-light;
 }
 
 // Mobile Cards (visible only on mobile)

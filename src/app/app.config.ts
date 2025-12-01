@@ -10,6 +10,8 @@ import { httpErrorInterceptor } from './core/http/http-error.interceptor';
 import { loadingInterceptor } from './core/http/loading.interceptor';
 import { environment } from '../environments/environment';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { CustomPaginatorIntlService } from './core/services';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,5 +27,6 @@ export const appConfig: ApplicationConfig = {
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideCharts(withDefaultRegisterables()),
+    { provide: MatPaginatorIntl, useClass: CustomPaginatorIntlService },
   ],
 };

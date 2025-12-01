@@ -65,6 +65,14 @@ export class SidebarService {
       )
       .subscribe({
         next: ({ companyName, tenantId, menuItems, emailVerified, isPasswordChanged, userId }) => {
+          console.log('Fetched sidebar data:', {
+            companyName,
+            tenantId,
+            menuItems,
+            emailVerified,
+            isPasswordChanged,
+            userId,
+          });
           this.companyName.set(companyName);
           this.tenantId.set(tenantId);
           this.menuItems.set(menuItems);

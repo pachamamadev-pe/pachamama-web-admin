@@ -28,70 +28,108 @@ export interface BrigadeCollectorsDialogData {
   ],
   template: `
     <div class="dialog-container">
-      <div class="dialog-header">
-        <h2 class="dialog-title">Recolectores de {{ data.brigadeName }}</h2>
-        <button mat-icon-button (click)="close()">
+      <!-- Header -->
+      <header class="dialog-header">
+        <div class="header-content">
+          <div class="header-icon">
+            <mat-icon class="text-secondary">group</mat-icon>
+          </div>
+          <div class="header-text">
+            <h2 class="text-title font-bold text-accent-titles">
+              Recolectores de {{ data.brigadeName }}
+            </h2>
+            <p class="text-subtitle text-neutral-subheading">
+              Lista de recolectores asignados a esta brigada
+            </p>
+          </div>
+        </div>
+        <button mat-icon-button (click)="close()" class="close-button">
           <mat-icon>close</mat-icon>
         </button>
-      </div>
+      </header>
 
       <div class="dialog-content">
         @if (loading()) {
           <!-- Loading State -->
           <div class="loading-container">
             <mat-spinner diameter="48" />
-            <p class="loading-text">Cargando recolectores...</p>
+            <p class="text-body text-neutral-subheading mt-4">Cargando recolectores...</p>
           </div>
         } @else if (collectors().length === 0) {
           <!-- Empty State -->
           <div class="empty-state">
-            <mat-icon class="empty-icon">people_outline</mat-icon>
-            <h3 class="empty-title">No hay recolectores</h3>
-            <p class="empty-description">Esta brigada aún no tiene recolectores asignados</p>
+            <div class="empty-icon">
+              <mat-icon>people_outline</mat-icon>
+            </div>
+            <h3 class="text-body font-bold text-accent-titles">No hay recolectores</h3>
+            <p class="text-subtitle text-neutral-subheading">
+              Esta brigada aún no tiene recolectores asignados. Los recolectores se unirán
+              escaneando el código QR de onboarding.
+            </p>
           </div>
         } @else {
-          <!-- Table -->
-          <div class="table-container">
+          <!-- Desktop Table (hidden on mobile) -->
+          <div class="table-wrapper hidden md:block">
             <table mat-table [dataSource]="collectors()" class="collectors-table">
               <!-- Nombre Column -->
               <ng-container matColumnDef="collectorName">
-                <th mat-header-cell *matHeaderCellDef>Nombre</th>
-                <td mat-cell *matCellDef="let collector">
-                  {{ collector.collectorName }}
+                <th mat-header-cell *matHeaderCellDef class="table-th">
+                  <div class="th-content">
+                    <mat-icon class="th-icon">person</mat-icon>
+                    <span>Nombre</span>
+                  </div>
+                </th>
+                <td mat-cell *matCellDef="let collector" class="table-td">
+                  <span class="text-body font-bold">{{ collector.collectorName }}</span>
                 </td>
               </ng-container>
 
               <!-- Teléfono Column -->
               <ng-container matColumnDef="collectorPhone">
-                <th mat-header-cell *matHeaderCellDef>Teléfono</th>
-                <td mat-cell *matCellDef="let collector">
-                  {{ collector.collectorPhone }}
+                <th mat-header-cell *matHeaderCellDef class="table-th">
+                  <div class="th-content">
+                    <mat-icon class="th-icon">phone</mat-icon>
+                    <span>Teléfono</span>
+                  </div>
+                </th>
+                <td mat-cell *matCellDef="let collector" class="table-td">
+                  <span class="text-body">{{ collector.collectorPhone }}</span>
                 </td>
               </ng-container>
 
               <!-- Fecha de Inicio Column -->
               <ng-container matColumnDef="startDate">
-                <th mat-header-cell *matHeaderCellDef>Fecha de Inicio</th>
-                <td mat-cell *matCellDef="let collector">
-                  {{ collector.startDate }}
+                <th mat-header-cell *matHeaderCellDef class="table-th">
+                  <div class="th-content">
+                    <mat-icon class="th-icon">calendar_today</mat-icon>
+                    <span>Inicio</span>
+                  </div>
+                </th>
+                <td mat-cell *matCellDef="let collector" class="table-td">
+                  <span class="text-subtitle">{{ collector.startDate }}</span>
                 </td>
               </ng-container>
 
               <!-- Fecha de Fin Column -->
               <ng-container matColumnDef="endDate">
-                <th mat-header-cell *matHeaderCellDef>Fecha de Fin</th>
-                <td mat-cell *matCellDef="let collector">
-                  {{ collector.endDate || '-' }}
+                <th mat-header-cell *matHeaderCellDef class="table-th">
+                  <div class="th-content">
+                    <mat-icon class="th-icon">event_available</mat-icon>
+                    <span>Fin</span>
+                  </div>
+                </th>
+                <td mat-cell *matCellDef="let collector" class="table-td">
+                  <span class="text-subtitle">{{ collector.endDate || '-' }}</span>
                 </td>
               </ng-container>
 
               <!-- Estado Column -->
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Estado</th>
-                <td mat-cell *matCellDef="let collector">
-                  <mat-chip [class]="getStatusClass(collector.status)" selected>
+                <th mat-header-cell *matHeaderCellDef class="table-th text-right">Estado</th>
+                <td mat-cell *matCellDef="let collector" class="table-td text-right">
+                  <span [class]="'status-badge status-' + collector.status.toLowerCase()">
                     {{ getStatusLabel(collector.status) }}
-                  </mat-chip>
+                  </span>
                 </td>
               </ng-container>
 
@@ -99,68 +137,158 @@ export interface BrigadeCollectorsDialogData {
               <tr
                 mat-row
                 *matRowDef="let row; columns: displayedColumns"
-                [class]="getRowClass(row.status)"
+                [class.row-archived]="row.status.toLowerCase() === 'archived'"
               ></tr>
             </table>
           </div>
 
-          <!-- Total Count -->
-          <div class="total-count">
-            Total: {{ totalElements() }} recolector{{ totalElements() === 1 ? '' : 'es' }}
+          <!-- Mobile Cards (visible only on mobile) -->
+          <div class="mobile-cards md:hidden">
+            @for (collector of collectors(); track collector.collectorName) {
+              <div
+                class="collector-card"
+                [class.card-archived]="collector.status.toLowerCase() === 'archived'"
+              >
+                <div class="card-header">
+                  <div class="collector-info">
+                    <h3 class="text-body font-bold text-primary-black">
+                      {{ collector.collectorName }}
+                    </h3>
+                    <span [class]="'status-badge status-' + collector.status.toLowerCase()">
+                      {{ getStatusLabel(collector.status) }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="card-details">
+                  <div class="detail-row">
+                    <mat-icon class="detail-icon">phone</mat-icon>
+                    <span class="detail-label">Teléfono:</span>
+                    <span class="detail-value">{{ collector.collectorPhone }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <mat-icon class="detail-icon">calendar_today</mat-icon>
+                    <span class="detail-label">Inicio:</span>
+                    <span class="detail-value">{{ collector.startDate }}</span>
+                  </div>
+                  @if (collector.endDate) {
+                    <div class="detail-row">
+                      <mat-icon class="detail-icon">event_available</mat-icon>
+                      <span class="detail-label">Fin:</span>
+                      <span class="detail-value">{{ collector.endDate }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Summary -->
+          <div class="summary-bar">
+            <div class="summary-item">
+              <mat-icon class="summary-icon">group</mat-icon>
+              <span class="text-body">
+                <strong>{{ totalElements() }}</strong>
+                recolector{{ totalElements() === 1 ? '' : 'es' }}
+              </span>
+            </div>
           </div>
         }
       </div>
 
-      <div class="dialog-actions">
+      <!-- Footer -->
+      <footer class="dialog-footer">
         <button mat-stroked-button (click)="close()">Cerrar</button>
-      </div>
+      </footer>
     </div>
   `,
   styles: `
     .dialog-container {
       display: flex;
       flex-direction: column;
-      max-height: 80vh;
-      width: 600px;
-      max-width: 90vw;
+      width: 100%;
+      max-width: 800px;
+      max-height: 90vh;
+      background: #ffffff;
     }
 
+    /* Header */
     .dialog-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding: 20px 24px;
+      align-items: flex-start;
+      padding: 24px;
       border-bottom: 1px solid #e5e5e5;
+      background: #f9fafb;
     }
 
-    .dialog-title {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 700;
-      color: #0a0a0a;
+    .header-content {
+      display: flex;
+      gap: 16px;
+      flex: 1;
     }
 
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #f4fbf6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+    }
+
+    .header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+
+      h2 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.3;
+      }
+
+      p {
+        margin: 0;
+        font-size: 13px;
+      }
+    }
+
+    .close-button {
+      flex-shrink: 0;
+      margin: -8px -8px 0 0;
+    }
+
+    /* Content */
     .dialog-content {
       flex: 1;
       overflow-y: auto;
       padding: 24px;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
     }
 
+    /* Loading */
     .loading-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px;
+      padding: 60px 20px;
       gap: 16px;
     }
 
-    .loading-text {
-      color: #737373;
-      font-size: 14px;
-      margin: 0;
-    }
-
+    /* Empty State */
     .empty-state {
       display: flex;
       flex-direction: column;
@@ -171,104 +299,257 @@ export interface BrigadeCollectorsDialogData {
     }
 
     .empty-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      color: #d4d4d4;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #f4fbf6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 16px;
+
+      mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        color: #218358;
+      }
     }
 
-    .empty-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #0a0a0a;
+    .empty-state h3 {
       margin: 0 0 8px 0;
+      font-size: 18px;
     }
 
-    .empty-description {
-      font-size: 14px;
-      color: #737373;
+    .empty-state p {
       margin: 0;
+      font-size: 14px;
+      max-width: 400px;
+      line-height: 1.6;
     }
 
-    .table-container {
-      overflow-x: auto;
-      background-color: #ffffff;
-      border-radius: 8px;
+    /* Desktop Table */
+    .table-wrapper {
       border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
     }
 
     .collectors-table {
       width: 100%;
 
-      th {
-        background-color: #f9fafb;
-        color: #0a0a0a;
-        font-weight: 700;
-        font-size: 14px;
+      .table-th {
+        background: #f9fafb;
         padding: 16px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0a0a0a;
         border-bottom: 2px solid #e5e5e5;
       }
 
-      td {
+      .th-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .th-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #737373;
+      }
+
+      .table-td {
         padding: 16px;
-        color: #0a0a0a;
         font-size: 14px;
         border-bottom: 1px solid #f3f4f6;
       }
 
       tr:hover {
-        background-color: #f9fafb;
+        background: #f9fafb;
       }
 
-      tr:last-child td {
+      tr:last-child .table-td {
         border-bottom: none;
       }
     }
 
-    .total-count {
-      margin-top: 16px;
-      text-align: right;
-      font-size: 14px;
-      color: #737373;
-      font-weight: 500;
+    .row-archived {
+      opacity: 0.5;
+      background: #fafafa;
     }
 
-    .dialog-actions {
+    /* Mobile Cards */
+    .mobile-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .collector-card {
+      background: #ffffff;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 16px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-color: #d4d4d4;
+      }
+    }
+
+    .card-archived {
+      opacity: 0.6;
+      background: #fafafa;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .collector-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+
+      h3 {
+        margin: 0;
+        font-size: 15px;
+      }
+    }
+
+    .card-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .detail-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #737373;
+      flex-shrink: 0;
+    }
+
+    .detail-label {
+      color: #737373;
+      min-width: 60px;
+    }
+
+    .detail-value {
+      color: #0a0a0a;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-active {
+      background: #f4fbf6;
+      color: #218358;
+      border: 1px solid #218358;
+    }
+
+    .status-inactive {
+      background: #fef3f2;
+      color: #dc2626;
+      border: 1px solid #dc2626;
+    }
+
+    .status-archived {
+      background: #f9fafb;
+      color: #6b7280;
+      border: 1px solid #9ca3af;
+    }
+
+    /* Summary Bar */
+    .summary-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      padding: 16px;
+      background: #f9fafb;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+    }
+
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .summary-icon {
+      color: #218358;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Footer */
+    .dialog-footer {
       display: flex;
       justify-content: flex-end;
       padding: 16px 24px;
       border-top: 1px solid #e5e5e5;
-      gap: 12px;
+      background: #f9fafb;
     }
 
-    // Status chip styles
-    ::ng-deep .mat-mdc-chip.status-active {
-      --mdc-chip-container-color: #f4fbf6;
-      --mdc-chip-label-text-color: #218358;
-      --mdc-chip-outline-color: #218358;
-    }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .dialog-container {
+        max-width: 100vw;
+        max-height: 100vh;
+      }
 
-    ::ng-deep .mat-mdc-chip.status-inactive {
-      --mdc-chip-container-color: #fef3f2;
-      --mdc-chip-label-text-color: #dc2626;
-      --mdc-chip-outline-color: #dc2626;
-    }
+      .dialog-header,
+      .dialog-content,
+      .dialog-footer {
+        padding: 16px;
+      }
 
-    ::ng-deep .mat-mdc-chip.status-archived {
-      --mdc-chip-container-color: #f9fafb;
-      --mdc-chip-label-text-color: #6b7280;
-      --mdc-chip-outline-color: #6b7280;
-    }
+      .header-icon {
+        width: 40px;
+        height: 40px;
 
-    ::ng-deep .mat-mdc-chip.status-default {
-      --mdc-chip-container-color: #f3f4f6;
-      --mdc-chip-label-text-color: #374151;
-      --mdc-chip-outline-color: #374151;
-    }
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+      }
 
-    .row-archived {
-      opacity: 0.6;
+      .header-text h2 {
+        font-size: 18px;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -327,28 +608,6 @@ export class BrigadeCollectorsDialogComponent {
         return 'Archivado';
       default:
         return status;
-    }
-  }
-
-  getStatusClass(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'status-active';
-      case 'inactive':
-        return 'status-inactive';
-      case 'archived':
-        return 'status-archived';
-      default:
-        return 'status-default';
-    }
-  }
-
-  getRowClass(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'archived':
-        return 'row-archived';
-      default:
-        return '';
     }
   }
 }

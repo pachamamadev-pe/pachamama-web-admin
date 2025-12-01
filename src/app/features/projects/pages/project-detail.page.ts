@@ -33,6 +33,7 @@ import { AreasService } from '../services/areas.service';
 import { CollectorsService } from '../services/collectors.service';
 import { BrigadesService } from '../services/brigades.service';
 import { BrigadeAssignmentsService } from '../services/brigade-assignments.service';
+import { ProjectInvitationsService } from '../services/project-invitations.service';
 import { Project } from '../models/project.model';
 import { Product } from '../../products/models/product.model';
 import { Community } from '../../communities/models/community.model';
@@ -86,6 +87,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   private collectorsService = inject(CollectorsService);
   private brigadesService = inject(BrigadesService);
   private brigadeAssignmentsService = inject(BrigadeAssignmentsService);
+  private projectInvitationsService = inject(ProjectInvitationsService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private destroy$ = new Subject<void>();
@@ -195,6 +197,38 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   isStageActive = computed(() => {
     const currentStage = this.project()?.stage;
     return (stageKey: string) => currentStage === stageKey;
+  });
+
+  // Computed para calcular el progreso basado en la etapa actual
+  projectProgress = computed(() => {
+    const currentStage = this.project()?.stage;
+    if (!currentStage) return 0;
+
+    const stageIndex = this.stages.findIndex((s) => s.key === currentStage);
+    if (stageIndex === -1) return 0;
+
+    // Calcular porcentaje: (etapa actual / total etapas) * 100
+    const totalStages = this.stages.length;
+    const progress = Math.round((stageIndex / totalStages) * 100);
+    return progress;
+  });
+
+  // Computed para verificar si se puede iniciar el inventario
+  canStartInventory = computed(() => {
+    const stage = this.project()?.stage;
+    const hasCollectors = this.collectors().length > 0;
+    const hasBrigades = this.brigades().length > 0;
+
+    // Solo se puede iniciar inventario si:
+    // 1. Está en etapa 'planning'
+    // 2. Hay recolectores registrados
+    // 3. Hay al menos una brigada creada
+    return stage === 'planning' && hasCollectors && hasBrigades;
+  });
+
+  // Computed para mostrar/ocultar el tab de brigadas
+  showBrigadesTab = computed(() => {
+    return this.collectors().length > 0;
   });
 
   // Helpers para etiquetas y estilos
@@ -724,28 +758,6 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Inicia la etapa de Inventario si el proyecto está en planificación
-   */
-  startInventoryStage(): void {
-    const proj = this.project();
-    if (!proj) return;
-    if (proj.stage !== 'planning') {
-      this.notification.warning('La etapa actual no permite iniciar inventario');
-      return;
-    }
-    this.projectsService.startInventory(proj.id).subscribe({
-      next: (updated) => {
-        this.project.set(updated);
-        this.notification.success('Inventario iniciado');
-      },
-      error: (error) => {
-        console.error('Error iniciando inventario:', error);
-        this.notification.error('Error al iniciar inventario');
-      },
-    });
-  }
-
-  /**
    * Carga los recolectores del proyecto
    */
   loadCollectors(projectCommunityId: string): void {
@@ -893,6 +905,123 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
           brigadeName: brigade.name,
         },
       });
+    });
+  }
+
+  /**
+   * Descarga el GeoJSON actual del proyecto
+   */
+  downloadGeoJSON(): void {
+    const projectId = this.project()?.id;
+    if (!projectId) {
+      this.notification.error('No se pudo obtener el ID del proyecto');
+      return;
+    }
+
+    this.notification.info('Descargando GeoJSON...');
+
+    this.areasService.getCurrentAreaGeoJSON(projectId).subscribe({
+      next: (geoJSON) => {
+        // Convertir el GeoJSON a string con formato
+        const dataStr = JSON.stringify(geoJSON, null, 2);
+
+        // Crear un blob con el contenido
+        const blob = new Blob([dataStr], { type: 'application/json' });
+
+        // Crear un enlace temporal para descargar
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+
+        // Nombre del archivo con timestamp
+        const projectName = this.project()?.name || 'proyecto';
+        const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        link.download = `${projectName.toLowerCase().replace(/\s+/g, '-')}_${timestamp}.geojson`;
+
+        // Simular click y limpiar
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        this.notification.success('GeoJSON descargado correctamente');
+      },
+      error: (error) => {
+        console.error('Error downloading GeoJSON:', error);
+        this.notification.error('Error al descargar el GeoJSON');
+      },
+    });
+  }
+
+  /**
+   * Genera la invitación de onboarding (QR + código)
+   */
+  generateOnboardingInvitation(): void {
+    const projectId = this.project()?.id;
+    const communityId = this.community()?.id;
+
+    if (!projectId || !communityId) {
+      this.notification.error('No se pudo obtener los datos del proyecto o comunidad');
+      return;
+    }
+
+    this.notification.info('Generando código de invitación...');
+
+    this.projectInvitationsService.generateInvitation(projectId, communityId).subscribe({
+      next: (response: { qrCodeContent: string; onboardingCode: string; expiresAt: string }) => {
+        // Abrir dialog con el QR y código
+        import('../components/onboarding-qr-dialog.component').then((m) => {
+          this.dialog.open(m.OnboardingQrDialogComponent, {
+            width: '650px',
+            maxWidth: '95vw',
+            data: {
+              qrCodeContent: response.qrCodeContent,
+              onboardingCode: response.onboardingCode,
+              expiresAt: response.expiresAt,
+              projectName: this.project()?.name || 'Proyecto',
+              communityName: this.community()?.name || 'Comunidad',
+            },
+            disableClose: false,
+          });
+        });
+        this.notification.success('Código de invitación generado correctamente');
+      },
+      error: (error: unknown) => {
+        console.error('Error generating invitation:', error);
+        this.notification.error('Error al generar el código de invitación');
+      },
+    });
+  }
+
+  /**
+   * Inicia la etapa de inventario del proyecto
+   */
+  startInventoryStage(): void {
+    const projectId = this.project()?.id;
+    if (!projectId) {
+      this.notification.error('No se pudo obtener el ID del proyecto');
+      return;
+    }
+
+    // Validar que se cumplan las condiciones
+    if (!this.canStartInventory()) {
+      this.notification.warning(
+        'Para iniciar el inventario debes tener recolectores registrados y brigadas creadas',
+      );
+      return;
+    }
+
+    this.notification.info('Iniciando etapa de inventario...');
+
+    this.projectsService.startInventory(projectId).subscribe({
+      next: (updatedProject) => {
+        this.project.set(updatedProject);
+        this.notification.success('Etapa de inventario iniciada correctamente');
+      },
+      error: (error) => {
+        console.error('Error starting inventory:', error);
+        this.notification.error('Error al iniciar la etapa de inventario');
+      },
     });
   }
 }

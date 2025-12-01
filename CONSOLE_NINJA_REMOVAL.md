@@ -23,6 +23,7 @@ Esta extensión inyectaba código de instrumentación en los archivos TypeScript
 ### Código removido
 
 #### EOF Instrumentation Blocks
+
 ```typescript
 /* istanbul ignore next */ /* c8 ignore start */ /* eslint-disable */ function oo_cm() { ... }
 /* istanbul ignore next */ function oo_oo(i: string, ...v: any[]) { ... }
@@ -31,14 +32,15 @@ Esta extensión inyectaba código de instrumentación en los archivos TypeScript
 ```
 
 #### Source Code Modifications
+
 ```typescript
 // ❌ Antes (con Console Ninja)
-console.error(...oo_tx(`3369111778_5_52_5_70_11`, err))
-console.log(...oo_oo(`44424303_178_6_178_65_4`, 'Message:', data))
+console.error(...oo_tx(`3369111778_5_52_5_70_11`, err));
+console.log(...oo_oo(`44424303_178_6_178_65_4`, 'Message:', data));
 
 // ✅ Después (código limpio)
-console.error(err)
-console.log('Message:', data)
+console.error(err);
+console.log('Message:', data);
 ```
 
 ### Prevención futura

@@ -1,14 +1,14 @@
 {
   // Prevenir instalación automática de extensiones no deseadas
   "extensions.ignoreRecommendations": false,
-  
+
   // Deshabilitar extensiones específicas (Console Ninja)
   "extensions.autoUpdate": false,
-  
+
   // Configuración de TypeScript
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  
+
   // Configuración de formato
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",

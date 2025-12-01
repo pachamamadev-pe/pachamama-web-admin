@@ -82,7 +82,6 @@ export class ProjectsPage implements OnInit {
   products = signal<Product[]>([]);
   loading = signal(true);
 
-  // Filtered projects based on search
   filteredProjects = computed(() => {
     const search = this.searchTerm().toLowerCase().trim();
     if (!search) {
