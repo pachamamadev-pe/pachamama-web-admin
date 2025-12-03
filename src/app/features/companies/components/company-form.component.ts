@@ -13,12 +13,12 @@ import { Company, LicenseType } from '../models/company.model';
 import { CreateCompanyDto } from '../models/create-company.dto';
 import { UpdateCompanyDto } from '../models/update-company.dto';
 import { CompaniesService } from '../services/companies.service';
-import {
-  RucValidationService,
-  RucValidationResponse,
-} from '../../../shared/services/ruc-validation.service';
 import { NotificationService } from '@core/services/notification.service';
 import { rucValidator } from '../../../shared/utils/validators';
+import {
+  RucValidatorComponent,
+  RucValidationResult,
+} from '@shared/components/ruc-validator/ruc-validator.component';
 
 export interface CompanyFormData {
   mode: 'create' | 'edit';
@@ -38,6 +38,7 @@ export interface CompanyFormData {
     MatDividerModule,
     MatSelectModule,
     MatProgressSpinnerModule,
+    RucValidatorComponent,
   ],
   template: `
     <div class="company-form-dialog">
@@ -54,80 +55,16 @@ export interface CompanyFormData {
       @if (data.mode === 'create') {
         <!-- PASO 1: Validación de RUC (Solo en modo creación) -->
         @if (!rucValidated()) {
-          <div class="ruc-validation-section">
-            <!-- Info banner -->
-            <div class="bg-secondary-light border-l-4 border-secondary p-4 mb-6 rounded-r-lg">
-              <div class="flex items-start gap-3">
-                <mat-icon class="text-secondary">info</mat-icon>
-                <div>
-                  <p class="text-sm font-semibold text-secondary mb-1">Paso 1: Validar RUC</p>
-                  <p class="text-xs text-neutral-subheading">
-                    Ingresa el RUC de la empresa para validar su información ante SUNAT
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- RUC Validation Form -->
-            <div class="ruc-input-container">
-              <mat-form-field appearance="outline" class="flex-1">
-                <mat-label>RUC de la Empresa</mat-label>
-                <mat-icon matPrefix class="text-secondary">badge</mat-icon>
-                <input
-                  matInput
-                  [formControl]="rucControl"
-                  placeholder="Ej: 20123456789"
-                  maxlength="11"
-                  [disabled]="validatingRuc()"
-                  (keydown.enter)="validateRuc()"
-                />
-                @if (rucControl.hasError('required') && rucControl.touched) {
-                  <mat-error>El RUC es obligatorio</mat-error>
-                }
-                @if (rucControl.hasError('ruc') && rucControl.touched) {
-                  <mat-error>El RUC debe tener exactamente 11 dígitos numéricos</mat-error>
-                }
-              </mat-form-field>
-
-              <button
-                mat-raised-button
-                color="primary"
-                class="btn-primary validate-btn"
-                [disabled]="rucControl.invalid || validatingRuc()"
-                (click)="validateRuc()"
-              >
-                @if (validatingRuc()) {
-                  <ng-container>
-                    <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
-                    <span class="ml-2">Validando...</span>
-                  </ng-container>
-                } @else {
-                  <ng-container>
-                    <mat-icon>search</mat-icon>
-                    <span>Validar RUC</span>
-                  </ng-container>
-                }
-              </button>
-            </div>
-
-            <!-- Validation Result -->
-            @if (validationError()) {
-              <div class="validation-error mt-4 animate-fade-in">
-                <div
-                  class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg flex items-start gap-3"
-                >
-                  <mat-icon class="text-red-500">error_outline</mat-icon>
-                  <div>
-                    <p class="text-sm font-semibold text-red-800">RUC no válido</p>
-                    <p class="text-xs text-red-600 mt-1">{{ validationError() }}</p>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
+          <app-ruc-validator
+            entityType="de la empresa"
+            entityLabel="de la Empresa"
+            [showResetButton]="false"
+            successMessage="Hemos completado algunos campos con la información de SUNAT. Verifica y completa los datos restantes."
+            (rucValidated)="onRucValidated($event)"
+          />
         }
 
-        <!-- PASO 2: Formulario completo (Después de validación exitosa) -->
+        <!-- PASO 2: Banner de éxito (Después de validación exitosa) -->
         @if (rucValidated()) {
           <div class="validation-success mb-6 animate-fade-in">
             <div
@@ -312,37 +249,6 @@ export interface CompanyFormData {
         box-sizing: border-box;
       }
 
-      .ruc-validation-section {
-        padding: 16px 0;
-      }
-
-      .ruc-input-container {
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-      }
-
-      .validate-btn {
-        min-width: 140px;
-        height: 56px;
-        flex-shrink: 0;
-      }
-
-      .validate-btn {
-        .mdc-button__label {
-          display: flex;
-        }
-      }
-
-      .inline-spinner {
-        display: inline-block;
-        vertical-align: middle;
-      }
-
-      .inline-spinner ::ng-deep circle {
-        stroke: white !important;
-      }
-
       /* Animations */
       @keyframes fadeIn {
         from {
@@ -382,15 +288,6 @@ export interface CompanyFormData {
           max-width: 100%;
           max-height: 100vh;
         }
-
-        .ruc-input-container {
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .validate-btn {
-          width: 100%;
-        }
       }
     `,
   ],
@@ -399,7 +296,6 @@ export interface CompanyFormData {
 export class CompanyFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private companiesService = inject(CompaniesService);
-  private rucValidationService = inject(RucValidationService);
   private notification = inject(NotificationService);
   private dialogRef = inject(MatDialogRef<CompanyFormComponent>);
 
@@ -407,60 +303,43 @@ export class CompanyFormComponent implements OnInit {
 
   // Signals
   submitting = signal(false);
-  validatingRuc = signal(false);
   rucValidated = signal(false);
-  validationError = signal<string | null>(null);
 
   // Forms
   form!: FormGroup;
-  rucControl = this.fb.control('', [Validators.required, rucValidator()]);
 
   // Enum para el template
   readonly LicenseType = LicenseType;
 
   ngOnInit(): void {
-    // En modo edición, inicializar el formulario directamente
+    // En modo edición, inicializar el formulario directamente y marcar como validado
     if (this.data.mode === 'edit') {
       this.initForm();
+      this.rucValidated.set(true); // Skip validation in edit mode
     }
   }
 
   /**
-   * Valida el RUC mediante API de SUNAT
+   * Maneja la validación exitosa del RUC
    */
-  validateRuc(): void {
-    if (this.rucControl.invalid) {
-      this.rucControl.markAsTouched();
-      return;
-    }
+  onRucValidated(result: RucValidationResult): void {
+    this.rucValidated.set(true);
+    this.initFormWithRucData(result);
+  }
 
-    const ruc = this.rucControl.value?.trim();
-    if (!ruc) {
-      return;
-    }
-
-    this.validatingRuc.set(true);
-    this.validationError.set(null);
-
-    this.rucValidationService.validateRuc(ruc).subscribe({
-      next: (response) => {
-        this.validatingRuc.set(false);
-
-        if (response.estado && response.resultado) {
-          this.rucValidated.set(true);
-          this.initFormWithSunatData(response.resultado);
-          this.notification.success('RUC validado correctamente');
-        } else {
-          this.validationError.set(response.mensaje || 'No se encontró información para este RUC');
-        }
-      },
-      error: (error) => {
-        this.validatingRuc.set(false);
-        console.error('Error validating RUC:', error);
-        this.validationError.set(
-          'Error al validar el RUC. Por favor, intenta nuevamente o ingresa los datos manualmente.',
-        );
-      },
+  /**
+   * Inicializa el formulario con datos de validación de RUC
+   */
+  private initFormWithRucData(rucData: RucValidationResult): void {
+    this.form = this.fb.group({
+      ruc: [rucData.ruc, [Validators.required, rucValidator()]],
+      businessName: [rucData.businessName || '', [Validators.required, Validators.minLength(3)]],
+      tradeName: [rucData.tradeName || ''],
+      taxAddress: [rucData.address || ''],
+      contactEmail: ['', [Validators.required, Validators.email]],
+      contactPhone: [''],
+      legalRepresentative: [rucData.legalRepresentatives || ''],
+      licenseType: [LicenseType.BASIC],
     });
   }
 
@@ -469,39 +348,7 @@ export class CompanyFormComponent implements OnInit {
    */
   resetRucValidation(): void {
     this.rucValidated.set(false);
-    this.validationError.set(null);
-    this.rucControl.reset();
     this.form.reset();
-  }
-
-  /**
-   * Inicializa el formulario con datos de SUNAT después de validación exitosa
-   */
-  private initFormWithSunatData(sunatData: NonNullable<RucValidationResponse['resultado']>): void {
-    // Procesar representantes legales (puede ser array)
-    let legalRepresentative = '';
-    if (sunatData.representantes_legales && Array.isArray(sunatData.representantes_legales)) {
-      legalRepresentative = sunatData.representantes_legales.join(', ');
-    } else if (typeof sunatData.representantes_legales === 'string') {
-      legalRepresentative = sunatData.representantes_legales;
-    }
-
-    // Limpiar valores "-" que vienen de SUNAT
-    const cleanValue = (value: string) => (value && value !== '-' ? value : '');
-
-    this.form = this.fb.group({
-      ruc: [this.rucControl.value, [Validators.required, rucValidator()]],
-      businessName: [
-        cleanValue(sunatData.razon_social) || '',
-        [Validators.required, Validators.minLength(3)],
-      ],
-      tradeName: [cleanValue(sunatData.nombre_comercial) || ''],
-      taxAddress: [cleanValue(sunatData.direccion) || ''],
-      contactEmail: ['', [Validators.required, Validators.email]],
-      contactPhone: [''],
-      legalRepresentative: [cleanValue(legalRepresentative) || ''],
-      licenseType: [LicenseType.BASIC],
-    });
   }
 
   /**

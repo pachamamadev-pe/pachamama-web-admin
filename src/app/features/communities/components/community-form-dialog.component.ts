@@ -15,6 +15,10 @@ import type {
 } from '../models/community.model';
 import type { Department, Province, District } from '@shared/models/ubigeo.model';
 import { UbigeoService } from '@shared/services/ubigeo.service';
+import {
+  RucValidatorComponent,
+  RucValidationResult,
+} from '@shared/components/ruc-validator/ruc-validator.component';
 
 export interface CommunityFormDialogData {
   community?: Community;
@@ -36,178 +40,401 @@ export interface CommunityFormDialogData {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatIconModule,
+    RucValidatorComponent,
   ],
   template: `
     <div class="dialog-container">
-      <h2 mat-dialog-title class="text-title font-bold text-accent-titles">
-        {{ isEditMode() ? 'Editar Comunidad' : 'Nueva Comunidad' }}
-      </h2>
+      <!-- Header -->
+      <header class="dialog-header">
+        <div class="header-content">
+          <div class="header-icon">
+            <mat-icon class="text-secondary">
+              {{ isEditMode() ? 'edit' : 'add_circle' }}
+            </mat-icon>
+          </div>
+          <div class="header-text">
+            <h2 class="text-title font-bold text-accent-titles">
+              {{ isEditMode() ? 'Editar Comunidad' : 'Nueva Comunidad' }}
+            </h2>
+            <p class="text-subtitle text-neutral-subheading">
+              {{
+                isEditMode()
+                  ? 'Actualiza los datos de la comunidad'
+                  : 'Completa la información de la comunidad'
+              }}
+            </p>
+          </div>
+        </div>
+        <button mat-icon-button (click)="dialogRef.close()" class="close-button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
 
-      <mat-dialog-content class="mt-4">
-        <form [formGroup]="form" class="community-form">
-          <!-- RUC -->
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>RUC</mat-label>
-            <input
-              matInput
-              formControlName="ruc"
-              placeholder="20123456789"
-              maxlength="11"
-              required
+      <mat-dialog-content class="dialog-content">
+        @if (!isEditMode()) {
+          <!-- PASO 1: Validación de RUC (Solo en modo creación) -->
+          @if (!rucValidated()) {
+            <app-ruc-validator
+              entityType="de la comunidad"
+              entityLabel="de la Comunidad"
+              [showResetButton]="false"
+              successMessage="RUC validado. Completa los datos restantes de la comunidad."
+              (rucValidated)="onRucValidated($event)"
             />
-            <mat-icon matPrefix>badge</mat-icon>
-            @if (form.get('ruc')?.hasError('required') && form.get('ruc')?.touched) {
-              <mat-error>El RUC es obligatorio</mat-error>
-            }
-            @if (form.get('ruc')?.hasError('pattern')) {
-              <mat-error>El RUC debe tener 11 dígitos numéricos</mat-error>
-            }
-          </mat-form-field>
+          }
 
-          <!-- Nombre -->
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Nombre de la Comunidad</mat-label>
-            <input matInput formControlName="name" placeholder="Nombre" required />
-            <mat-icon matPrefix>groups</mat-icon>
-            @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-              <mat-error>El nombre es obligatorio</mat-error>
-            }
-            @if (form.get('name')?.hasError('minlength')) {
-              <mat-error>Mínimo 3 caracteres</mat-error>
-            }
-          </mat-form-field>
+          <!-- Banner de éxito -->
+          @if (rucValidated()) {
+            <div class="validation-success animate-fade-in">
+              <div class="success-banner">
+                <mat-icon class="text-secondary">check_circle</mat-icon>
+                <div class="success-text">
+                  <p class="text-sm font-semibold text-secondary mb-1">✓ RUC Validado</p>
+                  <p class="text-xs text-neutral-subheading">
+                    Completa los datos de ubicación de la comunidad.
+                  </p>
+                </div>
+                <button
+                  mat-icon-button
+                  class="text-neutral-subheading"
+                  (click)="resetRucValidation()"
+                  matTooltip="Validar otro RUC"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        }
 
-          <!-- Dirección Legal -->
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Dirección Legal</mat-label>
-            <textarea
-              matInput
-              formControlName="legalAddress"
-              placeholder="Dirección completa"
-              rows="2"
-              required
-            ></textarea>
-            <mat-icon matPrefix>location_on</mat-icon>
-            @if (
-              form.get('legalAddress')?.hasError('required') && form.get('legalAddress')?.touched
-            ) {
-              <mat-error>La dirección es obligatoria</mat-error>
-            }
-            @if (form.get('legalAddress')?.hasError('minlength')) {
-              <mat-error>Mínimo 10 caracteres</mat-error>
-            }
-          </mat-form-field>
+        <!-- Formulario completo (Edit mode OR after RUC validation) -->
+        @if (isEditMode() || rucValidated()) {
+          <form [formGroup]="form" class="community-form animate-slide-down">
+            <!-- RUC (Read-only después de validar) -->
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>RUC</mat-label>
+              <mat-icon matPrefix>badge</mat-icon>
+              <input
+                matInput
+                formControlName="ruc"
+                placeholder="20123456789"
+                maxlength="11"
+                [readonly]="!isEditMode()"
+              />
+              @if (form.get('ruc')?.hasError('required') && form.get('ruc')?.touched) {
+                <mat-error>El RUC es obligatorio</mat-error>
+              }
+              @if (form.get('ruc')?.hasError('pattern')) {
+                <mat-error>El RUC debe tener 11 dígitos numéricos</mat-error>
+              }
+            </mat-form-field>
 
-          <!-- Región/Departamento -->
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Región / Departamento</mat-label>
-            <mat-select
-              formControlName="region"
-              (selectionChange)="onDepartmentChange($event.value)"
-              required
-            >
-              @if (isLoadingDepartments()) {
-                <mat-option disabled>Cargando...</mat-option>
+            <!-- Nombre -->
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Nombre de la Comunidad</mat-label>
+              <mat-icon matPrefix>groups</mat-icon>
+              <input matInput formControlName="name" placeholder="Nombre" required />
+              @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+                <mat-error>El nombre es obligatorio</mat-error>
               }
-              @for (dept of departments(); track dept.code) {
-                <mat-option [value]="dept.name">{{ dept.name }}</mat-option>
+              @if (form.get('name')?.hasError('minlength')) {
+                <mat-error>Mínimo 3 caracteres</mat-error>
               }
-            </mat-select>
-            <mat-icon matPrefix>map</mat-icon>
-            @if (form.get('region')?.hasError('required') && form.get('region')?.touched) {
-              <mat-error>La región es obligatoria</mat-error>
-            }
-          </mat-form-field>
+            </mat-form-field>
 
-          <!-- Provincia -->
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Provincia</mat-label>
-            <mat-select
-              formControlName="province"
-              (selectionChange)="onProvinceChange($event.value)"
-              [disabled]="!form.get('region')?.value"
-              required
-            >
-              @if (isLoadingProvinces()) {
-                <mat-option disabled>Cargando...</mat-option>
+            <!-- Dirección Legal -->
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Dirección Legal</mat-label>
+              <mat-icon matPrefix>location_on</mat-icon>
+              <textarea
+                matInput
+                formControlName="legalAddress"
+                placeholder="Dirección completa"
+                rows="2"
+                required
+              ></textarea>
+              @if (
+                form.get('legalAddress')?.hasError('required') && form.get('legalAddress')?.touched
+              ) {
+                <mat-error>La dirección es obligatoria</mat-error>
               }
-              @for (prov of provinces(); track prov.code) {
-                <mat-option [value]="prov.name">{{ prov.name }}</mat-option>
+              @if (form.get('legalAddress')?.hasError('minlength')) {
+                <mat-error>Mínimo 10 caracteres</mat-error>
               }
-            </mat-select>
-            <mat-icon matPrefix>location_city</mat-icon>
-            @if (form.get('province')?.hasError('required') && form.get('province')?.touched) {
-              <mat-error>La provincia es obligatoria</mat-error>
-            }
-          </mat-form-field>
+            </mat-form-field>
 
-          <!-- Distrito -->
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Distrito</mat-label>
-            <mat-select
-              formControlName="district"
-              [disabled]="!form.get('province')?.value"
-              required
-            >
-              @if (isLoadingDistricts()) {
-                <mat-option disabled>Cargando...</mat-option>
+            <!-- Región/Departamento -->
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Región / Departamento</mat-label>
+              <mat-icon matPrefix>map</mat-icon>
+              <mat-select
+                formControlName="region"
+                (selectionChange)="onDepartmentChange($event.value)"
+                required
+              >
+                @if (isLoadingDepartments()) {
+                  <mat-option disabled>Cargando...</mat-option>
+                }
+                @for (dept of departments(); track dept.code) {
+                  <mat-option [value]="dept.name">{{ dept.name }}</mat-option>
+                }
+              </mat-select>
+              @if (form.get('region')?.hasError('required') && form.get('region')?.touched) {
+                <mat-error>La región es obligatoria</mat-error>
               }
-              @for (dist of districts(); track dist.code) {
-                <mat-option [value]="dist.name">{{ dist.name }}</mat-option>
+            </mat-form-field>
+
+            <!-- Provincia -->
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Provincia</mat-label>
+              <mat-icon matPrefix>location_city</mat-icon>
+              <mat-select
+                formControlName="province"
+                (selectionChange)="onProvinceChange($event.value)"
+                [disabled]="!form.get('region')?.value"
+                required
+              >
+                @if (isLoadingProvinces()) {
+                  <mat-option disabled>Cargando...</mat-option>
+                }
+                @for (prov of provinces(); track prov.code) {
+                  <mat-option [value]="prov.name">{{ prov.name }}</mat-option>
+                }
+              </mat-select>
+              @if (form.get('province')?.hasError('required') && form.get('province')?.touched) {
+                <mat-error>La provincia es obligatoria</mat-error>
               }
-            </mat-select>
-            <mat-icon matPrefix>place</mat-icon>
-            @if (form.get('district')?.hasError('required') && form.get('district')?.touched) {
-              <mat-error>El distrito es obligatorio</mat-error>
-            }
-          </mat-form-field>
-        </form>
+            </mat-form-field>
+
+            <!-- Distrito -->
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Distrito</mat-label>
+              <mat-icon matPrefix>place</mat-icon>
+              <mat-select
+                formControlName="district"
+                [disabled]="!form.get('province')?.value"
+                required
+              >
+                @if (isLoadingDistricts()) {
+                  <mat-option disabled>Cargando...</mat-option>
+                }
+                @for (dist of districts(); track dist.code) {
+                  <mat-option [value]="dist.name">{{ dist.name }}</mat-option>
+                }
+              </mat-select>
+              @if (form.get('district')?.hasError('required') && form.get('district')?.touched) {
+                <mat-error>El distrito es obligatorio</mat-error>
+              }
+            </mat-form-field>
+          </form>
+        }
       </mat-dialog-content>
 
-      <mat-dialog-actions align="end" class="gap-2">
-        <button mat-button [mat-dialog-close]="null" [disabled]="isSaving()">Cancelar</button>
+      <mat-dialog-actions class="dialog-footer" align="end">
+        <button mat-stroked-button [mat-dialog-close]="null" [disabled]="isSaving()">
+          Cancelar
+        </button>
         <button
           mat-raised-button
-          color="primary"
+          class="btn-primary"
           (click)="onSubmit()"
           [disabled]="form.invalid || isSaving()"
         >
-          @if (isSaving()) {
-            <mat-spinner diameter="20"></mat-spinner>
-          } @else {
-            {{ isEditMode() ? 'Guardar Cambios' : 'Crear Comunidad' }}
-          }
+          <span class="button-content">
+            @if (isSaving()) {
+              <mat-spinner diameter="20"></mat-spinner>
+              <span>Guardando...</span>
+            } @else {
+              <mat-icon>{{ isEditMode() ? 'save' : 'add_circle' }}</mat-icon>
+              <span>{{ isEditMode() ? 'Guardar Cambios' : 'Crear Comunidad' }}</span>
+            }
+          </span>
         </button>
       </mat-dialog-actions>
     </div>
   `,
   styles: `
     .dialog-container {
-      min-width: 300px;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      background: #ffffff;
+    }
+
+    /* Header */
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 24px;
+      border-bottom: 1px solid #e5e5e5;
+      background: #f9fafb;
+    }
+
+    .header-content {
+      display: flex;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #f4fbf6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+    }
+
+    .header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+
+      h2 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.3;
+      }
+
+      p {
+        margin: 0;
+        font-size: 13px;
+      }
+    }
+
+    .close-button {
+      flex-shrink: 0;
+      margin: -8px -8px 0 0;
+    }
+
+    /* Content */
+    .dialog-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
     }
 
     .community-form {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      padding: 1rem 0;
+      gap: 16px;
     }
 
-    @media (min-width: 768px) {
+    /* Success Banner */
+    .validation-success {
+      margin-bottom: 24px;
+    }
+
+    .success-banner {
+      background: #f4fbf6;
+      border-left: 4px solid #218358;
+      border-radius: 0 8px 8px 0;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .success-text {
+      flex: 1;
+    }
+
+    /* Footer */
+    .dialog-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e5e5e5;
+      background: #f9fafb;
+      gap: 12px;
+    }
+
+    .button-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .animate-slide-down {
+      animation: slideDown 0.4s ease-out;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
       .dialog-container {
-        min-width: 500px;
+        max-width: 100vw;
+        max-height: 100vh;
+      }
+
+      .dialog-header,
+      .dialog-content,
+      .dialog-footer {
+        padding: 16px;
+      }
+
+      .header-icon {
+        width: 40px;
+        height: 40px;
+
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+      }
+
+      .header-text h2 {
+        font-size: 18px;
       }
     }
   `,
 })
 export class CommunityFormDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
-  private dialogRef = inject(MatDialogRef<CommunityFormDialogComponent>);
+  dialogRef = inject(MatDialogRef<CommunityFormDialogComponent>);
   private ubigeoService = inject(UbigeoService);
   data = inject<CommunityFormDialogData>(MAT_DIALOG_DATA);
 
   isEditMode = signal(this.data.mode === 'edit');
   isSaving = signal(false);
+  rucValidated = signal(false);
 
   // Ubigeo data
   departments = signal<Department[]>([]);
@@ -242,8 +469,31 @@ export class CommunityFormDialogComponent implements OnInit {
     this.loadDepartments();
 
     if (this.isEditMode() && this.data.community) {
+      this.rucValidated.set(true); // Skip validation in edit mode
       this.populateForm(this.data.community);
     }
+  }
+
+  /**
+   * Maneja la validación exitosa del RUC
+   */
+  onRucValidated(result: RucValidationResult): void {
+    this.rucValidated.set(true);
+
+    // Pre-llenar formulario con datos de RUC
+    this.form.patchValue({
+      ruc: result.ruc,
+      name: result.businessName || '',
+      legalAddress: result.address || '',
+    });
+  }
+
+  /**
+   * Reinicia la validación de RUC
+   */
+  resetRucValidation(): void {
+    this.rucValidated.set(false);
+    this.form.reset();
   }
 
   /**

@@ -338,34 +338,83 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Maneja la selección de archivo
+   * Maneja la selección de uno o más archivos de áreas
    */
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
+    const files = input.files;
 
-      // Validar extensión
-      if (!file.name.endsWith('.zip')) {
-        this.notification.error('Solo se permiten archivos .zip');
-        return;
-      }
-
-      // Validar tamaño (ej: máximo 50MB)
-      const maxSize = 50 * 1024 * 1024; // 50MB
-      if (file.size > maxSize) {
-        this.notification.error('El archivo es demasiado grande (máximo 50MB)');
-        return;
-      }
-
-      this.uploadShapefile(file);
+    if (!files || files.length === 0) {
+      return;
     }
+
+    const fileArray = Array.from(files);
+
+    // Validar formatos permitidos
+    const allowedExtensions = [
+      '.zip',
+      '.rar', // Comprimidos
+      '.shp',
+      '.dbf',
+      '.shx',
+      '.prj',
+      '.cpg', // Shapefile principales
+      '.qmd',
+      '.sbn',
+      '.sbx',
+      '.xml',
+      '.shp.xml', // Shapefile adicionales
+      '.geojson',
+      '.json', // GeoJSON
+    ];
+
+    const invalidFiles: string[] = [];
+    const oversizedFiles: string[] = [];
+    const maxSize = 150 * 1024 * 1024; // 150MB
+
+    for (const file of fileArray) {
+      // Validar extensión
+      const fileName = file.name.toLowerCase();
+      const isValid = allowedExtensions.some((ext) => fileName.endsWith(ext));
+
+      if (!isValid) {
+        invalidFiles.push(file.name);
+        continue;
+      }
+
+      // Validar tamaño
+      if (file.size > maxSize) {
+        oversizedFiles.push(file.name);
+      }
+    }
+
+    // Mostrar errores si existen
+    if (invalidFiles.length > 0) {
+      this.notification.error(
+        `Formato no soportado: ${invalidFiles.join(', ')}. ` +
+          `Formatos permitidos: ZIP, RAR, Shapefiles, GeoJSON`,
+      );
+      input.value = ''; // Reset input
+      return;
+    }
+
+    if (oversizedFiles.length > 0) {
+      this.notification.error(
+        `Archivos demasiado grandes (máximo 150MB): ${oversizedFiles.join(', ')}`,
+      );
+      input.value = ''; // Reset input
+      return;
+    }
+
+    // Si todo es válido, proceder con la subida
+    this.uploadFiles(fileArray);
+    input.value = ''; // Reset input
   }
 
   /**
-   * Inicia la carga del shapefile
+   * Inicia la carga de uno o más archivos de áreas
    */
-  private uploadShapefile(file: File): void {
+  private uploadFiles(files: File[]): void {
     const projectId = this.project()?.id;
     const projectName = this.project()?.name;
 
@@ -382,7 +431,12 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     const name = `Importación de mapa para proyecto ${projectName}`;
     const source = 'GPS';
 
-    this.areasService.importAreaShapefile(projectId, file, name, source).subscribe({
+    // Mensaje descriptivo según cantidad de archivos
+    const fileCount = files.length;
+    const fileNames = files.map((f) => f.name).join(', ');
+    console.log(`Subiendo ${fileCount} archivo(s): ${fileNames}`);
+
+    this.areasService.importAreaFiles(projectId, files, name, source).subscribe({
       next: (response: AreaImportResponse) => {
         this.currentImportId.set(response.importId);
         this.notification.success('Archivo enviado. Procesando...');

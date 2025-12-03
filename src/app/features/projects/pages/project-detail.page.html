@@ -199,9 +199,14 @@
                       [class.map-fullscreen]="isMapFullscreen()"
                     >
                       <mat-card-header>
-                        <mat-card-title>
+                        <mat-card-title
+                          [matTooltip]="'Perímetro de ' + (project()?.name || 'Proyecto')"
+                          matTooltipPosition="below"
+                        >
                           <mat-icon class="title-icon">map</mat-icon>
-                          Perímetro de {{ project()?.name || 'Proyecto' }}
+                          <span class="map-title-text">
+                            Perímetro de {{ project()?.name || 'Proyecto' }}
+                          </span>
                         </mat-card-title>
                         @if (hasMap()) {
                           <div class="map-actions">
@@ -243,7 +248,8 @@
                             <input
                               type="file"
                               id="shapefileInput"
-                              accept=".zip"
+                              accept=".zip,.rar,.shp,.dbf,.shx,.prj,.cpg,.qmd,.sbn,.sbx,.xml,.geojson,.json"
+                              multiple
                               (change)="onFileSelected($event)"
                               style="display: none"
                             />
@@ -254,8 +260,7 @@
                               </div>
                               <h4 class="upload-title">No hay mapa cargado</h4>
                               <p class="upload-description">
-                                Sube un archivo shapefile (.zip) para visualizar el perímetro del
-                                proyecto
+                                Sube uno o más archivos de áreas del proyecto
                               </p>
 
                               <button
@@ -264,10 +269,14 @@
                                 (click)="triggerFileInput()"
                               >
                                 <mat-icon>folder_open</mat-icon>
-                                Seleccionar shapefile
+                                Seleccionar archivo(s)
                               </button>
 
-                              <p class="upload-hint">Formato aceptado: .zip (máximo 50MB)</p>
+                              <p class="upload-hint">
+                                Formatos: ZIP/RAR, Shapefiles (.shp + acompañantes), GeoJSON
+                                <br />
+                                Máximo 150MB por archivo
+                              </p>
                             </div>
                           </div>
                         }

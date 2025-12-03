@@ -29,24 +29,41 @@ export class AreasService {
   }
 
   /**
-   * Importa un shapefile (.zip) para un proyecto
+   * Importa uno o más archivos de áreas para un proyecto
+   * Soporta:
+   * - ZIP/RAR con shapefiles o GeoJSON
+   * - Múltiples archivos .shp + acompañantes (.dbf, .shx, .prj, etc.)
+   * - Múltiples archivos .geojson/.json
+   * - Combinaciones de los anteriores
+   *
    * @param projectId UUID del proyecto
-   * @param file Archivo .zip con el shapefile
+   * @param files Array de archivos a importar (o un solo archivo)
    * @param name Nombre descriptivo de la importación
-   * @param source Fuente del mapa (ej: "GPS")
+   * @param source Fuente del mapa (ej: "GPS", "Satellite")
    */
-  importAreaShapefile(
+  importAreaFiles(
     projectId: string,
-    file: File,
+    files: File | File[],
     name: string,
     source: string,
   ): Observable<AreaImportResponse> {
     const formData = new FormData();
-    formData.append('file', file);
+
+    // Soportar tanto File único como File[]
+    const fileArray = Array.isArray(files) ? files : [files];
+
+    // Agregar cada archivo con el nombre 'files' (plural)
+    fileArray.forEach((file) => {
+      formData.append('files', file);
+    });
+
     formData.append('name', name);
     formData.append('source', source);
 
-    return this.http.post<AreaImportResponse>(`${this.apiUrl}/${projectId}/areas/import`, formData);
+    return this.http.post<AreaImportResponse>(
+      `${this.apiUrl}/${projectId}/areas/import/multi`,
+      formData,
+    );
   }
 
   /**

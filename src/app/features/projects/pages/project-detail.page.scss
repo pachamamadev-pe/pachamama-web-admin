@@ -389,6 +389,15 @@
 
     .title-icon {
       color: #218358;
+      flex-shrink: 0; // Prevent icon from shrinking
+    }
+
+    // Truncate long project names with ellipsis
+    .map-title-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
   }
 
