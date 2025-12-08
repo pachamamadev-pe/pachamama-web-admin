@@ -46,6 +46,7 @@ import {
   ImportStatus,
 } from '../models/area.model';
 import { NotificationService } from '@core/services/notification.service';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { getProjectStageLabel, getProjectStageClass } from '../models/project.model';
 import * as L from 'leaflet';
 
@@ -187,10 +188,10 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     { number: 3, name: 'Recolección', key: 'collection' },
     { number: 4, name: 'Elaboración de PMF', key: 'pmf_development' },
     { number: 5, name: 'Evaluación y Aprobación (SERFOR)', key: 'serfor_evaluation' },
-    { number: 6, name: 'Recolección', key: 'harvest' },
-    { number: 7, name: 'Acopio / Ingreso a CTP', key: 'collection' },
-    { number: 8, name: 'Transformación Primaria', key: 'primary_transformation' },
-    { number: 9, name: 'Proceso de Ajuste de Mapas a Estándares IPG/IGN', key: 'map_adjustment' },
+
+    { number: 6, name: 'Acopio / Ingreso a CTP', key: 'collection' },
+    { number: 7, name: 'Transformación Primaria', key: 'primary_transformation' },
+    { number: 8, name: 'Proceso de Ajuste de Mapas a Estándares IPG/IGN', key: 'map_adjustment' },
   ];
 
   // Computed para verificar si una etapa está activa
@@ -886,34 +887,48 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // Fecha actual en formato YYYY-MM-DD
-    const today = new Date().toISOString().split('T')[0];
+    // Fecha actual en formato YYYY-MM-DD (zona horaria local)
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const localDateString = `${year}-${month}-${day}`;
 
     const projectCommunityId = this.project()?.communityLink?.id;
 
     // Si ya tiene brigada y selecciona una distinta, se REASIGNA
     if (collector.currentBrigadeId && collector.currentBrigadeId !== brigadeId) {
-      const reassignRequest = {
-        projectCommunityCollectorId: collector.projectCommunityCollectorId,
-        newBrigadeId: brigadeId,
-        startDate: today,
-        notes: 'Reasignación desde UI',
-      };
+      // Validar si startDate es hoy (posible error de selección)
+      if (collector.startDate === localDateString) {
+        const currentBrigade = this.brigades().find((b) => b.id === collector.currentBrigadeId);
+        const newBrigade = this.brigades().find((b) => b.id === brigadeId);
 
-      this.brigadeAssignmentsService.reassignBrigade(reassignRequest).subscribe({
-        next: () => {
-          this.notification.success(
-            `${collector.name} ${collector.lastName} reasignado correctamente`,
-          );
-          if (projectCommunityId) {
-            this.loadCollectors(projectCommunityId);
+        const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+          data: {
+            title: '¿Reasignar recolector?',
+            message: `Has asignado a ${collector.name} ${collector.lastName} a la brigada "${currentBrigade?.name || 'N/A'}" hoy. ¿Estás seguro de cambiarla por "${newBrigade?.name || 'N/A'}"?`,
+            confirmText: 'Sí, cambiar',
+            type: 'warning',
+          },
+        });
+
+        dialogRef.afterClosed().subscribe((confirmed) => {
+          if (!confirmed) {
+            // Revertir la selección visualmente
+            if (projectCommunityId) {
+              this.loadCollectors(projectCommunityId);
+            }
+            return;
           }
-        },
-        error: (error) => {
-          console.error('Error reassigning collector:', error);
-          this.notification.error('Error al reasignar recolector');
-        },
-      });
+
+          // Usuario confirmó, proceder con la reasignación
+          this.performReassignment(collector, brigadeId, localDateString, projectCommunityId);
+        });
+        return;
+      }
+
+      // startDate no es hoy, proceder directamente
+      this.performReassignment(collector, brigadeId, localDateString, projectCommunityId);
       return;
     }
 
@@ -922,7 +937,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
       const request = {
         projectCommunityCollectorId: collector.projectCommunityCollectorId,
         brigadeId,
-        startDate: today,
+        startDate: localDateString,
       };
 
       this.brigadeAssignmentsService.createBrigadeAssignment(request).subscribe({
@@ -936,7 +951,12 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error assigning collector to brigade:', error);
-          this.notification.error('Error al asignar recolector a brigada');
+          const errorMessage = error?.error?.message || 'Error al asignar recolector a brigada';
+          this.notification.error(errorMessage);
+          // Recargar collectors para revertir la selección visual
+          if (projectCommunityId) {
+            this.loadCollectors(projectCommunityId);
+          }
         },
       });
       return;
@@ -944,6 +964,43 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
     // Si seleccionó la misma brigada que ya tenía, no hacer nada
     this.notification.info('El recolector ya está asignado a esta brigada');
+  }
+
+  /**
+   * Realiza la reasignación de brigada
+   */
+  private performReassignment(
+    collector: Collector,
+    brigadeId: string,
+    startDate: string,
+    projectCommunityId?: string,
+  ): void {
+    const reassignRequest = {
+      projectCommunityCollectorId: collector.projectCommunityCollectorId!,
+      newBrigadeId: brigadeId,
+      startDate,
+      notes: 'Reasignación desde UI',
+    };
+
+    this.brigadeAssignmentsService.reassignBrigade(reassignRequest).subscribe({
+      next: () => {
+        this.notification.success(
+          `${collector.name} ${collector.lastName} reasignado correctamente`,
+        );
+        if (projectCommunityId) {
+          this.loadCollectors(projectCommunityId);
+        }
+      },
+      error: (error) => {
+        console.error('Error reassigning collector:', error);
+        const errorMessage = error?.error?.message || 'Error al reasignar recolector';
+        this.notification.error(errorMessage);
+        // Recargar collectors para revertir la selección visual
+        if (projectCommunityId) {
+          this.loadCollectors(projectCommunityId);
+        }
+      },
+    });
   }
 
   /**

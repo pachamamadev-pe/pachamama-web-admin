@@ -336,6 +336,20 @@ export interface BrigadeCollectorsDialogData {
       background: #ffffff;
     }
 
+    /* Force hide mobile cards on desktop */
+    @media (min-width: 768px) {
+      .mobile-cards {
+        display: none !important;
+      }
+    }
+
+    /* Force hide desktop table on mobile */
+    @media (max-width: 767px) {
+      .table-wrapper {
+        display: none !important;
+      }
+    }
+
     .collectors-table {
       width: 100%;
 

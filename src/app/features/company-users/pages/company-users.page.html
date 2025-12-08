@@ -1,0 +1,234 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="text-title font-bold text-accent-titles">Usuarios de Empresa</h1>
+        <p class="text-subtitle text-neutral-subheading">
+          Gestiona los usuarios y roles de tu empresa
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <mat-icon>person_add</mat-icon>
+          <span class="hidden sm:inline">Añadir Usuario</span>
+          <span class="sm:hidden">Añadir</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-container">
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+        <input
+          matInput
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar usuarios por nombre, email, documento o rol..."
+          class="text-body"
+        />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()" matTooltip="Limpiar búsqueda">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="page-content">
+    @if (loading()) {
+      <!-- Loading state -->
+      <div class="loading-container">
+        <mat-spinner diameter="48" />
+        <p class="text-body text-neutral-subheading mt-4">Cargando usuarios...</p>
+      </div>
+    } @else if (users().length === 0 && !searchTerm()) {
+      <!-- Empty state -->
+      <app-empty-state
+        icon="people"
+        [useMaterialIcon]="true"
+        title="No hay usuarios registrados"
+        description="Comienza añadiendo el primer usuario a tu empresa"
+        actionLabel="Crear primer usuario"
+        (action)="openCreateDialog()"
+      />
+    } @else if (filteredUsers().length === 0 && searchTerm()) {
+      <!-- No Results State -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <mat-icon>search_off</mat-icon>
+        </div>
+        <h3 class="text-body font-bold text-accent-titles">No se encontraron usuarios</h3>
+        <p class="text-subtitle text-neutral-subheading">Intenta con otros términos de búsqueda</p>
+        <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
+      </div>
+    } @else {
+      <!-- Users Table (Desktop only) -->
+      <div class="company-users-table">
+        <table class="table-auto w-full">
+          <thead class="table-header">
+            <tr>
+              <th class="table-th text-left">Usuario</th>
+              <th class="table-th text-left">Email</th>
+              <th class="table-th text-left">Documento</th>
+              <th class="table-th text-left">Rol</th>
+              <th class="table-th text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="table-body">
+            @for (user of filteredUsers(); track user.id) {
+              <tr class="table-row">
+                <!-- Usuario (nombre + avatar) -->
+                <td class="table-td">
+                  <div class="flex items-center gap-3">
+                    <div class="user-avatar">
+                      {{ getUserInitials(user) }}
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-body font-bold text-accent-titles">
+                        {{ getFullName(user) }}
+                      </span>
+                      <span class="text-subtitle text-neutral-subheading">
+                        {{ user.phone || '-' }}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Email -->
+                <td class="table-td">
+                  <span class="text-body text-accent-titles">{{ user.email }}</span>
+                </td>
+
+                <!-- Documento -->
+                <td class="table-td">
+                  <div class="flex flex-col">
+                    <span class="text-subtitle text-neutral-subheading">
+                      {{ getDocumentTypeLabel(user.documentType) }}
+                    </span>
+                    <span class="text-body text-accent-titles font-mono">
+                      {{ user.documentNumber }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Rol -->
+                <td class="table-td">
+                  <span class="role-badge" [style.background-color]="getRoleBadgeColor(user.role)">
+                    {{ user.role }}
+                  </span>
+                </td>
+
+                <!-- Acciones -->
+                <td class="table-td text-right">
+                  <button mat-icon-button [matMenuTriggerFor]="tableMenu">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #tableMenu="matMenu">
+                    <button mat-menu-item (click)="openEditDialog(user)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar</span>
+                    </button>
+                    <button mat-menu-item (click)="openAssignRoleDialog(user)">
+                      <mat-icon>shield</mat-icon>
+                      <span>Cambiar rol</span>
+                    </button>
+                    <button mat-menu-item (click)="deleteUser(user)">
+                      <mat-icon>delete</mat-icon>
+                      <span>Desactivar</span>
+                    </button>
+                  </mat-menu>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards (Mobile only) -->
+      <div class="mobile-cards">
+        @for (user of filteredUsers(); track user.id) {
+          <div class="company-user-card bg-primary-white rounded-lg shadow p-4">
+            <!-- Card Header -->
+            <div class="card-header">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="user-avatar">
+                  {{ getUserInitials(user) }}
+                </div>
+                <div class="flex flex-col flex-1 min-w-0">
+                  <h3 class="text-body font-bold text-primary-black truncate">
+                    {{ getFullName(user) }}
+                  </h3>
+                  <span
+                    class="role-badge role-badge-mobile"
+                    [style.background-color]="getRoleBadgeColor(user.role)"
+                  >
+                    {{ user.role }}
+                  </span>
+                </div>
+              </div>
+              <div class="card-actions">
+                <button mat-icon-button [matMenuTriggerFor]="mobileMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #mobileMenu="matMenu">
+                  <button mat-menu-item (click)="openEditDialog(user)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <button mat-menu-item (click)="openAssignRoleDialog(user)">
+                    <mat-icon>shield</mat-icon>
+                    <span>Cambiar rol</span>
+                  </button>
+                  <button mat-menu-item (click)="deleteUser(user)">
+                    <mat-icon>delete</mat-icon>
+                    <span>Desactivar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
+
+            <!-- Card Details -->
+            <div class="card-details">
+              <div class="detail-row">
+                <mat-icon class="detail-icon">email</mat-icon>
+                <span class="detail-label">Email:</span>
+                <span class="detail-value truncate">{{ user.email }}</span>
+              </div>
+
+              <div class="detail-row">
+                <mat-icon class="detail-icon">badge</mat-icon>
+                <span class="detail-label">{{ getDocumentTypeLabel(user.documentType) }}:</span>
+                <span class="detail-value font-mono">{{ user.documentNumber }}</span>
+              </div>
+
+              @if (user.phone) {
+                <div class="detail-row">
+                  <mat-icon class="detail-icon">phone</mat-icon>
+                  <span class="detail-label">Teléfono:</span>
+                  <span class="detail-value">{{ user.phone }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Pagination (shared for both desktop and mobile) -->
+      <div class="pagination-container">
+        <mat-paginator
+          [length]="totalElements()"
+          [pageSize]="pageSize()"
+          [pageIndex]="currentPage()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+        />
+      </div>
+    }
+  </div>
+</div>

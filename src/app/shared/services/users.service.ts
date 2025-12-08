@@ -1,20 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { CreateUserRequest, User } from '../models/create-user.dto';
 import { UserDetails, UpdateUserRequest } from '../models/user-details.model';
 import { environment } from '@environments/environment';
-
-/**
- * Respuesta paginada del API
- */
-interface PaginatedResponse<T> {
-  page: number;
-  size: number;
-  total: number;
-  items: T[];
-}
 
 /**
  * Servicio para gestionar usuarios del sistema
@@ -36,17 +25,6 @@ export class UsersService {
     return this.http.post<User>(`${this.apiUrl}company`, request, {
       headers: { 'X-Company-Id': request.tenantId },
     });
-  }
-
-  /**
-   * Obtiene los usuarios asociados a una empresa
-   * @param companyId UUID de la empresa
-   * @returns Observable con la lista de usuarios
-   */
-  getCompanyUsers(companyId: string): Observable<User[]> {
-    return this.http
-      .get<PaginatedResponse<User>>(`${this.companiesUrl}/${companyId}/users`)
-      .pipe(map((response) => response.items));
   }
 
   /**

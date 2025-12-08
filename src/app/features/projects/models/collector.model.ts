@@ -32,4 +32,5 @@ export interface Collector {
   projectCommunityCollectorId?: string | null;
   currentBrigadeId?: string | null;
   currentBrigadeName?: string | null;
+  startDate?: string | null; // Fecha de inicio de asignación a brigada actual (YYYY-MM-DD)
 }

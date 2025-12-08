@@ -74,7 +74,7 @@ export default class LoginPage {
       next: (userCredential) => {
         const user: FirebaseUser = userCredential.user;
 
-        // Verificar si el correo está validado
+        // Verificar si el correo está validado PRIMERO
         if (!user.emailVerified) {
           sendEmailVerification(user)
             .then(() => {
@@ -82,28 +82,46 @@ export default class LoginPage {
               this.notificationService.warning(
                 'Tu correo no está verificado. Hemos enviado un enlace de verificación a tu correo electrónico.',
               );
+              this.authService.logout();
             })
             .catch((error: unknown) => {
               console.error('Error al enviar el correo de verificación:', error);
+              this.isLoading.set(false);
             });
-        } else {
-          user.getIdToken().then((token) => {
-            console.log('Firebase Auth token:', token);
-            this.sidebarService.fetchSidebarData(token, () => {
-              this.userService.verifyEmail().subscribe({
-                next: () => {
-                  console.log('Verification email sent via UsersService');
-                  this.isLoading.set(false);
-                  this.router.navigate(['/home']);
-                },
-                error: (err: unknown) => {
-                  this.isLoading.set(false);
-                  console.error('Error sending verification email via UsersService:', err);
-                },
-              });
+          return;
+        }
+
+        // Si el correo está verificado, obtener el token y validar permisos
+        user.getIdToken().then((token) => {
+          console.log('Firebase Auth token:', token);
+          this.sidebarService.fetchSidebarData(token, () => {
+            // Validar que el usuario tenga acceso al sistema
+            const menuItems = this.sidebarService.menuItems();
+
+            if (!menuItems || menuItems.length === 0) {
+              // Usuario sin permisos de acceso
+              this.isLoading.set(false);
+              this.loginError.set(
+                'Tu rol no tiene acceso a ninguna funcionalidad del sistema. Por favor, contacta al administrador para que te asigne los permisos necesarios.',
+              );
+              this.authService.logout();
+              return;
+            }
+
+            // Usuario con permisos y correo verificado, continuar con el flujo normal
+            this.userService.verifyEmail().subscribe({
+              next: () => {
+                console.log('Verification email sent via UsersService');
+                this.isLoading.set(false);
+                this.router.navigate(['/home']);
+              },
+              error: (err: unknown) => {
+                this.isLoading.set(false);
+                console.error('Error sending verification email via UsersService:', err);
+              },
             });
           });
-        }
+        });
       },
       error: (error: Error) => {
         // Mostrar error de autenticación

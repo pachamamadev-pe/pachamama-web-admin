@@ -15,6 +15,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { Company } from '../models/company.model';
 import { UsersService } from '@shared/services/users.service';
+import { CompanyUsersService } from '../../company-users/services/company-users.service';
+import { CompanyUser } from '../../company-users/models/company-user.model';
 import { NotificationService } from '@core/services/notification.service';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -24,6 +26,31 @@ import {
   DocumentType,
   ParamRole,
 } from '@shared/models/create-user.dto';
+
+/**
+ * Mapea un CompanyUser al formato User esperado por este componente.
+ * Convierte los tipos de documento y maneja las diferencias de modelo.
+ */
+function mapCompanyUserToUser(companyUser: CompanyUser): User {
+  // Mapeo de tipos de documento del sistema de company-users al sistema general
+  const documentTypeMap: Record<string, DocumentType> = {
+    DNI: DocumentType.DNI,
+    CARNET_EXTRANJERIA: DocumentType.CE,
+    PASAPORTE: DocumentType.CE, // Los pasaportes se mapean a CE en el sistema general
+  };
+
+  return {
+    id: companyUser.id,
+    tenantId: companyUser.tenantId,
+    email: companyUser.email,
+    documentType: documentTypeMap[companyUser.documentType] || DocumentType.DNI,
+    documentNumber: companyUser.documentNumber,
+    firstName: companyUser.firstName,
+    lastName: companyUser.lastName,
+    role: companyUser.role,
+    authProviderUid: companyUser.authProviderUid,
+  };
+}
 
 export interface AssignAdminDialogData {
   company: Company;
@@ -299,6 +326,7 @@ export interface AssignAdminDialogData {
 export class AssignAdminDialogComponent {
   private fb = inject(FormBuilder);
   private usersService = inject(UsersService);
+  private companyUsersService = inject(CompanyUsersService);
   private notification = inject(NotificationService);
   private dialog = inject(MatDialog);
   private dialogRef = inject(MatDialogRef<AssignAdminDialogComponent>);
@@ -342,9 +370,11 @@ export class AssignAdminDialogComponent {
   }
 
   private loadCurrentAdmins(): void {
-    this.usersService.getCompanyUsers(this.data.company.id).subscribe({
-      next: (users) => {
-        this.currentAdmins.set(users);
+    this.companyUsersService.getUsers(this.data.company.id, 0, 100).subscribe({
+      next: (response) => {
+        // Mapear CompanyUser[] a User[] para compatibilidad con el componente
+        const mappedUsers = response.items.map(mapCompanyUserToUser);
+        this.currentAdmins.set(mappedUsers);
       },
       error: (error) => {
         this.notification.handleError(error, 'Error al cargar administradores');
