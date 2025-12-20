@@ -1,0 +1,207 @@
+@use '@angular/material' as mat;
+
+.documents-table-container {
+  .filters-section {
+    .search-field,
+    .stage-filter {
+      :host ::ng-deep {
+        .mat-mdc-form-field {
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  .empty-state {
+    .empty-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+    }
+  }
+
+  // Desktop Table
+  .documents-table {
+    // Status badge (fuera de ::ng-deep para que funcione)
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    // Colores de estado
+    .doc-status-approved {
+      background-color: #f4fbf6; // secondary-light
+      color: #218358; // secondary
+
+      mat-icon {
+        color: #218358;
+      }
+    }
+
+    .doc-status-pending {
+      background-color: #fff7ed; // orange-light
+      color: #fe714b; // price
+
+      mat-icon {
+        color: #fe714b;
+      }
+    }
+
+    .doc-status-observed {
+      background-color: #eff6ff; // blue-light
+      color: #3b00ff; // ump-blue
+
+      mat-icon {
+        color: #3b00ff;
+      }
+    }
+
+    .doc-status-rejected {
+      background-color: #fef2f2; // red-light
+      color: #ef4444; // red
+
+      mat-icon {
+        color: #ef4444;
+      }
+    }
+
+    :host ::ng-deep {
+      .mat-mdc-table {
+        background: transparent;
+      }
+
+      .mat-mdc-header-row {
+        background-color: #f4fbf6; // secondary-light
+        border-bottom: 2px solid #e5e5e5; // neutral-border
+      }
+
+      .table-th {
+        font-size: 12px;
+        font-weight: 700;
+        color: #0a0a0a; // accent-titles
+        padding: 16px;
+      }
+
+      .table-td {
+        font-size: 14px;
+        color: #000000; // primary-black
+        padding: 16px;
+        border-bottom: 1px solid #e5e5e5; // neutral-border
+      }
+
+      .table-row {
+        transition: background-color 0.2s ease;
+
+        &:hover {
+          background-color: #f4fbf6; // secondary-light
+        }
+      }
+    }
+  }
+
+  // Mobile Cards
+  .mobile-cards {
+    // Status badge para mobile
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    // Colores de estado para mobile
+    .doc-status-approved {
+      background-color: #f4fbf6;
+      color: #218358;
+
+      mat-icon {
+        color: #218358;
+      }
+    }
+
+    .doc-status-pending {
+      background-color: #fff7ed;
+      color: #fe714b;
+
+      mat-icon {
+        color: #fe714b;
+      }
+    }
+
+    .doc-status-observed {
+      background-color: #eff6ff;
+      color: #3b00ff;
+
+      mat-icon {
+        color: #3b00ff;
+      }
+    }
+
+    .doc-status-rejected {
+      background-color: #fef2f2;
+      color: #ef4444;
+
+      mat-icon {
+        color: #ef4444;
+      }
+    }
+
+    .document-card {
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-header {
+        border-bottom: 1px solid #e5e5e5; // neutral-border
+        padding-bottom: 12px;
+      }
+
+      .card-details {
+        padding-top: 12px;
+
+        .detail-row {
+          .detail-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+        }
+      }
+    }
+  }
+
+  // Pagination
+  :host ::ng-deep {
+    .mat-mdc-paginator {
+      background: transparent;
+      border-top: 1px solid #e5e5e5; // neutral-border
+    }
+  }
+}

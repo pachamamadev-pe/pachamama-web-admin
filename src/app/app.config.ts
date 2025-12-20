@@ -12,6 +12,7 @@ import { environment } from '../environments/environment';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { CustomPaginatorIntlService } from './core/services';
+import { provideQuillConfig } from 'ngx-quill';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -28,5 +29,11 @@ export const appConfig: ApplicationConfig = {
     provideAuth(() => getAuth()),
     provideCharts(withDefaultRegisterables()),
     { provide: MatPaginatorIntl, useClass: CustomPaginatorIntlService },
+    provideQuillConfig({
+      modules: {
+        syntax: false,
+        toolbar: true,
+      },
+    }),
   ],
 };

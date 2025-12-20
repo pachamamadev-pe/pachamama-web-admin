@@ -1,0 +1,220 @@
+<div class="document-review-dialog">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon class="title-icon">rate_review</mat-icon>
+    Revisar Documento
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <!-- Información del Documento -->
+    <div class="document-info-section mb-6">
+      <div class="info-header mb-4">
+        @if (data.document.documentType.icon) {
+          <mat-icon class="doc-type-icon">{{ data.document.documentType.icon }}</mat-icon>
+        }
+        <div class="flex-1">
+          <h3 class="doc-type-name">{{ data.document.documentType.name }}</h3>
+          <p class="doc-type-description">{{ data.document.documentType.description }}</p>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <mat-icon class="info-icon">description</mat-icon>
+          <div class="info-content">
+            <span class="info-label">Archivo:</span>
+            <span class="info-value">{{ data.document.fileName }}</span>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <mat-icon class="info-icon">storage</mat-icon>
+          <div class="info-content">
+            <span class="info-label">Tamaño:</span>
+            <span class="info-value">{{ formatFileSize(data.document.fileSizeBytes) }}</span>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <mat-icon class="info-icon">calendar_today</mat-icon>
+          <div class="info-content">
+            <span class="info-label">Subido:</span>
+            <span class="info-value">{{ formatDate(data.document.uploadedAt) }}</span>
+          </div>
+        </div>
+
+        @if (data.document.version > 1) {
+          <div class="info-item">
+            <mat-icon class="info-icon">history</mat-icon>
+            <div class="info-content">
+              <span class="info-label">Versión:</span>
+              <span class="info-value">{{ data.document.version }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Botones de Acción del Documento -->
+      <div class="document-actions mt-4 flex gap-3">
+        <button mat-stroked-button class="action-button" (click)="downloadDocument()">
+          <mat-icon>download</mat-icon>
+          Descargar
+        </button>
+        <button mat-stroked-button class="action-button" (click)="viewDocument()">
+          <mat-icon>visibility</mat-icon>
+          Ver Documento
+        </button>
+      </div>
+    </div>
+
+    <mat-divider />
+
+    <!-- Acciones de Revisión -->
+    <div class="review-actions-section mt-6">
+      <h3 class="section-title mb-4">Acciones de Revisión</h3>
+
+      <!-- Aprobar -->
+      <div class="action-card approve-card mb-4">
+        <div class="action-header">
+          <mat-icon class="action-icon text-secondary">check_circle</mat-icon>
+          <div class="action-info flex-1">
+            <h4 class="action-title">Aprobar Documento</h4>
+            <p class="action-description">
+              El documento cumple con los requisitos y será marcado como aprobado
+            </p>
+          </div>
+          <button
+            mat-raised-button
+            class="btn-approve"
+            (click)="approve()"
+            [disabled]="processing()"
+          >
+            @if (processing()) {
+              <mat-icon>hourglass_empty</mat-icon>
+            } @else {
+              <mat-icon>check</mat-icon>
+            }
+            Aprobar
+          </button>
+        </div>
+      </div>
+
+      <!-- Observar -->
+      <div class="action-card observe-card mb-4">
+        <div class="action-header">
+          <mat-icon class="action-icon text-ump-blue">visibility</mat-icon>
+          <div class="action-info flex-1">
+            <h4 class="action-title">Observar (Requiere Correcciones)</h4>
+            <p class="action-description">
+              El documento necesita ajustes. El usuario podrá resubirlo corregido
+            </p>
+          </div>
+          <button
+            mat-raised-button
+            class="btn-observe"
+            (click)="toggleObserveForm()"
+            [disabled]="processing()"
+          >
+            <mat-icon>visibility</mat-icon>
+            Observar
+          </button>
+        </div>
+
+        @if (showObserveForm()) {
+          <div class="action-form mt-4">
+            <mat-form-field class="w-full" appearance="outline">
+              <mat-label>Notas de Observación (opcional)</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="observationNotes"
+                placeholder="Ej: Falta la firma del representante legal en la página 3..."
+                rows="4"
+                [disabled]="processing()"
+              ></textarea>
+              <mat-hint>Describe qué correcciones debe realizar el usuario</mat-hint>
+            </mat-form-field>
+
+            <div class="form-actions flex gap-2 justify-end mt-2">
+              <button mat-button (click)="toggleObserveForm()" [disabled]="processing()">
+                Cancelar
+              </button>
+              <button
+                mat-raised-button
+                class="btn-observe"
+                (click)="observe()"
+                [disabled]="processing()"
+              >
+                @if (processing()) {
+                  <mat-icon>hourglass_empty</mat-icon>
+                } @else {
+                  <mat-icon>send</mat-icon>
+                }
+                Confirmar Observación
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Rechazar -->
+      <div class="action-card reject-card">
+        <div class="action-header">
+          <mat-icon class="action-icon text-map-red-1">cancel</mat-icon>
+          <div class="action-info flex-1">
+            <h4 class="action-title">Rechazar Definitivamente</h4>
+            <p class="action-description">
+              El documento no es válido y será rechazado sin posibilidad de resubmisión
+            </p>
+          </div>
+          <button
+            mat-raised-button
+            class="btn-reject"
+            (click)="toggleRejectForm()"
+            [disabled]="processing()"
+          >
+            <mat-icon>cancel</mat-icon>
+            Rechazar
+          </button>
+        </div>
+
+        @if (showRejectForm()) {
+          <div class="action-form mt-4">
+            <mat-form-field class="w-full" appearance="outline">
+              <mat-label>Razón del Rechazo (recomendado)</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="rejectionNotes"
+                placeholder="Ej: El permiso ha expirado y no es aplicable al proyecto..."
+                rows="4"
+                [disabled]="processing()"
+              ></textarea>
+              <mat-hint>Explica por qué el documento es rechazado</mat-hint>
+            </mat-form-field>
+
+            <div class="form-actions flex gap-2 justify-end mt-2">
+              <button mat-button (click)="toggleRejectForm()" [disabled]="processing()">
+                Cancelar
+              </button>
+              <button
+                mat-raised-button
+                class="btn-reject"
+                (click)="reject()"
+                [disabled]="processing()"
+              >
+                @if (processing()) {
+                  <mat-icon>hourglass_empty</mat-icon>
+                } @else {
+                  <mat-icon>delete_forever</mat-icon>
+                }
+                Confirmar Rechazo
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="close()" [disabled]="processing()">Cerrar</button>
+  </mat-dialog-actions>
+</div>

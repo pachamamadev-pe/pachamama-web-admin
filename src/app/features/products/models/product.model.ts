@@ -51,6 +51,14 @@ export interface Product {
   description?: string;
 
   /**
+   * Descripción enriquecida en formato HTML
+   * Contiene los conceptos de árbol (aprovechable/no aprovechable)
+   * Se sanitiza automáticamente en el backend
+   * Opcional
+   */
+  descriptionHtml?: string | null;
+
+  /**
    * Path relativo del icono/imagen en Azure Storage
    * Ejemplo: "products/1731234567-abc123.png"
    * Opcional

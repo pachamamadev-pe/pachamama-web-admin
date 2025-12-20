@@ -1,0 +1,152 @@
+<div class="document-resubmit-dialog">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon class="title-icon">upload</mat-icon>
+    Resubir Documento Corregido
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <!-- Información del Documento Original -->
+    <div class="original-doc-section mb-6">
+      <div class="section-header mb-3">
+        <h3 class="section-title">Documento Observado</h3>
+      </div>
+
+      <div class="doc-info-card">
+        <div class="doc-header">
+          @if (data.document.documentType.icon) {
+            <mat-icon class="doc-icon">{{ data.document.documentType.icon }}</mat-icon>
+          }
+          <div class="doc-details flex-1">
+            <h4 class="doc-name">{{ data.document.documentType.name }}</h4>
+            <p class="doc-description">{{ data.document.documentType.description }}</p>
+          </div>
+          <mat-chip class="doc-status">
+            <mat-icon class="chip-icon">visibility</mat-icon>
+            Observado
+          </mat-chip>
+        </div>
+
+        <div class="doc-meta mt-3">
+          <div class="meta-item">
+            <mat-icon class="meta-icon">description</mat-icon>
+            <span class="meta-text">{{ data.document.fileName }}</span>
+          </div>
+          <div class="meta-item">
+            <mat-icon class="meta-icon">history</mat-icon>
+            <span class="meta-text">Versión {{ data.document.version }}</span>
+          </div>
+          <div class="meta-item">
+            <mat-icon class="meta-icon">calendar_today</mat-icon>
+            <span class="meta-text">{{ formatDate(data.document.uploadedAt) }}</span>
+          </div>
+        </div>
+
+        <!-- Notas de Observación -->
+        @if (data.document.validationNotes) {
+          <div class="observation-notes mt-4">
+            <div class="notes-header">
+              <mat-icon class="notes-icon">info</mat-icon>
+              <span class="notes-label">Observaciones del Revisor:</span>
+            </div>
+            <p class="notes-content">{{ data.document.validationNotes }}</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <mat-divider />
+
+    <!-- Sección de Nueva Subida -->
+    <div class="resubmit-section mt-6">
+      <div class="section-header mb-3">
+        <h3 class="section-title">Nueva Versión</h3>
+        <p class="section-description">
+          Sube el archivo corregido. Se creará la versión {{ data.document.version + 1 }} con estado
+          "Pendiente"
+        </p>
+      </div>
+
+      @if (!selectedFile()) {
+        <!-- Zona de Selección de Archivo -->
+        <div
+          class="file-select-zone"
+          role="button"
+          tabindex="0"
+          (click)="selectFile()"
+          (keyup.enter)="selectFile()"
+          (keyup.space)="selectFile()"
+        >
+          <mat-icon class="select-icon">cloud_upload</mat-icon>
+          <h4 class="select-title">Selecciona el archivo corregido</h4>
+          <p class="select-hint">PDF, Word, o imágenes (máx 10MB)</p>
+          <button mat-raised-button class="btn-select">
+            <mat-icon>folder_open</mat-icon>
+            Seleccionar Archivo
+          </button>
+        </div>
+      } @else {
+        <!-- Archivo Seleccionado -->
+        <div class="file-selected-card">
+          <div class="file-info">
+            <mat-icon class="file-icon text-secondary">description</mat-icon>
+            <div class="file-details flex-1">
+              <h4 class="file-name">{{ selectedFile()!.name }}</h4>
+              <p class="file-size">{{ formatFileSize(selectedFile()!.size) }}</p>
+            </div>
+            @if (!uploading()) {
+              <button
+                mat-icon-button
+                class="btn-remove"
+                (click)="selectedFile.set(null)"
+                matTooltip="Quitar archivo"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+
+          @if (uploading()) {
+            <!-- Progreso de Subida -->
+            <div class="upload-progress mt-3">
+              <mat-progress-bar mode="indeterminate" />
+              <p class="upload-text">Subiendo documento...</p>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Info Box -->
+      <div class="info-box mt-4">
+        <mat-icon class="info-icon">info</mat-icon>
+        <div class="info-text">
+          <p class="info-title">¿Qué sucede después?</p>
+          <ul class="info-list">
+            <li>Se creará una nueva versión del documento con estado "Pendiente"</li>
+            <li>El revisor será notificado para evaluar la nueva versión</li>
+            <li>La versión anterior se mantendrá como historial</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()" [disabled]="uploading()">Cancelar</button>
+    <button
+      mat-raised-button
+      class="btn-upload"
+      (click)="uploadFile()"
+      [disabled]="!selectedFile() || uploading()"
+    >
+      <ng-container>
+        @if (uploading()) {
+          <mat-icon>hourglass_empty</mat-icon>
+          Subiendo...
+        } @else {
+          <mat-icon>upload</mat-icon>
+          Resubir Documento
+        }
+      </ng-container>
+    </button>
+  </mat-dialog-actions>
+</div>

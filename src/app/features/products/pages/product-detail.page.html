@@ -1,0 +1,166 @@
+<div class="page-container">
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48" />
+      <p class="text-body text-neutral-subheading mt-4">Cargando producto...</p>
+    </div>
+  }
+
+  <!-- Product Detail Content -->
+  @if (!loading() && product()) {
+    <!-- Header -->
+    <header class="product-header">
+      <div class="header-top">
+        <button mat-icon-button (click)="goBack()" class="back-button">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="breadcrumb text-subtitle text-neutral-subheading">
+          <span>Productos</span>
+          <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+          <span>{{ productName() }}</span>
+        </div>
+      </div>
+
+      <div class="header-content">
+        <div class="header-left">
+          <!-- Product Icon -->
+          <div class="product-icon">
+            @if (productImageUrl()) {
+              <img [src]="productImageUrl()!" [alt]="productName()" class="icon-image" />
+            } @else {
+              <div class="icon-placeholder">
+                <mat-icon>spa</mat-icon>
+              </div>
+            }
+          </div>
+
+          <!-- Product Info -->
+          <div class="title-info">
+            <p class="product-label text-subtitle text-neutral-subheading">Producto</p>
+            <h1 class="product-name text-title font-bold text-accent-titles">
+              {{ productName() }}
+            </h1>
+            <p class="growth-indicator text-subtitle">
+              <span class="growth-value text-secondary">{{ growthPercentage() }}</span>
+              <span class="text-neutral-subheading">respecto al mes pasado</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Product Image (derecha) -->
+        @if (productImageUrl()) {
+          <div class="product-image-container">
+            <img [src]="productImageUrl()!" [alt]="productName()" class="product-main-image" />
+          </div>
+        }
+      </div>
+    </header>
+
+    <!-- Tabs Section -->
+    <section class="product-tabs">
+      <mat-tab-group class="custom-tabs" animationDuration="300ms">
+        <!-- Tab 1: Información -->
+        <mat-tab label="Información">
+          <div class="tab-content">
+            <!-- Requerimientos mínimos del árbol -->
+            <app-product-requirements-card
+              [productId]="product()?.id ?? ''"
+              [protocols]="protocols()"
+              (createProtocol)="onCreateProtocol()"
+              (editProtocol)="onEditProtocol($event)"
+              (deleteProtocol)="onDeleteProtocol($event)"
+              (reorderProtocols)="onReorderProtocols($event)"
+            />
+
+            <!-- Gráficos y estadísticas -->
+            <div class="stats-grid">
+              <!-- Árboles conservados -->
+              <div class="stat-card">
+                <div class="stat-header">
+                  <h3 class="text-body font-bold text-accent-titles">
+                    Árboles conservados
+                    <span class="text-subtitle text-neutral-subheading">Enero - Junio 2025</span>
+                  </h3>
+                  <p class="stat-subtitle text-subtitle text-neutral-subheading">
+                    Número de árboles protegidos gracias a tala controlada
+                  </p>
+                </div>
+                <app-product-conservation-chart />
+              </div>
+
+              <!-- Nuevos comuneros -->
+              <div class="stat-card metric-card">
+                <div class="metric-icon">
+                  <mat-icon class="text-secondary">trending_up</mat-icon>
+                </div>
+                <div class="metric-content">
+                  <h3 class="text-subtitle text-neutral-subheading">Nuevos comuneros</h3>
+                  <p class="metric-value text-title font-bold text-accent-titles">120</p>
+                  <p class="metric-growth text-subtitle text-secondary">+12.5%</p>
+                  <button mat-button class="metric-action">
+                    Crecimiento este mes
+                    <mat-icon>arrow_forward</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Familias beneficiadas -->
+              <div class="stat-card metric-card">
+                <div class="metric-icon">
+                  <mat-icon class="text-secondary">groups</mat-icon>
+                </div>
+                <div class="metric-content">
+                  <h3 class="text-subtitle text-neutral-subheading">Familias beneficiadas</h3>
+                  <p class="metric-value text-title font-bold text-accent-titles">254</p>
+                  <p class="metric-growth text-subtitle text-secondary">+4.5%</p>
+                  <button mat-button class="metric-action">
+                    Crecimiento este mes
+                    <mat-icon>arrow_forward</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Conceptos de árbol -->
+            <app-product-tree-concepts
+              [productId]="product()?.id ?? ''"
+              [productName]="productName()"
+              [conceptsHtml]="product()?.descriptionHtml ?? null"
+              (editConcepts)="openConceptsEditor()"
+            />
+          </div>
+        </mat-tab>
+
+        <!-- Tab 2: Proyectos (En construcción) -->
+        <mat-tab label="Proyectos">
+          <div class="tab-content">
+            <div class="under-construction">
+              <mat-icon class="construction-icon">construction</mat-icon>
+              <h3 class="text-body font-bold text-accent-titles">En construcción</h3>
+              <p class="text-subtitle text-neutral-subheading">
+                Esta sección mostrará los proyectos asociados a este producto.
+              </p>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab 3: Protocolo de recolección -->
+        <mat-tab label="Protocolo de recolección">
+          <div class="tab-content">
+            <div class="under-construction">
+              <mat-icon class="construction-icon">science</mat-icon>
+              <h3 class="text-body font-bold text-accent-titles">En construcción</h3>
+              <p class="text-subtitle text-neutral-subheading">
+                Esta sección permitirá configurar los formularios dinámicos de recolección.
+              </p>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </section>
+  }
+</div>
+
+<!-- Side Panel for Protocol Form -->
+<app-product-protocol-form-side-panel />

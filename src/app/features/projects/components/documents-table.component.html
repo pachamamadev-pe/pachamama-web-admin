@@ -1,0 +1,243 @@
+<div class="documents-table-container">
+  <!-- Filtros y búsqueda -->
+  <div class="filters-section mb-6 flex flex-col md:flex-row gap-4">
+    <!-- Búsqueda -->
+    <mat-form-field class="search-field flex-1" appearance="outline">
+      <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+      <input
+        matInput
+        [ngModel]="searchTerm()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Buscar por nombre de documento o tipo..."
+        class="text-body"
+      />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <!-- Filtro por etapa -->
+    <mat-form-field class="stage-filter w-full md:w-64" appearance="outline">
+      <mat-label>Filtrar por etapa</mat-label>
+      <mat-select [value]="selectedStage()" (selectionChange)="onStageFilterChange($event.value)">
+        <mat-option value="all">Todas las etapas</mat-option>
+        <mat-option value="planning">Relacionamiento Comunitario</mat-option>
+        <mat-option value="inventory">Inventario</mat-option>
+        <mat-option value="inventory_complete">Inventario Completo</mat-option>
+        <mat-option value="area_generation">Generación de Áreas</mat-option>
+        <mat-option value="pending_approval">Pendiente de Aprobación</mat-option>
+        <mat-option value="approved">Aprobado</mat-option>
+        <mat-option value="pmf_development">Elaboración de PMF</mat-option>
+        <mat-option value="serfor_evaluation">Evaluación SERFOR</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (loading()) {
+    <!-- Loading State -->
+    <div class="loading-container flex justify-center items-center py-12">
+      <mat-spinner diameter="48" />
+    </div>
+  } @else if (filteredDocuments().length === 0) {
+    <!-- Empty State -->
+    <div class="empty-state text-center py-12">
+      <mat-icon class="empty-icon text-neutral-subheading mb-4">folder_open</mat-icon>
+      @if (searchTerm() || selectedStage() !== 'all') {
+        <h3 class="text-body font-bold text-accent-titles mb-2">No se encontraron documentos</h3>
+        <p class="text-subtitle text-neutral-subheading">
+          Intenta con otros términos de búsqueda o filtros
+        </p>
+      } @else {
+        <h3 class="text-body font-bold text-accent-titles mb-2">No hay documentos subidos</h3>
+        <p class="text-subtitle text-neutral-subheading">
+          Sube tu primer documento usando el botón "Subir Documentos"
+        </p>
+      }
+    </div>
+  } @else {
+    <!-- Desktop Table -->
+    <div
+      class="documents-table hidden md:block bg-primary-white rounded-lg shadow-sm overflow-hidden"
+    >
+      <table mat-table [dataSource]="paginatedDocuments()" class="w-full">
+        <!-- Tipo de Documento Column -->
+        <ng-container matColumnDef="documentType">
+          <th mat-header-cell *matHeaderCellDef class="table-th">Documento</th>
+          <td mat-cell *matCellDef="let doc" class="table-td">
+            <div class="flex items-center">
+              @if (doc.documentType.icon) {
+                <mat-icon class="text-icon mr-2">{{ doc.documentType.icon }}</mat-icon>
+              }
+              <div>
+                <p class="text-body font-bold text-accent-titles">
+                  {{ doc.documentType.name }}
+                </p>
+                @if (doc.version > 1) {
+                  <p class="text-subtitle text-neutral-subheading">v{{ doc.version }}</p>
+                }
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Nombre de Archivo Column -->
+        <ng-container matColumnDef="fileName">
+          <th mat-header-cell *matHeaderCellDef class="table-th">Archivo</th>
+          <td mat-cell *matCellDef="let doc" class="table-td">
+            <p class="text-body text-primary-black truncate max-w-xs" [matTooltip]="doc.fileName">
+              {{ doc.fileName }}
+            </p>
+            <p class="text-subtitle text-neutral-subheading">
+              {{ (doc.fileSizeBytes / 1024 / 1024).toFixed(2) }} MB
+            </p>
+          </td>
+        </ng-container>
+
+        <!-- Fecha de Revisión Column -->
+        <ng-container matColumnDef="uploadedAt">
+          <th mat-header-cell *matHeaderCellDef class="table-th">Fecha de Subida</th>
+          <td mat-cell *matCellDef="let doc" class="table-td">
+            <p class="text-body text-primary-black">{{ formatDate(doc.uploadedAt) }}</p>
+          </td>
+        </ng-container>
+
+        <!-- Etapa Column -->
+        <ng-container matColumnDef="projectStage">
+          <th mat-header-cell *matHeaderCellDef class="table-th">Etapa</th>
+          <td mat-cell *matCellDef="let doc" class="table-td">
+            <p class="text-body text-neutral-subheading">
+              {{ getProjectStageLabel(doc.projectStage) }}
+            </p>
+          </td>
+        </ng-container>
+
+        <!-- Estado Column -->
+        <ng-container matColumnDef="validationStatus">
+          <th mat-header-cell *matHeaderCellDef class="table-th">Estado</th>
+          <td mat-cell *matCellDef="let doc" class="table-td">
+            <div class="status-badge" [class]="getStatusColor(doc.validationStatus)">
+              <mat-icon>{{ getStatusIcon(doc.validationStatus) }}</mat-icon>
+              <span>{{ getStatusLabel(doc.validationStatus) }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Acciones Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="table-th text-right">Acciones</th>
+          <td mat-cell *matCellDef="let doc" class="table-td text-right">
+            <button mat-icon-button [matMenuTriggerFor]="tableMenu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #tableMenu="matMenu">
+              <button mat-menu-item (click)="downloadDocument.emit(doc)">
+                <mat-icon>download</mat-icon>
+                <span>Descargar</span>
+              </button>
+              @if (canBeReviewed(doc)) {
+                <button mat-menu-item (click)="reviewDocument.emit(doc)">
+                  <mat-icon>rate_review</mat-icon>
+                  <span>Revisar</span>
+                </button>
+              }
+              @if (canResubmit(doc)) {
+                <button mat-menu-item (click)="resubmitDocument.emit(doc)">
+                  <mat-icon>upload</mat-icon>
+                  <span>Resubir</span>
+                </button>
+              }
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="mobile-cards md:hidden space-y-4">
+      @for (doc of paginatedDocuments(); track doc.id) {
+        <div class="document-card bg-primary-white rounded-lg shadow-sm p-4">
+          <div class="card-header flex justify-between items-start mb-3">
+            <div class="flex items-center flex-1">
+              @if (doc.documentType.icon) {
+                <mat-icon class="text-icon mr-2">{{ doc.documentType.icon }}</mat-icon>
+              }
+              <div class="flex-1">
+                <h3 class="text-body font-bold text-accent-titles">
+                  {{ doc.documentType.name }}
+                </h3>
+                @if (doc.version > 1) {
+                  <p class="text-subtitle text-neutral-subheading">Versión {{ doc.version }}</p>
+                }
+              </div>
+            </div>
+            <button mat-icon-button [matMenuTriggerFor]="mobileMenu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #mobileMenu="matMenu">
+              <button mat-menu-item (click)="downloadDocument.emit(doc)">
+                <mat-icon>download</mat-icon>
+                <span>Descargar</span>
+              </button>
+              @if (canBeReviewed(doc)) {
+                <button mat-menu-item (click)="reviewDocument.emit(doc)">
+                  <mat-icon>rate_review</mat-icon>
+                  <span>Revisar</span>
+                </button>
+              }
+              @if (canResubmit(doc)) {
+                <button mat-menu-item (click)="resubmitDocument.emit(doc)">
+                  <mat-icon>upload</mat-icon>
+                  <span>Resubir</span>
+                </button>
+              }
+            </mat-menu>
+          </div>
+
+          <div class="card-details space-y-2">
+            <div class="detail-row flex items-center">
+              <mat-icon class="detail-icon text-neutral-subheading mr-2">description</mat-icon>
+              <span class="text-subtitle text-neutral-subheading mr-2">Archivo:</span>
+              <span class="text-body text-primary-black truncate">{{ doc.fileName }}</span>
+            </div>
+            <div class="detail-row flex items-center">
+              <mat-icon class="detail-icon text-neutral-subheading mr-2">calendar_today</mat-icon>
+              <span class="text-subtitle text-neutral-subheading mr-2">Fecha:</span>
+              <span class="text-body text-primary-black">{{ formatDate(doc.uploadedAt) }}</span>
+            </div>
+            <div class="detail-row flex items-center">
+              <mat-icon class="detail-icon text-neutral-subheading mr-2">flag</mat-icon>
+              <span class="text-subtitle text-neutral-subheading mr-2">Etapa:</span>
+              <span class="text-body text-primary-black">{{
+                getProjectStageLabel(doc.projectStage)
+              }}</span>
+            </div>
+            <div class="detail-row flex items-center">
+              <mat-icon class="detail-icon text-neutral-subheading mr-2">info</mat-icon>
+              <span class="text-subtitle text-neutral-subheading mr-2">Estado:</span>
+              <div class="status-badge" [class]="getStatusColor(doc.validationStatus)">
+                <mat-icon>{{ getStatusIcon(doc.validationStatus) }}</mat-icon>
+                <span>{{ getStatusLabel(doc.validationStatus) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Pagination -->
+    <mat-paginator
+      [length]="filteredDocuments().length"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+      class="mt-4"
+    />
+  }
+</div>

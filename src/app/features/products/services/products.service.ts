@@ -1,7 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Product, CreateProductDto, UpdateProductDto, ProductStatus } from '../models';
+import {
+  Product,
+  CreateProductDto,
+  UpdateProductDto,
+  ProductStatus,
+  ProductHtmlUpdateDto,
+} from '../models';
 import { SimplePaginatedResponse, PageRequest } from '@shared/models/pagination.model';
 import { environment } from '@environments/environment';
 /**
@@ -158,5 +164,27 @@ export class ProductsService {
    */
   deactivateProduct(id: string): Observable<Product> {
     return this.updateProduct(id, { status: ProductStatus.INACTIVE });
+  }
+
+  /**
+   * Actualiza la descripción HTML de un producto
+   * Solo disponible para ADMIN_PACHAMAMA
+   *
+   * @param id - UUID del producto
+   * @param dto - DTO con la descripción HTML (se sanitizará en el backend)
+   * @returns Observable con el producto actualizado
+   *
+   * @example
+   * ```typescript
+   * const htmlContent = '<h1>Conceptos</h1><p>...</p>';
+   * this.productsService.updateHtmlDescription('a1b2c3d4-...', {
+   *   descriptionHtml: htmlContent
+   * }).subscribe(
+   *   product => console.log('HTML actualizado:', product.descriptionHtml)
+   * );
+   * ```
+   */
+  updateHtmlDescription(id: string, dto: ProductHtmlUpdateDto): Observable<Product> {
+    return this.http.patch<Product>(`${this.apiUrl}/${id}/html-description`, dto);
   }
 }

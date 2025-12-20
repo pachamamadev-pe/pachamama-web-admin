@@ -1,0 +1,266 @@
+@if (isOpen()) {
+  <div
+    class="side-panel-overlay"
+    (click)="onCancel()"
+    (keydown.escape)="onCancel()"
+    tabindex="0"
+    role="button"
+    aria-label="Cerrar panel"
+  ></div>
+  <div class="protocol-side-panel" [@slideIn]>
+    <div class="panel-header">
+      <div class="header-content">
+        <h2 class="text-title font-bold text-accent-titles">
+          {{ isEditMode() ? 'Editar protocolo' : 'Nuevo protocolo' }}
+        </h2>
+        <p class="text-subtitle text-neutral-subheading">
+          {{ data()?.productName }}
+        </p>
+      </div>
+      <button mat-icon-button (click)="onCancel()" class="close-button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="panel-content">
+      @if (loadingAttributes()) {
+        <div class="loading-state">
+          <mat-spinner diameter="40" />
+          <p class="text-body text-neutral-subheading">Cargando atributos...</p>
+        </div>
+      } @else {
+        <form [formGroup]="form" class="protocol-form">
+          <!-- Domain Attribute Selection -->
+          @if (dataReady() && domainAttributes().length > 0) {
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Atributo de dominio</mat-label>
+              <mat-select
+                formControlName="domainAttributeId"
+                required
+                panelClass="sidepanel-select-panel"
+              >
+                <mat-option value="">Seleccione un atributo</mat-option>
+                @for (attr of domainAttributes(); track attr.id) {
+                  <mat-option [value]="attr.id">
+                    {{ attr.name }}
+                    @if (attr.unit) {
+                      <span class="text-neutral-subheading">({{ attr.unit }})</span>
+                    }
+                  </mat-option>
+                }
+              </mat-select>
+              @if (selectedAttribute()?.description) {
+                <mat-hint>{{ selectedAttribute()?.description }}</mat-hint>
+              }
+              @if (
+                form.get('domainAttributeId')?.invalid && form.get('domainAttributeId')?.touched
+              ) {
+                <mat-error>Debe seleccionar un atributo</mat-error>
+              }
+            </mat-form-field>
+          }
+
+          <!-- Operator Selection -->
+          @if (availableOperators().length > 0) {
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Operador de validación</mat-label>
+              <mat-select formControlName="operator" required panelClass="sidepanel-select-panel">
+                <mat-option value="">Seleccione un operador</mat-option>
+                @for (op of availableOperators(); track op) {
+                  <mat-option [value]="op">
+                    {{ operatorLabels[op] }}
+                  </mat-option>
+                }
+              </mat-select>
+              @if (form.get('operator')?.invalid && form.get('operator')?.touched) {
+                <mat-error>Debe seleccionar un operador</mat-error>
+              }
+            </mat-form-field>
+          }
+
+          <!-- Expected Value Input -->
+          @if (needsTwoValues()) {
+            <!-- BETWEEN operator: two inputs -->
+            <div class="value-range">
+              <mat-form-field appearance="outline" class="range-input">
+                <mat-label>Valor mínimo</mat-label>
+                <input
+                  matInput
+                  formControlName="expectedValue"
+                  [type]="getInputType()"
+                  [step]="getInputStep()"
+                  required
+                />
+                @if (form.get('expectedValue')?.invalid && form.get('expectedValue')?.touched) {
+                  <mat-error>Campo requerido</mat-error>
+                }
+              </mat-form-field>
+
+              <span class="range-separator text-body text-neutral-subheading">y</span>
+
+              <mat-form-field appearance="outline" class="range-input">
+                <mat-label>Valor máximo</mat-label>
+                <input
+                  matInput
+                  formControlName="expectedValueMax"
+                  [type]="getInputType()"
+                  [step]="getInputStep()"
+                  required
+                />
+                @if (
+                  form.get('expectedValueMax')?.invalid && form.get('expectedValueMax')?.touched
+                ) {
+                  <mat-error>Campo requerido</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          } @else if (needsMultipleValues() && isEnumWithAllowedValues()) {
+            <!-- IN/NOT_IN with ENUM: multiple select -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Valores esperados</mat-label>
+              <mat-select
+                formControlName="expectedValue"
+                multiple
+                required
+                panelClass="sidepanel-select-panel"
+              >
+                @for (value of selectedAttribute()?.allowedValues; track value) {
+                  <mat-option [value]="value">{{ value }}</mat-option>
+                }
+              </mat-select>
+              <mat-hint>Seleccione uno o más valores</mat-hint>
+              @if (form.get('expectedValue')?.invalid && form.get('expectedValue')?.touched) {
+                <mat-error>Debe seleccionar al menos un valor</mat-error>
+              }
+            </mat-form-field>
+          } @else if (needsMultipleValues()) {
+            <!-- IN/NOT_IN operators: comma-separated values -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Valores esperados</mat-label>
+              <textarea
+                matInput
+                formControlName="expectedValue"
+                rows="3"
+                [placeholder]="getValuePlaceholder()"
+                required
+              ></textarea>
+              <mat-hint>Separe múltiples valores con coma</mat-hint>
+              @if (form.get('expectedValue')?.invalid && form.get('expectedValue')?.touched) {
+                <mat-error>Campo requerido</mat-error>
+              }
+            </mat-form-field>
+          } @else if (isEnumWithAllowedValues()) {
+            <!-- ENUM with allowedValues: show dropdown -->
+            <!-- DEBUG: {{ selectedAttribute()?.dataType }} - {{ selectedAttribute()?.allowedValues?.length }} - {{ isEnumWithAllowedValues() }} -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Valor esperado</mat-label>
+              <mat-select
+                formControlName="expectedValue"
+                required
+                panelClass="sidepanel-select-panel"
+              >
+                <mat-option value="">Seleccione un valor</mat-option>
+                @for (value of selectedAttribute()?.allowedValues; track value) {
+                  <mat-option [value]="value">{{ value }}</mat-option>
+                }
+              </mat-select>
+              <mat-hint>
+                Valores disponibles: {{ selectedAttribute()!.allowedValues!.join(', ') }}
+              </mat-hint>
+              @if (form.get('expectedValue')?.invalid && form.get('expectedValue')?.touched) {
+                <mat-error>Debe seleccionar un valor</mat-error>
+              }
+            </mat-form-field>
+          } @else {
+            <!-- Standard single value input -->
+            <!-- DEBUG ELSE: attr={{ selectedAttribute()?.name }} type={{ selectedAttribute()?.dataType }} allowed={{ selectedAttribute()?.allowedValues?.length }} isEnum={{ isEnumWithAllowedValues() }} -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Valor esperado</mat-label>
+              <input
+                matInput
+                formControlName="expectedValue"
+                [type]="getInputType()"
+                [step]="getInputStep()"
+                [min]="getMinValue()"
+                [max]="getMaxValue()"
+                [placeholder]="getValuePlaceholder()"
+                required
+              />
+              @if (selectedAttribute()?.unit) {
+                <span matTextSuffix class="text-neutral-subheading">
+                  {{ selectedAttribute()?.unit }}
+                </span>
+              }
+              @if (
+                selectedAttribute()?.allowedValues && selectedAttribute()!.allowedValues!.length > 0
+              ) {
+                <mat-hint>
+                  Valores permitidos: {{ selectedAttribute()!.allowedValues!.join(', ') }}
+                </mat-hint>
+              }
+              @if (form.get('expectedValue')?.invalid && form.get('expectedValue')?.touched) {
+                <mat-error>
+                  @if (form.get('expectedValue')?.hasError('required')) {
+                    Campo requerido
+                  } @else if (form.get('expectedValue')?.hasError('min')) {
+                    Valor mínimo: {{ getMinValue() }}
+                  } @else if (form.get('expectedValue')?.hasError('max')) {
+                    Valor máximo: {{ getMaxValue() }}
+                  } @else if (form.get('expectedValue')?.hasError('allowedValues')) {
+                    @if (
+                      selectedAttribute()?.allowedValues &&
+                      selectedAttribute()!.allowedValues!.length > 0
+                    ) {
+                      El valor debe ser uno de: {{ selectedAttribute()!.allowedValues!.join(', ') }}
+                    } @else {
+                      Valor no permitido
+                    }
+                  } @else {
+                    Valor inválido
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+          }
+
+          <!-- Mandatory Checkbox -->
+          <div class="checkbox-field">
+            <mat-checkbox formControlName="isMandatory">
+              <span class="text-body">Protocolo obligatorio</span>
+            </mat-checkbox>
+            <p class="text-subtitle text-neutral-subheading checkbox-hint">
+              Los protocolos obligatorios rechazan el producto si no se cumple la condición
+            </p>
+          </div>
+
+          <!-- Rejection Message -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Mensaje de rechazo</mat-label>
+            <textarea
+              matInput
+              formControlName="rejectionMessage"
+              rows="3"
+              placeholder="Mensaje que se mostrará si no se cumple la condición (opcional)"
+            ></textarea>
+            <mat-hint>Este mensaje aparecerá cuando se rechace el producto</mat-hint>
+          </mat-form-field>
+        </form>
+      }
+    </div>
+
+    <div class="panel-footer">
+      <button mat-stroked-button (click)="onCancel()" [disabled]="saving()">Cancelar</button>
+      <button
+        mat-raised-button
+        class="btn-primary"
+        (click)="onSave()"
+        [disabled]="form.invalid || saving()"
+      >
+        @if (saving()) {
+          <mat-spinner diameter="20" class="inline-spinner" />
+        }
+        {{ isEditMode() ? 'Guardar cambios' : 'Crear protocolo' }}
+      </button>
+    </div>
+  </div>
+}

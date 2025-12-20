@@ -48,8 +48,14 @@ export class SidebarService {
   /**
    * Obtener el menu de la barra lateral desde el backend
    * @param token Firebase Auth token
+   * @param callback Callback de éxito
+   * @param errorCallback Callback de error
    */
-  fetchSidebarData(token: string, callback?: () => void): void {
+  fetchSidebarData(
+    token: string,
+    callback?: () => void,
+    errorCallback?: (error: unknown) => void,
+  ): void {
     const headers = { Authorization: `Bearer ${token}` };
     this.http
       .get<SidebarResponse>(this.uploadApiUrl, { headers })
@@ -91,8 +97,28 @@ export class SidebarService {
         },
         error: (err: unknown) => {
           console.error('Error fetching sidebar data:', err);
+          // Limpiar datos en caso de error
+          this.clearData();
+          // Llamar al callback de error si existe
+          if (errorCallback) {
+            errorCallback(err);
+          }
         },
       });
+  }
+
+  /**
+   * Limpia todos los datos del sidebar y localStorage
+   * Útil cuando la sesión expira o el usuario hace logout
+   */
+  clearData(): void {
+    this.companyName.set('');
+    this.tenantId.set('');
+    this.menuItems.set([]);
+    this.emailVerified.set(false);
+    this.isPasswordChanged.set(false);
+    this.userId.set('');
+    localStorage.removeItem(this.localStorageKey);
   }
 
   /**

@@ -30,6 +30,12 @@ export const appRoutes: Routes = [
           import('./features/products/pages/products.page').then((m) => m.ProductsPage),
       },
       {
+        path: 'products/:id',
+        title: 'Detalle del producto',
+        loadComponent: () =>
+          import('./features/products/pages/product-detail.page').then((m) => m.ProductDetailPage),
+      },
+      {
         path: 'companies',
         title: 'Empresas',
         loadComponent: () =>

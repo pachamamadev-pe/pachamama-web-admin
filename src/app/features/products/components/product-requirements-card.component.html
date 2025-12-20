@@ -1,0 +1,145 @@
+<div class="requirements-card">
+  @if (!hasProtocols()) {
+    <!-- Empty State -->
+    <div class="card-header">
+      <div class="header-title">
+        <mat-icon class="text-secondary">fact_check</mat-icon>
+        <div>
+          <h3 class="text-body font-bold text-accent-titles">Requerimientos mínimos del árbol</h3>
+          <p class="text-subtitle text-neutral-subheading">
+            Requisitos mínimos que debe tener cualquier árbol para ser considerado válido
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state">
+      <div class="empty-icon">
+        <mat-icon>check_circle_outline</mat-icon>
+      </div>
+      <p class="text-body text-neutral-subheading">No hay protocolos de recolección configurados</p>
+      @if (isAdmin()) {
+        <button mat-raised-button class="btn-primary" (click)="onCreateProtocol()">
+          <mat-icon>add</mat-icon>
+          Registrar primer protocolo
+        </button>
+      }
+    </div>
+  } @else {
+    <!-- Header with protocols -->
+    <div class="card-header">
+      <div class="header-title">
+        <mat-icon class="text-secondary">fact_check</mat-icon>
+        <div>
+          <h3 class="text-body font-bold text-accent-titles">Requerimientos mínimos del árbol</h3>
+          <p class="text-subtitle text-neutral-subheading">
+            Requisitos mínimos que debe tener cualquier árbol para ser considerado válido
+          </p>
+        </div>
+      </div>
+      @if (isAdmin()) {
+        <button
+          mat-icon-button
+          (click)="onCreateProtocol()"
+          matTooltip="Añadir nuevo protocolo"
+          class="add-button"
+        >
+          <mat-icon>add_circle</mat-icon>
+        </button>
+      }
+    </div>
+
+    <!-- Protocols List -->
+    <div
+      class="requirements-list"
+      cdkDropList
+      [cdkDropListDisabled]="!isAdmin()"
+      (cdkDropListDropped)="onDrop($event)"
+    >
+      @for (protocol of localProtocols(); track protocol.id) {
+        <div class="requirement-row" cdkDrag [cdkDragDisabled]="!isAdmin()">
+          <!-- Drag Handle -->
+          @if (isAdmin()) {
+            <div class="drag-handle" cdkDragHandle>
+              <mat-icon class="text-neutral-subheading">drag_indicator</mat-icon>
+            </div>
+          }
+
+          <!-- Checkbox Icon -->
+          <div class="requirement-checkbox">
+            <mat-icon
+              [class.mandatory]="protocol.isRequired"
+              [class.optional]="!protocol.isRequired"
+            >
+              {{ protocol.isRequired ? 'check_box' : 'check_box_outline_blank' }}
+            </mat-icon>
+          </div>
+
+          <!-- Requirement Content -->
+          <div class="requirement-content">
+            <div class="requirement-main">
+              <span class="attribute-name text-body text-neutral-subheading">
+                {{ protocol.attribute.name }}
+                @if (protocol.attribute.unit) {
+                  <span class="unit">({{ protocol.attribute.unit }})</span>
+                }
+              </span>
+              <span class="operator text-body text-neutral-subheading">
+                {{ getOperatorLabel(protocol.operator) }}
+              </span>
+              <span class="expected-value text-body font-bold text-primary-black">
+                {{ formatExpectedValue(protocol) }}
+              </span>
+            </div>
+
+            @if (protocol.failureMessage) {
+              <div class="rejection-message">
+                <mat-icon class="message-icon">error_outline</mat-icon>
+                <span class="text-subtitle text-neutral-subheading">
+                  {{ protocol.failureMessage }}
+                </span>
+              </div>
+            }
+          </div>
+
+          <!-- Mandatory Badge -->
+          <div class="requirement-badge">
+            @if (protocol.isRequired) {
+              <mat-chip class="mandatory-chip" [highlighted]="true">
+                <mat-icon>warning</mat-icon>
+                Obligatorio
+              </mat-chip>
+            }
+          </div>
+
+          <!-- Actions Menu -->
+          @if (isAdmin()) {
+            <div class="requirement-actions">
+              <button mat-icon-button [matMenuTriggerFor]="protocolMenu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #protocolMenu="matMenu">
+                <button mat-menu-item (click)="onEditProtocol(protocol)">
+                  <mat-icon>edit</mat-icon>
+                  <span>Editar</span>
+                </button>
+                <button mat-menu-item (click)="onDeleteProtocol(protocol)">
+                  <mat-icon>delete</mat-icon>
+                  <span>Eliminar</span>
+                </button>
+              </mat-menu>
+            </div>
+          }
+
+          <!-- Drag Preview -->
+          <div class="requirement-drag-preview" *cdkDragPreview>
+            <div class="drag-preview-content">
+              <mat-icon>drag_indicator</mat-icon>
+              <span>{{ protocol.attribute.name }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

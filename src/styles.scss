@@ -179,6 +179,19 @@
 }
 
 // ============================================================================
+// FIX: mat-select overlay z-index para side panels
+// ============================================================================
+// Cuando mat-select se usa dentro de un side panel con z-index alto,
+// el overlay del dropdown queda detrás. Esta clase fuerza z-index correcto.
+.cdk-overlay-pane .sidepanel-select-panel {
+  z-index: 2000 !important;
+}
+
+.cdk-overlay-container {
+  z-index: 2000;
+}
+
+// ============================================================================
 // Custom Button Styles
 // ============================================================================
 .btn-primary {

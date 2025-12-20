@@ -24,14 +24,19 @@
       <!-- Main Content Area -->
       <main class="main-content">
         <!-- Botón Flotante: Iniciar Inventario (Opción A) -->
-        @if (canStartInventory()) {
-          <div class="floating-action-button">
-            <button mat-raised-button class="btn-primary btn-lg" (click)="startInventoryStage()">
-              <mat-icon>play_arrow</mat-icon>
-              <span>Iniciar Inventario</span>
-            </button>
-          </div>
-        }
+        <div class="floating-action-button">
+          <button
+            mat-raised-button
+            class="btn-primary btn-lg"
+            [disabled]="!canStartInventory()"
+            (click)="startInventoryStage()"
+            [matTooltip]="getDocumentApprovalMessage()"
+            [matTooltipDisabled]="canStartInventory()"
+          >
+            <mat-icon>play_arrow</mat-icon>
+            <span>Iniciar Inventario</span>
+          </button>
+        </div>
 
         <!-- Project Header -->
         <header class="project-header">
@@ -680,9 +685,36 @@
 
             <mat-tab label="Documentos">
               <div class="tab-content">
-                <p class="text-body text-neutral-subheading">
-                  Contenido de Documentos en desarrollo...
-                </p>
+                <!-- Progress Card -->
+                <app-documents-progress-card
+                  [requirements]="documentRequirements()"
+                  [allDocsApproved]="allDocsApproved()"
+                />
+
+                <!-- Botón de Subir Documentos -->
+                <div class="documents-header mb-6 flex justify-between items-center">
+                  <h2 class="text-body font-bold text-accent-titles">Documentos del Proyecto</h2>
+                  <button
+                    mat-raised-button
+                    class="btn-primary"
+                    (click)="openUploadDialog()"
+                    [disabled]="loadingRequirements()"
+                  >
+                    <mat-icon>upload_file</mat-icon>
+                    <span class="hidden sm:inline">Subir Documentos</span>
+                    <span class="sm:hidden">Subir</span>
+                  </button>
+                </div>
+
+                <!-- Tabla de Documentos -->
+                <app-documents-table
+                  [documents]="documents()"
+                  [canReview]="true"
+                  [loading]="loadingDocuments()"
+                  (reviewDocument)="openReviewDialog($event)"
+                  (resubmitDocument)="openResubmitDialog($event)"
+                  (downloadDocument)="downloadDocument($event)"
+                />
               </div>
             </mat-tab>
 

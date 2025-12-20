@@ -68,6 +68,10 @@ export default class LoginPage {
     this.loginError.set(null);
     this.passwordChangeSuccess.set(null);
 
+    // Limpiar cualquier sesión previa (tokens expirados en localStorage)
+    localStorage.removeItem('pachamama_auth_token');
+    this.sidebarService.clearData();
+
     const { email, password } = this.loginForm.getRawValue();
 
     this.authService.login({ email, password }).subscribe({
@@ -92,41 +96,68 @@ export default class LoginPage {
         }
 
         // Si el correo está verificado, obtener el token y validar permisos
-        user.getIdToken().then((token) => {
-          console.log('Firebase Auth token:', token);
-          this.sidebarService.fetchSidebarData(token, () => {
-            // Validar que el usuario tenga acceso al sistema
-            const menuItems = this.sidebarService.menuItems();
+        user
+          .getIdToken()
+          .then((token) => {
+            console.log('Firebase Auth token:', token);
+            this.sidebarService.fetchSidebarData(
+              token,
+              () => {
+                // Validar que el usuario tenga acceso al sistema
+                const menuItems = this.sidebarService.menuItems();
 
-            if (!menuItems || menuItems.length === 0) {
-              // Usuario sin permisos de acceso
-              this.isLoading.set(false);
-              this.loginError.set(
-                'Tu rol no tiene acceso a ninguna funcionalidad del sistema. Por favor, contacta al administrador para que te asigne los permisos necesarios.',
-              );
-              this.authService.logout();
-              return;
-            }
+                if (!menuItems || menuItems.length === 0) {
+                  // Usuario sin permisos de acceso
+                  this.isLoading.set(false);
+                  this.loginError.set(
+                    'Tu rol no tiene acceso a ninguna funcionalidad del sistema. Por favor, contacta al administrador para que te asigne los permisos necesarios.',
+                  );
+                  this.authService.logout();
+                  return;
+                }
 
-            // Usuario con permisos y correo verificado, continuar con el flujo normal
-            this.userService.verifyEmail().subscribe({
-              next: () => {
-                console.log('Verification email sent via UsersService');
-                this.isLoading.set(false);
-                this.router.navigate(['/home']);
+                // Usuario con permisos y correo verificado, continuar con el flujo normal
+                this.userService.verifyEmail().subscribe({
+                  next: () => {
+                    console.log('Verification email sent via UsersService');
+                    this.isLoading.set(false);
+                    this.router.navigate(['/home']);
+                  },
+                  error: (err: unknown) => {
+                    this.isLoading.set(false);
+                    console.error('Error sending verification email via UsersService:', err);
+                    // El interceptor ya mostró la notificación
+                  },
+                });
               },
-              error: (err: unknown) => {
+              (error) => {
+                // Error al cargar sidebar data (posiblemente 401)
+                console.error('Error loading sidebar data:', error);
                 this.isLoading.set(false);
-                console.error('Error sending verification email via UsersService:', err);
+                this.loginError.set(
+                  'Error al verificar permisos. Por favor, intenta iniciar sesión nuevamente.',
+                );
+                this.authService.logout();
               },
-            });
+            );
+          })
+          .catch((tokenError) => {
+            // Error al obtener token de Firebase
+            console.error('Error getting Firebase token:', tokenError);
+            this.isLoading.set(false);
+            this.loginError.set('Error al autenticar. Por favor, intenta nuevamente.');
+            this.authService.logout();
           });
-        });
       },
       error: (error: Error) => {
         // Mostrar error de autenticación
-        this.loginError.set(error.message);
+        console.error('Login error:', error);
+        const errorMessage =
+          error.message || 'Error al iniciar sesión. Por favor, intenta nuevamente.';
+        this.loginError.set(errorMessage);
         this.isLoading.set(false);
+        // Limpiar sesión
+        this.authService.logout();
       },
     });
   }

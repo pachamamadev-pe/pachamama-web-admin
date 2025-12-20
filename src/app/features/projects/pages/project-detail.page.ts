@@ -34,11 +34,13 @@ import { CollectorsService } from '../services/collectors.service';
 import { BrigadesService } from '../services/brigades.service';
 import { BrigadeAssignmentsService } from '../services/brigade-assignments.service';
 import { ProjectInvitationsService } from '../services/project-invitations.service';
+import { ProjectDocumentsService } from '../services/project-documents.service';
 import { Project } from '../models/project.model';
 import { Product } from '../../products/models/product.model';
 import { Community } from '../../communities/models/community.model';
 import { Collector } from '../models/collector.model';
 import { Brigade } from '../models/brigade.model';
+import { DocumentRequirements, ProjectDocument } from '../models/project-document.model';
 import {
   GeoJSONFeatureCollection,
   AreaImportResponse,
@@ -46,7 +48,13 @@ import {
   ImportStatus,
 } from '../models/area.model';
 import { NotificationService } from '@core/services/notification.service';
+import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { DocumentsProgressCardComponent } from '../components/documents-progress-card.component';
+import { DocumentsTableComponent } from '../components/documents-table.component';
+import { DocumentUploadDialogComponent } from '../components/document-upload-dialog.component';
+import { DocumentReviewDialogComponent } from '../components/document-review-dialog.component';
+import { DocumentResubmitDialogComponent } from '../components/document-resubmit-dialog.component';
 import { getProjectStageLabel, getProjectStageClass } from '../models/project.model';
 import * as L from 'leaflet';
 
@@ -73,6 +81,8 @@ interface ProjectStage {
     MatPaginatorModule,
     MatSelectModule,
     MatFormFieldModule,
+    DocumentsProgressCardComponent,
+    DocumentsTableComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -89,6 +99,8 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   private brigadesService = inject(BrigadesService);
   private brigadeAssignmentsService = inject(BrigadeAssignmentsService);
   private projectInvitationsService = inject(ProjectInvitationsService);
+  private projectDocumentsService = inject(ProjectDocumentsService);
+  private azureStorage = inject(AzureStorageService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private destroy$ = new Subject<void>();
@@ -156,6 +168,15 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   // Columnas de la tabla de brigadas
   brigadesDisplayedColumns: string[] = ['code', 'name', 'members'];
 
+  // Documents state
+  documentRequirements = signal<DocumentRequirements | null>(null);
+  documents = signal<ProjectDocument[]>([]);
+  loadingDocuments = signal(false);
+  loadingRequirements = signal(false);
+
+  // Computed: verifica si todos los documentos obligatorios están aprobados
+  allDocsApproved = computed(() => this.areAllRequiredDocumentsApproved());
+
   /**
    * Abre dialogo para crear brigada
    */
@@ -189,7 +210,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     { number: 4, name: 'Elaboración de PMF', key: 'pmf_development' },
     { number: 5, name: 'Evaluación y Aprobación (SERFOR)', key: 'serfor_evaluation' },
 
-    { number: 6, name: 'Acopio / Ingreso a CTP', key: 'collection' },
+    { number: 6, name: 'Acopio / Ingreso a CTP', key: 'ctp_entry' },
     { number: 7, name: 'Transformación Primaria', key: 'primary_transformation' },
     { number: 8, name: 'Proceso de Ajuste de Mapas a Estándares IPG/IGN', key: 'map_adjustment' },
   ];
@@ -219,12 +240,18 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     const stage = this.project()?.stage;
     const hasCollectors = this.collectors().length > 0;
     const hasBrigades = this.brigades().length > 0;
+    const hasRequiredDocs = this.documentRequirements()?.isCompliant || false;
+    const allDocsApproved = this.areAllRequiredDocumentsApproved();
 
     // Solo se puede iniciar inventario si:
     // 1. Está en etapa 'planning'
     // 2. Hay recolectores registrados
     // 3. Hay al menos una brigada creada
-    return stage === 'planning' && hasCollectors && hasBrigades;
+    // 4. Todos los documentos obligatorios han sido subidos (isCompliant)
+    // 5. Todos los documentos obligatorios están aprobados
+    return (
+      stage === 'planning' && hasCollectors && hasBrigades && hasRequiredDocs && allDocsApproved
+    );
   });
 
   // Computed para mostrar/ocultar el tab de brigadas
@@ -283,6 +310,10 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
               this.loadCollectors(project.communityLink.id);
               this.loadBrigades(project.communityLink.id);
             }
+
+            // Cargar documentos y requirements
+            this.loadDocumentRequirements(id);
+            this.loadDocuments(id);
 
             this.loading.set(false);
           },
@@ -1117,7 +1148,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     // Validar que se cumplan las condiciones
     if (!this.canStartInventory()) {
       this.notification.warning(
-        'Para iniciar el inventario debes tener recolectores registrados y brigadas creadas',
+        'Para iniciar el inventario debes tener recolectores, brigadas y todos los documentos obligatorios aprobados',
       );
       return;
     }
@@ -1132,6 +1163,197 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
       error: (error) => {
         console.error('Error starting inventory:', error);
         this.notification.error('Error al iniciar la etapa de inventario');
+      },
+    });
+  }
+
+  /**
+   * Carga los requerimientos de documentos del proyecto
+   */
+  loadDocumentRequirements(projectId: string): void {
+    this.loadingRequirements.set(true);
+    this.projectDocumentsService.getDocumentRequirements(projectId).subscribe({
+      next: (requirements) => {
+        this.documentRequirements.set(requirements);
+        this.loadingRequirements.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading document requirements:', error);
+        this.documentRequirements.set(null);
+        this.loadingRequirements.set(false);
+      },
+    });
+  }
+
+  /**
+   * Carga los documentos del proyecto
+   */
+  loadDocuments(projectId: string): void {
+    this.loadingDocuments.set(true);
+    this.projectDocumentsService.getDocuments(projectId).subscribe({
+      next: (documents) => {
+        this.documents.set(documents);
+        this.loadingDocuments.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading documents:', error);
+        this.documents.set([]);
+        this.loadingDocuments.set(false);
+      },
+    });
+  }
+
+  /**
+   * Abre el dialog para subir documentos
+   */
+  openUploadDialog(): void {
+    const projectId = this.project()?.id;
+    const requirements = this.documentRequirements();
+
+    if (!projectId || !requirements) {
+      this.notification.error('No se pudo cargar la información del proyecto');
+      return;
+    }
+
+    const dialogRef = this.dialog.open(DocumentUploadDialogComponent, {
+      width: '100%',
+      maxWidth: '700px',
+      data: { projectId, requirements },
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.success) {
+        // Recargar requirements y documentos
+        this.loadDocumentRequirements(projectId);
+        this.loadDocuments(projectId);
+      }
+    });
+  }
+
+  /**
+   * Abre el dialog para revisar un documento
+   */
+  openReviewDialog(document: ProjectDocument): void {
+    const dialogRef = this.dialog.open(DocumentReviewDialogComponent, {
+      width: '100%',
+      maxWidth: '700px',
+      data: { document },
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.action) {
+        // Recargar requirements y documentos
+        const projectId = this.project()?.id;
+        if (projectId) {
+          this.loadDocumentRequirements(projectId);
+          this.loadDocuments(projectId);
+        }
+      }
+    });
+  }
+
+  /**
+   * Abre el dialog para resubir un documento observado
+   */
+  openResubmitDialog(document: ProjectDocument): void {
+    const projectId = this.project()?.id;
+    if (!projectId) {
+      this.notification.error('No se pudo obtener el ID del proyecto');
+      return;
+    }
+
+    const dialogRef = this.dialog.open(DocumentResubmitDialogComponent, {
+      width: '100%',
+      maxWidth: '600px',
+      data: { projectId, document },
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.success) {
+        // Recargar requirements y documentos
+        this.loadDocumentRequirements(projectId);
+        this.loadDocuments(projectId);
+      }
+    });
+  }
+
+  /**
+   * Verifica si todos los documentos obligatorios están aprobados
+   */
+  areAllRequiredDocumentsApproved(): boolean {
+    const requirements = this.documentRequirements();
+    if (!requirements) {
+      return false;
+    }
+
+    const documents = this.documents();
+
+    // Obtener documentos obligatorios que han sido subidos
+    const requiredDocs = requirements.documentTypes.filter(
+      (docType) => docType.isRequired && docType.isUploaded,
+    );
+
+    // Si no hay documentos obligatorios subidos, retornar true
+    // (no hay nada que revisar)
+    if (requiredDocs.length === 0) {
+      console.log('✅ No required docs to approve, returning TRUE');
+      return true;
+    }
+
+    // Verificar que cada documento obligatorio tenga su última versión aprobada
+    const allApproved = requiredDocs.every((docType) => {
+      const docTypeId = docType.documentTypeId;
+
+      // Encontrar el documento en la lista de documentos
+      const doc = documents.find((d) => {
+        const matches = d.documentType.id === docTypeId && d.isLatestVersion;
+        return matches;
+      });
+
+      // El documento debe existir y estar aprobado
+      return doc && doc.validationStatus === 'approved';
+    });
+
+    return allApproved;
+  }
+
+  /**
+   * Mensaje de error cuando faltan documentos por aprobar
+   */
+  getDocumentApprovalMessage(): string {
+    const requirements = this.documentRequirements();
+    if (!requirements) return '';
+
+    // Si no cumple con isCompliant, faltan documentos por subir
+    if (!requirements.isCompliant) {
+      return 'Faltan subir documentos obligatorios';
+    }
+
+    // Si cumple con isCompliant pero no todos están aprobados
+    const allApproved = this.areAllRequiredDocumentsApproved();
+    if (!allApproved) {
+      return 'Faltan aprobar documentos obligatorios';
+    }
+
+    return '';
+  }
+
+  /**
+   * Descarga un documento
+   */
+  downloadDocument(document: ProjectDocument): void {
+    // Usar AzureStorageService para obtener URL con SAS token
+    this.azureStorage.getFileUrl(document.blobName).subscribe({
+      next: (url) => {
+        // Abrir en nueva pestaña para descargar
+        window.open(url, '_blank');
+      },
+      error: (error) => {
+        console.error('Error getting download URL:', error);
+        this.notification.error('Error al obtener URL de descarga');
       },
     });
   }

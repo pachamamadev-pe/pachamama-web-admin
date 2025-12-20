@@ -181,4 +181,57 @@ export class AuthService {
       throw new Error('No se pudo enviar el correo de restablecimiento de contraseña.');
     }
   }
+
+  /**
+   * Verifica si el usuario actual es ADMIN_PACHAMAMA
+   * Decodifica el JWT y verifica el claim "admin: true"
+   * @returns Promise<boolean>
+   */
+  async isAdminPachamama(): Promise<boolean> {
+    try {
+      const currentUser = this.auth.currentUser;
+      if (!currentUser) {
+        return false;
+      }
+
+      // Obtener el ID token result que contiene los claims
+      const idTokenResult = await currentUser.getIdTokenResult();
+
+      // ADMIN_PACHAMAMA tiene el claim "admin: true"
+      return idTokenResult.claims['admin'] === true;
+    } catch (error) {
+      console.error('Error verificando rol de administrador:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Obtiene el rol del usuario actual desde los claims del JWT
+   * @returns Promise<string | null> - Retorna el rol o null si no tiene
+   */
+  async getUserRole(): Promise<string | null> {
+    try {
+      const currentUser = this.auth.currentUser;
+      if (!currentUser) {
+        return null;
+      }
+
+      const idTokenResult = await currentUser.getIdTokenResult();
+
+      // Si tiene admin: true, es ADMIN_PACHAMAMA
+      if (idTokenResult.claims['admin'] === true) {
+        return 'ADMIN_PACHAMAMA';
+      }
+
+      // Si tiene role explícito (ADMIN_EMPRESA, etc.)
+      if (idTokenResult.claims['role']) {
+        return idTokenResult.claims['role'] as string;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error obteniendo rol del usuario:', error);
+      return null;
+    }
+  }
 }

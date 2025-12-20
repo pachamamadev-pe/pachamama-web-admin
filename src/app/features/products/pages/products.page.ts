@@ -9,6 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { ProductsService } from '../services/products.service';
 import { Product, ProductStatus, ProductUnit, CreateProductDto, UpdateProductDto } from '../models';
 import {
@@ -47,6 +48,7 @@ export class ProductsPage implements OnInit {
   private azureStorage = inject(AzureStorageService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
+  private router = inject(Router);
 
   // State
   products = signal<Product[]>([]);
@@ -103,6 +105,13 @@ export class ProductsPage implements OnInit {
 
   clearSearch(): void {
     this.searchTerm.set('');
+  }
+
+  /**
+   * Navega a la página de detalle del producto
+   */
+  viewProductDetail(product: Product): void {
+    this.router.navigate(['/products', product.id]);
   }
 
   openCreateDialog(): void {

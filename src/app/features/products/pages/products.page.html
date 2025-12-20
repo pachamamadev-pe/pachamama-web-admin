@@ -119,9 +119,9 @@
               class="product-card"
               role="button"
               tabindex="0"
-              (click)="openEditDialog(product)"
-              (keydown.enter)="openEditDialog(product)"
-              (keydown.space)="openEditDialog(product); $event.preventDefault()"
+              (click)="viewProductDetail(product)"
+              (keydown.enter)="viewProductDetail(product)"
+              (keydown.space)="viewProductDetail(product); $event.preventDefault()"
             >
               <!-- Product illustration (like Figma design) -->
               <div class="product-illustration">
@@ -209,9 +209,9 @@
                 class="list-item-mobile"
                 role="button"
                 tabindex="0"
-                (click)="openEditDialog(product)"
-                (keydown.enter)="openEditDialog(product)"
-                (keydown.space)="openEditDialog(product); $event.preventDefault()"
+                (click)="viewProductDetail(product)"
+                (keydown.enter)="viewProductDetail(product)"
+                (keydown.space)="viewProductDetail(product); $event.preventDefault()"
               >
                 <!-- Imagen miniatura -->
                 <div class="list-item-thumbnail">
@@ -296,10 +296,10 @@
                 @for (product of filteredProducts(); track product.id) {
                   <tr
                     class="table-row"
-                    (click)="openEditDialog(product)"
+                    (click)="viewProductDetail(product)"
                     role="button"
                     tabindex="0"
-                    (keydown.enter)="openEditDialog(product)"
+                    (keydown.enter)="viewProductDetail(product)"
                   >
                     <!-- Imagen miniatura -->
                     <td class="table-td">
