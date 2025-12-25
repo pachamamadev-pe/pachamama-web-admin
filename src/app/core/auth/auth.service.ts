@@ -234,4 +234,29 @@ export class AuthService {
       return null;
     }
   }
+
+  /**
+   * Obtiene el companyId del usuario actual desde los claims del JWT
+   * @returns Promise<string | null> - Retorna el companyId o null si no tiene (ADMIN_PACHAMAMA)
+   */
+  async getUserCompanyId(): Promise<string | null> {
+    try {
+      const currentUser = this.auth.currentUser;
+      if (!currentUser) {
+        return null;
+      }
+
+      const idTokenResult = await currentUser.getIdTokenResult();
+
+      // Si tiene companyId en los claims, retornarlo
+      if (idTokenResult.claims['tenantId']) {
+        return idTokenResult.claims['tenantId'] as string;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error obteniendo companyId del usuario:', error);
+      return null;
+    }
+  }
 }

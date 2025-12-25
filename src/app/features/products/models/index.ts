@@ -15,3 +15,6 @@ export * from './product-protocol.model';
 export * from './create-product-protocol.dto';
 export * from './update-product-protocol.dto';
 export * from './reorder-product-protocols.dto';
+export * from './form-field.model';
+export * from './form-schema-response.model';
+export * from './form-schema.model';

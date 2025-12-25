@@ -1,0 +1,74 @@
+<div class="protocol-container">
+  <div class="protocol-header">
+    <h2 class="text-title font-bold text-accent-titles">Protocolo de recolección</h2>
+    <p class="text-subtitle text-neutral-subheading">
+      Configura los formularios dinámicos para cada etapa del proyecto
+    </p>
+  </div>
+
+  <div class="stages-timeline">
+    @for (stageInfo of stagesWithFormStatus(); track stageInfo.number) {
+      <div
+        class="stage-card"
+        [class.has-form]="stageInfo.hasForm"
+        [class.clickable]="canEditProtocol()"
+        (click)="onStageClick(stageInfo)"
+        role="button"
+        [attr.tabindex]="canEditProtocol() ? 0 : -1"
+        (keydown.enter)="onStageClick(stageInfo)"
+        (keydown.space)="onStageClick(stageInfo)"
+      >
+        <!-- Stage Number Badge -->
+        <div class="stage-badge">
+          <span class="badge-number">{{ stageInfo.number }}</span>
+        </div>
+
+        <!-- Stage Content -->
+        <div class="stage-content">
+          <div class="stage-header">
+            <div class="stage-icon-wrapper">
+              <mat-icon class="stage-icon">{{ stageInfo.icon }}</mat-icon>
+            </div>
+            <div class="stage-info">
+              <h3 class="stage-title text-body font-bold text-accent-titles">
+                Etapa {{ stageInfo.number }}:
+              </h3>
+              <p class="stage-name text-body text-primary-black">{{ stageInfo.title }}</p>
+            </div>
+          </div>
+
+          <div class="stage-description">
+            <p class="text-subtitle text-neutral-subheading">{{ stageInfo.description }}</p>
+          </div>
+
+          <!-- Status Indicator -->
+          @if (stageInfo.hasForm) {
+            <div class="stage-status configured">
+              <mat-icon>check_circle</mat-icon>
+              <span class="text-subtitle">Formulario configurado</span>
+            </div>
+          } @else {
+            <div class="stage-status pending">
+              <mat-icon>radio_button_unchecked</mat-icon>
+              <span class="text-subtitle">Sin configurar</span>
+            </div>
+          }
+        </div>
+
+        <!-- Connector Line -->
+        @if (stageInfo.number < stagesWithFormStatus().length) {
+          <div class="stage-connector"></div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (!canEditProtocol()) {
+    <div class="permission-notice">
+      <mat-icon>info</mat-icon>
+      <p class="text-body text-neutral-subheading">
+        Solo los administradores pueden configurar los protocolos de recolección
+      </p>
+    </div>
+  }
+</div>

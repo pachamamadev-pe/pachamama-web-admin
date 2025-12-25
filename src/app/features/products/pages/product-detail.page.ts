@@ -24,6 +24,10 @@ import { ProductConceptsEditorDialogComponent } from '../components/product-conc
 import { ProductHtmlUpdateDto } from '../models/product-html-update.dto';
 import { ProductTreeConceptsComponent } from '../components/product-tree-concepts.component';
 import {
+  ProductCollectionProtocolComponent,
+  ProjectStage,
+} from '../components/product-collection-protocol.component';
+import {
   ProductProtocolFormSidePanelComponent,
   ProductProtocolFormSidePanelResult,
 } from '../components/product-protocol-form-side-panel.component';
@@ -52,6 +56,7 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
     ProductTreeConceptsComponent,
     ProductConservationChartComponent,
     ProductProtocolFormSidePanelComponent,
+    ProductCollectionProtocolComponent,
   ],
   templateUrl: './product-detail.page.html',
   styleUrl: './product-detail.page.scss',
@@ -347,5 +352,17 @@ export class ProductDetailPage implements OnInit {
         this.notification.error('Error al eliminar protocolo');
       },
     });
+  }
+
+  /**
+   * Maneja la selección de un stage para crear formulario dinámico
+   */
+  onStageSelected(stage: ProjectStage): void {
+    const product = this.product();
+    if (!product) return;
+
+    console.log('Stage selected:', stage);
+    // TODO: Implementar navegación a creación de formulario dinámico
+    this.notification.info(`Creación de formulario para stage "${stage}" - En desarrollo`);
   }
 }

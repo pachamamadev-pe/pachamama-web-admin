@@ -36,6 +36,14 @@ export const appRoutes: Routes = [
           import('./features/products/pages/product-detail.page').then((m) => m.ProductDetailPage),
       },
       {
+        path: 'products/:productId/forms/:stage',
+        title: 'Editar formulario',
+        loadComponent: () =>
+          import('./features/products/components/product-form-builder.component').then(
+            (m) => m.ProductFormBuilderComponent,
+          ),
+      },
+      {
         path: 'companies',
         title: 'Empresas',
         loadComponent: () =>

@@ -187,4 +187,153 @@ export class ProductsService {
   updateHtmlDescription(id: string, dto: ProductHtmlUpdateDto): Observable<Product> {
     return this.http.patch<Product>(`${this.apiUrl}/${id}/html-description`, dto);
   }
+
+  /**
+   * Obtiene las etapas (ProjectStage) que tienen formularios publicados
+   * para un producto específico y la compañía del usuario autenticado
+   *
+   * @param productId - UUID del producto
+   * @returns Observable con array de etapas que tienen formularios
+   *
+   * @example
+   * ```typescript
+   * this.productsService.getPublishedFormStages('a1b2c3d4-...').subscribe(
+   *   stages => console.log('Etapas con formularios:', stages)
+   *   // Output: ['INVENTORY', 'COLLECTION', 'PRIMARY_TRANSFORMATION']
+   * );
+   * ```
+   */
+  getPublishedFormStages(productId: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/${productId}/forms/stages`);
+  }
+
+  /**
+   * Obtiene todos los formularios de un producto (cualquier estado: publicados o no)
+   * para la compañía del usuario autenticado
+   *
+   * @param productId - UUID del producto
+   * @returns Observable con array de formularios completos
+   *
+   * @example
+   * ```typescript
+   * this.productsService.getProductForms('a1b2c3d4-...').subscribe(
+   *   forms => console.log('Formularios:', forms)
+   *   // Output: [{ id, name, version, isPublished, applicableStages, schema, ... }]
+   * );
+   * ```
+   */
+  getProductForms(productId: string): Observable<import('../models').FormSchemaResponse[]> {
+    return this.http.get<import('../models').FormSchemaResponse[]>(
+      `${this.apiUrl}/${productId}/forms`,
+    );
+  }
+
+  /**
+   * Obtiene un formulario específico por ID
+   *
+   * @param productId - UUID del producto
+   * @param formId - UUID del formulario
+   * @returns Observable con el formulario completo
+   *
+   * @example
+   * ```typescript
+   * this.productsService.getProductFormById('product-id', 'form-id').subscribe(
+   *   form => console.log('Formulario:', form)
+   *   // Output: { id, name, schema, version, isPublished, ... }
+   * );
+   * ```
+   */
+  getProductFormById(
+    productId: string,
+    formId: string,
+  ): Observable<import('../models').FormSchemaResponse> {
+    return this.http.get<import('../models').FormSchemaResponse>(
+      `${this.apiUrl}/${productId}/forms/${formId}`,
+    );
+  }
+
+  /**
+   * Obtiene los tipos de campo disponibles para formularios dinámicos
+   *
+   * @param productId - UUID del producto
+   * @returns Observable con array de tipos de campo
+   *
+   * @example
+   * ```typescript
+   * this.productsService.getFieldTypes('a1b2c3d4-...').subscribe(
+   *   types => console.log('Tipos de campo:', types)
+   *   // Output: [{ code: 'SHORT_TEXT', name: 'Texto corto', ... }, ...]
+   * );
+   * ```
+   */
+  getFieldTypes(productId: string): Observable<import('../models').FieldType[]> {
+    return this.http.get<import('../models').FieldType[]>(
+      `${this.apiUrl}/${productId}/forms/field-types`,
+    );
+  }
+
+  /**
+   * Crea un formulario dinámico para una etapa específica del producto
+   *
+   * @param productId - UUID del producto
+   * @param formData - Datos del formulario (name, description, applicableStages, schema)
+   * @returns Observable con la respuesta del servidor
+   *
+   * @example
+   * ```typescript
+   * const formData = {
+   *   name: 'Formulario de Inventario para Caoba',
+   *   description: 'Formulario de recolección de datos',
+   *   applicableStages: ['INVENTORY'],
+   *   schema: '{...}'
+   * };
+   * this.productsService.createProductForm('a1b2c3d4-...', formData).subscribe(
+   *   response => console.log('Formulario creado:', response)
+   * );
+   * ```
+   */
+  createProductForm(productId: string, formData: CreateProductFormRequest): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/${productId}/forms`, formData);
+  }
+
+  /**
+   * Actualiza un formulario existente de un producto
+   *
+   * PUT /api/v1/admin/products/{productId}/forms/{formId}
+   *
+   * @param productId - ID del producto
+   * @param formId - ID del formulario a actualizar
+   * @param formData - Datos actualizados del formulario
+   * @returns Observable con la respuesta de actualización
+   *
+   * @example
+   * ```typescript
+   * const formData = {
+   *   name: 'Formulario de Inventario Actualizado',
+   *   description: 'Descripción actualizada',
+   *   applicableStages: ['INVENTORY', 'COLLECTION'],
+   *   schema: '{...}'
+   * };
+   * this.productsService.updateProductForm('product-id', 'form-id', formData).subscribe(
+   *   response => console.log('Formulario actualizado:', response)
+   * );
+   * ```
+   */
+  updateProductForm(
+    productId: string,
+    formId: string,
+    formData: CreateProductFormRequest,
+  ): Observable<unknown> {
+    return this.http.put(`${this.apiUrl}/${productId}/forms/${formId}`, formData);
+  }
+}
+
+/**
+ * Request para crear formulario de producto
+ */
+export interface CreateProductFormRequest {
+  name: string;
+  description: string;
+  applicableStages: string[];
+  schema: string; // JSON stringificado
 }
