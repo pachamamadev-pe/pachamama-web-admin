@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -56,6 +57,7 @@ export type ProjectStage =
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    DragDropModule,
   ],
   templateUrl: './product-form-builder.component.html',
   styleUrl: './product-form-builder.component.scss',
@@ -348,7 +350,7 @@ export class ProductFormBuilderComponent implements OnInit {
   }
 
   /**
-   * Añade o actualiza un campo de la Parte 1 (protocol_linked)
+   * Añade o actualiza un campo (maneja tanto protocol_linked como free_form según si tiene protocolId)
    */
   addProtocolLinkedField(): void {
     const newField = this.newProtocolLinkedField();
@@ -363,58 +365,107 @@ export class ProductFormBuilderComponent implements OnInit {
       return;
     }
 
-    if (!newField.protocolId) {
-      this.notification.warning('Debes seleccionar un protocolo vinculado');
-      return;
-    }
+    // Determinar si tiene protocolo (linked_protocol) o no (free_form)
+    const hasProtocol = !!newField.protocolId;
+    const editingProtocolId = this.editingProtocolFieldId();
+    const editingFreeFormId = this.editingFreeFormFieldId();
 
-    const section = this.protocolLinkedSection();
-    const editingId = this.editingProtocolFieldId();
+    if (hasProtocol) {
+      // CASO 1: Con protocolo → va a protocolLinkedSection
+      const section = this.protocolLinkedSection();
 
-    if (editingId) {
-      // Modo edición: actualizar campo existente
-      const updatedFields = section.fields.map((f): FormField => {
-        if (f.id === editingId) {
-          return {
-            ...f,
-            question: newField.question!.trim(),
-            fieldTypeId: newField.fieldTypeId!,
-            isRequired: newField.isRequired || false,
-            protocolId: newField.protocolId,
-            validationConfig:
-              newField.validationConfig && Object.keys(newField.validationConfig).length > 0
-                ? newField.validationConfig
-                : undefined,
-          };
-        }
-        return f;
-      });
+      if (editingProtocolId) {
+        // Modo edición: actualizar campo existente
+        const updatedFields = section.fields.map((f): FormField => {
+          if (f.id === editingProtocolId) {
+            return {
+              ...f,
+              question: newField.question!.trim(),
+              fieldTypeId: newField.fieldTypeId!,
+              isRequired: newField.isRequired || false,
+              protocolId: newField.protocolId,
+              validationConfig:
+                newField.validationConfig && Object.keys(newField.validationConfig).length > 0
+                  ? newField.validationConfig
+                  : undefined,
+            };
+          }
+          return f;
+        });
 
-      this.protocolLinkedSection.set({
-        ...section,
-        fields: updatedFields,
-      });
+        this.protocolLinkedSection.set({
+          ...section,
+          fields: updatedFields,
+        });
 
-      this.notification.success('Pregunta actualizada correctamente');
-      this.editingProtocolFieldId.set(null);
+        this.notification.success('Pregunta actualizada correctamente');
+        this.editingProtocolFieldId.set(null);
+      } else {
+        // Modo creación: agregar nuevo campo
+        const field: FormField = {
+          id: `temp-${Date.now()}`,
+          question: newField.question!.trim(),
+          fieldTypeId: newField.fieldTypeId!,
+          isRequired: newField.isRequired || false,
+          protocolId: newField.protocolId,
+          validationConfig:
+            newField.validationConfig && Object.keys(newField.validationConfig).length > 0
+              ? newField.validationConfig
+              : undefined,
+        };
+
+        this.protocolLinkedSection.set({
+          ...section,
+          fields: [...section.fields, field],
+        });
+      }
     } else {
-      // Modo creación: agregar nuevo campo
-      const field: FormField = {
-        id: `temp-${Date.now()}`,
-        question: newField.question!.trim(),
-        fieldTypeId: newField.fieldTypeId!,
-        isRequired: newField.isRequired || false,
-        protocolId: newField.protocolId,
-        validationConfig:
-          newField.validationConfig && Object.keys(newField.validationConfig).length > 0
-            ? newField.validationConfig
-            : undefined,
-      };
+      // CASO 2: Sin protocolo → va a freeFormSection
+      const section = this.freeFormSection();
 
-      this.protocolLinkedSection.set({
-        ...section,
-        fields: [...section.fields, field],
-      });
+      if (editingFreeFormId) {
+        // Modo edición: actualizar campo existente
+        const updatedFields = section.fields.map((f): FormField => {
+          if (f.id === editingFreeFormId) {
+            return {
+              ...f,
+              question: newField.question!.trim(),
+              fieldTypeId: newField.fieldTypeId!,
+              isRequired: newField.isRequired || false,
+              validationConfig:
+                newField.validationConfig && Object.keys(newField.validationConfig).length > 0
+                  ? newField.validationConfig
+                  : undefined,
+            };
+          }
+          return f;
+        });
+
+        this.freeFormSection.set({
+          ...section,
+          fields: updatedFields,
+        });
+
+        this.notification.success('Pregunta actualizada correctamente');
+        this.editingFreeFormFieldId.set(null);
+      } else {
+        // Modo creación: agregar nuevo campo
+        const field: FormField = {
+          id: `temp-${Date.now()}`,
+          question: newField.question!.trim(),
+          fieldTypeId: newField.fieldTypeId!,
+          isRequired: newField.isRequired || false,
+          validationConfig:
+            newField.validationConfig && Object.keys(newField.validationConfig).length > 0
+              ? newField.validationConfig
+              : undefined,
+        };
+
+        this.freeFormSection.set({
+          ...section,
+          fields: [...section.fields, field],
+        });
+      }
     }
 
     // Limpiar formulario
@@ -525,20 +576,23 @@ export class ProductFormBuilderComponent implements OnInit {
   }
 
   /**
-   * Carga un campo de la Parte 2 para edición
+   * Carga un campo de la Parte 2 (free_form) para edición en el formulario unificado
    */
   editFreeFormField(field: FormField): void {
     this.editingFreeFormFieldId.set(field.id!);
-    this.newFreeFormField.set({
+    // Cargar los datos en newProtocolLinkedField (formulario unificado)
+    // protocolId será null para free_form
+    this.newProtocolLinkedField.set({
       question: field.question,
       fieldTypeId: field.fieldTypeId,
       isRequired: field.isRequired,
+      protocolId: null, // Free form no tiene protocolo
       validationConfig: field.validationConfig ? { ...field.validationConfig } : {},
     });
 
     // Scroll hacia el formulario
     setTimeout(() => {
-      const formElement = document.querySelectorAll('.new-field-form')[1];
+      const formElement = document.querySelector('.new-field-form');
       formElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
   }
@@ -560,17 +614,19 @@ export class ProductFormBuilderComponent implements OnInit {
   }
 
   /**
-   * Cancela la edición de un campo de la Parte 2
+   * Cancela la edición de un campo de free_form (limpia el formulario unificado)
    */
   cancelEditFreeFormField(): void {
     this.editingFreeFormFieldId.set(null);
-    this.newFreeFormField.set({
+    // Limpiar newProtocolLinkedField (formulario unificado)
+    this.newProtocolLinkedField.set({
       question: '',
       fieldTypeId: '',
       isRequired: false,
+      protocolId: null,
       validationConfig: {},
     });
-    this.tempFreeFormOption.set('');
+    this.tempProtocolOption.set('');
     this.tempArrayValues.set({});
   }
 
@@ -604,6 +660,34 @@ export class ProductFormBuilderComponent implements OnInit {
     if (this.editingFreeFormFieldId() === fieldId) {
       this.cancelEditFreeFormField();
     }
+  }
+
+  /**
+   * Maneja el reordenamiento de preguntas vinculadas a protocolo mediante drag & drop
+   */
+  onProtocolFieldDrop(event: CdkDragDrop<FormField[]>): void {
+    const section = this.protocolLinkedSection();
+    const updatedFields = [...section.fields];
+    moveItemInArray(updatedFields, event.previousIndex, event.currentIndex);
+
+    this.protocolLinkedSection.set({
+      ...section,
+      fields: updatedFields,
+    });
+  }
+
+  /**
+   * Maneja el reordenamiento de preguntas libres mediante drag & drop
+   */
+  onFreeFormFieldDrop(event: CdkDragDrop<FormField[]>): void {
+    const section = this.freeFormSection();
+    const updatedFields = [...section.fields];
+    moveItemInArray(updatedFields, event.previousIndex, event.currentIndex);
+
+    this.freeFormSection.set({
+      ...section,
+      fields: updatedFields,
+    });
   }
 
   /**

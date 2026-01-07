@@ -39,7 +39,7 @@
   } @else {
     <!-- Content -->
     <div class="form-builder-content">
-      <!-- Parte 1: Protocol Linked -->
+      <!-- Sección Unificada de Preguntas -->
       <mat-expansion-panel
         [expanded]="protocolPanelExpanded()"
         (expandedChange)="protocolPanelExpanded.set($event)"
@@ -48,62 +48,127 @@
         <mat-expansion-panel-header>
           <mat-panel-title>
             <div class="panel-title">
-              <mat-icon class="panel-icon">link</mat-icon>
-              <span class="text-body font-bold">Parte 1</span>
+              <mat-icon class="panel-icon">description</mat-icon>
+              <span class="text-body font-bold">Preguntas del Formulario</span>
               <span class="text-subtitle text-neutral-subheading ml-2">
-                ({{ protocolLinkedSection().fields.length }} preguntas)
+                ({{ protocolLinkedSection().fields.length + freeFormSection().fields.length }}
+                preguntas totales)
               </span>
             </div>
           </mat-panel-title>
-          <mat-panel-description> Formularios vinculados a protocolo </mat-panel-description>
+          <mat-panel-description>
+            Gestiona todas las preguntas del formulario
+          </mat-panel-description>
         </mat-expansion-panel-header>
 
         <div class="panel-content">
-          <!-- Lista de preguntas existentes -->
-          @if (protocolLinkedSection().fields.length > 0) {
+          <!-- Lista de TODAS las preguntas existentes (Protocol Linked + Free Form) -->
+          @if (protocolLinkedSection().fields.length > 0 || freeFormSection().fields.length > 0) {
             <div class="fields-list">
-              @for (field of protocolLinkedSection().fields; track field.id) {
-                <div class="field-card">
-                  <div class="field-header">
-                    <mat-icon class="field-number-icon">looks_one</mat-icon>
-                    <div class="field-info">
-                      <p class="field-question text-body font-bold">
-                        {{ field.question }}
-                      </p>
-                      <div class="field-meta">
-                        <span class="text-subtitle text-neutral-subheading">
-                          {{ getFieldTypeName(field.fieldTypeId) }}
-                        </span>
-                        @if (field.isRequired) {
-                          <span class="required-badge">Requerido</span>
-                        }
-                        @if (field.protocolId) {
-                          <span class="protocol-badge">
-                            <mat-icon>link</mat-icon>
-                            Vinculado
-                          </span>
-                        }
+              <!-- Preguntas vinculadas a protocolo -->
+              @if (protocolLinkedSection().fields.length > 0) {
+                <div
+                  cdkDropList
+                  (cdkDropListDropped)="onProtocolFieldDrop($event)"
+                  class="drag-drop-list"
+                >
+                  @for (field of protocolLinkedSection().fields; track field.id) {
+                    <div class="field-card" cdkDrag>
+                      <div class="drag-handle" cdkDragHandle>
+                        <mat-icon>drag_indicator</mat-icon>
+                      </div>
+                      <div class="field-header">
+                        <mat-icon class="field-number-icon">help_outline</mat-icon>
+                        <div class="field-info">
+                          <p class="field-question text-body font-bold">
+                            {{ field.question }}
+                          </p>
+                          <div class="field-meta">
+                            <span class="text-subtitle text-neutral-subheading">
+                              {{ getFieldTypeName(field.fieldTypeId) }}
+                            </span>
+                            @if (field.isRequired) {
+                              <span class="required-badge">Requerido</span>
+                            }
+                            @if (field.protocolId) {
+                              <span class="protocol-badge">
+                                <mat-icon>link</mat-icon>
+                                Vinculado
+                              </span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      <div class="field-actions">
+                        <button
+                          mat-icon-button
+                          (click)="editProtocolLinkedField(field)"
+                          class="edit-button"
+                          matTooltip="Editar pregunta"
+                        >
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button
+                          mat-icon-button
+                          (click)="removeProtocolLinkedField(field.id!)"
+                          class="delete-button"
+                          matTooltip="Eliminar pregunta"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
                       </div>
                     </div>
-                  </div>
-                  <div class="field-actions">
-                    <button
-                      mat-icon-button
-                      (click)="editProtocolLinkedField(field)"
-                      class="edit-button"
-                      matTooltip="Editar pregunta"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      (click)="removeProtocolLinkedField(field.id!)"
-                      class="delete-button"
-                      matTooltip="Eliminar pregunta"
-                    >
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
+                  }
+                </div>
+              }
+              <!-- Preguntas libres (sin protocolo) -->
+              @if (freeFormSection().fields.length > 0) {
+                <div
+                  cdkDropList
+                  (cdkDropListDropped)="onFreeFormFieldDrop($event)"
+                  class="drag-drop-list"
+                >
+                  @for (field of freeFormSection().fields; track field.id) {
+                    <div class="field-card" cdkDrag>
+                      <div class="drag-handle" cdkDragHandle>
+                        <mat-icon>drag_indicator</mat-icon>
+                      </div>
+                      <div class="field-header">
+                        <mat-icon class="field-number-icon">help_outline</mat-icon>
+                        <div class="field-info">
+                          <p class="field-question text-body font-bold">
+                            {{ field.question }}
+                          </p>
+                          <div class="field-meta">
+                            <span class="text-subtitle text-neutral-subheading">
+                              {{ getFieldTypeName(field.fieldTypeId) }}
+                            </span>
+                            @if (field.isRequired) {
+                              <span class="required-badge">Requerido</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      <div class="field-actions">
+                        <button
+                          mat-icon-button
+                          (click)="editFreeFormField(field)"
+                          class="edit-button"
+                          matTooltip="Editar pregunta"
+                        >
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button
+                          mat-icon-button
+                          (click)="removeFreeFormField(field.id!)"
+                          class="delete-button"
+                          matTooltip="Eliminar pregunta"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -128,8 +193,8 @@
               </mat-form-field>
             </div>
 
-            <div class="form-row two-cols">
-              <mat-form-field appearance="outline">
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Formato de respuesta</mat-label>
                 <mat-select
                   [value]="newProtocolLinkedField().fieldTypeId"
@@ -143,14 +208,16 @@
                 </mat-select>
                 <mat-icon matPrefix>format_list_bulleted</mat-icon>
               </mat-form-field>
+            </div>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Protocolo vinculado</mat-label>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Protocolo vinculado (opcional)</mat-label>
                 <mat-select
                   [value]="newProtocolLinkedField().protocolId"
                   (selectionChange)="updateProtocolLinkedField('protocolId', $event.value)"
-                  required
                 >
+                  <mat-option [value]="null">Sin protocolo</mat-option>
                   @for (protocol of protocols(); track protocol.id) {
                     <mat-option [value]="protocol.id">
                       {{ protocol.attribute.name }}
@@ -158,6 +225,7 @@
                   }
                 </mat-select>
                 <mat-icon matPrefix>link</mat-icon>
+                <mat-hint>Si no seleccionas protocolo, será una pregunta libre</mat-hint>
               </mat-form-field>
             </div>
 
@@ -320,297 +388,27 @@
             }
 
             <div class="form-actions">
-              @if (editingProtocolFieldId()) {
+              @if (editingProtocolFieldId() || editingFreeFormFieldId()) {
                 <button
                   mat-stroked-button
-                  (click)="cancelEditProtocolLinkedField()"
+                  (click)="
+                    editingProtocolFieldId()
+                      ? cancelEditProtocolLinkedField()
+                      : cancelEditFreeFormField()
+                  "
                   class="btn-cancel"
                 >
                   Cancelar
                 </button>
               }
               <button mat-raised-button (click)="addProtocolLinkedField()" class="btn-secondary">
-                <mat-icon>{{ editingProtocolFieldId() ? 'save' : 'add' }}</mat-icon>
+                <mat-icon>{{
+                  editingProtocolFieldId() || editingFreeFormFieldId() ? 'save' : 'add'
+                }}</mat-icon>
                 <span>{{
-                  editingProtocolFieldId() ? 'Actualizar pregunta' : 'Añadir pregunta'
-                }}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </mat-expansion-panel>
-
-      <!-- Parte 2: Free Form -->
-      <mat-expansion-panel
-        [expanded]="freeFormPanelExpanded()"
-        (expandedChange)="freeFormPanelExpanded.set($event)"
-        class="section-panel mt-4"
-      >
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            <div class="panel-title">
-              <mat-icon class="panel-icon">description</mat-icon>
-              <span class="text-body font-bold">Parte 2</span>
-              <span class="text-subtitle text-neutral-subheading ml-2">
-                ({{ freeFormSection().fields.length }} preguntas)
-              </span>
-            </div>
-          </mat-panel-title>
-          <mat-panel-description> Formularios sin vínculo a protocolo </mat-panel-description>
-        </mat-expansion-panel-header>
-
-        <div class="panel-content">
-          <!-- Lista de preguntas existentes -->
-          @if (freeFormSection().fields.length > 0) {
-            <div class="fields-list">
-              @for (field of freeFormSection().fields; track field.id) {
-                <div class="field-card">
-                  <div class="field-header">
-                    <mat-icon class="field-number-icon">looks_two</mat-icon>
-                    <div class="field-info">
-                      <p class="field-question text-body font-bold">
-                        {{ field.question }}
-                      </p>
-                      <div class="field-meta">
-                        <span class="text-subtitle text-neutral-subheading">
-                          {{ getFieldTypeName(field.fieldTypeId) }}
-                        </span>
-                        @if (field.isRequired) {
-                          <span class="required-badge">Requerido</span>
-                        }
-                      </div>
-                    </div>
-                  </div>
-                  <div class="field-actions">
-                    <button
-                      mat-icon-button
-                      (click)="editFreeFormField(field)"
-                      class="edit-button"
-                      matTooltip="Editar pregunta"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      (click)="removeFreeFormField(field.id!)"
-                      class="delete-button"
-                      matTooltip="Eliminar pregunta"
-                    >
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-
-          <!-- Formulario para añadir nueva pregunta -->
-          <div class="new-field-form">
-            <h3 class="form-subtitle text-body font-bold text-accent-titles">
-              {{ editingFreeFormFieldId() ? 'Editar pregunta' : 'Añadir nueva pregunta' }}
-            </h3>
-
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Pregunta</mat-label>
-                <input
-                  matInput
-                  [ngModel]="newFreeFormField().question"
-                  (ngModelChange)="updateFreeFormField('question', $event)"
-                  placeholder="¿Se encontró el árbol?"
-                />
-                <mat-icon matPrefix>help_outline</mat-icon>
-              </mat-form-field>
-            </div>
-
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Formato de respuesta</mat-label>
-                <mat-select
-                  [value]="newFreeFormField().fieldTypeId"
-                  (selectionChange)="onFreeFormFieldTypeChange($event.value)"
-                >
-                  @for (type of fieldTypes(); track type.id) {
-                    <mat-option [value]="type.id">
-                      {{ type.name }}
-                    </mat-option>
-                  }
-                </mat-select>
-                <mat-icon matPrefix>format_list_bulleted</mat-icon>
-              </mat-form-field>
-            </div>
-
-            <div class="form-row">
-              <mat-slide-toggle
-                [ngModel]="newFreeFormField().isRequired"
-                (ngModelChange)="updateFreeFormField('isRequired', $event)"
-                color="primary"
-              >
-                Campo requerido
-              </mat-slide-toggle>
-            </div>
-
-            <!-- Sección de validaciones (solo si validationOptions NO es null) -->
-            @if (
-              selectedFreeFormFieldType()?.validationOptions &&
-              selectedFreeFormFieldType()!.validationOptions !== null
-            ) {
-              <div class="validation-section">
-                <h4 class="validation-title text-subtitle font-bold text-accent-titles">
-                  <mat-icon class="validation-icon">rule</mat-icon>
-                  Configuración de validación
-                </h4>
-
-                <div class="validation-fields">
-                  @for (
-                    key of getValidationKeys(selectedFreeFormFieldType()!.validationOptions);
-                    track key
-                  ) {
-                    <div class="validation-field">
-                      @if (key === 'options') {
-                        <!-- Campo especial para options: input + chips -->
-                        <div class="options-field">
-                          <span class="text-subtitle font-bold text-accent-titles mb-2 block"
-                            >Opciones</span
-                          >
-                          <div class="options-input-row">
-                            <mat-form-field appearance="outline" class="flex-grow">
-                              <mat-label>Nueva opción</mat-label>
-                              <input
-                                matInput
-                                [ngModel]="tempFreeFormOption()"
-                                (ngModelChange)="tempFreeFormOption.set($event)"
-                                placeholder="Ej: Opción 1"
-                                (keydown.enter)="addFreeFormValidationOption()"
-                              />
-                            </mat-form-field>
-                            <button
-                              mat-raised-button
-                              (click)="addFreeFormValidationOption()"
-                              [disabled]="!tempFreeFormOption().trim()"
-                              class="btn-secondary"
-                            >
-                              <mat-icon>add</mat-icon>
-                              Añadir
-                            </button>
-                          </div>
-                          @if (hasArrayValues(getFreeFormValidationValue(key))) {
-                            <div class="options-chips">
-                              <mat-chip-set>
-                                @for (
-                                  option of asArray(getFreeFormValidationValue(key));
-                                  track option
-                                ) {
-                                  <mat-chip
-                                    [removable]="true"
-                                    (removed)="removeFreeFormValidationOption($any(option))"
-                                  >
-                                    {{ option }}
-                                    <mat-icon matChipRemove>cancel</mat-icon>
-                                  </mat-chip>
-                                }
-                              </mat-chip-set>
-                            </div>
-                          }
-                        </div>
-                      } @else {
-                        @switch (
-                          getValidationInputType(
-                            key,
-                            selectedFreeFormFieldType()!.validationOptions![key]
-                          )
-                        ) {
-                          @case ('number') {
-                            <mat-form-field appearance="outline" class="full-width">
-                              <mat-label>{{ formatLabel(key) }}</mat-label>
-                              <input
-                                matInput
-                                [type]="isDateField(key) ? 'date' : 'number'"
-                                [ngModel]="getFreeFormValidationValue(key)"
-                                (ngModelChange)="
-                                  updateFreeFormValidation(
-                                    key,
-                                    isDateField(key) ? $event : $event === '' ? null : +$event
-                                  )
-                                "
-                                [placeholder]="'Ingrese ' + formatLabel(key)"
-                              />
-                            </mat-form-field>
-                          }
-                          @case ('boolean') {
-                            <mat-slide-toggle
-                              [ngModel]="getFreeFormValidationValue(key) ?? false"
-                              (ngModelChange)="updateFreeFormValidation(key, $event)"
-                              color="primary"
-                            >
-                              {{ formatLabel(key) }}
-                            </mat-slide-toggle>
-                          }
-                          @case ('array') {
-                            <!-- Arrays no-options (como allowed_formats) también como chips -->
-                            <div class="array-field">
-                              <span class="text-subtitle font-bold text-accent-titles mb-2 block">{{
-                                formatLabel(key)
-                              }}</span>
-                              <div class="options-input-row">
-                                <mat-form-field appearance="outline" class="flex-grow">
-                                  <mat-label>Nuevo valor</mat-label>
-                                  <input
-                                    matInput
-                                    [ngModel]="getTempArrayValue(key)"
-                                    (ngModelChange)="setTempArrayValue(key, $event)"
-                                    placeholder="Ej: jpg"
-                                    (keydown.enter)="addFreeFormArrayValue(key)"
-                                  />
-                                </mat-form-field>
-                                <button
-                                  mat-raised-button
-                                  (click)="addFreeFormArrayValue(key)"
-                                  [disabled]="!getTempArrayValue(key).trim()"
-                                  class="btn-secondary"
-                                >
-                                  <mat-icon>add</mat-icon>
-                                  Añadir
-                                </button>
-                              </div>
-                              @if (hasArrayValues(getFreeFormValidationValue(key))) {
-                                <div class="options-chips">
-                                  <mat-chip-set>
-                                    @for (
-                                      value of asArray(getFreeFormValidationValue(key));
-                                      track value
-                                    ) {
-                                      <mat-chip
-                                        [removable]="true"
-                                        (removed)="removeFreeFormArrayValue(key, $any(value))"
-                                      >
-                                        {{ value }}
-                                        <mat-icon matChipRemove>cancel</mat-icon>
-                                      </mat-chip>
-                                    }
-                                  </mat-chip-set>
-                                </div>
-                              }
-                            </div>
-                          }
-                        }
-                      }
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            <div class="form-actions">
-              @if (editingFreeFormFieldId()) {
-                <button mat-stroked-button (click)="cancelEditFreeFormField()" class="btn-cancel">
-                  Cancelar
-                </button>
-              }
-              <button mat-raised-button (click)="addFreeFormField()" class="btn-secondary">
-                <mat-icon>{{ editingFreeFormFieldId() ? 'save' : 'add' }}</mat-icon>
-                <span>{{
-                  editingFreeFormFieldId() ? 'Actualizar pregunta' : 'Añadir pregunta'
+                  editingProtocolFieldId() || editingFreeFormFieldId()
+                    ? 'Actualizar pregunta'
+                    : 'Añadir pregunta'
                 }}</span>
               </button>
             </div>

@@ -1,0 +1,172 @@
+<div class="inventory-evaluation-container">
+  @if (loading()) {
+    <!-- Loading State -->
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p class="text-body text-neutral-subheading mt-4">Cargando evaluación...</p>
+    </div>
+  } @else {
+    <!-- Registros Section -->
+    <section class="records-section">
+      <div class="section-header">
+        <h2 class="text-title font-bold text-accent-titles">Registros</h2>
+        <p class="text-subtitle text-neutral-subheading">
+          Total de registros durante los últimos tres meses
+        </p>
+      </div>
+
+      <!-- Chart Card -->
+      <mat-card class="chart-card">
+        <mat-card-content>
+          <div class="chart-header">
+            <div class="chart-stats">
+              <span class="stat-value text-title font-bold text-accent-titles">{{
+                totalRecords()
+              }}</span>
+              <span class="stat-label text-subtitle text-neutral-subheading">
+                Registros totales
+              </span>
+            </div>
+          </div>
+          <div class="chart-container">
+            <app-line-chart [data]="chartData()" [height]="200" [showGrid]="true" />
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <!-- Evaluación de inventario Section -->
+    <section class="evaluation-section">
+      <div class="section-header">
+        <div class="header-title">
+          <h2 class="text-title font-bold text-accent-titles">Evaluación de inventario</h2>
+        </div>
+        <div class="header-actions">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-icon matPrefix class="text-neutral-subheading">filter_list</mat-icon>
+            <mat-label>Filtrar por...</mat-label>
+            <mat-select [value]="selectedFilter()" (selectionChange)="onFilterChange($event.value)">
+              <mat-option value="normal">Registros normales</mat-option>
+              <mat-option value="atypical">Registros atípicos</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      @if (filteredForms().length === 0) {
+        <!-- Empty State -->
+        <div class="empty-state">
+          <mat-icon class="empty-icon">description_off</mat-icon>
+          <h3 class="text-body font-bold text-accent-titles">No hay formularios</h3>
+          <p class="text-subtitle text-neutral-subheading">
+            No se encontraron formularios para este producto
+          </p>
+        </div>
+      } @else {
+        <!-- Desktop Table (hidden on mobile) -->
+        <div class="forms-table hidden md:block">
+          <table class="table-auto w-full">
+            <thead class="table-header">
+              <tr>
+                <th class="table-th text-left">Registro</th>
+                <th class="table-th text-left">Fecha de revisión</th>
+                <th class="table-th text-left">Etapa</th>
+                <th class="table-th text-left">Estado</th>
+                <th class="table-th text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="table-body">
+              @for (form of filteredForms(); track form.id) {
+                <tr class="table-row">
+                  <td class="table-td">
+                    <span class="text-body font-bold text-accent-titles">{{ form.name }}</span>
+                  </td>
+                  <td class="table-td">
+                    <span class="text-body text-neutral-subheading">
+                      {{ form.publishedAt | date: 'dd/MM/yy' }}
+                    </span>
+                  </td>
+                  <td class="table-td">
+                    <mat-chip class="stage-chip">
+                      {{ getStageLabel(form.applicableStages[0]) }}
+                    </mat-chip>
+                  </td>
+                  <td class="table-td">
+                    <div class="status-indicator">
+                      <span class="status-dot" [class.published]="form.isPublished"></span>
+                      <span class="text-body" [ngClass]="getStatusColor(form.isPublished)">
+                        {{ form.isPublished ? 'Aprobado' : 'Pendiente' }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="table-td text-right">
+                    <button mat-icon-button [matMenuTriggerFor]="tableMenu">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #tableMenu="matMenu">
+                      <button mat-menu-item (click)="viewForm(form)">
+                        <mat-icon>visibility</mat-icon>
+                        <span>Ver detalle</span>
+                      </button>
+                      <button mat-menu-item (click)="downloadForm(form)">
+                        <mat-icon>download</mat-icon>
+                        <span>Descargar</span>
+                      </button>
+                    </mat-menu>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Cards (visible on mobile only) -->
+        <div class="mobile-cards md:hidden">
+          @for (form of filteredForms(); track form.id) {
+            <div class="form-card bg-primary-white rounded-lg shadow p-4">
+              <div class="card-header">
+                <div class="card-title">
+                  <h3 class="text-body font-bold text-accent-titles">{{ form.name }}</h3>
+                  <mat-chip class="stage-chip mt-2">
+                    {{ getStageLabel(form.applicableStages[0]) }}
+                  </mat-chip>
+                </div>
+                <div class="card-actions">
+                  <button mat-icon-button [matMenuTriggerFor]="mobileMenu">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #mobileMenu="matMenu">
+                    <button mat-menu-item (click)="viewForm(form)">
+                      <mat-icon>visibility</mat-icon>
+                      <span>Ver detalle</span>
+                    </button>
+                    <button mat-menu-item (click)="downloadForm(form)">
+                      <mat-icon>download</mat-icon>
+                      <span>Descargar</span>
+                    </button>
+                  </mat-menu>
+                </div>
+              </div>
+              <div class="card-details">
+                <div class="detail-row">
+                  <mat-icon class="detail-icon">calendar_today</mat-icon>
+                  <span class="detail-label">Fecha:</span>
+                  <span class="detail-value">
+                    {{ form.publishedAt | date: 'dd/MM/yy' }}
+                  </span>
+                </div>
+                <div class="detail-row">
+                  <span class="status-dot" [class.published]="form.isPublished"></span>
+                  <span class="detail-label">Estado:</span>
+                  <span class="detail-value" [ngClass]="getStatusColor(form.isPublished)">
+                    {{ form.isPublished ? 'Aprobado' : 'Pendiente' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

@@ -448,29 +448,26 @@
                 } @else {
                   <!-- Tabla de Recolectores -->
                   <div class="collectors-table-container">
-                    <!-- Header con botón para generar QR (solo si stage es 'planning') -->
-                    @if (project()?.stage === 'planning') {
-                      <div class="table-header-actions">
-                        <div class="header-info">
-                          <h3 class="text-body font-bold text-accent-titles">
-                            Recolectores Registrados ({{ collectors().length }})
-                          </h3>
-                          <p class="text-subtitle text-neutral-subheading">
-                            Puedes generar un nuevo código QR para invitar más recolectores
-                          </p>
-                        </div>
-                        <button
-                          mat-raised-button
-                          class="btn-secondary"
-                          (click)="generateOnboardingInvitation()"
-                          matTooltip="Genera un código QR para que más recolectores puedan registrarse"
-                        >
-                          <mat-icon>qr_code_2</mat-icon>
-                          <span class="hidden sm:inline">Generar QR / Código</span>
-                          <span class="sm:hidden">QR</span>
-                        </button>
+                    <div class="table-header-actions">
+                      <div class="header-info">
+                        <h3 class="text-body font-bold text-accent-titles">
+                          Recolectores Registrados ({{ collectors().length }})
+                        </h3>
+                        <p class="text-subtitle text-neutral-subheading">
+                          Puedes generar un nuevo código QR para invitar más recolectores
+                        </p>
                       </div>
-                    }
+                      <button
+                        mat-raised-button
+                        class="btn-secondary"
+                        (click)="generateOnboardingInvitation()"
+                        matTooltip="Genera un código QR para que más recolectores puedan registrarse"
+                      >
+                        <mat-icon>qr_code_2</mat-icon>
+                        <span class="hidden sm:inline">Generar QR / Código</span>
+                        <span class="sm:hidden">QR</span>
+                      </button>
+                    </div>
 
                     <div class="table-wrapper">
                       <table
@@ -675,13 +672,16 @@
               </mat-tab>
             }
 
-            <mat-tab label="Evaluación de inventario">
-              <div class="tab-content">
-                <p class="text-body text-neutral-subheading">
-                  Contenido de Evaluación de inventario en desarrollo...
-                </p>
-              </div>
-            </mat-tab>
+            @if (showInventoryEvaluationTab()) {
+              <mat-tab label="Evaluación de inventario">
+                <div class="tab-content">
+                  <app-inventory-evaluation
+                    [productId]="project()!.productId"
+                    [projectId]="project()!.id"
+                  />
+                </div>
+              </mat-tab>
+            }
 
             <mat-tab label="Documentos">
               <div class="tab-content">

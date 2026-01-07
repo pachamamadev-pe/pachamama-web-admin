@@ -52,6 +52,7 @@ import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { DocumentsProgressCardComponent } from '../components/documents-progress-card.component';
 import { DocumentsTableComponent } from '../components/documents-table.component';
+import { InventoryEvaluationComponent } from '../components/inventory-evaluation.component';
 import { DocumentUploadDialogComponent } from '../components/document-upload-dialog.component';
 import { DocumentReviewDialogComponent } from '../components/document-review-dialog.component';
 import { DocumentResubmitDialogComponent } from '../components/document-resubmit-dialog.component';
@@ -83,6 +84,7 @@ interface ProjectStage {
     MatFormFieldModule,
     DocumentsProgressCardComponent,
     DocumentsTableComponent,
+    InventoryEvaluationComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -253,10 +255,15 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
       stage === 'planning' && hasCollectors && hasBrigades && hasRequiredDocs && allDocsApproved
     );
   });
-
   // Computed para mostrar/ocultar el tab de brigadas
   showBrigadesTab = computed(() => {
     return this.collectors().length > 0;
+  });
+
+  // Computed para mostrar/ocultar el tab de evaluación de inventario
+  showInventoryEvaluationTab = computed(() => {
+    const stage = this.project()?.stage;
+    return stage !== 'planning';
   });
 
   // Helpers para etiquetas y estilos
