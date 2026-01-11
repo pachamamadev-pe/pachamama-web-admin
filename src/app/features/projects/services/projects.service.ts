@@ -6,6 +6,7 @@ import {
   Project,
   CreateProjectRequest,
   UpdateProjectRequest,
+  ProjectStageUpdateDto,
   PageDto,
 } from '../models/project.model';
 
@@ -69,6 +70,17 @@ export class ProjectsService {
   startInventory(id: string): Observable<Project> {
     // No body requerido; backend determina cambio de etapa
     return this.http.patch<Project>(`${this.apiUrl}/${id}/start-inventory`, {});
+  }
+
+  /**
+   * Actualiza la etapa de un proyecto
+   * PATCH /projects/{id}/stage
+   * @param id - UUID del proyecto
+   * @param stage - Nueva etapa del proyecto
+   */
+  updateProjectStage(id: string, stage: string): Observable<Project> {
+    const body: ProjectStageUpdateDto = { stage };
+    return this.http.patch<Project>(`${this.apiUrl}/${id}/stage`, body);
   }
 
   /**

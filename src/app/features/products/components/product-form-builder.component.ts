@@ -20,6 +20,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatRadioModule } from '@angular/material/radio';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductsService } from '../services/products.service';
 import { ProductProtocolsService } from '../services/product-protocols.service';
@@ -57,6 +58,7 @@ export type ProjectStage =
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    MatRadioModule,
     DragDropModule,
   ],
   templateUrl: './product-form-builder.component.html',
@@ -106,6 +108,7 @@ export class ProductFormBuilderComponent implements OnInit {
     isRequired: false,
     protocolId: null,
     validationConfig: {},
+    appliesTo: 'both', // Por defecto aplica a ambos
   });
 
   newFreeFormField = signal<Partial<FormField>>({
@@ -113,6 +116,7 @@ export class ProductFormBuilderComponent implements OnInit {
     fieldTypeId: '',
     isRequired: false,
     validationConfig: {},
+    appliesTo: 'both', // Por defecto aplica a ambos
   });
 
   // Computed signals para obtener el fieldType seleccionado
@@ -309,6 +313,7 @@ export class ProductFormBuilderComponent implements OnInit {
             isRequired: field.required,
             protocolId: field.id_protocol || null,
             validationConfig: field.validationOptions,
+            appliesTo: (field as FormSchemaField & { applies_to?: string }).applies_to || 'both',
           }),
         );
 
@@ -331,6 +336,7 @@ export class ProductFormBuilderComponent implements OnInit {
             fieldTypeId: field.id_field_type,
             isRequired: field.required,
             validationConfig: field.validationOptions,
+            appliesTo: (field as FormSchemaField & { applies_to?: string }).applies_to || 'both',
           }),
         );
 
@@ -384,6 +390,7 @@ export class ProductFormBuilderComponent implements OnInit {
               fieldTypeId: newField.fieldTypeId!,
               isRequired: newField.isRequired || false,
               protocolId: newField.protocolId,
+              appliesTo: newField.appliesTo || 'both',
               validationConfig:
                 newField.validationConfig && Object.keys(newField.validationConfig).length > 0
                   ? newField.validationConfig
@@ -408,6 +415,7 @@ export class ProductFormBuilderComponent implements OnInit {
           fieldTypeId: newField.fieldTypeId!,
           isRequired: newField.isRequired || false,
           protocolId: newField.protocolId,
+          appliesTo: newField.appliesTo || 'both',
           validationConfig:
             newField.validationConfig && Object.keys(newField.validationConfig).length > 0
               ? newField.validationConfig
@@ -432,6 +440,7 @@ export class ProductFormBuilderComponent implements OnInit {
               question: newField.question!.trim(),
               fieldTypeId: newField.fieldTypeId!,
               isRequired: newField.isRequired || false,
+              appliesTo: newField.appliesTo || 'both',
               validationConfig:
                 newField.validationConfig && Object.keys(newField.validationConfig).length > 0
                   ? newField.validationConfig
@@ -455,6 +464,7 @@ export class ProductFormBuilderComponent implements OnInit {
           question: newField.question!.trim(),
           fieldTypeId: newField.fieldTypeId!,
           isRequired: newField.isRequired || false,
+          appliesTo: newField.appliesTo || 'both',
           validationConfig:
             newField.validationConfig && Object.keys(newField.validationConfig).length > 0
               ? newField.validationConfig
@@ -475,6 +485,7 @@ export class ProductFormBuilderComponent implements OnInit {
       isRequired: false,
       protocolId: null,
       validationConfig: {},
+      appliesTo: 'both',
     });
     this.tempProtocolOption.set('');
     this.tempArrayValues.set({});
@@ -566,6 +577,7 @@ export class ProductFormBuilderComponent implements OnInit {
       isRequired: field.isRequired,
       protocolId: field.protocolId || null,
       validationConfig: field.validationConfig ? { ...field.validationConfig } : {},
+      appliesTo: field.appliesTo || 'both',
     });
 
     // Scroll hacia el formulario
@@ -588,6 +600,7 @@ export class ProductFormBuilderComponent implements OnInit {
       isRequired: field.isRequired,
       protocolId: null, // Free form no tiene protocolo
       validationConfig: field.validationConfig ? { ...field.validationConfig } : {},
+      appliesTo: field.appliesTo || 'both',
     });
 
     // Scroll hacia el formulario
@@ -608,6 +621,7 @@ export class ProductFormBuilderComponent implements OnInit {
       isRequired: false,
       protocolId: null,
       validationConfig: {},
+      appliesTo: 'both',
     });
     this.tempProtocolOption.set('');
     this.tempArrayValues.set({});
@@ -625,6 +639,7 @@ export class ProductFormBuilderComponent implements OnInit {
       isRequired: false,
       protocolId: null,
       validationConfig: {},
+      appliesTo: 'both',
     });
     this.tempProtocolOption.set('');
     this.tempArrayValues.set({});
@@ -1086,6 +1101,7 @@ export class ProductFormBuilderComponent implements OnInit {
             attribute_code: protocol?.attribute?.code || '',
             required: field.isRequired,
             validationOptions: field.validationConfig || {},
+            applies_to: field.appliesTo || 'both',
             display_order: index + 1,
           };
         }),
@@ -1113,6 +1129,7 @@ export class ProductFormBuilderComponent implements OnInit {
             attribute_code: '',
             required: field.isRequired,
             validationOptions: field.validationConfig || {},
+            applies_to: field.appliesTo || 'both',
             display_order: index + 1,
           };
         }),

@@ -35,12 +35,14 @@ import { BrigadesService } from '../services/brigades.service';
 import { BrigadeAssignmentsService } from '../services/brigade-assignments.service';
 import { ProjectInvitationsService } from '../services/project-invitations.service';
 import { ProjectDocumentsService } from '../services/project-documents.service';
+import { ActivitiesService } from '../services/activities.service';
 import { Project } from '../models/project.model';
 import { Product } from '../../products/models/product.model';
 import { Community } from '../../communities/models/community.model';
 import { Collector } from '../models/collector.model';
 import { Brigade } from '../models/brigade.model';
 import { DocumentRequirements, ProjectDocument } from '../models/project-document.model';
+import { ActivityResponse } from '../models/activity.model';
 import {
   GeoJSONFeatureCollection,
   AreaImportResponse,
@@ -53,6 +55,7 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
 import { DocumentsProgressCardComponent } from '../components/documents-progress-card.component';
 import { DocumentsTableComponent } from '../components/documents-table.component';
 import { InventoryEvaluationComponent } from '../components/inventory-evaluation.component';
+import { PmfGenerationComponent } from '../components/pmf-generation/pmf-generation.component';
 import { DocumentUploadDialogComponent } from '../components/document-upload-dialog.component';
 import { DocumentReviewDialogComponent } from '../components/document-review-dialog.component';
 import { DocumentResubmitDialogComponent } from '../components/document-resubmit-dialog.component';
@@ -85,6 +88,7 @@ interface ProjectStage {
     DocumentsProgressCardComponent,
     DocumentsTableComponent,
     InventoryEvaluationComponent,
+    PmfGenerationComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -102,6 +106,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   private brigadeAssignmentsService = inject(BrigadeAssignmentsService);
   private projectInvitationsService = inject(ProjectInvitationsService);
   private projectDocumentsService = inject(ProjectDocumentsService);
+  private activitiesService = inject(ActivitiesService);
   private azureStorage = inject(AzureStorageService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
@@ -208,8 +213,8 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   stages: ProjectStage[] = [
     { number: 1, name: 'Relacionamiento Comunitario', key: 'planning' },
     { number: 2, name: 'Inventario', key: 'inventory' },
-    { number: 3, name: 'Recolección', key: 'collection' },
-    { number: 4, name: 'Elaboración de PMF', key: 'pmf_development' },
+    { number: 3, name: 'Elaboración de PMF', key: 'pmf_development' },
+    { number: 4, name: 'Recolección', key: 'collection' },
     { number: 5, name: 'Evaluación y Aprobación (SERFOR)', key: 'serfor_evaluation' },
 
     { number: 6, name: 'Acopio / Ingreso a CTP', key: 'ctp_entry' },
@@ -255,6 +260,73 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
       stage === 'planning' && hasCollectors && hasBrigades && hasRequiredDocs && allDocsApproved
     );
   });
+
+  // Activities state para validación de etapas
+  projectActivities = signal<ActivityResponse[]>([]);
+  loadingActivities = signal(false);
+
+  // Computed para verificar si se puede avanzar a PMF (de Inventario a PMF Development)
+  canStartPMF = computed(() => {
+    const stage = this.project()?.stage;
+    const hasActivities = this.projectActivities().length > 0;
+
+    // Solo se puede iniciar PMF si:
+    // 1. Está en etapa 'inventory'
+    // 2. Hay al menos una actividad registrada
+    return stage === 'inventory' && hasActivities;
+  });
+
+  // Computed para obtener la siguiente etapa
+  nextStage = computed(() => {
+    const currentStage = this.project()?.stage;
+    if (!currentStage) return null;
+
+    const currentIndex = this.stages.findIndex((s) => s.key === currentStage);
+    if (currentIndex === -1 || currentIndex === this.stages.length - 1) return null;
+
+    return this.stages[currentIndex + 1];
+  });
+
+  // Computed para verificar si se puede avanzar a la siguiente etapa
+  canAdvanceToNextStage = computed(() => {
+    const stage = this.project()?.stage;
+    if (!stage) return false;
+
+    // Validaciones específicas según la etapa actual
+    switch (stage) {
+      case 'planning':
+        return this.canStartInventory();
+      case 'inventory':
+        return this.canStartPMF();
+      // TODO: Agregar validaciones para otras transiciones de etapas cuando se definan
+      default:
+        return false;
+    }
+  });
+
+  // Computed para obtener el mensaje de por qué no se puede avanzar
+  stageAdvanceBlockerMessage = computed(() => {
+    const stage = this.project()?.stage;
+    if (!stage) return '';
+
+    switch (stage) {
+      case 'planning':
+        if (!this.collectors().length) return 'Debes registrar recolectores';
+        if (!this.brigades().length) return 'Debes crear al menos una brigada';
+        if (!this.documentRequirements()?.isCompliant)
+          return 'Faltan subir documentos obligatorios';
+        if (!this.areAllRequiredDocumentsApproved())
+          return 'Faltan aprobar documentos obligatorios';
+        return '';
+      case 'inventory':
+        if (!this.projectActivities().length)
+          return 'Debes registrar al menos una actividad de inventario';
+        return '';
+      default:
+        return 'No se puede avanzar desde esta etapa';
+    }
+  });
+
   // Computed para mostrar/ocultar el tab de brigadas
   showBrigadesTab = computed(() => {
     return this.collectors().length > 0;
@@ -266,6 +338,15 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     return stage !== 'planning';
   });
 
+  // Computed para mostrar/ocultar el tab de generación de PMF
+  showPmfGenerationTab = computed(() => {
+    const stage = this.project()?.stage;
+    // Mostrar tab desde la etapa de PMF en adelante
+    const pmfStageIndex = this.stages.findIndex((s) => s.key === 'pmf_development');
+    const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
+    return currentStageIndex >= pmfStageIndex && pmfStageIndex !== -1;
+  });
+
   // Helpers para etiquetas y estilos
   getProjectStageLabel = getProjectStageLabel;
   getProjectStageClass = getProjectStageClass;
@@ -275,6 +356,13 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     if (projectId) {
       this.loadProjectDetail(projectId);
       this.checkForExistingMap(projectId);
+
+      // Check for fragment to auto-select tab
+      const fragment = this.route.snapshot.fragment;
+      if (fragment === 'inventory') {
+        // Set to inventory evaluation tab (index 7 based on tab structure)
+        this.selectedTabIndex.set(2);
+      }
     } else {
       this.notification.error('ID de proyecto no válido');
       this.router.navigate(['/projects']);
@@ -321,6 +409,9 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
             // Cargar documentos y requirements
             this.loadDocumentRequirements(id);
             this.loadDocuments(id);
+
+            // Cargar actividades para validación de etapas
+            this.loadProjectActivities(id);
 
             this.loading.set(false);
           },
@@ -469,11 +560,6 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
     const name = `Importación de mapa para proyecto ${projectName}`;
     const source = 'GPS';
-
-    // Mensaje descriptivo según cantidad de archivos
-    const fileCount = files.length;
-    const fileNames = files.map((f) => f.name).join(', ');
-    console.log(`Subiendo ${fileCount} archivo(s): ${fileNames}`);
 
     this.areasService.importAreaFiles(projectId, files, name, source).subscribe({
       next: (response: AreaImportResponse) => {
@@ -1143,33 +1229,94 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Inicia la etapa de inventario del proyecto
+   * Avanza el proyecto a la siguiente etapa
    */
-  startInventoryStage(): void {
+  advanceToNextStage(): void {
     const projectId = this.project()?.id;
-    if (!projectId) {
-      this.notification.error('No se pudo obtener el ID del proyecto');
+    const currentStage = this.project()?.stage;
+    const next = this.nextStage();
+
+    if (!projectId || !currentStage || !next) {
+      this.notification.error('No se pudo obtener la información del proyecto');
       return;
     }
 
-    // Validar que se cumplan las condiciones
-    if (!this.canStartInventory()) {
+    // Debug logging
+    console.log('Advancing stage:', {
+      projectId,
+      currentStage,
+      nextStage: next,
+      nextKey: next.key,
+    });
+
+    // Validar que se pueda avanzar
+    if (!this.canAdvanceToNextStage()) {
+      const message = this.stageAdvanceBlockerMessage();
+      this.notification.warning(message || 'No se puede avanzar a la siguiente etapa');
+      return;
+    }
+
+    // Solo está implementado el avance de Planning a Inventory
+    if (currentStage === 'planning' && next.key === 'inventory') {
+      this.notification.info(`Avanzando a etapa: ${next.name}...`);
+
+      this.projectsService.startInventory(projectId).subscribe({
+        next: (updatedProject) => {
+          this.project.set(updatedProject);
+          this.notification.success(`Etapa "${next.name}" iniciada correctamente`);
+          // Recargar actividades para la nueva etapa
+          this.loadProjectActivities(projectId);
+        },
+        error: (error) => {
+          console.error('Error advancing stage:', error);
+          this.notification.error('Error al avanzar a la siguiente etapa');
+        },
+      });
+    } else if (currentStage === 'inventory' && next.key === 'pmf_development') {
+      this.notification.info(`Avanzando a etapa: ${next.name}...`);
+
+      // Asegurar que el stage key no sea null o undefined
+      const targetStage = next.key;
+      if (!targetStage) {
+        console.error('Target stage is null or undefined:', next);
+        this.notification.error('Error: Etapa de destino inválida');
+        return;
+      }
+
+      console.log('Calling updateProjectStage with:', { projectId, targetStage });
+
+      this.projectsService.updateProjectStage(projectId, targetStage).subscribe({
+        next: (updatedProject) => {
+          this.project.set(updatedProject);
+          this.notification.success(`Etapa "${next.name}" iniciada correctamente`);
+        },
+        error: (error) => {
+          console.error('Error advancing to PMF stage:', error);
+          this.notification.error('Error al avanzar a la etapa de PMF');
+        },
+      });
+    } else {
+      // Otras transiciones aún no implementadas en el backend
       this.notification.warning(
-        'Para iniciar el inventario debes tener recolectores, brigadas y todos los documentos obligatorios aprobados',
+        `La transición de "${currentStage}" a "${next.name}" aún no está implementada en el backend`,
       );
-      return;
     }
+  }
 
-    this.notification.info('Iniciando etapa de inventario...');
-
-    this.projectsService.startInventory(projectId).subscribe({
-      next: (updatedProject) => {
-        this.project.set(updatedProject);
-        this.notification.success('Etapa de inventario iniciada correctamente');
+  /**
+   * Carga las actividades del proyecto para validación de etapas
+   */
+  loadProjectActivities(projectId: string): void {
+    this.loadingActivities.set(true);
+    this.activitiesService.getActivitiesByProject(projectId).subscribe({
+      next: (activities) => {
+        this.projectActivities.set(activities);
+        this.loadingActivities.set(false);
       },
       error: (error) => {
-        console.error('Error starting inventory:', error);
-        this.notification.error('Error al iniciar la etapa de inventario');
+        console.error('Error loading project activities:', error);
+        this.projectActivities.set([]);
+        this.loadingActivities.set(false);
       },
     });
   }
@@ -1306,7 +1453,6 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     // Si no hay documentos obligatorios subidos, retornar true
     // (no hay nada que revisar)
     if (requiredDocs.length === 0) {
-      console.log('✅ No required docs to approve, returning TRUE');
       return true;
     }
 

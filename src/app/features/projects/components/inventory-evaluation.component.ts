@@ -17,10 +17,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
-import { ProductsService } from '@features/products/services/products.service';
-import { FormSchemaResponse } from '@features/products/models/form-schema-response.model';
 import { NotificationService } from '@core/services/notification.service';
 import { LineChartComponent } from '@shared/components/line-chart/line-chart.component';
+import { ActivitiesService } from '../services/activities.service';
+import { ActivityResponse, ValidationStatus } from '../models/activity.model';
 
 interface RecordStats {
   date: string;
@@ -51,7 +51,7 @@ interface RecordStats {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InventoryEvaluationComponent {
-  private productsService = inject(ProductsService);
+  private activitiesService = inject(ActivitiesService);
   private notification = inject(NotificationService);
   private router = inject(Router);
 
@@ -61,8 +61,8 @@ export class InventoryEvaluationComponent {
 
   // State
   loading = signal(true);
-  forms = signal<FormSchemaResponse[]>([]);
-  selectedFilter = signal('normal');
+  activities = signal<ActivityResponse[]>([]);
+  selectedFilter = signal('all');
 
   // Datos simulados para el gráfico de registros (últimos 3 meses)
   private generateMockRecordStats(): RecordStats[] {
@@ -101,64 +101,88 @@ export class InventoryEvaluationComponent {
     return stats.reduce((sum, s) => sum + s.count, 0);
   });
 
-  // Filtrar formularios según el filtro seleccionado
-  filteredForms = computed(() => {
-    const allForms = this.forms();
+  // Filtrar actividades según el filtro seleccionado
+  filteredActivities = computed(() => {
+    const allActivities = this.activities();
     const filter = this.selectedFilter();
 
-    if (filter === 'normal') {
-      return allForms; // Mostrar todos
-    } else if (filter === 'atypical') {
-      // Filtrar solo los formularios con "atípicos" (puedes ajustar la lógica)
-      return allForms.filter((form) => this.isAtypical(form));
+    if (filter === 'all') {
+      return allActivities;
+    } else if (filter === 'pending') {
+      return allActivities.filter((activity) => activity.overallValidationStatus === 'pending');
+    } else if (filter === 'approved') {
+      return allActivities.filter((activity) => activity.overallValidationStatus === 'approved');
+    } else if (filter === 'rejected') {
+      return allActivities.filter((activity) => activity.overallValidationStatus === 'rejected');
     }
 
-    return allForms;
+    return allActivities;
   });
 
   constructor() {
     effect(() => {
-      const prodId = this.productId();
-      if (prodId) {
-        this.loadForms(prodId);
+      const projId = this.projectId();
+      if (projId) {
+        this.loadActivities(projId);
       }
     });
   }
 
   /**
-   * Carga los formularios del producto
+   * Carga las actividades del proyecto
    */
-  private loadForms(productId: string): void {
+  private loadActivities(projectId: string): void {
     this.loading.set(true);
-    this.productsService.getProductForms(productId).subscribe({
-      next: (forms) => {
-        this.forms.set(forms);
+    this.activitiesService.getActivitiesByProject(projectId).subscribe({
+      next: (activities) => {
+        this.activities.set(activities);
         this.loading.set(false);
       },
       error: (error) => {
-        console.error('Error cargando formularios:', error);
-        this.notification.error('Error al cargar los formularios');
-        this.forms.set([]);
+        console.error('Error cargando actividades:', error);
+        this.notification.error('Error al cargar las actividades');
+        this.activities.set([]);
         this.loading.set(false);
       },
     });
   }
 
   /**
-   * Navega al detalle/edición de un formulario
+   * Navega a la evaluación de una actividad
    */
-  viewForm(form: FormSchemaResponse): void {
-    const stage = form.applicableStages[0]; // Tomar la primera etapa
-    this.router.navigate(['/products', this.productId(), 'forms', stage.toLowerCase()], {
-      queryParams: { formId: form.id },
-    });
+  evaluateActivity(activity: ActivityResponse): void {
+    console.log('evaluateActivity');
+    const projectId = (this.projectId() || activity.projectId || '').trim();
+    const activityId = (activity.id || '').trim();
+
+    if (!projectId) {
+      this.notification.error('No se pudo navegar: falta el ID del proyecto');
+      return;
+    }
+
+    if (!activityId) {
+      this.notification.error('No se pudo navegar: falta el ID de la actividad');
+      return;
+    }
+
+    this.router
+      .navigate(['/projects', projectId, 'activities', activityId, 'evaluate'])
+      .then((ok) => {
+        if (!ok) {
+          this.notification.error('No se pudo navegar a la evaluación');
+        }
+      })
+      .catch((error) => {
+        console.error('Error navegando a evaluación de actividad:', error);
+        this.notification.error('Error al navegar a la evaluación');
+      });
   }
 
   /**
-   * Descarga un formulario (simulado por ahora)
+   * Descarga una actividad (simulado por ahora)
    */
-  downloadForm(form: FormSchemaResponse): void {
-    this.notification.info(`Descargando formulario: ${form.name}`);
+  downloadActivity(activity: ActivityResponse): void {
+    this.notification.info(`Descargando actividad: ${activity.formSchemaName}`);
     // TODO: Implementar lógica de descarga
   }
 
@@ -170,36 +194,89 @@ export class InventoryEvaluationComponent {
   }
 
   /**
-   * Determina si un formulario es "atípico"
-   * (Puedes ajustar esta lógica según criterios reales)
+   * Obtiene el label del estado de validación
    */
-  private isAtypical(form: FormSchemaResponse): boolean {
-    // Ejemplo: consideramos atípico si el nombre contiene ciertas palabras
-    // o si no está publicado, etc.
-    return !form.isPublished || form.name.toLowerCase().includes('test');
-  }
-
-  /**
-   * Obtiene el label de la etapa
-   */
-  getStageLabel(stage: string): string {
-    const stageLabels: Record<string, string> = {
-      planning: 'Relacionamiento Comunitario',
-      inventory: 'Inventario',
-      collection: 'Recolección',
-      pmf_development: 'Elaboración de PMF',
-      serfor_evaluation: 'Evaluación SERFOR',
-      ctp_entry: 'Ingreso a CTP',
-      primary_transformation: 'Transformación Primaria',
-      map_adjustment: 'Ajuste de Mapas',
+  getValidationStatusLabel(status: ValidationStatus): string {
+    const labels: Record<ValidationStatus, string> = {
+      pending: 'Evaluación pendiente',
+      approved: 'Aprobado',
+      rejected: 'Rechazado',
     };
-    return stageLabels[stage.toLowerCase()] || stage;
+    return labels[status] || status;
   }
 
   /**
-   * Obtiene el color del chip de estado
+   * Obtiene el color del badge de estado
    */
-  getStatusColor(isPublished: boolean): string {
-    return isPublished ? 'text-secondary' : 'text-neutral-subheading';
+  getValidationStatusColor(status: ValidationStatus): string {
+    const colors: Record<ValidationStatus, string> = {
+      pending: 'text-price',
+      approved: 'text-secondary',
+      rejected: 'text-red-600',
+    };
+    return colors[status] || 'text-neutral-subheading';
+  }
+
+  /**
+   * Obtiene el ícono del estado de validación
+   */
+  getValidationStatusIcon(status: ValidationStatus): string {
+    const icons: Record<ValidationStatus, string> = {
+      pending: 'schedule',
+      approved: 'check_circle',
+      rejected: 'cancel',
+    };
+    return icons[status] || 'help_outline';
+  }
+
+  /**
+   * Obtiene el label del tipo de actividad
+   */
+  getActivityTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      TREE_REGISTRATION: 'Registro de árbol',
+      TREE_COLLECTION: 'Recolección de árbol',
+      TREE_STUMP_REGISTRATION: 'Registro de troza',
+      TREE_STUMP_COLLECTION: 'Recolección de troza',
+      OTHER: 'Otra',
+    };
+    return labels[type] || type;
+  }
+
+  /**
+   * Obtiene el label de calidad GPS
+   */
+  getGpsQualityLabel(quality?: string): string {
+    if (!quality) return 'N/A';
+    const labels: Record<string, string> = {
+      EXCELLENT: 'Excelente',
+      GOOD: 'Buena',
+      FAIR: 'Regular',
+      POOR: 'Pobre',
+      NO_SIGNAL: 'Sin señal',
+    };
+    return labels[quality] || quality;
+  }
+
+  /**
+   * Obtiene el color del badge de calidad GPS
+   */
+  getGpsQualityColor(quality?: string): string {
+    if (!quality) return 'text-neutral-subheading';
+    const colors: Record<string, string> = {
+      EXCELLENT: 'text-secondary',
+      GOOD: 'text-secondary',
+      FAIR: 'text-price',
+      POOR: 'text-red-600',
+      NO_SIGNAL: 'text-red-600',
+    };
+    return colors[quality] || 'text-neutral-subheading';
+  }
+
+  /**
+   * Formatea el código del árbol (prioriza manual sobre sistema)
+   */
+  getForestCodeDisplay(activity: ActivityResponse): string {
+    return activity.forestManualCode || activity.forestCode || 'Sin código';
   }
 }

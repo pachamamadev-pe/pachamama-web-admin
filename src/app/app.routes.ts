@@ -70,6 +70,28 @@ export const appRoutes: Routes = [
           import('./features/projects/pages/projects.page').then((m) => m.ProjectsPage),
       },
       {
+        path: 'projects/:id/areas/import',
+        title: 'Importar áreas',
+        loadComponent: () =>
+          import('./features/areas/pages/areas-import.page').then((m) => m.AreasImportPage),
+      },
+      {
+        path: 'projects/:id/enable-inventory',
+        title: 'Habilitar inventario',
+        loadComponent: () =>
+          import('./features/inventory/pages/enable-inventory.page').then(
+            (m) => m.EnableInventoryPage,
+          ),
+      },
+      {
+        path: 'projects/:projectId/activities/:activityId/evaluate',
+        title: 'Evaluar Actividad',
+        loadComponent: () =>
+          import('./features/projects/pages/activity-evaluation.page').then(
+            (m) => m.ActivityEvaluationPage,
+          ),
+      },
+      {
         path: 'projects/:id',
         title: 'Detalle del Proyecto',
         loadComponent: () =>
@@ -85,20 +107,6 @@ export const appRoutes: Routes = [
         path: 'profile',
         title: 'Mi Perfil',
         loadComponent: () => import('./features/profile/pages/profile.page'),
-      },
-      {
-        path: 'projects/:id/areas/import',
-        title: 'Importar áreas',
-        loadComponent: () =>
-          import('./features/areas/pages/areas-import.page').then((m) => m.AreasImportPage),
-      },
-      {
-        path: 'projects/:id/enable-inventory',
-        title: 'Habilitar inventario',
-        loadComponent: () =>
-          import('./features/inventory/pages/enable-inventory.page').then(
-            (m) => m.EnableInventoryPage,
-          ),
       },
       { path: '**', redirectTo: 'home' },
     ],

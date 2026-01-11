@@ -1,0 +1,319 @@
+<div class="activity-evaluation-container">
+  @if (loading()) {
+    <!-- Loading State -->
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p class="text-body text-neutral-subheading mt-4">Cargando actividad...</p>
+    </div>
+  } @else if (activity()) {
+    <!-- Header -->
+    <header class="page-header">
+      <div class="header-left">
+        <button mat-icon-button class="back-button" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="header-info">
+          <h1 class="text-title font-bold text-accent-titles">Evaluación de Actividad</h1>
+          <p class="text-subtitle text-neutral-subheading">
+            {{ activity()!.projectName }} - {{ activity()!.collectorName }}
+          </p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button (click)="saveEvaluation()" class="mr-2">
+          <mat-icon>save</mat-icon>
+          <span class="hidden sm:inline">Guardar</span>
+        </button>
+        <button mat-raised-button (click)="approveAll()" class="btn-secondary mr-2">
+          <mat-icon>check_circle</mat-icon>
+          <span class="hidden sm:inline">Aprobar Todo</span>
+        </button>
+        <button
+          mat-raised-button
+          (click)="rejectAll()"
+          style="background-color: #ef4444; color: white"
+        >
+          <mat-icon>cancel</mat-icon>
+          <span class="hidden sm:inline">Rechazar Todo</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="page-content">
+      <!-- Estado General -->
+      <mat-card class="status-card">
+        <mat-card-content>
+          <div class="status-header">
+            <div class="status-info">
+              <mat-icon [class]="getValidationStatusColor(activity()!.overallValidationStatus)">
+                {{ getValidationStatusIcon(activity()!.overallValidationStatus) }}
+              </mat-icon>
+              <div>
+                <h3 class="text-body font-bold text-accent-titles">Estado de Validación</h3>
+                <p
+                  class="text-subtitle"
+                  [class]="getValidationStatusColor(activity()!.overallValidationStatus)"
+                >
+                  {{ getValidationStatusLabel(activity()!.overallValidationStatus) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Información General -->
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title class="text-body font-bold text-accent-titles"
+            >Información General</mat-card-title
+          >
+        </mat-card-header>
+        <mat-card-content>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label text-subtitle text-neutral-subheading">Código Árbol:</span>
+              <span class="info-value text-body text-accent-titles">
+                {{ activity()!.forestManualCode || activity()!.forestCode }}
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label text-subtitle text-neutral-subheading">Recolector:</span>
+              <span class="info-value text-body text-accent-titles">
+                {{ activity()!.collectorName }}
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label text-subtitle text-neutral-subheading"
+                >Fecha de Captura:</span
+              >
+              <span class="info-value text-body text-accent-titles">
+                {{ activity()!.deviceTimestamp | date: 'dd/MM/yyyy HH:mm' }}
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label text-subtitle text-neutral-subheading">Producto:</span>
+              <span class="info-value text-body text-accent-titles">
+                {{ activity()!.productName }}
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label text-subtitle text-neutral-subheading">Comunidad:</span>
+              <span class="info-value text-body text-accent-titles">
+                {{ activity()!.communityName }}
+              </span>
+            </div>
+            @if (activity()!.gpsQuality) {
+              <div class="info-item">
+                <span class="info-label text-subtitle text-neutral-subheading">Calidad GPS:</span>
+                <span class="info-value text-body">
+                  {{ activity()!.gpsQuality }}
+                  @if (activity()!.gpsAccuracyM) {
+                    <span class="text-subtitle text-neutral-subheading"
+                      >(±{{ activity()!.gpsAccuracyM }}m)</span
+                    >
+                  }
+                </span>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Evaluación por Pregunta -->
+      @for (section of formSections(); track section.id) {
+        <div class="section-container">
+          <div class="section-header-bar">
+            <div class="section-badge">{{ section.display_order }}</div>
+            <h2 class="text-body font-bold text-accent-titles">{{ section.name }}</h2>
+            @if (section.type === 'protocol_linked') {
+              <mat-chip class="type-chip protocol-chip">
+                <mat-icon>verified</mat-icon>
+                Protocolo vinculado
+              </mat-chip>
+            } @else {
+              <mat-chip class="type-chip freeform-chip">
+                <mat-icon>edit_note</mat-icon>
+                Formato libre
+              </mat-chip>
+            }
+          </div>
+
+          <mat-accordion class="field-accordion">
+            @for (field of section.fields; track $index) {
+              @let evaluation = getFieldEvaluation(section.id, $index);
+              <mat-expansion-panel
+                class="field-panel"
+                [class.approved]="evaluation?.status === 'approved'"
+                [class.rejected]="evaluation?.status === 'rejected'"
+                [class.pending]="evaluation?.status === 'pending'"
+              >
+                <mat-expansion-panel-header>
+                  <mat-panel-title class="panel-title-content">
+                    <div class="field-header-compact">
+                      <div class="field-question-compact">
+                        <span class="question-number">Pregunta {{ $index + 1 }}</span>
+                        <h3 class="text-body font-bold text-accent-titles">{{ field.question }}</h3>
+                        @if (field.required) {
+                          <mat-chip class="required-chip">Requerido</mat-chip>
+                        }
+                      </div>
+                      <div class="field-status">
+                        @if (evaluation?.status === 'approved') {
+                          <mat-icon class="status-icon approved">check_circle</mat-icon>
+                          <span class="status-label approved">Aprobado</span>
+                        } @else if (evaluation?.status === 'rejected') {
+                          <mat-icon class="status-icon rejected">cancel</mat-icon>
+                          <span class="status-label rejected">Rechazado</span>
+                        } @else {
+                          <mat-icon class="status-icon pending">schedule</mat-icon>
+                          <span class="status-label pending">Evaluación pendiente</span>
+                        }
+                      </div>
+                    </div>
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+
+                <!-- Response Section -->
+                <div class="field-content">
+                  <div class="response-section">
+                    <span class="section-label text-subtitle text-neutral-subheading"
+                      >Respuesta del recolector:</span
+                    >
+                    @if (field.field_type === 'photo' && field.response.files) {
+                      <div class="photo-grid">
+                        @for (file of field.response.files; track file) {
+                          <div class="photo-item">
+                            <mat-icon>image</mat-icon>
+                            <span class="text-subtitle">{{ file }}</span>
+                            <button mat-icon-button matTooltip="Ver foto">
+                              <mat-icon>visibility</mat-icon>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <div class="response-value text-body font-bold text-accent-titles">
+                        {{ field.response.value ?? 'Sin respuesta' }}
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Protocol Expected Value (only for protocol_linked) -->
+                  @if (section.type === 'protocol_linked' && field.protocol) {
+                    <div class="expected-section">
+                      <span class="section-label text-subtitle text-neutral-subheading"
+                        >Valor esperado (Protocolo):</span
+                      >
+                      <div class="expected-value text-body">
+                        {{ getExpectedValueDisplay(field) }}
+                      </div>
+                      @if (evaluation && !evaluation.manualOverride) {
+                        <div class="auto-eval-badge">
+                          <mat-icon>auto_awesome</mat-icon>
+                          <span class="text-subtitle">Evaluación automática</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="field-actions">
+                  <button
+                    mat-stroked-button
+                    class="reject-btn"
+                    (click)="rejectField(section.id, $index)"
+                    [disabled]="evaluation?.status === 'rejected'"
+                  >
+                    <mat-icon>cancel</mat-icon>
+                    Rechazar
+                  </button>
+                  <button
+                    mat-raised-button
+                    class="approve-btn"
+                    (click)="approveField(section.id, $index)"
+                    [disabled]="evaluation?.status === 'approved'"
+                  >
+                    <mat-icon>check_circle</mat-icon>
+                    Aprobar
+                  </button>
+                </div>
+              </mat-expansion-panel>
+            }
+          </mat-accordion>
+        </div>
+      }
+
+      <!-- Notas de Validación -->
+      <mat-card class="validation-notes-card">
+        <mat-card-header>
+          <mat-card-title class="text-body font-bold text-accent-titles"
+            >Notas de Validación</mat-card-title
+          >
+        </mat-card-header>
+        <mat-card-content>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Comentarios sobre la evaluación (opcional)</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="validationNotes"
+              placeholder="Agrega observaciones o comentarios sobre esta evaluación..."
+              rows="4"
+              class="text-body"
+            ></textarea>
+            <mat-hint>Estos comentarios serán visibles en el historial de la actividad</mat-hint>
+          </mat-form-field>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Summary Card -->
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <div class="summary-content">
+            <div class="summary-info">
+              <mat-icon [class]="allFieldsEvaluated() ? 'text-secondary' : 'text-price'">
+                {{ allFieldsEvaluated() ? 'check_circle' : 'schedule' }}
+              </mat-icon>
+              <div>
+                <h3 class="text-body font-bold text-accent-titles">
+                  {{
+                    allFieldsEvaluated()
+                      ? 'Todas las preguntas evaluadas'
+                      : 'Evaluación en progreso'
+                  }}
+                </h3>
+                <p class="text-subtitle text-neutral-subheading">
+                  {{
+                    allFieldsEvaluated()
+                      ? 'Puedes guardar la evaluación de esta actividad'
+                      : 'Debes evaluar todas las preguntas antes de guardar'
+                  }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Validaciones por Sección (Old Summary - Keep for reference) -->
+      <!--
+      <mat-card class="sections-card\">\n        <mat-card-header>\n          <mat-card-title class=\"text-body font-bold text-accent-titles\"\n            >Validaciones por Sección</mat-card-title\n          >\n        </mat-card-header>\n        <mat-card-content>\n          <mat-accordion>\n            @for (section of activity()!.sectionValidations; track section.validationId) {\n              <mat-expansion-panel>\n                ...\n              </mat-expansion-panel>\n            }\n          </mat-accordion>\n        </mat-card-content>\n      </mat-card>\n      -->
+
+      @if (activity()!.notes) {
+        <!-- Observaciones -->
+        <mat-card class="notes-card">
+          <mat-card-header>
+            <mat-card-title class="text-body font-bold text-accent-titles"
+              >Observaciones del Recolector</mat-card-title
+            >
+          </mat-card-header>
+          <mat-card-content>
+            <p class="text-body">{{ activity()!.notes }}</p>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

@@ -76,6 +76,13 @@ export interface UpdateProjectRequest {
 }
 
 /**
+ * DTO para actualizar la etapa de un proyecto
+ */
+export interface ProjectStageUpdateDto {
+  stage: string;
+}
+
+/**
  * Respuesta paginada genérica
  */
 export interface PageDto<T> {
@@ -95,6 +102,7 @@ export function getProjectStageLabel(stage?: string): string {
     planning: 'Planificación',
     inventory: 'Inventario',
     inventory_complete: 'Inventario Completo',
+    pmf_development: 'Elaboración de PMF',
     area_generation: 'Generación de Áreas',
     pending_approval: 'Pendiente de Aprobación',
     approved: 'Aprobado',
@@ -117,7 +125,7 @@ export function getProjectStageClass(stage?: string): string {
     planning: 'bg-blue-100 text-blue-700',
     inventory: 'bg-purple-100 text-purple-700',
     inventory_complete: 'bg-indigo-100 text-indigo-700',
-    area_generation: 'bg-cyan-100 text-cyan-700',
+    pmf_development: 'bg-cyan-100 text-cyan-700',
     pending_approval: 'bg-yellow-100 text-yellow-700',
     approved: 'bg-green-100 text-green-700',
     harvest: 'bg-orange-100 text-orange-700',

@@ -242,7 +242,8 @@
 
 // Badges
 .required-badge,
-.protocol-badge {
+.protocol-badge,
+.applies-to-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -266,6 +267,29 @@
     font-size: 16px;
     width: 16px;
     height: 16px;
+  }
+}
+
+.applies-to-badge {
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &.tree {
+    background: rgba(33, 131, 88, 0.15); // Verde (secondary)
+    color: #218358;
+  }
+
+  &.stump {
+    background: rgba(254, 113, 75, 0.15); // Naranja (price)
+    color: #fe714b;
+  }
+
+  &.both {
+    background: rgba(59, 0, 255, 0.15); // Azul (ump-blue)
+    color: #3b00ff;
   }
 }
 
@@ -305,6 +329,30 @@
 
       &.full-width {
         width: 100%;
+      }
+    }
+  }
+
+  // Estilos para el radio group de appliesTo
+  .applies-to-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    mat-radio-button {
+      margin: 0;
+
+      .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .radio-icon {
+          font-size: 1.25rem;
+          width: 1.25rem;
+          height: 1.25rem;
+          color: #218358; // secondary
+        }
       }
     }
   }

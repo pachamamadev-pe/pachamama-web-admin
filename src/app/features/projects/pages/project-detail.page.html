@@ -23,18 +23,18 @@
 
       <!-- Main Content Area -->
       <main class="main-content">
-        <!-- Botón Flotante: Iniciar Inventario (Opción A) -->
+        <!-- Botón Flotante: Avanzar a Siguiente Etapa -->
         <div class="floating-action-button">
           <button
             mat-raised-button
             class="btn-primary btn-lg"
-            [disabled]="!canStartInventory()"
-            (click)="startInventoryStage()"
-            [matTooltip]="getDocumentApprovalMessage()"
-            [matTooltipDisabled]="canStartInventory()"
+            [disabled]="!canAdvanceToNextStage()"
+            (click)="advanceToNextStage()"
+            [matTooltip]="stageAdvanceBlockerMessage()"
+            [matTooltipDisabled]="canAdvanceToNextStage()"
           >
-            <mat-icon>play_arrow</mat-icon>
-            <span>Iniciar Inventario</span>
+            <mat-icon>arrow_forward</mat-icon>
+            <span>{{ nextStage() ? 'Avanzar a ' + nextStage()!.name : 'Siguiente Etapa' }}</span>
           </button>
         </div>
 
@@ -679,6 +679,14 @@
                     [productId]="project()!.productId"
                     [projectId]="project()!.id"
                   />
+                </div>
+              </mat-tab>
+            }
+
+            @if (showPmfGenerationTab()) {
+              <mat-tab label="Generar PMF">
+                <div class="tab-content">
+                  <app-pmf-generation [projectId]="project()!.id" />
                 </div>
               </mat-tab>
             }

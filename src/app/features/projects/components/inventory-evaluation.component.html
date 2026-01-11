@@ -44,22 +44,24 @@
         <div class="header-actions">
           <mat-form-field appearance="outline" class="filter-field">
             <mat-icon matPrefix class="text-neutral-subheading">filter_list</mat-icon>
-            <mat-label>Filtrar por...</mat-label>
+            <mat-label>Filtrar por estado</mat-label>
             <mat-select [value]="selectedFilter()" (selectionChange)="onFilterChange($event.value)">
-              <mat-option value="normal">Registros normales</mat-option>
-              <mat-option value="atypical">Registros atípicos</mat-option>
+              <mat-option value="all">Todos los registros</mat-option>
+              <mat-option value="pending">Evaluación pendiente</mat-option>
+              <mat-option value="approved">Aprobados</mat-option>
+              <mat-option value="rejected">Rechazados</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
       </div>
 
-      @if (filteredForms().length === 0) {
+      @if (filteredActivities().length === 0) {
         <!-- Empty State -->
         <div class="empty-state">
           <mat-icon class="empty-icon">description_off</mat-icon>
-          <h3 class="text-body font-bold text-accent-titles">No hay formularios</h3>
+          <h3 class="text-body font-bold text-accent-titles">No hay registros</h3>
           <p class="text-subtitle text-neutral-subheading">
-            No se encontraron formularios para este producto
+            No se encontraron registros de actividades para este proyecto
           </p>
         </div>
       } @else {
@@ -69,50 +71,63 @@
             <thead class="table-header">
               <tr>
                 <th class="table-th text-left">Registro</th>
-                <th class="table-th text-left">Fecha de revisión</th>
-                <th class="table-th text-left">Etapa</th>
+                <th class="table-th text-left">Código árbol</th>
+                <th class="table-th text-left">Fecha de captura</th>
+                <th class="table-th text-left">Tipo</th>
                 <th class="table-th text-left">Estado</th>
                 <th class="table-th text-right">Acciones</th>
               </tr>
             </thead>
             <tbody class="table-body">
-              @for (form of filteredForms(); track form.id) {
+              @for (activity of filteredActivities(); track activity.id) {
                 <tr class="table-row">
                   <td class="table-td">
-                    <span class="text-body font-bold text-accent-titles">{{ form.name }}</span>
+                    <span class="text-body font-bold text-accent-titles">{{
+                      activity.formSchemaName
+                    }}</span>
+                    <span class="text-subtitle text-neutral-subheading block">
+                      {{ activity.collectorName }}
+                    </span>
+                  </td>
+                  <td class="table-td">
+                    <span class="text-body text-accent-titles">
+                      {{ getForestCodeDisplay(activity) }}
+                    </span>
                   </td>
                   <td class="table-td">
                     <span class="text-body text-neutral-subheading">
-                      {{ form.publishedAt | date: 'dd/MM/yy' }}
+                      {{ activity.deviceTimestamp | date: 'dd/MM/yy HH:mm' }}
                     </span>
                   </td>
                   <td class="table-td">
                     <mat-chip class="stage-chip">
-                      {{ getStageLabel(form.applicableStages[0]) }}
+                      {{ getActivityTypeLabel(activity.activityType) }}
                     </mat-chip>
                   </td>
                   <td class="table-td">
                     <div class="status-indicator">
-                      <span class="status-dot" [class.published]="form.isPublished"></span>
-                      <span class="text-body" [ngClass]="getStatusColor(form.isPublished)">
-                        {{ form.isPublished ? 'Aprobado' : 'Pendiente' }}
+                      <mat-icon
+                        [class]="getValidationStatusColor(activity.overallValidationStatus)"
+                      >
+                        {{ getValidationStatusIcon(activity.overallValidationStatus) }}
+                      </mat-icon>
+                      <span
+                        class="text-body"
+                        [class]="getValidationStatusColor(activity.overallValidationStatus)"
+                      >
+                        {{ getValidationStatusLabel(activity.overallValidationStatus) }}
                       </span>
                     </div>
                   </td>
                   <td class="table-td text-right">
-                    <button mat-icon-button [matMenuTriggerFor]="tableMenu">
-                      <mat-icon>more_vert</mat-icon>
+                    <button
+                      mat-raised-button
+                      class="btn-primary"
+                      (click)="evaluateActivity(activity)"
+                      [disabled]="activity.overallValidationStatus === 'approved'"
+                    >
+                      Evaluar
                     </button>
-                    <mat-menu #tableMenu="matMenu">
-                      <button mat-menu-item (click)="viewForm(form)">
-                        <mat-icon>visibility</mat-icon>
-                        <span>Ver detalle</span>
-                      </button>
-                      <button mat-menu-item (click)="downloadForm(form)">
-                        <mat-icon>download</mat-icon>
-                        <span>Descargar</span>
-                      </button>
-                    </mat-menu>
                   </td>
                 </tr>
               }
@@ -122,13 +137,16 @@
 
         <!-- Mobile Cards (visible on mobile only) -->
         <div class="mobile-cards md:hidden">
-          @for (form of filteredForms(); track form.id) {
+          @for (activity of filteredActivities(); track activity.id) {
             <div class="form-card bg-primary-white rounded-lg shadow p-4">
               <div class="card-header">
                 <div class="card-title">
-                  <h3 class="text-body font-bold text-accent-titles">{{ form.name }}</h3>
+                  <h3 class="text-body font-bold text-accent-titles">
+                    {{ activity.formSchemaName }}
+                  </h3>
+                  <p class="text-subtitle text-neutral-subheading">{{ activity.collectorName }}</p>
                   <mat-chip class="stage-chip mt-2">
-                    {{ getStageLabel(form.applicableStages[0]) }}
+                    {{ getActivityTypeLabel(activity.activityType) }}
                   </mat-chip>
                 </div>
                 <div class="card-actions">
@@ -136,11 +154,15 @@
                     <mat-icon>more_vert</mat-icon>
                   </button>
                   <mat-menu #mobileMenu="matMenu">
-                    <button mat-menu-item (click)="viewForm(form)">
-                      <mat-icon>visibility</mat-icon>
-                      <span>Ver detalle</span>
+                    <button
+                      mat-menu-item
+                      (click)="evaluateActivity(activity)"
+                      [disabled]="activity.overallValidationStatus === 'approved'"
+                    >
+                      <mat-icon>rate_review</mat-icon>
+                      <span>Evaluar</span>
                     </button>
-                    <button mat-menu-item (click)="downloadForm(form)">
+                    <button mat-menu-item (click)="downloadActivity(activity)">
                       <mat-icon>download</mat-icon>
                       <span>Descargar</span>
                     </button>
@@ -149,18 +171,54 @@
               </div>
               <div class="card-details">
                 <div class="detail-row">
-                  <mat-icon class="detail-icon">calendar_today</mat-icon>
-                  <span class="detail-label">Fecha:</span>
+                  <mat-icon class="detail-icon">qr_code</mat-icon>
+                  <span class="detail-label">Código:</span>
                   <span class="detail-value">
-                    {{ form.publishedAt | date: 'dd/MM/yy' }}
+                    {{ getForestCodeDisplay(activity) }}
                   </span>
                 </div>
                 <div class="detail-row">
-                  <span class="status-dot" [class.published]="form.isPublished"></span>
-                  <span class="detail-label">Estado:</span>
-                  <span class="detail-value" [ngClass]="getStatusColor(form.isPublished)">
-                    {{ form.isPublished ? 'Aprobado' : 'Pendiente' }}
+                  <mat-icon class="detail-icon">calendar_today</mat-icon>
+                  <span class="detail-label">Fecha:</span>
+                  <span class="detail-value">
+                    {{ activity.deviceTimestamp | date: 'dd/MM/yy HH:mm' }}
                   </span>
+                </div>
+                <div class="detail-row">
+                  <mat-icon [class]="getValidationStatusColor(activity.overallValidationStatus)">
+                    {{ getValidationStatusIcon(activity.overallValidationStatus) }}
+                  </mat-icon>
+                  <span class="detail-label">Estado:</span>
+                  <span
+                    class="detail-value"
+                    [class]="getValidationStatusColor(activity.overallValidationStatus)"
+                  >
+                    {{ getValidationStatusLabel(activity.overallValidationStatus) }}
+                  </span>
+                </div>
+                @if (activity.gpsQuality) {
+                  <div class="detail-row">
+                    <mat-icon class="detail-icon" [class]="getGpsQualityColor(activity.gpsQuality)">
+                      gps_fixed
+                    </mat-icon>
+                    <span class="detail-label">GPS:</span>
+                    <span class="detail-value" [class]="getGpsQualityColor(activity.gpsQuality)">
+                      {{ getGpsQualityLabel(activity.gpsQuality) }}
+                      @if (activity.gpsAccuracyM) {
+                        <span class="text-subtitle">(±{{ activity.gpsAccuracyM }}m)</span>
+                      }
+                    </span>
+                  </div>
+                }
+                <div class="detail-row mt-3">
+                  <button
+                    mat-raised-button
+                    class="btn-primary w-full"
+                    (click)="evaluateActivity(activity)"
+                    [disabled]="activity.overallValidationStatus === 'approved'"
+                  >
+                    Evaluar
+                  </button>
                 </div>
               </div>
             </div>

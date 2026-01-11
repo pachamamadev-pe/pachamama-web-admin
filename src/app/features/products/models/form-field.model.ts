@@ -1,4 +1,12 @@
 /**
+ * Indica a qué entidad aplica una pregunta en el flujo de recolección
+ * - 'tree': Solo se pregunta 1 vez por árbol completo
+ * - 'tree_stump': Se pregunta por cada troza/segmento del árbol
+ * - 'both': Se pregunta en ambos contextos
+ */
+export type AppliesTo = 'tree' | 'tree_stump' | 'both';
+
+/**
  * Tipo de campo de formulario dinámico
  */
 export interface FieldType {
@@ -26,6 +34,7 @@ export interface FormField {
   order?: number;
   options?: string[]; // Para tipos como MULTIPLE_CHOICE (cuando requiresOptions = true)
   validationConfig?: Record<string, unknown>; // Configuración de validación personalizada
+  appliesTo?: AppliesTo; // A qué entidad aplica: árbol, troza, o ambos
 }
 
 /**

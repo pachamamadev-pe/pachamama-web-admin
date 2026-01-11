@@ -1,0 +1,189 @@
+<div class="pmf-container">
+  <!-- Loading Existing PMF State -->
+  @if (isLoadingExisting()) {
+    <div class="loading-state">
+      <mat-spinner diameter="48" />
+      <h3 class="text-body font-bold text-accent-titles mt-6">Cargando documento PMF</h3>
+      <p class="text-subtitle text-neutral-subheading mt-2">
+        Verificando si existe un Plan de Manejo Forestal...
+      </p>
+    </div>
+  }
+
+  <!-- Initial State: No PMF exists, show generate button -->
+  @if (isInitial()) {
+    <app-empty-state
+      icon="description"
+      [useMaterialIcon]="true"
+      title="Plan de Manejo Forestal no generado"
+      description="Aún no se ha generado el documento de Plan de Manejo Forestal para este proyecto. Este documento es obligatorio y debe ser generado y aprobado para poder avanzar a la siguiente etapa del proyecto. El reporte incluye todas las actividades forestales, información de GPS, validaciones y estadísticas completas."
+      actionLabel="Generar PMF"
+      (action)="generatePmf()"
+    />
+  }
+
+  <!-- Generating State: Creating PDF -->
+  @if (isGenerating()) {
+    <div class="loading-state">
+      <mat-spinner diameter="48" />
+      <h3 class="text-body font-bold text-accent-titles mt-6">Generando Plan de Manejo Forestal</h3>
+      <p class="text-subtitle text-neutral-subheading mt-2">
+        Este proceso puede tomar algunos segundos. Por favor, espere...
+      </p>
+    </div>
+  }
+
+  <!-- Uploading State: Saving to backend -->
+  @if (isUploading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="48" />
+      <h3 class="text-body font-bold text-accent-titles mt-6">Guardando documento</h3>
+      <p class="text-subtitle text-neutral-subheading mt-2">
+        Subiendo el Plan de Manejo Forestal al sistema...
+      </p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (isError()) {
+    <div class="error-state">
+      <div class="error-icon">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <h3 class="text-body font-bold text-accent-titles">Error al procesar documento</h3>
+      <p class="text-subtitle text-neutral-subheading mt-2">
+        {{ errorMessage() }}
+      </p>
+      <button mat-raised-button class="btn-primary mt-6" (click)="retry()">
+        <mat-icon>refresh</mat-icon>
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <!-- Viewing Existing PMF State: Show existing document from Azure -->
+  @if (isViewingExisting() && pdfUrl() && existingDocument()) {
+    <div class="pdf-viewer-container">
+      <!-- Toolbar with document info -->
+      <div class="pdf-toolbar">
+        <div class="toolbar-info">
+          <div class="toolbar-title">
+            <mat-icon class="text-secondary">description</mat-icon>
+            <div>
+              <h3 class="text-body font-bold text-accent-titles">Plan de Manejo Forestal</h3>
+              <p class="text-subtitle text-neutral-subheading">
+                Versión {{ existingDocument()!.version }} •
+                {{ formatDate(existingDocument()!.uploadedAt) }} •
+                {{ formatFileSize(existingDocument()!.fileSizeBytes) }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar-actions">
+          <button mat-stroked-button (click)="generatePmf()">
+            <mat-icon>refresh</mat-icon>
+            <span class="hidden sm:inline">Regenerar PMF</span>
+            <span class="sm:hidden">Regenerar</span>
+          </button>
+          <button mat-raised-button class="btn-primary" (click)="downloadPdf()">
+            <mat-icon>download</mat-icon>
+            <span class="hidden sm:inline">Descargar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CORS Notice -->
+      <div class="cors-notice">
+        <mat-icon>info</mat-icon>
+        <p>
+          <strong>Nota:</strong> Si tienes problemas para visualizar el PDF Puedes
+          <button mat-button color="primary" (click)="downloadPdf()" class="inline-download-btn">
+            descargar el PDF aquí
+          </button>
+        </p>
+      </div>
+
+      <!-- PDF Viewer -->
+      <div class="pdf-viewer-wrapper">
+        <ngx-extended-pdf-viewer
+          [src]="pdfUrl()"
+          [height]="'calc(100vh - 300px)'"
+          [showHandToolButton]="true"
+          [showOpenFileButton]="false"
+          [showPrintButton]="true"
+          [showDownloadButton]="true"
+          [showSecondaryToolbarButton]="true"
+          [showRotateButton]="true"
+          [showPropertiesButton]="false"
+          [zoom]="'auto'"
+          [mobileFriendlyZoom]="'100%'"
+        />
+      </div>
+    </div>
+  }
+
+  <!-- Ready State: Newly generated PDF -->
+  @if (isReady() && pdfUrl() && existingDocument()) {
+    <div class="pdf-viewer-container">
+      <!-- Toolbar -->
+      <div class="pdf-toolbar">
+        <div class="toolbar-info">
+          <div class="toolbar-title">
+            <mat-icon class="text-secondary">description</mat-icon>
+            <div>
+              <h3 class="text-body font-bold text-accent-titles">
+                Plan de Manejo Forestal
+                <span class="success-badge">Generado exitosamente</span>
+              </h3>
+              <p class="text-subtitle text-neutral-subheading">
+                Versión {{ existingDocument()!.version }} •
+                {{ formatDate(existingDocument()!.uploadedAt) }} •
+                {{ formatFileSize(existingDocument()!.fileSizeBytes) }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar-actions">
+          <button mat-stroked-button (click)="generatePmf()">
+            <mat-icon>refresh</mat-icon>
+            <span class="hidden sm:inline">Regenerar</span>
+          </button>
+          <button mat-raised-button class="btn-primary" (click)="downloadPdf()">
+            <mat-icon>download</mat-icon>
+            <span class="hidden sm:inline">Descargar PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CORS Notice -->
+      <div class="cors-notice">
+        <mat-icon>info</mat-icon>
+        <p>
+          <strong>Nota:</strong> Si el PDF no se visualiza, hay un problema de CORS con Azure
+          Storage. Puedes
+          <button mat-button color="primary" (click)="downloadPdf()" class="inline-download-btn">
+            descargar el PDF aquí
+          </button>
+          mientras se configura el servidor.
+        </p>
+      </div>
+
+      <!-- PDF Viewer -->
+      <div class="pdf-viewer-wrapper">
+        <ngx-extended-pdf-viewer
+          [src]="pdfUrl()"
+          [height]="'calc(100vh - 300px)'"
+          [showHandToolButton]="true"
+          [showOpenFileButton]="false"
+          [showPrintButton]="true"
+          [showDownloadButton]="true"
+          [showSecondaryToolbarButton]="true"
+          [showRotateButton]="true"
+          [showPropertiesButton]="false"
+          [zoom]="'auto'"
+          [mobileFriendlyZoom]="'100%'"
+        />
+      </div>
+    </div>
+  }
+</div>

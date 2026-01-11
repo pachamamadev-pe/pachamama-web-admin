@@ -96,6 +96,25 @@
                                 Vinculado
                               </span>
                             }
+                            <!-- Badge de appliesTo -->
+                            @if (field.appliesTo === 'tree') {
+                              <span class="applies-to-badge tree">
+                                <mat-icon>park</mat-icon>
+                                Árbol
+                              </span>
+                            }
+                            @if (field.appliesTo === 'tree_stump') {
+                              <span class="applies-to-badge stump">
+                                <mat-icon>segment</mat-icon>
+                                Trozas
+                              </span>
+                            }
+                            @if (!field.appliesTo || field.appliesTo === 'both') {
+                              <span class="applies-to-badge both">
+                                <mat-icon>eco</mat-icon>
+                                Ambos
+                              </span>
+                            }
                           </div>
                         </div>
                       </div>
@@ -145,6 +164,25 @@
                             </span>
                             @if (field.isRequired) {
                               <span class="required-badge">Requerido</span>
+                            }
+                            <!-- Badge de appliesTo -->
+                            @if (field.appliesTo === 'tree') {
+                              <span class="applies-to-badge tree">
+                                <mat-icon>park</mat-icon>
+                                Árbol
+                              </span>
+                            }
+                            @if (field.appliesTo === 'tree_stump') {
+                              <span class="applies-to-badge stump">
+                                <mat-icon>segment</mat-icon>
+                                Trozas
+                              </span>
+                            }
+                            @if (!field.appliesTo || field.appliesTo === 'both') {
+                              <span class="applies-to-badge both">
+                                <mat-icon>eco</mat-icon>
+                                Ambos
+                              </span>
                             }
                           </div>
                         </div>
@@ -227,6 +265,44 @@
                 <mat-icon matPrefix>link</mat-icon>
                 <mat-hint>Si no seleccionas protocolo, será una pregunta libre</mat-hint>
               </mat-form-field>
+            </div>
+
+            <!-- Campo appliesTo -->
+            <div class="form-row">
+              <label class="text-subtitle font-bold text-accent-titles mb-2 block">
+                <mat-icon class="text-neutral-subheading mr-2" style="vertical-align: middle"
+                  >category</mat-icon
+                >
+                Esta pregunta aplica a:
+              </label>
+              <mat-radio-group
+                [value]="newProtocolLinkedField().appliesTo || 'both'"
+                (change)="updateProtocolLinkedField('appliesTo', $event.value)"
+                class="applies-to-radio-group"
+              >
+                <mat-radio-button value="both" color="primary">
+                  <span class="radio-label">
+                    <mat-icon class="radio-icon">eco</mat-icon>
+                    Ambos (árbol completo y trozas/segmentos)
+                  </span>
+                </mat-radio-button>
+                <mat-radio-button value="tree" color="primary">
+                  <span class="radio-label">
+                    <mat-icon class="radio-icon">park</mat-icon>
+                    Solo árbol completo
+                  </span>
+                </mat-radio-button>
+                <mat-radio-button value="tree_stump" color="primary">
+                  <span class="radio-label">
+                    <mat-icon class="radio-icon">segment</mat-icon>
+                    Solo trozas/segmentos individuales
+                  </span>
+                </mat-radio-button>
+              </mat-radio-group>
+              <mat-hint class="text-subtitle text-neutral-subheading mt-2">
+                Define si esta pregunta se hará una vez por árbol o se repetirá para cada
+                troza/segmento
+              </mat-hint>
             </div>
 
             <div class="form-row">
