@@ -25,7 +25,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProductsService } from '../services/products.service';
 import { ProductProtocolsService } from '../services/product-protocols.service';
 import { NotificationService } from '@core/services/notification.service';
-import { FieldType, FormField, FormSection, ProductProtocol } from '../models';
+import { AppliesTo, FieldType, FormField, FormSection, ProductProtocol } from '../models';
 import { FormSchema, FormSchemaField, FormSchemaSection } from '../models/form-schema.model';
 import { FormSchemaResponse } from '../models/form-schema-response.model';
 
@@ -313,7 +313,8 @@ export class ProductFormBuilderComponent implements OnInit {
             isRequired: field.required,
             protocolId: field.id_protocol || null,
             validationConfig: field.validationOptions,
-            appliesTo: (field as FormSchemaField & { applies_to?: string }).applies_to || 'both',
+            appliesTo: ((field as FormSchemaField & { applies_to?: string }).applies_to ||
+              'both') as AppliesTo,
           }),
         );
 
@@ -336,7 +337,8 @@ export class ProductFormBuilderComponent implements OnInit {
             fieldTypeId: field.id_field_type,
             isRequired: field.required,
             validationConfig: field.validationOptions,
-            appliesTo: (field as FormSchemaField & { applies_to?: string }).applies_to || 'both',
+            appliesTo: ((field as FormSchemaField & { applies_to?: string }).applies_to ||
+              'both') as AppliesTo,
           }),
         );
 
