@@ -269,13 +269,17 @@
 
             <!-- Campo appliesTo -->
             <div class="form-row">
-              <label class="text-subtitle font-bold text-accent-titles mb-2 block">
+              <label
+                for="protocol-applies-to"
+                class="text-subtitle font-bold text-accent-titles mb-2 block"
+              >
                 <mat-icon class="text-neutral-subheading mr-2" style="vertical-align: middle"
                   >category</mat-icon
                 >
                 Esta pregunta aplica a:
               </label>
               <mat-radio-group
+                id="protocol-applies-to"
                 [value]="newProtocolLinkedField().appliesTo || 'both'"
                 (change)="updateProtocolLinkedField('appliesTo', $event.value)"
                 class="applies-to-radio-group"
