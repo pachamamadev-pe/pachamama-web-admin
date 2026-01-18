@@ -686,7 +686,10 @@
             @if (showPmfGenerationTab()) {
               <mat-tab label="Generar PMF">
                 <div class="tab-content">
-                  <app-pmf-generation [projectId]="project()!.id" />
+                  <app-pmf-generation
+                    [projectId]="project()!.id"
+                    (reportGenerated)="onReportGenerated()"
+                  />
                 </div>
               </mat-tab>
             }

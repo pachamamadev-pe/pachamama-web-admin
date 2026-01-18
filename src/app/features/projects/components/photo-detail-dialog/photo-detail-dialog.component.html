@@ -1,0 +1,106 @@
+<div class="photo-detail-dialog">
+  <!-- Header -->
+  <div class="dialog-header">
+    <h2 class="dialog-title">Foto {{ data.photoNumber }}</h2>
+    <button mat-icon-button (click)="close()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="dialog-content">
+    <!-- Sección Izquierda: Foto -->
+    <div class="photo-section">
+      @if (!imageLoaded() && !imageError()) {
+        <div class="photo-loading">
+          <mat-spinner diameter="48" />
+          <p class="text-subtitle text-neutral-subheading mt-4">Cargando foto...</p>
+        </div>
+      }
+
+      @if (imageError()) {
+        <div class="photo-error">
+          <mat-icon class="error-icon">broken_image</mat-icon>
+          <p class="text-subtitle text-neutral-subheading">Error al cargar la imagen</p>
+        </div>
+      }
+
+      <img
+        [src]="data.photoUrl"
+        [alt]="data.metadata.fileName"
+        class="photo-image"
+        [class.loaded]="imageLoaded()"
+        (load)="onImageLoad()"
+        (error)="onImageError()"
+      />
+    </div>
+
+    <!-- Sección Derecha: Mapa + Metadata -->
+    <div class="info-section">
+      <!-- Mapa -->
+      @if (data.location) {
+        <div class="map-container">
+          <h3 class="section-title">
+            <mat-icon class="title-icon">location_on</mat-icon>
+            Ubicación
+          </h3>
+          <div #mapContainer class="map-view" [class.map-loading]="!mapLoaded()">
+            @if (!mapLoaded()) {
+              <div class="map-spinner">
+                <mat-icon>map</mat-icon>
+                <p class="text-subtitle">Cargando mapa...</p>
+              </div>
+            }
+          </div>
+          <p class="location-coords text-subtitle text-neutral-subheading">
+            {{ data.location.latitude }}, {{ data.location.longitude }}
+          </p>
+        </div>
+      }
+
+      @if (!data.location) {
+        <div class="no-location">
+          <mat-icon class="text-neutral-subheading">location_off</mat-icon>
+          <p class="text-subtitle text-neutral-subheading">Sin ubicación registrada</p>
+        </div>
+      }
+
+      <!-- Metadata -->
+      <div class="metadata-container">
+        <h3 class="section-title">
+          <mat-icon class="title-icon">info</mat-icon>
+          Información de la foto
+        </h3>
+
+        <div class="metadata-grid">
+          <div class="metadata-item">
+            <span class="metadata-label">Nombre del archivo</span>
+            <span class="metadata-value">{{ data.metadata.fileName }}</span>
+          </div>
+
+          <div class="metadata-item">
+            <span class="metadata-label">ID de la foto</span>
+            <span class="metadata-value">{{ data.metadata.photoId }}</span>
+          </div>
+
+          <div class="metadata-item">
+            <span class="metadata-label">Dimensiones</span>
+            <span class="metadata-value">
+              {{ data.metadata.width }} × {{ data.metadata.height }} px
+            </span>
+          </div>
+
+          <div class="metadata-item">
+            <span class="metadata-label">Tamaño</span>
+            <span class="metadata-value">{{ formatFileSize(data.metadata.fileSizeBytes) }}</span>
+          </div>
+
+          <div class="metadata-item">
+            <span class="metadata-label">Fecha de captura</span>
+            <span class="metadata-value">{{ formatDate(data.metadata.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

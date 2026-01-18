@@ -208,11 +208,14 @@ export class DocumentsTableComponent {
 
   /**
    * Verifica si el documento puede ser revisado
+   * Ahora permite abrir el diálogo incluso para documentos aprobados (solo lectura)
    */
   canBeReviewed(document: ProjectDocument): boolean {
     return (
       this.canReview() &&
-      (document.validationStatus === 'pending' || document.validationStatus === 'observed')
+      (document.validationStatus === 'pending' ||
+        document.validationStatus === 'observed' ||
+        document.validationStatus === 'approved')
     );
   }
 }

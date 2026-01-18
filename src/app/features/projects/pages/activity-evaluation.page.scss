@@ -766,3 +766,48 @@ mat-card {
     }
   }
 }
+
+// ===================================
+// Photo Buttons Grid
+// ===================================
+.photo-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.photo-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #218358;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #218358;
+  font-weight: 600;
+  transition: all 0.2s ease;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background: #f4fbf6;
+    border-color: #1a6b47;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 131, 88, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}

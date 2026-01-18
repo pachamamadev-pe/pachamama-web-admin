@@ -7,7 +7,6 @@ import {
   ProjectDocument,
   UploadDocumentRequest,
   DocumentValidationResponse,
-  DocumentReviewRequest,
 } from '../models/project-document.model';
 import { ProjectStage } from '../models/project.model';
 import { EntityDocument } from '@shared/models/entity-document.model';
@@ -64,35 +63,72 @@ export class ProjectDocumentsService {
   /**
    * Aprueba un documento
    * PATCH /api/v1/admin/projects/documents/{documentId}/approve
+   * Ahora soporta multipart/form-data con validationNotes y validationAttachment
    */
-  approveDocument(documentId: string): Observable<DocumentValidationResponse> {
+  approveDocument(
+    documentId: string,
+    validationNotes?: string,
+    validationAttachment?: File,
+  ): Observable<DocumentValidationResponse> {
+    const formData = new FormData();
+
+    if (validationNotes) {
+      formData.append('validationNotes', validationNotes);
+    }
+
+    if (validationAttachment) {
+      formData.append('validationAttachment', validationAttachment);
+    }
+
     return this.http.patch<DocumentValidationResponse>(
       `${this.apiUrl}/documents/${documentId}/approve`,
-      {},
+      formData,
     );
   }
 
   /**
    * Observa un documento (requiere correcciones)
    * PATCH /api/v1/admin/projects/documents/{documentId}/observe
+   * Ahora soporta multipart/form-data con notes y validationAttachment
    */
-  observeDocument(documentId: string, notes?: string): Observable<DocumentValidationResponse> {
-    const body: DocumentReviewRequest = notes ? { notes } : {};
+  observeDocument(
+    documentId: string,
+    notes: string,
+    validationAttachment?: File,
+  ): Observable<DocumentValidationResponse> {
+    const formData = new FormData();
+    formData.append('notes', notes);
+
+    if (validationAttachment) {
+      formData.append('validationAttachment', validationAttachment);
+    }
+
     return this.http.patch<DocumentValidationResponse>(
       `${this.apiUrl}/documents/${documentId}/observe`,
-      body,
+      formData,
     );
   }
 
   /**
    * Rechaza un documento definitivamente
    * PATCH /api/v1/admin/projects/documents/{documentId}/reject
+   * Ahora soporta multipart/form-data con notes y validationAttachment
    */
-  rejectDocument(documentId: string, notes?: string): Observable<DocumentValidationResponse> {
-    const body: DocumentReviewRequest = notes ? { notes } : {};
+  rejectDocument(
+    documentId: string,
+    notes: string,
+    validationAttachment?: File,
+  ): Observable<DocumentValidationResponse> {
+    const formData = new FormData();
+    formData.append('notes', notes);
+
+    if (validationAttachment) {
+      formData.append('validationAttachment', validationAttachment);
+    }
+
     return this.http.patch<DocumentValidationResponse>(
       `${this.apiUrl}/documents/${documentId}/reject`,
-      body,
+      formData,
     );
   }
 

@@ -4,6 +4,7 @@ import {
   computed,
   inject,
   input,
+  output,
   OnInit,
   signal,
 } from '@angular/core';
@@ -11,14 +12,17 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog } from '@angular/material/dialog';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
-import { catchError, of, switchMap } from 'rxjs';
-import { ReportsService } from '../../services/reports.service';
-import { ProjectDocumentsService } from '../../services/project-documents.service';
+import { catchError, of, switchMap, tap } from 'rxjs';
+import { ReportsService, ReportExistsResponse } from '../../services/reports.service';
 import { AzureStorageService } from '@core/services/azure-storage.service';
 import { NotificationService } from '@core/services/notification.service';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
-import { EntityDocument } from '@shared/models/entity-document.model';
+import {
+  ReportMetadataDialogComponent,
+  ReportMetadata,
+} from '../report-metadata-dialog/report-metadata-dialog.component';
 
 type PmfState =
   | 'loading-existing'
@@ -49,16 +53,19 @@ type PmfState =
 })
 export class PmfGenerationComponent implements OnInit {
   private reportsService = inject(ReportsService);
-  private projectDocumentsService = inject(ProjectDocumentsService);
   private azureStorage = inject(AzureStorageService);
   private notification = inject(NotificationService);
+  private dialog = inject(MatDialog);
 
   // Inputs
   projectId = input.required<string>();
 
+  // Outputs
+  reportGenerated = output<void>();
+
   // State management
   state = signal<PmfState>('loading-existing');
-  existingDocument = signal<EntityDocument | null>(null);
+  existingReportMetadata = signal<ReportExistsResponse | null>(null);
   pdfBlob = signal<Blob | null>(null);
   pdfUrl = signal<string>('');
   errorMessage = signal<string>('');
@@ -78,6 +85,7 @@ export class PmfGenerationComponent implements OnInit {
 
   /**
    * Loads existing PMF document if available
+   * Checks if a report exists and uses pdfBlobUrl to get SAS token
    */
   private loadExistingPMF(): void {
     const projectId = this.projectId();
@@ -89,28 +97,38 @@ export class PmfGenerationComponent implements OnInit {
 
     this.state.set('loading-existing');
 
-    this.projectDocumentsService
-      .getPMFDocument(projectId)
+    // Check if report exists using new endpoint
+    this.reportsService
+      .checkReportExists(projectId)
       .pipe(
-        switchMap((document) => {
-          // If document is null, show generate button
-          if (!document) {
+        tap((reportMetadata) => {
+          // Store metadata for potential preloading in dialog
+          this.existingReportMetadata.set(reportMetadata);
+          console.log('Report exists:', reportMetadata);
+        }),
+        switchMap((reportMetadata) => {
+          // Check if the report is certified (has pdfBlobUrl)
+          if (!reportMetadata.pdfBlobUrl) {
+            // Report exists but is not certified yet
             this.state.set('initial');
+            this.errorMessage.set(
+              'El reporte no está certificado. Por favor, genere un nuevo reporte certificado.',
+            );
             return of(null);
           }
 
-          this.existingDocument.set(document);
-          console.log(document);
-          // Get Azure Storage URL and pass directly to viewer
-          return this.azureStorage.getFileUrl(document.blobName);
+          // Get Azure Storage URL using SAS token from pdfBlobUrl
+          return this.azureStorage.getFileUrl(reportMetadata.pdfBlobUrl);
         }),
         catchError((error) => {
-          // 404 means no PMF document exists yet - this is OK
+          // 404 means no report exists yet - this is expected, not an error
           if (error.status === 404) {
+            this.existingReportMetadata.set(null);
             this.state.set('initial');
+            // Silently continue - no error message needed
             return of(null);
           }
-          // Other errors are real errors
+          // Only log and show errors for actual problems (5xx, network errors, etc.)
           console.error('Error loading existing PMF:', error);
           this.state.set('error');
           this.errorMessage.set('Error al cargar documento PMF existente');
@@ -119,16 +137,21 @@ export class PmfGenerationComponent implements OnInit {
       )
       .subscribe({
         next: (url) => {
+          console.log('PDF URL received:', url);
+          console.log('Current state:', this.state());
+          console.log('Existing metadata:', this.existingReportMetadata());
           if (url) {
             this.pdfUrl.set(url);
             this.state.set('viewing-existing');
+            console.log('State set to viewing-existing');
           }
         },
       });
   }
 
   /**
-   * Generates the PMF PDF document
+   * First opens a dialog to collect metadata, then generates the report
+   * Preloads metadata if a report already exists
    */
   generatePmf(): void {
     const projectId = this.projectId();
@@ -137,41 +160,97 @@ export class PmfGenerationComponent implements OnInit {
       return;
     }
 
+    // Get existing metadata to preload in dialog
+    const existingMetadata = this.existingReportMetadata();
+
+    // Abrir diálogo para capturar metadatos (con precarga si existe)
+    const dialogRef = this.dialog.open(ReportMetadataDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: existingMetadata
+        ? {
+            objetivo: existingMetadata.objetivo || '',
+            finalidad: existingMetadata.finalidad || '',
+            baseLegal: existingMetadata.baseLegal || '',
+            alcance: existingMetadata.alcance || '',
+            generalidades: existingMetadata.generalidades || '',
+            lineamientos: existingMetadata.lineamientos || '',
+          }
+        : null,
+    });
+
+    dialogRef.afterClosed().subscribe((metadata: ReportMetadata | null) => {
+      // Si el usuario cancela, no generar reporte
+      if (!metadata) {
+        return;
+      }
+
+      // Generar el reporte certificado con los metadatos
+      this.generateReportWithMetadata(projectId, metadata);
+    });
+  }
+
+  /**
+   * Generates the certified report with provided metadata
+   * The backend handles PDF generation and upload to Azure Storage
+   * After generation, reloads the report metadata to get complete info
+   */
+  private generateReportWithMetadata(projectId: string, metadata: ReportMetadata): void {
     this.state.set('generating');
     this.errorMessage.set('');
 
     this.reportsService
-      .generateProjectActivitiesPdf(projectId)
+      .generateCertifiedReport(projectId, metadata)
       .pipe(
-        switchMap((blob) => {
-          this.pdfBlob.set(blob);
-          this.state.set('uploading');
-
-          // Upload the generated PDF to backend
-          const filename = `PMF-${projectId}-${new Date().toISOString().split('T')[0]}.pdf`;
-          return this.projectDocumentsService.uploadOrResubmitPMF(projectId, blob, filename);
+        tap((certificate) => {
+          console.log('Certified report generated:', certificate);
+          this.notification.success(
+            `Reporte certificado generado exitosamente. Código: ${certificate.certificateCode}`,
+          );
         }),
-        switchMap((document) => {
-          this.existingDocument.set(document);
-          // Get Azure Storage URL and pass directly to viewer
-          return this.azureStorage.getFileUrl(document.blobName);
+        switchMap(() => {
+          // After generating, reload the report metadata to get complete info including pdfBlobUrl
+          this.state.set('uploading'); // Reusing state for "loading metadata"
+          return this.reportsService.checkReportExists(projectId);
+        }),
+        tap((reportMetadata) => {
+          // Store complete metadata
+          this.existingReportMetadata.set(reportMetadata);
+          console.log('Report metadata reloaded:', reportMetadata);
+        }),
+        switchMap((reportMetadata) => {
+          // Get Azure Storage URL using SAS token from pdfBlobUrl
+          if (!reportMetadata.pdfBlobUrl) {
+            throw new Error('pdfBlobUrl not found in report metadata');
+          }
+          return this.azureStorage.getFileUrl(reportMetadata.pdfBlobUrl);
         }),
         catchError((error) => {
-          console.error('Error in PMF generation/upload flow:', error);
+          console.error('Error in certified report generation:', error);
           this.state.set('error');
           this.errorMessage.set(
-            'Error al generar o subir el Plan de Manejo Forestal. Por favor, intente nuevamente.',
+            'Error al generar el Plan de Manejo Forestal certificado. Por favor, intente nuevamente.',
           );
-          this.notification.error('Error al procesar el documento PMF');
+          this.notification.error('Error al generar reporte certificado');
           return of(null);
         }),
       )
       .subscribe({
         next: (url) => {
           if (url) {
+            // Set PDF URL for viewer
             this.pdfUrl.set(url);
-            this.state.set('ready');
-            this.notification.success('Plan de Manejo Forestal generado y guardado correctamente');
+            console.log('PDF URL set:', url);
+            console.log('Existing metadata:', this.existingReportMetadata());
+
+            // Show PDF viewer with the newly generated report
+            this.state.set('viewing-existing');
+            console.log('State set to viewing-existing');
+
+            // Notify parent component to reload documents
+            this.reportGenerated.emit();
           }
         },
       });
@@ -188,14 +267,14 @@ export class PmfGenerationComponent implements OnInit {
    * Downloads the generated PDF
    */
   downloadPdf(): void {
-    const pmfDocument = this.existingDocument();
-    if (!pmfDocument) {
+    const reportMetadata = this.existingReportMetadata();
+    if (!reportMetadata || !reportMetadata.pdfBlobUrl) {
       this.notification.error('No hay documento disponible para descargar');
       return;
     }
 
     // Get Azure URL directly for download (downloads don't have CORS issues)
-    this.azureStorage.getFileUrl(pmfDocument.blobName).subscribe({
+    this.azureStorage.getFileUrl(reportMetadata.pdfBlobUrl).subscribe({
       next: (azureUrl) => {
         const projectId = this.projectId();
         const filename = `PMF-${projectId}-${new Date().toISOString().split('T')[0]}.pdf`;

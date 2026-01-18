@@ -62,7 +62,7 @@
   }
 
   <!-- Viewing Existing PMF State: Show existing document from Azure -->
-  @if (isViewingExisting() && pdfUrl() && existingDocument()) {
+  @if (isViewingExisting() && pdfUrl() && existingReportMetadata()) {
     <div class="pdf-viewer-container">
       <!-- Toolbar with document info -->
       <div class="pdf-toolbar">
@@ -72,9 +72,19 @@
             <div>
               <h3 class="text-body font-bold text-accent-titles">Plan de Manejo Forestal</h3>
               <p class="text-subtitle text-neutral-subheading">
-                Versión {{ existingDocument()!.version }} •
-                {{ formatDate(existingDocument()!.uploadedAt) }} •
-                {{ formatFileSize(existingDocument()!.fileSizeBytes) }}
+                Versión {{ existingReportMetadata()!.versionNumber }} •
+                {{
+                  formatDate(
+                    existingReportMetadata()!.documentUpdatedAt ||
+                      existingReportMetadata()!.createdAt ||
+                      ''
+                  )
+                }}
+                •
+                {{
+                  existingReportMetadata()!.fileSizeFormatted ||
+                    formatFileSize(existingReportMetadata()!.reportFileSizeBytes)
+                }}
               </p>
             </div>
           </div>
@@ -123,7 +133,7 @@
   }
 
   <!-- Ready State: Newly generated PDF -->
-  @if (isReady() && pdfUrl() && existingDocument()) {
+  @if (isReady() && pdfUrl() && existingReportMetadata()) {
     <div class="pdf-viewer-container">
       <!-- Toolbar -->
       <div class="pdf-toolbar">
@@ -136,9 +146,19 @@
                 <span class="success-badge">Generado exitosamente</span>
               </h3>
               <p class="text-subtitle text-neutral-subheading">
-                Versión {{ existingDocument()!.version }} •
-                {{ formatDate(existingDocument()!.uploadedAt) }} •
-                {{ formatFileSize(existingDocument()!.fileSizeBytes) }}
+                Versión {{ existingReportMetadata()!.versionNumber }} •
+                {{
+                  formatDate(
+                    existingReportMetadata()!.documentUpdatedAt ||
+                      existingReportMetadata()!.createdAt ||
+                      ''
+                  )
+                }}
+                •
+                {{
+                  existingReportMetadata()!.fileSizeFormatted ||
+                    formatFileSize(existingReportMetadata()!.reportFileSizeBytes)
+                }}
               </p>
             </div>
           </div>

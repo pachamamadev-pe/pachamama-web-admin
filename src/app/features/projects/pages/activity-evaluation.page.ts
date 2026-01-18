@@ -18,10 +18,16 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatDialog } from '@angular/material/dialog';
 import { NotificationService } from '@core/services/notification.service';
+import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ActivitiesService } from '../services/activities.service';
 import { ActivityResponse, ValidationStatus } from '../models/activity.model';
 import { ValidationOperator, OPERATOR_LABELS } from '../../products/models/domain-attribute.model';
+import {
+  PhotoDetailDialogComponent,
+  PhotoDetailDialogData,
+} from '../components/photo-detail-dialog/photo-detail-dialog.component';
 
 /**
  * Field evaluation state
@@ -34,12 +40,35 @@ interface FieldEvaluationState {
 }
 
 /**
+ * Photo file metadata
+ */
+interface PhotoFileMetadata {
+  width: number;
+  height: number;
+  photoId: string;
+  fileName: string;
+  createdAt: string;
+  fileSizeBytes: number;
+}
+
+/**
+ * Photo file with metadata
+ */
+interface PhotoFile {
+  file: string; // URL path
+  metadata: PhotoFileMetadata;
+}
+
+/**
  * Form field from activity data
  */
 interface FormField {
   question: string;
   required: boolean;
-  response: { value?: unknown; files?: string[] };
+  response: {
+    value?: unknown;
+    files?: PhotoFile[]; // Array de fotos con metadata
+  };
   applies_to: string;
   field_type: string;
   id_protocol?: string;
@@ -93,6 +122,8 @@ export class ActivityEvaluationPage implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private activitiesService = inject(ActivitiesService);
+  private azureStorage = inject(AzureStorageService);
+  private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
 
   // State
@@ -102,6 +133,9 @@ export class ActivityEvaluationPage implements OnInit {
   activityId = signal<string>('');
   fieldEvaluations = signal<Map<string, FieldEvaluationState>>(new Map());
   validationNotes = signal<string>('');
+
+  // Cache de URLs de imágenes con SAS token (path -> url)
+  imageUrlCache = signal<Map<string, string>>(new Map());
 
   // Computed
   canApprove = computed(() => {
@@ -438,7 +472,101 @@ export class ActivityEvaluationPage implements OnInit {
 
     // If has pending or mixed approved/rejected, return pending
     return 'pending';
-  } /**
+  }
+
+  /**
+   * Obtiene la URL de la foto con SAS token (con caché)
+   */
+  getPhotoUrl(filePath: string | null): string | null {
+    if (!filePath) {
+      return null;
+    }
+
+    // Verificar si ya está en caché
+    const cache = this.imageUrlCache();
+    if (cache.has(filePath)) {
+      return cache.get(filePath)!;
+    }
+
+    // Solicitar URL con SAS token al servicio
+    this.azureStorage.getFileUrl(filePath, 5).subscribe({
+      next: (url) => {
+        // Actualizar caché de forma inmutable
+        this.imageUrlCache.update((currentCache) => {
+          const newCache = new Map(currentCache);
+          newCache.set(filePath, url);
+          return newCache;
+        });
+      },
+      error: (error) => {
+        console.error('Error al obtener URL con SAS token:', error);
+      },
+    });
+
+    // Retornar null mientras se carga
+    return null;
+  }
+
+  /**
+   * Abre el modal de detalle de foto
+   */
+  openPhotoDetail(photoFile: PhotoFile, photoNumber: number): void {
+    // Primero obtener la URL con SAS token
+    const cache = this.imageUrlCache();
+    const filePath = photoFile.file;
+
+    if (cache.has(filePath)) {
+      // Ya está en caché, abrir inmediatamente
+      this.openPhotoDialog(cache.get(filePath)!, photoFile.metadata, photoNumber);
+    } else {
+      // Solicitar SAS token primero
+      this.azureStorage.getFileUrl(filePath, 5).subscribe({
+        next: (url) => {
+          // Actualizar caché
+          this.imageUrlCache.update((currentCache) => {
+            const newCache = new Map(currentCache);
+            newCache.set(filePath, url);
+            return newCache;
+          });
+          // Abrir dialog
+          this.openPhotoDialog(url, photoFile.metadata, photoNumber);
+        },
+        error: () => {
+          this.notification.error('Error al cargar la foto');
+        },
+      });
+    }
+  }
+
+  /**
+   * Abre el diálogo con los datos de la foto
+   */
+  private openPhotoDialog(
+    photoUrl: string,
+    metadata: PhotoFileMetadata,
+    photoNumber: number,
+  ): void {
+    const activity = this.activity();
+    const location = activity?.location as { latitude: number; longitude: number } | undefined;
+
+    const dialogData: PhotoDetailDialogData = {
+      photoUrl,
+      metadata,
+      location: location || null,
+      photoNumber,
+    };
+
+    this.dialog.open(PhotoDetailDialogComponent, {
+      width: '95vw',
+      maxWidth: '1200px',
+      height: '90vh',
+      maxHeight: '900px',
+      data: dialogData,
+      panelClass: 'photo-detail-dialog-container',
+    });
+  }
+
+  /**
    * Regresa a la evaluación de inventario (marca el tab automáticamente)
    */
   goBack(): void {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -42,6 +42,9 @@ export class DocumentResubmitDialogComponent {
   // Estado
   uploading = signal(false);
   selectedFile = signal<File | null>(null);
+
+  // Verificar si el documento es PMF
+  isPMFDocument = computed(() => this.data.document.documentType.code === 'PMF');
 
   /**
    * Dispara el input de archivo

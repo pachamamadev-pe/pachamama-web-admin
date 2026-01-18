@@ -101,6 +101,43 @@
       }
     }
 
+    .approved-info-section {
+      .approved-info-card {
+        background-color: #f4fbf6; // secondary-light
+        border: 2px solid #218358; // secondary
+        border-radius: 8px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .approved-icon {
+          color: #218358; // secondary
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          flex-shrink: 0;
+        }
+
+        .approved-text {
+          flex: 1;
+
+          .approved-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #218358; // secondary
+            margin-bottom: 4px;
+          }
+
+          .approved-description {
+            font-size: 14px;
+            color: #737373; // neutral-subheading
+            margin: 0;
+          }
+        }
+      }
+    }
+
     .review-actions-section {
       .section-title {
         font-size: 16px;

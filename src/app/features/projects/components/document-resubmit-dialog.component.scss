@@ -151,6 +151,67 @@
 
     // Resubmit Section
     .resubmit-section {
+      // PMF Info Card
+      .pmf-info-card {
+        background-color: #f4fbf6; // secondary-light
+        border: 2px solid #218358; // secondary
+        border-radius: 8px;
+        padding: 24px;
+
+        .pmf-info-content {
+          display: flex;
+          gap: 16px;
+          align-items: flex-start;
+
+          .pmf-icon {
+            font-size: 48px;
+            width: 48px;
+            height: 48px;
+            color: #218358; // secondary
+            flex-shrink: 0;
+          }
+
+          .pmf-text {
+            flex: 1;
+
+            .pmf-title {
+              font-size: 16px;
+              font-weight: 700;
+              color: #0a0a0a; // accent-titles
+              margin-bottom: 8px;
+            }
+
+            .pmf-description {
+              font-size: 14px;
+              color: #737373; // neutral-subheading
+              line-height: 1.6;
+              margin-bottom: 0;
+
+              strong {
+                color: #218358; // secondary
+                font-weight: 700;
+              }
+            }
+
+            .pmf-note {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 13px;
+              color: #218358; // secondary
+              font-weight: 600;
+              margin-top: 12px;
+
+              .inline-icon {
+                font-size: 18px;
+                width: 18px;
+                height: 18px;
+              }
+            }
+          }
+        }
+      }
+
       .file-select-zone {
         border: 2px dashed #e5e5e5; // neutral-border
         border-radius: 8px;

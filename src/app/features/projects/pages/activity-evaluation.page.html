@@ -181,16 +181,25 @@
                     <span class="section-label text-subtitle text-neutral-subheading"
                       >Respuesta del recolector:</span
                     >
-                    @if (field.field_type === 'photo' && field.response.files) {
-                      <div class="photo-grid">
-                        @for (file of field.response.files; track file) {
-                          <div class="photo-item">
-                            <mat-icon>image</mat-icon>
-                            <span class="text-subtitle">{{ file }}</span>
-                            <button mat-icon-button matTooltip="Ver foto">
-                              <mat-icon>visibility</mat-icon>
-                            </button>
-                          </div>
+                    @if (
+                      field.field_type === 'photo' &&
+                      field.response.files &&
+                      field.response.files.length > 0
+                    ) {
+                      <div class="photo-buttons-grid">
+                        @for (
+                          file of field.response.files;
+                          track file.metadata.photoId;
+                          let idx = $index
+                        ) {
+                          <button
+                            mat-stroked-button
+                            class="photo-button"
+                            (click)="openPhotoDetail(file, idx + 1)"
+                          >
+                            <mat-icon>photo_camera</mat-icon>
+                            <span>Foto {{ idx + 1 }}</span>
+                          </button>
                         }
                       </div>
                     } @else {

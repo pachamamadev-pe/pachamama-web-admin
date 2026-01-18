@@ -1358,6 +1358,18 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Maneja el evento cuando se genera un nuevo reporte PMF
+   * Recarga la lista de documentos para mostrar el nuevo documento
+   */
+  onReportGenerated(): void {
+    const projectId = this.project()?.id;
+    if (projectId) {
+      console.log('PMF report generated, reloading documents...');
+      this.loadDocuments(projectId);
+    }
+  }
+
+  /**
    * Abre el dialog para subir documentos
    */
   openUploadDialog(): void {

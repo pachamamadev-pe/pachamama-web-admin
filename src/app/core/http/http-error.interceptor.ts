@@ -13,6 +13,14 @@ export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Ignore 404 errors from report existence check - it's expected when no report exists
+      const isReportExistsCheck =
+        error.url?.includes('/reports/projects/') && error.url?.endsWith('/exists');
+      if (error.status === 404 && isReportExistsCheck) {
+        // Silently pass through without showing notification
+        return throwError(() => error);
+      }
+
       let errorMessage = 'Ocurrió un error inesperado';
 
       if (error.error instanceof ErrorEvent) {

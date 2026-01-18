@@ -19,6 +19,9 @@ export interface DocumentType {
   description?: string;
   requiresApproval: boolean;
   icon?: string; // Icono del tipo de documento
+  requiresValidationAttachment?: boolean; // ¿Requiere adjunto de validación?
+  validationAttachmentMimeTypes?: string[]; // Tipos MIME permitidos
+  validationAttachmentMaxSizeMb?: number; // Tamaño máximo en MB
 }
 
 /**
@@ -65,6 +68,7 @@ export interface ProjectDocument {
   validatedBy: string | null;
   validatedAt: string | null; // ISO datetime
   validationNotes: string | null;
+  validationAttachmentUrl?: string | null; // URL del archivo adjuntado durante la validación
   uploadedBy: string;
   uploadedAt: string; // ISO datetime
   metadata?: Record<string, unknown>;

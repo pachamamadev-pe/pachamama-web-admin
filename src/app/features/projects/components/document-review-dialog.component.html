@@ -64,154 +64,334 @@
           Ver Documento
         </button>
       </div>
+
+      <!-- Notas de Validación si existen -->
+      @if (data.document.validationNotes) {
+        <div class="validation-notes-section mt-4 p-3 bg-secondary-light rounded-lg">
+          <div class="flex items-start gap-2">
+            <mat-icon class="text-secondary">notes</mat-icon>
+            <div class="flex-1">
+              <p class="text-sm font-bold text-accent-titles mb-2">Notas de Validación</p>
+              <p class="text-sm text-neutral-subheading whitespace-pre-wrap">
+                {{ data.document.validationNotes }}
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Archivo de Validación si existe -->
+      @if (data.document.validationAttachmentUrl) {
+        <div class="validation-attachment-section mt-4 p-3 bg-secondary-light rounded-lg">
+          <div class="flex items-center gap-2">
+            <mat-icon class="text-secondary">attachment</mat-icon>
+            <div class="flex-1">
+              <p class="text-sm font-bold text-accent-titles">Archivo de Validación Adjuntado</p>
+              <p class="text-xs text-neutral-subheading">Documento adjuntado durante la revisión</p>
+            </div>
+            <button mat-stroked-button size="small" (click)="downloadValidationAttachment()">
+              <mat-icon>download</mat-icon>
+              Descargar
+            </button>
+          </div>
+        </div>
+      }
     </div>
 
-    <mat-divider />
-
-    <!-- Acciones de Revisión -->
-    <div class="review-actions-section mt-6">
-      <h3 class="section-title mb-4">Acciones de Revisión</h3>
-
-      <!-- Aprobar -->
-      <div class="action-card approve-card mb-4">
-        <div class="action-header">
-          <mat-icon class="action-icon text-secondary">check_circle</mat-icon>
-          <div class="action-info flex-1">
-            <h4 class="action-title">Aprobar Documento</h4>
-            <p class="action-description">
-              El documento cumple con los requisitos y será marcado como aprobado
+    @if (isDocumentApproved()) {
+      <!-- Mensaje informativo para documentos aprobados -->
+      <div class="approved-info-section mt-6">
+        <div class="approved-info-card">
+          <mat-icon class="approved-icon">check_circle</mat-icon>
+          <div class="approved-text">
+            <h4 class="approved-title">Documento Aprobado</h4>
+            <p class="approved-description">
+              Este documento ha sido aprobado y no puede ser modificado. Puedes ver la información
+              de validación arriba.
             </p>
           </div>
-          <button
-            mat-raised-button
-            class="btn-approve"
-            (click)="approve()"
-            [disabled]="processing()"
-          >
-            @if (processing()) {
-              <mat-icon>hourglass_empty</mat-icon>
-            } @else {
+        </div>
+      </div>
+    }
+
+    @if (!isDocumentApproved()) {
+      <mat-divider />
+
+      <!-- Acciones de Revisión -->
+      <div class="review-actions-section mt-6">
+        <h3 class="section-title mb-4">Acciones de Revisión</h3>
+
+        <!-- Aprobar -->
+        <div class="action-card approve-card mb-4">
+          <div class="action-header">
+            <mat-icon class="action-icon text-secondary">check_circle</mat-icon>
+            <div class="action-info flex-1">
+              <h4 class="action-title">Aprobar Documento</h4>
+              <p class="action-description">
+                El documento cumple con los requisitos y será marcado como aprobado
+              </p>
+            </div>
+            <button
+              mat-raised-button
+              class="btn-approve"
+              (click)="toggleApproveForm()"
+              [disabled]="processing()"
+            >
               <mat-icon>check</mat-icon>
-            }
-            Aprobar
-          </button>
-        </div>
-      </div>
-
-      <!-- Observar -->
-      <div class="action-card observe-card mb-4">
-        <div class="action-header">
-          <mat-icon class="action-icon text-ump-blue">visibility</mat-icon>
-          <div class="action-info flex-1">
-            <h4 class="action-title">Observar (Requiere Correcciones)</h4>
-            <p class="action-description">
-              El documento necesita ajustes. El usuario podrá resubirlo corregido
-            </p>
+              Aprobar
+            </button>
           </div>
-          <button
-            mat-raised-button
-            class="btn-observe"
-            (click)="toggleObserveForm()"
-            [disabled]="processing()"
-          >
-            <mat-icon>visibility</mat-icon>
-            Observar
-          </button>
-        </div>
 
-        @if (showObserveForm()) {
-          <div class="action-form mt-4">
-            <mat-form-field class="w-full" appearance="outline">
-              <mat-label>Notas de Observación (opcional)</mat-label>
-              <textarea
-                matInput
-                [(ngModel)]="observationNotes"
-                placeholder="Ej: Falta la firma del representante legal en la página 3..."
-                rows="4"
-                [disabled]="processing()"
-              ></textarea>
-              <mat-hint>Describe qué correcciones debe realizar el usuario</mat-hint>
-            </mat-form-field>
+          @if (showApproveForm()) {
+            <div class="action-form mt-4">
+              <mat-form-field class="w-full" appearance="outline">
+                <mat-label>Notas de Validación *</mat-label>
+                <textarea
+                  matInput
+                  [ngModel]="approvalNotes()"
+                  (ngModelChange)="approvalNotes.set($event)"
+                  placeholder="Ej: Documento verificado, cumple con todos los requisitos..."
+                  rows="4"
+                  [disabled]="processing()"
+                  required
+                ></textarea>
+                <mat-hint>Las notas de validación son obligatorias</mat-hint>
+              </mat-form-field>
 
-            <div class="form-actions flex gap-2 justify-end mt-2">
-              <button mat-button (click)="toggleObserveForm()" [disabled]="processing()">
-                Cancelar
-              </button>
-              <button
-                mat-raised-button
-                class="btn-observe"
-                (click)="observe()"
-                [disabled]="processing()"
-              >
-                @if (processing()) {
-                  <mat-icon>hourglass_empty</mat-icon>
-                } @else {
-                  <mat-icon>send</mat-icon>
-                }
-                Confirmar Observación
-              </button>
+              @if (requiresValidationAttachment) {
+                <div class="file-upload-section mt-3">
+                  <p class="text-sm font-bold text-accent-titles mb-2">
+                    Archivo de Validación (Opcional)
+                  </p>
+                  <input
+                    type="file"
+                    #approvalFileInput
+                    (change)="onApprovalFileSelected($event)"
+                    [accept]="allowedMimeTypes"
+                    [disabled]="processing()"
+                    class="hidden"
+                  />
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="approvalFileInput.click()"
+                    [disabled]="processing()"
+                    class="w-full"
+                  >
+                    <mat-icon>attach_file</mat-icon>
+                    {{ approvalAttachment() ? approvalAttachment()!.name : 'Seleccionar archivo' }}
+                  </button>
+                  <p class="text-xs text-neutral-subheading mt-1">
+                    Tamaño máximo: {{ maxSizeMb }}MB
+                  </p>
+                </div>
+              }
+
+              <div class="form-actions flex gap-2 justify-end mt-2">
+                <button mat-button (click)="toggleApproveForm()" [disabled]="processing()">
+                  Cancelar
+                </button>
+                <button
+                  mat-raised-button
+                  class="btn-approve"
+                  (click)="approve()"
+                  [disabled]="processing()"
+                >
+                  @if (processing()) {
+                    <mat-icon>hourglass_empty</mat-icon>
+                  } @else {
+                    <mat-icon>send</mat-icon>
+                  }
+                  Confirmar Aprobación
+                </button>
+              </div>
             </div>
-          </div>
-        }
-      </div>
-
-      <!-- Rechazar -->
-      <div class="action-card reject-card">
-        <div class="action-header">
-          <mat-icon class="action-icon text-map-red-1">cancel</mat-icon>
-          <div class="action-info flex-1">
-            <h4 class="action-title">Rechazar Definitivamente</h4>
-            <p class="action-description">
-              El documento no es válido y será rechazado sin posibilidad de resubmisión
-            </p>
-          </div>
-          <button
-            mat-raised-button
-            class="btn-reject"
-            (click)="toggleRejectForm()"
-            [disabled]="processing()"
-          >
-            <mat-icon>cancel</mat-icon>
-            Rechazar
-          </button>
+          }
         </div>
 
-        @if (showRejectForm()) {
-          <div class="action-form mt-4">
-            <mat-form-field class="w-full" appearance="outline">
-              <mat-label>Razón del Rechazo (recomendado)</mat-label>
-              <textarea
-                matInput
-                [(ngModel)]="rejectionNotes"
-                placeholder="Ej: El permiso ha expirado y no es aplicable al proyecto..."
-                rows="4"
-                [disabled]="processing()"
-              ></textarea>
-              <mat-hint>Explica por qué el documento es rechazado</mat-hint>
-            </mat-form-field>
-
-            <div class="form-actions flex gap-2 justify-end mt-2">
-              <button mat-button (click)="toggleRejectForm()" [disabled]="processing()">
-                Cancelar
-              </button>
-              <button
-                mat-raised-button
-                class="btn-reject"
-                (click)="reject()"
-                [disabled]="processing()"
-              >
-                @if (processing()) {
-                  <mat-icon>hourglass_empty</mat-icon>
-                } @else {
-                  <mat-icon>delete_forever</mat-icon>
-                }
-                Confirmar Rechazo
-              </button>
+        <!-- Observar -->
+        <div class="action-card observe-card mb-4">
+          <div class="action-header">
+            <mat-icon class="action-icon text-ump-blue">visibility</mat-icon>
+            <div class="action-info flex-1">
+              <h4 class="action-title">Observar (Requiere Correcciones)</h4>
+              <p class="action-description">
+                El documento necesita ajustes. El usuario podrá resubirlo corregido
+              </p>
             </div>
+            <button
+              mat-raised-button
+              class="btn-observe"
+              (click)="toggleObserveForm()"
+              [disabled]="processing()"
+            >
+              <mat-icon>visibility</mat-icon>
+              Observar
+            </button>
           </div>
-        }
+
+          @if (showObserveForm()) {
+            <div class="action-form mt-4">
+              <mat-form-field class="w-full" appearance="outline">
+                <mat-label>Notas de Observación *</mat-label>
+                <textarea
+                  matInput
+                  [ngModel]="observationNotes()"
+                  (ngModelChange)="observationNotes.set($event)"
+                  placeholder="Ej: Falta la firma del representante legal en la página 3..."
+                  rows="4"
+                  [disabled]="processing()"
+                  required
+                ></textarea>
+                <mat-hint>Describe qué correcciones debe realizar el usuario</mat-hint>
+              </mat-form-field>
+
+              @if (requiresValidationAttachment) {
+                <div class="file-upload-section mt-3">
+                  <p class="text-sm font-bold text-accent-titles mb-2">
+                    Archivo de Validación (Opcional)
+                  </p>
+                  <input
+                    type="file"
+                    #observationFileInput
+                    (change)="onObservationFileSelected($event)"
+                    [accept]="allowedMimeTypes"
+                    [disabled]="processing()"
+                    class="hidden"
+                  />
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="observationFileInput.click()"
+                    [disabled]="processing()"
+                    class="w-full"
+                  >
+                    <mat-icon>attach_file</mat-icon>
+                    {{
+                      observationAttachment()
+                        ? observationAttachment()!.name
+                        : 'Seleccionar archivo'
+                    }}
+                  </button>
+                  <p class="text-xs text-neutral-subheading mt-1">
+                    Tamaño máximo: {{ maxSizeMb }}MB
+                  </p>
+                </div>
+              }
+
+              <div class="form-actions flex gap-2 justify-end mt-2">
+                <button mat-button (click)="toggleObserveForm()" [disabled]="processing()">
+                  Cancelar
+                </button>
+                <button
+                  mat-raised-button
+                  class="btn-observe"
+                  (click)="observe()"
+                  [disabled]="processing()"
+                >
+                  @if (processing()) {
+                    <mat-icon>hourglass_empty</mat-icon>
+                  } @else {
+                    <mat-icon>send</mat-icon>
+                  }
+                  Confirmar Observación
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Rechazar -->
+        <div class="action-card reject-card">
+          <div class="action-header">
+            <mat-icon class="action-icon text-map-red-1">cancel</mat-icon>
+            <div class="action-info flex-1">
+              <h4 class="action-title">Rechazar Definitivamente</h4>
+              <p class="action-description">
+                El documento no es válido y será rechazado sin posibilidad de resubmisión
+              </p>
+            </div>
+            <button
+              mat-raised-button
+              class="btn-reject"
+              (click)="toggleRejectForm()"
+              [disabled]="processing()"
+            >
+              <mat-icon>cancel</mat-icon>
+              Rechazar
+            </button>
+          </div>
+
+          @if (showRejectForm()) {
+            <div class="action-form mt-4">
+              <mat-form-field class="w-full" appearance="outline">
+                <mat-label>Razón del Rechazo *</mat-label>
+                <textarea
+                  matInput
+                  [ngModel]="rejectionNotes()"
+                  (ngModelChange)="rejectionNotes.set($event)"
+                  placeholder="Ej: El permiso ha expirado y no es aplicable al proyecto..."
+                  rows="4"
+                  [disabled]="processing()"
+                  required
+                ></textarea>
+                <mat-hint>Explica por qué el documento es rechazado</mat-hint>
+              </mat-form-field>
+
+              @if (requiresValidationAttachment) {
+                <div class="file-upload-section mt-3">
+                  <p class="text-sm font-bold text-accent-titles mb-2">
+                    Archivo de Validación (Opcional)
+                  </p>
+                  <input
+                    type="file"
+                    #rejectionFileInput
+                    (change)="onRejectionFileSelected($event)"
+                    [accept]="allowedMimeTypes"
+                    [disabled]="processing()"
+                    class="hidden"
+                  />
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="rejectionFileInput.click()"
+                    [disabled]="processing()"
+                    class="w-full"
+                  >
+                    <mat-icon>attach_file</mat-icon>
+                    {{
+                      rejectionAttachment() ? rejectionAttachment()!.name : 'Seleccionar archivo'
+                    }}
+                  </button>
+                  <p class="text-xs text-neutral-subheading mt-1">
+                    Tamaño máximo: {{ maxSizeMb }}MB
+                  </p>
+                </div>
+              }
+
+              <div class="form-actions flex gap-2 justify-end mt-2">
+                <button mat-button (click)="toggleRejectForm()" [disabled]="processing()">
+                  Cancelar
+                </button>
+                <button
+                  mat-raised-button
+                  class="btn-reject"
+                  (click)="reject()"
+                  [disabled]="processing()"
+                >
+                  @if (processing()) {
+                    <mat-icon>hourglass_empty</mat-icon>
+                  } @else {
+                    <mat-icon>delete_forever</mat-icon>
+                  }
+                  Confirmar Rechazo
+                </button>
+              </div>
+            </div>
+          }
+        </div>
       </div>
-    </div>
+    }
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">

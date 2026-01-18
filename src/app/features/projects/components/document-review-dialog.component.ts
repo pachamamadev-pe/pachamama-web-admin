@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -45,39 +45,149 @@ export class DocumentReviewDialogComponent {
   data = inject<DocumentReviewDialogData>(MAT_DIALOG_DATA);
 
   // Estado
+  approvalNotes = signal(''); // Notas para aprobar (ahora obligatorias)
+  approvalAttachment = signal<File | null>(null);
   observationNotes = signal('');
+  observationAttachment = signal<File | null>(null);
   rejectionNotes = signal('');
+  rejectionAttachment = signal<File | null>(null);
   processing = signal(false);
+  showApproveForm = signal(false);
   showObserveForm = signal(false);
   showRejectForm = signal(false);
+
+  /**
+   * Verifica si el documento ya está aprobado (solo lectura)
+   */
+  isDocumentApproved = computed(() => this.data.document.validationStatus === 'approved');
+
+  /**
+   * Verifica si el tipo de documento requiere adjunto de validación
+   */
+  get requiresValidationAttachment(): boolean {
+    return this.data.document.documentType.requiresValidationAttachment || false;
+  }
+
+  /**
+   * Obtiene los tipos MIME permitidos
+   */
+  get allowedMimeTypes(): string {
+    return this.data.document.documentType.validationAttachmentMimeTypes?.join(',') || '*';
+  }
+
+  /**
+   * Obtiene el tamaño máximo en MB
+   */
+  get maxSizeMb(): number {
+    return this.data.document.documentType.validationAttachmentMaxSizeMb || 10;
+  }
+
+  /**
+   * Maneja la selección de archivo para aprobación
+   */
+  onApprovalFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+
+      // Validar tamaño
+      const maxSizeBytes = this.maxSizeMb * 1024 * 1024;
+      if (file.size > maxSizeBytes) {
+        this.notification.error(`El archivo no debe superar ${this.maxSizeMb}MB`);
+        return;
+      }
+
+      this.approvalAttachment.set(file);
+    }
+  }
+
+  /**
+   * Maneja la selección de archivo para observación
+   */
+  onObservationFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+
+      const maxSizeBytes = this.maxSizeMb * 1024 * 1024;
+      if (file.size > maxSizeBytes) {
+        this.notification.error(`El archivo no debe superar ${this.maxSizeMb}MB`);
+        return;
+      }
+
+      this.observationAttachment.set(file);
+    }
+  }
+
+  /**
+   * Maneja la selección de archivo para rechazo
+   */
+  onRejectionFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+
+      const maxSizeBytes = this.maxSizeMb * 1024 * 1024;
+      if (file.size > maxSizeBytes) {
+        this.notification.error(`El archivo no debe superar ${this.maxSizeMb}MB`);
+        return;
+      }
+
+      this.rejectionAttachment.set(file);
+    }
+  }
+
+  /**
+   * Muestra el formulario de aprobación
+   */
+  toggleApproveForm(): void {
+    this.showApproveForm.update((v) => !v);
+    this.showObserveForm.set(false);
+    this.showRejectForm.set(false);
+  }
 
   /**
    * Aprueba el documento
    */
   approve(): void {
+    const notes = this.approvalNotes().trim();
+
+    // Validar notas obligatorias
+    if (!notes) {
+      this.notification.error('Las notas de validación son obligatorias');
+      return;
+    }
+
     this.processing.set(true);
-    this.projectDocumentsService.approveDocument(this.data.document.id).subscribe({
-      next: () => {
-        this.notification.success('Documento aprobado correctamente');
-        this.dialogRef.close({ action: 'approved' });
-      },
-      error: (error) => {
-        console.error('Error approving document:', error);
-        this.processing.set(false);
-        // Error manejado por interceptor
-      },
-    });
+    this.projectDocumentsService
+      .approveDocument(this.data.document.id, notes, this.approvalAttachment() || undefined)
+      .subscribe({
+        next: () => {
+          this.notification.success('Documento aprobado correctamente');
+          this.dialogRef.close({ action: 'approved' });
+        },
+        error: (error) => {
+          console.error('Error approving document:', error);
+          this.processing.set(false);
+        },
+      });
   }
 
   /**
    * Observa el documento
    */
   observe(): void {
-    this.processing.set(true);
     const notes = this.observationNotes().trim();
 
+    // Validar notas obligatorias
+    if (!notes) {
+      this.notification.error('Las notas de observación son obligatorias');
+      return;
+    }
+
+    this.processing.set(true);
     this.projectDocumentsService
-      .observeDocument(this.data.document.id, notes || undefined)
+      .observeDocument(this.data.document.id, notes, this.observationAttachment() || undefined)
       .subscribe({
         next: () => {
           this.notification.success('Documento observado correctamente');
@@ -86,7 +196,6 @@ export class DocumentReviewDialogComponent {
         error: (error) => {
           console.error('Error observing document:', error);
           this.processing.set(false);
-          // Error manejado por interceptor
         },
       });
   }
@@ -95,11 +204,17 @@ export class DocumentReviewDialogComponent {
    * Rechaza el documento
    */
   reject(): void {
-    this.processing.set(true);
     const notes = this.rejectionNotes().trim();
 
+    // Validar notas obligatorias
+    if (!notes) {
+      this.notification.error('Las notas de rechazo son obligatorias');
+      return;
+    }
+
+    this.processing.set(true);
     this.projectDocumentsService
-      .rejectDocument(this.data.document.id, notes || undefined)
+      .rejectDocument(this.data.document.id, notes, this.rejectionAttachment() || undefined)
       .subscribe({
         next: () => {
           this.notification.success('Documento rechazado');
@@ -108,7 +223,6 @@ export class DocumentReviewDialogComponent {
         error: (error) => {
           console.error('Error rejecting document:', error);
           this.processing.set(false);
-          // Error manejado por interceptor
         },
       });
   }
@@ -134,6 +248,25 @@ export class DocumentReviewDialogComponent {
    */
   downloadDocument(): void {
     this.azureStorage.getFileUrl(this.data.document.blobName).subscribe({
+      next: (url) => {
+        window.open(url, '_blank');
+      },
+      error: (error) => {
+        console.error('Error getting download URL:', error);
+        this.notification.error('Error al obtener URL de descarga');
+      },
+    });
+  }
+
+  /**
+   * Descarga el archivo adjunto de validación
+   */
+  downloadValidationAttachment(): void {
+    if (this.data.document.validationAttachmentUrl == null) {
+      this.notification.error('No hay archivo adjunto de validación disponible');
+      return;
+    }
+    this.azureStorage.getFileUrl(this.data.document.validationAttachmentUrl).subscribe({
       next: (url) => {
         window.open(url, '_blank');
       },
