@@ -19,28 +19,48 @@
           </p>
         </div>
       </div>
-      <div class="header-actions">
-        <button mat-stroked-button (click)="saveEvaluation()" class="mr-2">
-          <mat-icon>save</mat-icon>
-          <span class="hidden sm:inline">Guardar</span>
-        </button>
-        <button mat-raised-button (click)="approveAll()" class="btn-secondary mr-2">
-          <mat-icon>check_circle</mat-icon>
-          <span class="hidden sm:inline">Aprobar Todo</span>
-        </button>
-        <button
-          mat-raised-button
-          (click)="rejectAll()"
-          style="background-color: #ef4444; color: white"
-        >
-          <mat-icon>cancel</mat-icon>
-          <span class="hidden sm:inline">Rechazar Todo</span>
-        </button>
-      </div>
+      @if (!isReadOnly()) {
+        <div class="header-actions">
+          <button mat-stroked-button (click)="saveEvaluation()" class="mr-2">
+            <mat-icon>save</mat-icon>
+            <span class="hidden sm:inline">Guardar</span>
+          </button>
+          <button mat-raised-button (click)="approveAll()" class="btn-secondary mr-2">
+            <mat-icon>check_circle</mat-icon>
+            <span class="hidden sm:inline">Aprobar Todo</span>
+          </button>
+          <button
+            mat-raised-button
+            (click)="rejectAll()"
+            style="background-color: #ef4444; color: white"
+          >
+            <mat-icon>cancel</mat-icon>
+            <span class="hidden sm:inline">Rechazar Todo</span>
+          </button>
+        </div>
+      }
     </header>
 
     <!-- Content -->
     <div class="page-content">
+      @if (isApproved()) {
+        <!-- Mensaje informativo para actividades aprobadas -->
+        <mat-card class="approved-info-card mb-4">
+          <mat-card-content>
+            <div class="approved-info-content">
+              <mat-icon class="approved-icon">check_circle</mat-icon>
+              <div class="approved-text">
+                <h4 class="approved-title">Actividad Aprobada - Solo Lectura</h4>
+                <p class="approved-description">
+                  Esta actividad ha sido aprobada y no puede ser modificada. Puedes revisar el
+                  detalle de las respuestas y el estado de validación de cada pregunta.
+                </p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+
       <!-- Estado General -->
       <mat-card class="status-card">
         <mat-card-content>
@@ -229,26 +249,28 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="field-actions">
-                  <button
-                    mat-stroked-button
-                    class="reject-btn"
-                    (click)="rejectField(section.id, $index)"
-                    [disabled]="evaluation?.status === 'rejected'"
-                  >
-                    <mat-icon>cancel</mat-icon>
-                    Rechazar
-                  </button>
-                  <button
-                    mat-raised-button
-                    class="approve-btn"
-                    (click)="approveField(section.id, $index)"
-                    [disabled]="evaluation?.status === 'approved'"
-                  >
-                    <mat-icon>check_circle</mat-icon>
-                    Aprobar
-                  </button>
-                </div>
+                @if (!isReadOnly()) {
+                  <div class="field-actions">
+                    <button
+                      mat-stroked-button
+                      class="reject-btn"
+                      (click)="rejectField(section.id, $index)"
+                      [disabled]="evaluation?.status === 'rejected'"
+                    >
+                      <mat-icon>cancel</mat-icon>
+                      Rechazar
+                    </button>
+                    <button
+                      mat-raised-button
+                      class="approve-btn"
+                      (click)="approveField(section.id, $index)"
+                      [disabled]="evaluation?.status === 'approved'"
+                    >
+                      <mat-icon>check_circle</mat-icon>
+                      Aprobar
+                    </button>
+                  </div>
+                }
               </mat-expansion-panel>
             }
           </mat-accordion>

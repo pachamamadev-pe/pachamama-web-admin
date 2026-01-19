@@ -124,9 +124,10 @@
                       mat-raised-button
                       class="btn-primary"
                       (click)="evaluateActivity(activity)"
-                      [disabled]="activity.overallValidationStatus === 'approved'"
                     >
-                      Evaluar
+                      {{
+                        activity.overallValidationStatus === 'approved' ? 'Ver Detalle' : 'Evaluar'
+                      }}
                     </button>
                   </td>
                 </tr>
@@ -154,13 +155,11 @@
                     <mat-icon>more_vert</mat-icon>
                   </button>
                   <mat-menu #mobileMenu="matMenu">
-                    <button
-                      mat-menu-item
-                      (click)="evaluateActivity(activity)"
-                      [disabled]="activity.overallValidationStatus === 'approved'"
-                    >
+                    <button mat-menu-item (click)="evaluateActivity(activity)">
                       <mat-icon>rate_review</mat-icon>
-                      <span>Evaluar</span>
+                      <span>{{
+                        activity.overallValidationStatus === 'approved' ? 'Ver Detalle' : 'Evaluar'
+                      }}</span>
                     </button>
                     <button mat-menu-item (click)="downloadActivity(activity)">
                       <mat-icon>download</mat-icon>
@@ -215,9 +214,10 @@
                     mat-raised-button
                     class="btn-primary w-full"
                     (click)="evaluateActivity(activity)"
-                    [disabled]="activity.overallValidationStatus === 'approved'"
                   >
-                    Evaluar
+                    {{
+                      activity.overallValidationStatus === 'approved' ? 'Ver Detalle' : 'Evaluar'
+                    }}
                   </button>
                 </div>
               </div>

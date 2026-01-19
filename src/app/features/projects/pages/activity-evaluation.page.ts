@@ -138,10 +138,12 @@ export class ActivityEvaluationPage implements OnInit {
   imageUrlCache = signal<Map<string, string>>(new Map());
 
   // Computed
-  canApprove = computed(() => {
+  isApproved = computed(() => {
     const act = this.activity();
-    return act && act.overallValidationStatus !== 'approved';
+    return act && act.overallValidationStatus === 'approved';
   });
+
+  isReadOnly = computed(() => this.isApproved());
 
   formSections = computed(() => {
     const act = this.activity();
