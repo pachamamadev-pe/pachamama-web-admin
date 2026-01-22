@@ -6,6 +6,8 @@ import {
   input,
   output,
   signal,
+  computed,
+  effect,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
@@ -19,6 +21,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { LayoutService } from './layout.service';
 import { AuthService } from '../auth/auth.service';
+import { SidebarService } from '../services/sidebar.service';
+import { AzureStorageService } from '../services/azure-storage.service';
 
 @Component({
   standalone: true,
@@ -90,11 +94,19 @@ import { AuthService } from '../auth/auth.service';
             aria-label="Menú de usuario"
             class="overflow-hidden"
           >
-            <img
-              class="h-full w-full rounded-full object-cover"
-              src="https://i.pravatar.cc/40"
-              alt="Avatar"
-            />
+            @if (showAvatar()) {
+              <img
+                class="h-full w-full rounded-full object-cover"
+                [src]="avatarImageUrl()"
+                alt="Avatar del usuario"
+              />
+            } @else {
+              <div
+                class="flex h-full w-full items-center justify-center rounded-full bg-secondary text-primary-white font-bold text-sm"
+              >
+                {{ getUserInitials() }}
+              </div>
+            }
           </button>
 
           <!-- User Menu -->
@@ -129,6 +141,8 @@ import { AuthService } from '../auth/auth.service';
 export class HeaderComponent {
   readonly layoutService = inject(LayoutService);
   readonly authService = inject(AuthService);
+  readonly sidebarService = inject(SidebarService);
+  readonly azureStorage = inject(AzureStorageService);
   readonly router = inject(Router);
   readonly destroyRef = inject(DestroyRef);
 
@@ -141,6 +155,10 @@ export class HeaderComponent {
   title = signal('Inicio');
   notificationCount = signal(3); // TODO: Conectar con servicio de notificaciones real
 
+  // Avatar management
+  avatarImageUrl = signal<string | null>(null);
+  showAvatar = computed(() => this.avatarImageUrl() !== null);
+
   constructor() {
     // Suscribirse a los cambios de navegación
     this.router.events
@@ -149,6 +167,12 @@ export class HeaderComponent {
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       )
       .subscribe(() => this.updateTitle());
+
+    // Efecto para cargar avatar cuando cambia la URL en SidebarService
+    effect(() => {
+      const avatarPath = this.sidebarService.avatarUrl();
+      this.loadAvatarUrl(avatarPath);
+    });
   }
 
   private updateTitle(): void {
@@ -192,5 +216,46 @@ export class HeaderComponent {
    */
   async onLogout(): Promise<void> {
     await this.authService.logout();
+  }
+
+  /**
+   * Carga la URL del avatar con SAS token de Azure Storage
+   */
+  private loadAvatarUrl(avatarPath: string | null): void {
+    if (!avatarPath) {
+      this.avatarImageUrl.set(null);
+      return;
+    }
+
+    // Obtener SAS token desde Azure Storage
+    this.azureStorage.getFileUrl(avatarPath, 5).subscribe({
+      next: (url) => {
+        this.avatarImageUrl.set(url);
+      },
+      error: () => {
+        // Si falla, mostrar null (avatar por defecto con iniciales)
+        this.avatarImageUrl.set(null);
+      },
+    });
+  }
+
+  /**
+   * Obtiene las iniciales del usuario para el avatar placeholder
+   */
+  getUserInitials(): string {
+    const email = this.authService.currentUser()?.email || '';
+    if (!email) return 'U';
+
+    // Extraer nombre del email (parte antes del @)
+    const name = email.split('@')[0];
+    const parts = name.split('.');
+
+    if (parts.length >= 2) {
+      // Si hay punto, tomar primera letra de las dos primeras partes
+      return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+    }
+
+    // Si no hay punto, tomar las dos primeras letras
+    return name.substring(0, 2).toUpperCase();
   }
 }

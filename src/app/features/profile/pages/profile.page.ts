@@ -117,6 +117,10 @@ export default class ProfilePage implements OnInit {
         this.userDetails.set(details);
         this.populatePersonalInfoForm(details);
         this.loadAvatarUrl(details.avatarUrl);
+
+        // Propagar avatar URL al SidebarService
+        this.sidebarService.updateAvatarUrl(details.avatarUrl || null);
+
         this.isLoadingProfile.set(false);
       },
       error: () => {
@@ -246,6 +250,9 @@ export default class ProfilePage implements OnInit {
       next: () => {
         this.notificationService.success('Avatar actualizado correctamente');
 
+        // Propagar el cambio del avatar al SidebarService
+        this.sidebarService.updateAvatarUrl(result.relativePath);
+
         // Recargar el perfil completo desde el backend
         this.usersService.getUserDetails(userId).subscribe({
           next: (details) => {
@@ -278,6 +285,9 @@ export default class ProfilePage implements OnInit {
     this.usersService.updateAvatar(userId, null).subscribe({
       next: () => {
         this.notificationService.success('Avatar eliminado correctamente');
+
+        // Propagar la eliminación del avatar al SidebarService
+        this.sidebarService.updateAvatarUrl(null);
 
         // Recargar el perfil completo desde el backend
         this.usersService.getUserDetails(userId).subscribe({

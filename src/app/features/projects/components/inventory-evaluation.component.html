@@ -38,10 +38,26 @@
     <!-- Evaluación de inventario Section -->
     <section class="evaluation-section">
       <div class="section-header">
-        <div class="header-title">
+        <div class="header-left">
           <h2 class="text-title font-bold text-accent-titles">Evaluación de inventario</h2>
+          @if (lastUpdated()) {
+            <p class="text-subtitle text-neutral-subheading">
+              <mat-icon class="inline-icon">access_time</mat-icon>
+              Última actualización: {{ lastUpdated()! | date: 'dd/MM/yy HH:mm:ss' }}
+            </p>
+          }
+          <button
+            mat-stroked-button
+            (click)="refreshActivities()"
+            [disabled]="refreshing()"
+            class="refresh-button mt-2"
+            matTooltip="Actualizar registros"
+          >
+            <mat-icon [class.spinning]="refreshing()">refresh</mat-icon>
+            Actualizar
+          </button>
         </div>
-        <div class="header-actions">
+        <div class="header-right">
           <mat-form-field appearance="outline" class="filter-field">
             <mat-icon matPrefix class="text-neutral-subheading">filter_list</mat-icon>
             <mat-label>Filtrar por estado</mat-label>
@@ -53,6 +69,25 @@
             </mat-select>
           </mat-form-field>
         </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-container">
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+          <input
+            matInput
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchChange($event)"
+            placeholder="Buscar por registro, código, colector, tipo o estado..."
+            class="text-body"
+          />
+          @if (searchTerm()) {
+            <button matSuffix mat-icon-button (click)="clearSearch()">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
       </div>
 
       @if (filteredActivities().length === 0) {
@@ -79,7 +114,7 @@
               </tr>
             </thead>
             <tbody class="table-body">
-              @for (activity of filteredActivities(); track activity.id) {
+              @for (activity of paginatedActivities(); track activity.id) {
                 <tr class="table-row">
                   <td class="table-td">
                     <span class="text-body font-bold text-accent-titles">{{
@@ -134,11 +169,21 @@
               }
             </tbody>
           </table>
+
+          <!-- Pagination -->
+          <mat-paginator
+            [length]="filteredActivities().length"
+            [pageSize]="pageSize()"
+            [pageIndex]="currentPage()"
+            [pageSizeOptions]="[10, 20, 50, 100]"
+            (page)="onPageChange($event)"
+            showFirstLastButtons
+          />
         </div>
 
         <!-- Mobile Cards (visible on mobile only) -->
         <div class="mobile-cards md:hidden">
-          @for (activity of filteredActivities(); track activity.id) {
+          @for (activity of paginatedActivities(); track activity.id) {
             <div class="form-card bg-primary-white rounded-lg shadow p-4">
               <div class="card-header">
                 <div class="card-title">
@@ -223,6 +268,17 @@
               </div>
             </div>
           }
+
+          <!-- Mobile Pagination -->
+          <mat-paginator
+            class="mt-4"
+            [length]="filteredActivities().length"
+            [pageSize]="pageSize()"
+            [pageIndex]="currentPage()"
+            [pageSizeOptions]="[10, 20, 50, 100]"
+            (page)="onPageChange($event)"
+            showFirstLastButtons
+          />
         </div>
       }
     </section>

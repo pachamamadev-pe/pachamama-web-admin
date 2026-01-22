@@ -40,6 +40,7 @@ export class SidebarService {
   isPasswordChanged = signal<boolean>(false);
   userId = signal<string>('');
   tenantId = signal<string>('');
+  avatarUrl = signal<string | null>(null);
 
   constructor() {
     this.loadFromLocalStorage();
@@ -118,6 +119,7 @@ export class SidebarService {
     this.emailVerified.set(false);
     this.isPasswordChanged.set(false);
     this.userId.set('');
+    this.avatarUrl.set(null);
     localStorage.removeItem(this.localStorageKey);
   }
 
@@ -172,5 +174,13 @@ export class SidebarService {
   private truncateCompanyName(name: string, maxLength = 20): string {
     if (!name) return '';
     return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
+  }
+
+  /**
+   * Actualiza la URL del avatar del usuario
+   * @param avatarUrl Nueva URL del avatar (puede ser null)
+   */
+  updateAvatarUrl(avatarUrl: string | null): void {
+    this.avatarUrl.set(avatarUrl);
   }
 }

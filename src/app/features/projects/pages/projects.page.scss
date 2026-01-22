@@ -20,12 +20,84 @@
   @apply flex items-center gap-2;
 }
 
-.search-container {
-  @apply mt-4;
+/* ============================================
+   SEARCH & ADVANCED FILTERS
+   ============================================ */
+
+.search-filters-container {
+  @apply mt-4 flex flex-col gap-3;
+}
+
+.search-bar-row {
+  @apply flex gap-2 items-start;
 }
 
 .search-field {
+  @apply flex-1;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.filter-toggle-btn {
+  @apply flex items-center gap-2 shrink-0;
+  @apply border-neutral-border text-accent-titles;
+  position: relative;
+
+  &.active {
+    @apply bg-secondary-light text-secondary;
+    @apply border-secondary;
+  }
+
+  .filter-badge {
+    @apply bg-secondary text-primary-white rounded-full;
+    @apply text-xs font-bold;
+    @apply w-5 h-5 flex items-center justify-center;
+    margin-left: 4px;
+  }
+}
+
+.advanced-filters-panel {
+  @apply bg-secondary-light rounded-lg p-4;
+  @apply border border-neutral-border;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filters-grid {
+  @apply grid gap-4;
+  @apply grid-cols-1 md:grid-cols-3;
+}
+
+.filter-field {
   @apply w-full;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.filter-actions {
+  @apply flex justify-end mt-3 pt-3 border-t border-neutral-border;
+}
+
+.clear-filters-btn {
+  @apply text-neutral-subheading;
+
+  mat-icon {
+    @apply mr-1;
+  }
 }
 
 .page-content {
@@ -392,4 +464,34 @@
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+/* ============================================
+   STATUS CHIP STYLES
+   ============================================ */
+
+.status-chip {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  border-radius: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+// Status Color Classes
+.status-active {
+  background-color: #d1fae5 !important; // green-100
+  color: #065f46 !important; // green-800
+}
+
+.status-inactive {
+  background-color: #fee2e2 !important; // red-100
+  color: #991b1b !important; // red-800
+}
+
+.status-archived {
+  background-color: #f3f4f6 !important; // gray-100
+  color: #374151 !important; // gray-700
 }

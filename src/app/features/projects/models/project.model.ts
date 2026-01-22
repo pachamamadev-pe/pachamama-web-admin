@@ -35,7 +35,7 @@ export interface Project {
   productId: string;
   productName?: string;
   code?: string;
-  status: ProjectStatus;
+  status: string; // 'active' | 'inactive' | 'archived'
   stage?: string; // 'planning', 'inventory', 'inventory_complete', etc.
   startDate?: string;
   endDate?: string;
@@ -45,6 +45,7 @@ export interface Project {
 export interface CommunityProjectLink {
   id: string; // linkId para actualizar
   communityId: string;
+  communityName?: string; // Nombre de la comunidad
 }
 
 /**
@@ -135,4 +136,28 @@ export function getProjectStageClass(stage?: string): string {
   };
 
   return classes[stage] || 'bg-gray-100 text-gray-600';
+}
+
+/**
+ * Get status label in Spanish
+ */
+export function getProjectStatusLabel(status: string): string {
+  const statusMap: Record<string, string> = {
+    active: 'Activo',
+    inactive: 'Inactivo',
+    archived: 'Archivado',
+  };
+  return statusMap[status] || status;
+}
+
+/**
+ * Get CSS class for project status
+ */
+export function getProjectStatusClass(status: string): string {
+  const classMap: Record<string, string> = {
+    active: 'status-active',
+    inactive: 'status-inactive',
+    archived: 'status-archived',
+  };
+  return classMap[status] || 'status-active';
 }

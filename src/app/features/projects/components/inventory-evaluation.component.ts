@@ -6,6 +6,7 @@ import {
   inject,
   input,
   signal,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -16,6 +17,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NotificationService } from '@core/services/notification.service';
 import { LineChartComponent } from '@shared/components/line-chart/line-chart.component';
@@ -44,13 +49,17 @@ interface RecordStats {
     MatMenuModule,
     MatFormFieldModule,
     MatSelectModule,
+    MatTooltipModule,
+    MatPaginatorModule,
+    MatInputModule,
+    FormsModule,
     LineChartComponent,
   ],
   templateUrl: './inventory-evaluation.component.html',
   styleUrl: './inventory-evaluation.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InventoryEvaluationComponent {
+export class InventoryEvaluationComponent implements OnDestroy {
   private activitiesService = inject(ActivitiesService);
   private notification = inject(NotificationService);
   private router = inject(Router);
@@ -63,28 +72,64 @@ export class InventoryEvaluationComponent {
   loading = signal(true);
   activities = signal<ActivityResponse[]>([]);
   selectedFilter = signal('all');
+  refreshing = signal(false); // Indicador de refresh silencioso
+  lastUpdated = signal<Date | null>(null); // Última actualización
 
-  // Datos simulados para el gráfico de registros (últimos 3 meses)
-  private generateMockRecordStats(): RecordStats[] {
-    const stats: RecordStats[] = [];
+  // Search and pagination
+  searchTerm = signal('');
+  currentPage = signal(0);
+  pageSize = signal(10);
+
+  // Auto-refresh configuration
+  private autoRefreshInterval: number | null = null;
+  private readonly AUTO_REFRESH_SECONDS = 60; // Refrescar cada 60 segundos
+
+  /**
+   * Agrupa las actividades por fecha (últimos 3 meses)
+   */
+  private groupActivitiesByDate(): RecordStats[] {
+    const allActivities = this.activities();
     const today = new Date();
     const threeMonthsAgo = new Date(today);
     threeMonthsAgo.setMonth(today.getMonth() - 3);
 
-    // Generar datos diarios con variación aleatoria
+    // Crear mapa de fechas con contadores
+    const dateMap = new Map<string, number>();
+
+    // Inicializar todas las fechas con 0
     for (let d = new Date(threeMonthsAgo); d <= today; d.setDate(d.getDate() + 1)) {
-      stats.push({
-        date: new Date(d).toISOString().split('T')[0],
-        count: Math.floor(Math.random() * 40) + 10, // Entre 10 y 50 registros por día
-      });
+      const dateKey = new Date(d).toISOString().split('T')[0];
+      dateMap.set(dateKey, 0);
     }
+
+    // Contar actividades por fecha
+    allActivities.forEach((activity) => {
+      if (activity.deviceTimestamp) {
+        const activityDate = new Date(activity.deviceTimestamp);
+        // Solo contar si está dentro del rango de 3 meses
+        if (activityDate >= threeMonthsAgo && activityDate <= today) {
+          const dateKey = activityDate.toISOString().split('T')[0];
+          const currentCount = dateMap.get(dateKey) || 0;
+          dateMap.set(dateKey, currentCount + 1);
+        }
+      }
+    });
+
+    // Convertir a array de RecordStats
+    const stats: RecordStats[] = [];
+    dateMap.forEach((count, date) => {
+      stats.push({ date, count });
+    });
+
+    // Ordenar por fecha
+    stats.sort((a, b) => a.date.localeCompare(b.date));
 
     return stats;
   }
 
   // Datos del gráfico
   chartData = computed(() => {
-    const stats = this.generateMockRecordStats();
+    const stats = this.groupActivitiesByDate();
     return {
       labels: stats.map((s) =>
         new Date(s.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
@@ -97,54 +142,188 @@ export class InventoryEvaluationComponent {
 
   // Estadísticas computadas
   totalRecords = computed(() => {
-    const stats = this.generateMockRecordStats();
-    return stats.reduce((sum, s) => sum + s.count, 0);
+    return this.activities().length;
   });
 
-  // Filtrar actividades según el filtro seleccionado
+  // Filtrar actividades según el filtro seleccionado y término de búsqueda
   filteredActivities = computed(() => {
     const allActivities = this.activities();
     const filter = this.selectedFilter();
+    const search = this.searchTerm().toLowerCase().trim();
 
-    if (filter === 'all') {
-      return allActivities;
-    } else if (filter === 'pending') {
-      return allActivities.filter((activity) => activity.overallValidationStatus === 'pending');
+    // Aplicar filtro por estado
+    let filtered = allActivities;
+    if (filter === 'pending') {
+      filtered = allActivities.filter((activity) => activity.overallValidationStatus === 'pending');
     } else if (filter === 'approved') {
-      return allActivities.filter((activity) => activity.overallValidationStatus === 'approved');
+      filtered = allActivities.filter(
+        (activity) => activity.overallValidationStatus === 'approved',
+      );
     } else if (filter === 'rejected') {
-      return allActivities.filter((activity) => activity.overallValidationStatus === 'rejected');
+      filtered = allActivities.filter(
+        (activity) => activity.overallValidationStatus === 'rejected',
+      );
     }
 
-    return allActivities;
+    // Aplicar búsqueda si existe término
+    if (search) {
+      filtered = filtered.filter((activity) => {
+        const formName = activity.formSchemaName?.toLowerCase() || '';
+        const collectorName = activity.collectorName?.toLowerCase() || '';
+        const forestCode = this.getForestCodeDisplay(activity).toLowerCase();
+        const activityType = this.getActivityTypeLabel(activity.activityType).toLowerCase();
+        const status = this.getValidationStatusLabel(
+          activity.overallValidationStatus,
+        ).toLowerCase();
+
+        return (
+          formName.includes(search) ||
+          collectorName.includes(search) ||
+          forestCode.includes(search) ||
+          activityType.includes(search) ||
+          status.includes(search)
+        );
+      });
+    }
+
+    // Ordenar por fecha de captura (más recientes primero)
+    return filtered.sort((a, b) => {
+      const dateA = a.deviceTimestamp ? new Date(a.deviceTimestamp).getTime() : 0;
+      const dateB = b.deviceTimestamp ? new Date(b.deviceTimestamp).getTime() : 0;
+      return dateB - dateA; // Descendente (más recientes primero)
+    });
+  });
+
+  // Total de registros filtrados (para paginador)
+  totalFilteredRecords = computed(() => this.filteredActivities().length);
+
+  // Actividades paginadas
+  paginatedActivities = computed(() => {
+    const filtered = this.filteredActivities();
+    const page = this.currentPage();
+    const size = this.pageSize();
+    const start = page * size;
+    const end = start + size;
+    return filtered.slice(start, end);
   });
 
   constructor() {
     effect(() => {
       const projId = this.projectId();
       if (projId) {
-        this.loadActivities(projId);
+        this.loadActivities(projId, true); // Primera carga con spinner
+        // this.startAutoRefresh(projId);
       }
     });
   }
 
+  ngOnDestroy(): void {
+    this.stopAutoRefresh();
+  }
+
+  /**
+   * Inicia el auto-refresh de actividades
+   */
+  private startAutoRefresh(projectId: string): void {
+    this.stopAutoRefresh(); // Limpiar intervalo anterior si existe
+
+    this.autoRefreshInterval = window.setInterval(() => {
+      // Solo refrescar si el documento está visible (tab activo)
+      if (document.visibilityState === 'visible') {
+        this.loadActivities(projectId, false); // Refresh silencioso
+      }
+    }, this.AUTO_REFRESH_SECONDS * 1000);
+  }
+
+  /**
+   * Detiene el auto-refresh
+   */
+  private stopAutoRefresh(): void {
+    if (this.autoRefreshInterval !== null) {
+      window.clearInterval(this.autoRefreshInterval);
+      this.autoRefreshInterval = null;
+    }
+  }
+
+  /**
+   * Refresca manualmente las actividades (llamado desde el botón)
+   */
+  refreshActivities(): void {
+    const projId = this.projectId();
+    if (projId) {
+      this.loadActivities(projId, false); // Refresh silencioso
+      this.notification.info('Actualizando registros...');
+    }
+  }
+
   /**
    * Carga las actividades del proyecto
+   * @param projectId ID del proyecto
+   * @param showLoader Si debe mostrar el spinner de carga (true para carga inicial, false para refresh)
    */
-  private loadActivities(projectId: string): void {
-    this.loading.set(true);
+  private loadActivities(projectId: string, showLoader = true): void {
+    if (showLoader) {
+      this.loading.set(true);
+    } else {
+      this.refreshing.set(true);
+    }
+
     this.activitiesService.getActivitiesByProject(projectId).subscribe({
       next: (activities) => {
         this.activities.set(activities);
-        this.loading.set(false);
+        this.lastUpdated.set(new Date());
+
+        if (showLoader) {
+          this.loading.set(false);
+        } else {
+          this.refreshing.set(false);
+        }
       },
       error: (error) => {
         console.error('Error cargando actividades:', error);
-        this.notification.error('Error al cargar las actividades');
-        this.activities.set([]);
-        this.loading.set(false);
+        if (showLoader) {
+          this.notification.error('Error al cargar las actividades');
+          this.activities.set([]);
+          this.loading.set(false);
+        } else {
+          // En refresh silencioso, no mostrar error invasivo
+          console.warn('Error en auto-refresh, reintentando en próximo ciclo');
+          this.refreshing.set(false);
+        }
       },
     });
+  }
+
+  /**
+   * Cambia el filtro de estado
+   */
+  onFilterChange(filter: string): void {
+    this.selectedFilter.set(filter);
+    this.currentPage.set(0); // Resetear a la primera página al cambiar filtro
+  }
+
+  /**
+   * Maneja el cambio en el término de búsqueda
+   */
+  onSearchChange(term: string): void {
+    this.searchTerm.set(term);
+    this.currentPage.set(0); // Resetear a la primera página al buscar
+  }
+
+  /**
+   * Limpia el término de búsqueda
+   */
+  clearSearch(): void {
+    this.searchTerm.set('');
+    this.currentPage.set(0);
+  }
+
+  /**
+   * Maneja el cambio de página
+   */
+  onPageChange(event: PageEvent): void {
+    this.currentPage.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
   }
 
   /**
@@ -184,13 +363,6 @@ export class InventoryEvaluationComponent {
   downloadActivity(activity: ActivityResponse): void {
     this.notification.info(`Descargando actividad: ${activity.formSchemaName}`);
     // TODO: Implementar lógica de descarga
-  }
-
-  /**
-   * Cambia el filtro de registros
-   */
-  onFilterChange(filter: string): void {
-    this.selectedFilter.set(filter);
   }
 
   /**

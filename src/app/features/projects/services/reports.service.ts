@@ -106,4 +106,23 @@ export class ReportsService {
       responseType: 'blob',
     });
   }
+
+  /**
+   * Generates a report of all products in the specified format (PDF or XLSX)
+   *
+   * @param format - Report format: 'pdf' or 'xlsx' (default: 'pdf')
+   * @param searchQuery - Optional search filter
+   * @returns Observable with file as Blob
+   */
+  generateProductsReport(format: 'pdf' | 'xlsx' = 'pdf', searchQuery?: string): Observable<Blob> {
+    const params: { format: string; q?: string } = { format };
+    if (searchQuery) {
+      params.q = searchQuery;
+    }
+
+    return this.http.get(`${this.apiUrl}/products`, {
+      params,
+      responseType: 'blob',
+    });
+  }
 }

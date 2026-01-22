@@ -1,11 +1,4 @@
-﻿import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  OnInit,
-  signal,
-} from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -20,8 +13,10 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSelectModule } from '@angular/material/select';
 import { ProjectsService } from '../services/projects.service';
 import { ProductsService } from '../../products/services/products.service';
+import { CommunitiesService } from '../../communities/services/communities.service';
 import { CommunityProjectLinkService } from '../services/community-project-link.service';
 import { SidebarService } from '@core/services/sidebar.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -31,11 +26,13 @@ import {
   Project,
   CreateProjectRequest,
   UpdateProjectRequest,
-  ProjectStatus,
   getProjectStageLabel,
   getProjectStageClass,
+  getProjectStatusLabel,
+  getProjectStatusClass,
 } from '../models/project.model';
 import { Product } from '../../products/models/product.model';
+import { Community } from '../../communities/models/community.model';
 import { ProjectFormComponent } from '../components/project-form.component';
 
 @Component({
@@ -53,6 +50,7 @@ import { ProjectFormComponent } from '../components/project-form.component';
     MatPaginatorModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatChipsModule,
     EmptyStateComponent,
   ],
@@ -63,6 +61,7 @@ import { ProjectFormComponent } from '../components/project-form.component';
 export class ProjectsPage implements OnInit {
   private projectsService = inject(ProjectsService);
   private productsService = inject(ProductsService);
+  private communitiesService = inject(CommunitiesService);
   private communityProjectLinkService = inject(CommunityProjectLinkService);
   private sidebarService = inject(SidebarService);
   private dialog = inject(MatDialog);
@@ -71,6 +70,10 @@ export class ProjectsPage implements OnInit {
 
   // Search and filtering
   searchTerm = signal('');
+  selectedProductId = signal<string | null>(null);
+  selectedCommunityId = signal<string | null>(null);
+  selectedStatus = signal<string | null>(null);
+  showAdvancedFilters = signal(false);
 
   // Pagination
   currentPage = signal(0);
@@ -80,33 +83,35 @@ export class ProjectsPage implements OnInit {
   // Data
   projects = signal<Project[]>([]);
   products = signal<Product[]>([]);
+  communities = signal<Community[]>([]);
   loading = signal(true);
 
-  filteredProjects = computed(() => {
-    const search = this.searchTerm().toLowerCase().trim();
-    if (!search) {
-      return this.projects();
-    }
+  // Status options for filter
+  statusOptions = [
+    { value: 'active', label: 'Activo' },
+    { value: 'inactive', label: 'Inactivo' },
+    { value: 'archived', label: 'Archivado' },
+  ];
 
-    return this.projects().filter((project) => {
-      const productName = this.getProductName(project.productId).toLowerCase();
-      return (
-        project.name.toLowerCase().includes(search) ||
-        (project.code?.toLowerCase().includes(search) ?? false) ||
-        (project.description?.toLowerCase().includes(search) ?? false) ||
-        productName.includes(search)
-      );
-    });
-  });
-
-  displayedColumns: string[] = ['name', 'product', 'period', 'stage', 'actions'];
+  displayedColumns: string[] = [
+    'name',
+    'product',
+    'community',
+    'period',
+    'stage',
+    'status',
+    'actions',
+  ];
 
   // Helpers para el template
   readonly getProjectStageLabel = getProjectStageLabel;
   readonly getProjectStageClass = getProjectStageClass;
+  readonly getProjectStatusLabel = getProjectStatusLabel;
+  readonly getProjectStatusClass = getProjectStatusClass;
 
   ngOnInit(): void {
     this.loadProducts();
+    this.loadCommunities();
     this.loadProjects();
   }
 
@@ -121,17 +126,28 @@ export class ProjectsPage implements OnInit {
     });
   }
 
-  loadProjects(): void {
-    const companyId = this.sidebarService.tenantId();
-    if (!companyId) {
-      this.notification.error('No se pudo obtener el ID de la empresa');
-      this.loading.set(false);
-      return;
-    }
+  private loadCommunities(): void {
+    this.communitiesService.getCommunities().subscribe({
+      next: (communities) => {
+        this.communities.set(communities || []);
+      },
+      error: () => {
+        this.communities.set([]);
+      },
+    });
+  }
 
+  loadProjects(): void {
     this.loading.set(true);
     this.projectsService
-      .getProjects(companyId, this.currentPage(), this.pageSize(), this.searchTerm() || undefined)
+      .getProjectsAdvanced(
+        this.currentPage(),
+        this.pageSize(),
+        this.searchTerm() || undefined,
+        this.selectedProductId() || undefined,
+        this.selectedCommunityId() || undefined,
+        this.selectedStatus() || undefined,
+      )
       .subscribe({
         next: (response) => {
           this.projects.set(response?.items ?? []);
@@ -264,19 +280,6 @@ export class ProjectsPage implements OnInit {
     return `${formatDate(startDate)} - ${formatDate(endDate)}`;
   }
 
-  getProjectStatusClass(status: string): string {
-    switch (status) {
-      case ProjectStatus.ACTIVE:
-        return 'bg-secondary-light text-secondary';
-      case ProjectStatus.INACTIVE:
-        return 'bg-gray-100 text-gray-600';
-      case ProjectStatus.COMPLETED:
-        return 'bg-blue-100 text-blue-600';
-      default:
-        return 'bg-gray-100 text-gray-600';
-    }
-  }
-
   /**
    * Crea un proyecto y luego lo vincula con una comunidad de forma secuencial
    * Muestra mensajes progresivos para mejorar la experiencia del usuario
@@ -371,13 +374,82 @@ export class ProjectsPage implements OnInit {
   private performDelete(id: string): void {
     this.projectsService.deleteProject(id).subscribe({
       next: () => {
-        this.notification.success('Proyecto eliminado correctamente');
+        this.notification.success('Proyecto archivado correctamente');
         this.loadProjects();
       },
       error: (error) => {
         console.error('Error deleting project:', error);
-        this.notification.error('Error al eliminar proyecto');
+        // Manejar mensajes de error específicos del backend
+        const errorMessage =
+          error?.error?.message || error?.message || 'Error al archivar proyecto';
+        this.notification.error(errorMessage);
       },
     });
+  }
+
+  /**
+   * Toggle advanced filters visibility
+   */
+  toggleAdvancedFilters(): void {
+    this.showAdvancedFilters.update((show) => !show);
+  }
+
+  /**
+   * Handle product filter change
+   */
+  onProductFilterChange(productId: string | null): void {
+    this.selectedProductId.set(productId);
+    this.currentPage.set(0);
+    this.loadProjects();
+  }
+
+  /**
+   * Handle community filter change
+   */
+  onCommunityFilterChange(communityId: string | null): void {
+    this.selectedCommunityId.set(communityId);
+    this.currentPage.set(0);
+    this.loadProjects();
+  }
+
+  /**
+   * Handle status filter change
+   */
+  onStatusFilterChange(status: string | null): void {
+    this.selectedStatus.set(status);
+    this.currentPage.set(0);
+    this.loadProjects();
+  }
+
+  /**
+   * Clear all filters
+   */
+  clearAllFilters(): void {
+    this.searchTerm.set('');
+    this.selectedProductId.set(null);
+    this.selectedCommunityId.set(null);
+    this.selectedStatus.set(null);
+    this.currentPage.set(0);
+    this.loadProjects();
+  }
+
+  /**
+   * Check if any filter is active
+   */
+  hasActiveFilters(): boolean {
+    return !!(
+      this.searchTerm() ||
+      this.selectedProductId() ||
+      this.selectedCommunityId() ||
+      this.selectedStatus()
+    );
+  }
+
+  /**
+   * Get community name by ID
+   */
+  getCommunityName(communityId: string): string {
+    const community = this.communities().find((c) => c.id === communityId);
+    return community ? community.name : 'Sin comunidad';
   }
 }

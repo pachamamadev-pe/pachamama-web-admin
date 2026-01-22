@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { ProductsService } from '../services/products.service';
@@ -20,6 +21,7 @@ import {
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { NotificationService } from '@core/services/notification.service';
 import { AzureStorageService } from '@core/services/azure-storage.service';
+import { ReportsService } from '../../projects/services/reports.service';
 
 /**
  * Página principal de gestión de productos
@@ -39,6 +41,7 @@ import { AzureStorageService } from '@core/services/azure-storage.service';
     MatMenuModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    MatDividerModule,
   ],
   templateUrl: './products.page.html',
   styleUrl: './products.page.scss',
@@ -46,6 +49,7 @@ import { AzureStorageService } from '@core/services/azure-storage.service';
 export class ProductsPage implements OnInit {
   private productsService = inject(ProductsService);
   private azureStorage = inject(AzureStorageService);
+  private reportsService = inject(ReportsService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private router = inject(Router);
@@ -57,6 +61,7 @@ export class ProductsPage implements OnInit {
   searchTerm = signal('');
   viewMode = signal<'grid' | 'list'>('grid');
   totalElements = signal(0);
+  downloadingReport = signal(false);
 
   // Cache de URLs de imágenes con SAS token (path -> url)
   private imageUrlCache = signal<Map<string, string>>(new Map());
@@ -340,5 +345,49 @@ export class ProductsPage implements OnInit {
 
     // Retornar null mientras se carga (se mostrará el icono placeholder)
     return null;
+  }
+
+  /**
+   * Descarga el reporte de productos en el formato especificado
+   * @param format Formato del reporte: 'pdf' o 'xlsx'
+   */
+  downloadReport(format: 'pdf' | 'xlsx'): void {
+    if (this.downloadingReport()) return;
+
+    this.downloadingReport.set(true);
+    const searchQuery = this.searchTerm().trim() || undefined;
+    const formatLabel = format === 'pdf' ? 'PDF' : 'Excel';
+
+    this.notification.info(`Generando reporte ${formatLabel}...`);
+
+    this.reportsService.generateProductsReport(format, searchQuery).subscribe({
+      next: (blob) => {
+        // Crear URL del blob
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+
+        // Nombre del archivo con fecha actual
+        const date = new Date().toISOString().split('T')[0];
+        const extension = format === 'pdf' ? 'pdf' : 'xlsx';
+        link.download = `reporte-productos-${date}.${extension}`;
+
+        // Descargar
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Limpiar
+        window.URL.revokeObjectURL(url);
+
+        this.notification.success(`Reporte ${formatLabel} descargado correctamente`);
+        this.downloadingReport.set(false);
+      },
+      error: (error) => {
+        console.error('Error downloading report:', error);
+        this.notification.error(`Error al descargar el reporte ${formatLabel}`);
+        this.downloadingReport.set(false);
+      },
+    });
   }
 }

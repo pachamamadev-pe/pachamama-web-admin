@@ -39,6 +39,33 @@ export class ProjectsService {
   }
 
   /**
+   * Búsqueda avanzada de proyectos con filtros múltiples
+   * @param page - Número de página (default: 0)
+   * @param size - Tamaño de página (default: 20)
+   * @param q - Query de búsqueda (opcional)
+   * @param productId - ID del producto (opcional)
+   * @param communityId - ID de la comunidad (opcional)
+   * @param status - Estado del proyecto: active, inactive, archived (opcional)
+   */
+  getProjectsAdvanced(
+    page = 0,
+    size = 20,
+    q?: string,
+    productId?: string,
+    communityId?: string,
+    status?: string,
+  ): Observable<PageDto<Project>> {
+    let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+
+    if (q) params = params.set('q', q);
+    if (productId) params = params.set('productId', productId);
+    if (communityId) params = params.set('communityId', communityId);
+    if (status) params = params.set('status', status);
+
+    return this.http.get<PageDto<Project>>(`${this.apiUrl}/advanced`, { params });
+  }
+
+  /**
    * Crea un nuevo proyecto
    * @param data - Datos del proyecto a crear
    */

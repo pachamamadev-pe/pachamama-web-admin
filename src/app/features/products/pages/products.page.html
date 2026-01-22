@@ -36,14 +36,42 @@
         </mat-menu>
 
         <!-- More options menu -->
-        <button mat-icon-button [matMenuTriggerFor]="moreMenu" matTooltip="Más opciones">
-          <mat-icon>more_vert</mat-icon>
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="moreMenu"
+          matTooltip="Más opciones"
+          [disabled]="downloadingReport()"
+        >
+          @if (downloadingReport()) {
+            <mat-icon class="animate-spin">sync</mat-icon>
+          } @else {
+            <mat-icon>more_vert</mat-icon>
+          }
         </button>
 
         <mat-menu #moreMenu="matMenu">
           <button mat-menu-item (click)="refreshProducts()">
             <mat-icon>refresh</mat-icon>
             <span>Actualizar</span>
+          </button>
+
+          <mat-divider></mat-divider>
+
+          <!-- Descargar Reportes -->
+          <div class="px-3 py-2">
+            <p class="text-xs font-semibold text-neutral-subheading uppercase tracking-wide">
+              Descargar Reporte
+            </p>
+          </div>
+
+          <button mat-menu-item (click)="downloadReport('pdf')" [disabled]="downloadingReport()">
+            <mat-icon class="text-red-600">picture_as_pdf</mat-icon>
+            <span>Reporte PDF</span>
+          </button>
+
+          <button mat-menu-item (click)="downloadReport('xlsx')" [disabled]="downloadingReport()">
+            <mat-icon class="text-green-600">table_chart</mat-icon>
+            <span>Reporte Excel</span>
           </button>
         </mat-menu>
       </div>

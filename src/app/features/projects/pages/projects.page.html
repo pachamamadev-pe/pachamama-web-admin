@@ -18,23 +18,109 @@
       </div>
     </div>
 
-    <!-- Search bar -->
-    <div class="search-container">
-      <mat-form-field class="search-field" appearance="outline">
-        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
-        <input
-          matInput
-          [ngModel]="searchTerm()"
-          (ngModelChange)="onSearchChange($event)"
-          placeholder="Buscar proyectos..."
-          class="text-body"
-        />
-        @if (searchTerm()) {
-          <button matSuffix mat-icon-button (click)="clearSearch()" matTooltip="Limpiar búsqueda">
-            <mat-icon>close</mat-icon>
-          </button>
-        }
-      </mat-form-field>
+    <!-- Search and Advanced Filters -->
+    <div class="search-filters-container">
+      <!-- Main search bar -->
+      <div class="search-bar-row">
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+          <input
+            matInput
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchChange($event)"
+            placeholder="Buscar por nombre o descripción..."
+            class="text-body"
+          />
+          @if (searchTerm()) {
+            <button matSuffix mat-icon-button (click)="clearSearch()" matTooltip="Limpiar búsqueda">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
+
+        <!-- Toggle advanced filters button -->
+        <button
+          mat-stroked-button
+          (click)="toggleAdvancedFilters()"
+          class="filter-toggle-btn"
+          [class.active]="showAdvancedFilters()"
+        >
+          <mat-icon>{{ showAdvancedFilters() ? 'expand_less' : 'tune' }}</mat-icon>
+          <span class="hidden sm:inline">Filtros avanzados</span>
+          @if (hasActiveFilters() && !showAdvancedFilters()) {
+            <span class="filter-badge">{{
+              (selectedProductId() ? 1 : 0) +
+                (selectedCommunityId() ? 1 : 0) +
+                (selectedStatus() ? 1 : 0)
+            }}</span>
+          }
+        </button>
+      </div>
+
+      <!-- Advanced filters panel -->
+      @if (showAdvancedFilters()) {
+        <div class="advanced-filters-panel">
+          <div class="filters-grid">
+            <!-- Product filter -->
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Producto</mat-label>
+              <mat-icon matPrefix class="text-neutral-subheading">eco</mat-icon>
+              <mat-select
+                [ngModel]="selectedProductId()"
+                (ngModelChange)="onProductFilterChange($event)"
+                placeholder="Todos los productos"
+              >
+                <mat-option [value]="null">Todos los productos</mat-option>
+                @for (product of products(); track product.id) {
+                  <mat-option [value]="product.id">{{ product.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Community filter -->
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Comunidad</mat-label>
+              <mat-icon matPrefix class="text-neutral-subheading">groups</mat-icon>
+              <mat-select
+                [ngModel]="selectedCommunityId()"
+                (ngModelChange)="onCommunityFilterChange($event)"
+                placeholder="Todas las comunidades"
+              >
+                <mat-option [value]="null">Todas las comunidades</mat-option>
+                @for (community of communities(); track community.id) {
+                  <mat-option [value]="community.id">{{ community.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Status filter -->
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Estado</mat-label>
+              <mat-icon matPrefix class="text-neutral-subheading">flag</mat-icon>
+              <mat-select
+                [ngModel]="selectedStatus()"
+                (ngModelChange)="onStatusFilterChange($event)"
+                placeholder="Todos los estados"
+              >
+                <mat-option [value]="null">Todos los estados</mat-option>
+                @for (status of statusOptions; track status.value) {
+                  <mat-option [value]="status.value">{{ status.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Clear filters button -->
+          @if (hasActiveFilters()) {
+            <div class="filter-actions">
+              <button mat-button (click)="clearAllFilters()" class="clear-filters-btn">
+                <mat-icon>clear_all</mat-icon>
+                Limpiar todos los filtros
+              </button>
+            </div>
+          }
+        </div>
+      }
     </div>
   </header>
 
@@ -46,7 +132,7 @@
         <mat-spinner diameter="48" />
         <p class="text-body text-neutral-subheading mt-4">Cargando proyectos...</p>
       </div>
-    } @else if (projects().length === 0 && !searchTerm()) {
+    } @else if (projects().length === 0 && !searchTerm() && !hasActiveFilters()) {
       <!-- Empty state -->
       <app-empty-state
         icon="folder"
@@ -56,15 +142,17 @@
         actionLabel="Crear primer proyecto"
         (action)="openCreateDialog()"
       />
-    } @else if (filteredProjects().length === 0 && searchTerm()) {
+    } @else if (projects().length === 0 && (searchTerm() || hasActiveFilters())) {
       <!-- No Results State -->
       <div class="empty-state">
         <div class="empty-icon">
           <mat-icon>search_off</mat-icon>
         </div>
         <h3 class="text-body font-bold text-accent-titles">No se encontraron proyectos</h3>
-        <p class="text-subtitle text-neutral-subheading">Intenta con otros términos de búsqueda</p>
-        <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
+        <p class="text-subtitle text-neutral-subheading">
+          Intenta ajustando los filtros o términos de búsqueda
+        </p>
+        <button mat-stroked-button class="mt-4" (click)="clearAllFilters()">Limpiar filtros</button>
       </div>
     } @else {
       <!-- Projects Table (Desktop only) -->
@@ -75,13 +163,15 @@
               <tr>
                 <th class="table-th text-left">Nombre</th>
                 <th class="table-th text-left">Producto</th>
+                <th class="table-th text-left hidden xl:table-cell">Comunidad</th>
                 <th class="table-th text-left hidden lg:table-cell">Periodo</th>
                 <th class="table-th text-left">Etapa</th>
+                <th class="table-th text-left">Estado</th>
                 <th class="table-th text-right">Acciones</th>
               </tr>
             </thead>
             <tbody class="table-body">
-              @for (project of filteredProjects(); track project.id) {
+              @for (project of projects(); track project.id) {
                 <tr class="table-row">
                   <!-- Nombre -->
                   <td class="table-td">
@@ -95,8 +185,22 @@
                   <!-- Producto -->
                   <td class="table-td">
                     <span class="text-body text-accent-titles">
-                      {{ getProductName(project.productId) }}
+                      {{ project.productName || 'Sin producto' }}
                     </span>
+                  </td>
+
+                  <!-- Comunidad (solo desktop extra grande) -->
+                  <td class="table-td hidden xl:table-cell">
+                    <div class="flex items-center gap-1">
+                      <mat-icon
+                        class="text-neutral-subheading"
+                        style="font-size: 16px; width: 16px; height: 16px"
+                        >groups</mat-icon
+                      >
+                      <span class="text-subtitle text-neutral-subheading">
+                        {{ project.communityLink?.communityName || 'Sin comunidad' }}
+                      </span>
+                    </div>
                   </td>
 
                   <!-- Periodo (solo desktop grande) -->
@@ -117,6 +221,13 @@
                   <td class="table-td">
                     <mat-chip class="stage-chip" [ngClass]="getProjectStageClass(project.stage)">
                       {{ getProjectStageLabel(project.stage) }}
+                    </mat-chip>
+                  </td>
+
+                  <!-- Estado -->
+                  <td class="table-td">
+                    <mat-chip class="status-chip" [ngClass]="getProjectStatusClass(project.status)">
+                      {{ getProjectStatusLabel(project.status) }}
                     </mat-chip>
                   </td>
 
@@ -166,7 +277,7 @@
 
       <!-- Mobile Cards (visible only on mobile) -->
       <div class="mobile-cards">
-        @for (project of filteredProjects(); track project.id) {
+        @for (project of projects(); track project.id) {
           <div class="project-card bg-primary-white rounded-lg shadow p-4">
             <!-- Header with status and menu -->
             <div class="card-header">
@@ -204,10 +315,13 @@
               </div>
             </div>
 
-            <!-- Stage Badge -->
-            <div class="mb-2">
+            <!-- Stage and Status Badges -->
+            <div class="mb-2 flex gap-2">
               <mat-chip class="stage-chip" [ngClass]="getProjectStageClass(project.stage)">
                 {{ getProjectStageLabel(project.stage) }}
+              </mat-chip>
+              <mat-chip class="status-chip" [ngClass]="getProjectStatusClass(project.status)">
+                {{ getProjectStatusLabel(project.status) }}
               </mat-chip>
             </div>
 
@@ -217,7 +331,16 @@
               <div class="detail-row">
                 <mat-icon class="detail-icon">category</mat-icon>
                 <span class="detail-label">Producto:</span>
-                <span class="detail-value">{{ getProductName(project.productId) }}</span>
+                <span class="detail-value">{{ project.productName || 'Sin producto' }}</span>
+              </div>
+
+              <!-- Comunidad -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">groups</mat-icon>
+                <span class="detail-label">Comunidad:</span>
+                <span class="detail-value">
+                  {{ project.communityLink?.communityName || 'Sin comunidad' }}
+                </span>
               </div>
 
               <!-- Periodo -->

@@ -270,3 +270,20 @@
   @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200;
   @apply animate-pulse;
 }
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
