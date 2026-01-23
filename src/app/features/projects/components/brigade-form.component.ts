@@ -6,12 +6,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BrigadesService } from '../services/brigades.service';
 import { NotificationService } from '@core/services/notification.service';
 import { CreateBrigadeRequest } from '../models/create-brigade.request';
+import { Brigade } from '../models/brigade.model';
 
 interface BrigadeFormDialogData {
   projectCommunityId: string;
+  mode?: 'create' | 'edit';
+  brigade?: Brigade;
 }
 
 @Component({
@@ -25,6 +29,7 @@ interface BrigadeFormDialogData {
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSlideToggleModule,
   ],
   template: `
     <div class="dialog-container">
@@ -32,12 +37,18 @@ interface BrigadeFormDialogData {
       <header class="dialog-header">
         <div class="header-content">
           <div class="header-icon">
-            <mat-icon class="text-secondary">group_add</mat-icon>
+            <mat-icon class="text-secondary">{{ isEditMode() ? 'edit' : 'group_add' }}</mat-icon>
           </div>
           <div class="header-text">
-            <h2 class="text-title font-bold text-accent-titles">Crear Nueva Brigada</h2>
+            <h2 class="text-title font-bold text-accent-titles">
+              {{ isEditMode() ? 'Editar Brigada' : 'Crear Nueva Brigada' }}
+            </h2>
             <p class="text-subtitle text-neutral-subheading">
-              Completa la información de la brigada
+              {{
+                isEditMode()
+                  ? 'Modifica la información de la brigada'
+                  : 'Completa la información de la brigada'
+              }}
             </p>
           </div>
         </div>
@@ -87,6 +98,32 @@ interface BrigadeFormDialogData {
                   {{ form.get('description')?.value?.length || 0 }}/500
                 </mat-hint>
               </mat-form-field>
+
+              <!-- Status Toggle (solo en modo edición) -->
+              @if (isEditMode()) {
+                <div class="status-toggle-container">
+                  <div class="status-info">
+                    <mat-icon class="status-icon">{{
+                      form.get('status')?.value === 'active' ? 'check_circle' : 'cancel'
+                    }}</mat-icon>
+                    <div class="status-text">
+                      <span class="status-label">Estado de la Brigada</span>
+                      <span class="status-description">{{
+                        form.get('status')?.value === 'active'
+                          ? 'La brigada está activa y puede recibir asignaciones'
+                          : 'La brigada está inactiva y no recibirá nuevas asignaciones'
+                      }}</span>
+                    </div>
+                  </div>
+                  <mat-slide-toggle
+                    color="primary"
+                    [checked]="form.get('status')?.value === 'active'"
+                    (change)="onStatusChange($event.checked)"
+                  >
+                    {{ form.get('status')?.value === 'active' ? 'Activa' : 'Inactiva' }}
+                  </mat-slide-toggle>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -105,12 +142,12 @@ interface BrigadeFormDialogData {
             @if (submitting()) {
               <span class="button-content">
                 <mat-icon class="button-icon spin">hourglass_empty</mat-icon>
-                Creando...
+                {{ isEditMode() ? 'Guardando...' : 'Creando...' }}
               </span>
             } @else {
               <span class="button-content">
-                <mat-icon class="button-icon">add_circle</mat-icon>
-                Crear Brigada
+                <mat-icon class="button-icon">{{ isEditMode() ? 'save' : 'add_circle' }}</mat-icon>
+                {{ isEditMode() ? 'Guardar Cambios' : 'Crear Brigada' }}
               </span>
             }
           </button>
@@ -220,6 +257,50 @@ interface BrigadeFormDialogData {
     .field-icon {
       color: #737373;
       margin-right: 8px;
+    }
+
+    /* Status Toggle */
+    .status-toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: #f9fafb;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      gap: 16px;
+    }
+
+    .status-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .status-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: #218358;
+    }
+
+    .status-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .status-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0a0a0a;
+    }
+
+    .status-description {
+      font-size: 13px;
+      color: #737373;
+      line-height: 1.4;
     }
 
     /* Info Box */
@@ -336,11 +417,27 @@ export class BrigadeFormDialogComponent {
   private data = inject<BrigadeFormDialogData>(MAT_DIALOG_DATA);
 
   submitting = signal(false);
+  isEditMode = signal(this.data.mode === 'edit');
 
   form: FormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
     description: ['', [Validators.maxLength(500)]],
+    status: ['active'], // Solo se usa en modo edición
   });
+
+  constructor() {
+    if (this.isEditMode() && this.data.brigade) {
+      this.form.patchValue({
+        name: this.data.brigade.name,
+        description: this.data.brigade.description || '',
+        status: this.data.brigade.status,
+      });
+    }
+  }
+
+  onStatusChange(isActive: boolean): void {
+    this.form.patchValue({ status: isActive ? 'active' : 'inactive' });
+  }
 
   private generateCode(): string {
     // Prefijo BRIGADA- + sufijo aleatorio base36 de 5 caracteres
@@ -367,25 +464,50 @@ export class BrigadeFormDialogComponent {
     if (this.form.invalid || this.submitting()) return;
     this.submitting.set(true);
     const value = this.form.value;
-    const code = this.generateCode();
-    const payload: CreateBrigadeRequest = {
-      projectCommunityId: this.data.projectCommunityId,
-      code,
-      name: value.name.trim(),
-      description: value.description?.trim() || undefined,
-      qrCode: this.generateQr(code, value.name.trim()),
-    };
-    this.brigadesService.createBrigade(payload).subscribe({
-      next: () => {
-        this.notification.success('Brigada creada correctamente');
-        this.submitting.set(false);
-        this.dialogRef.close({ created: true });
-      },
-      error: (error) => {
-        console.error('Error creando brigada:', error);
-        this.notification.error('Error al crear la brigada');
-        this.submitting.set(false);
-      },
-    });
+
+    if (this.isEditMode() && this.data.brigade) {
+      // Modo edición
+      const updatePayload = {
+        name: value.name.trim(),
+        description: value.description?.trim() || undefined,
+        status: value.status,
+      };
+
+      this.brigadesService.updateBrigade(this.data.brigade.id, updatePayload).subscribe({
+        next: () => {
+          this.notification.success('Brigada actualizada correctamente');
+          this.submitting.set(false);
+          this.dialogRef.close({ updated: true });
+        },
+        error: (error) => {
+          console.error('Error actualizando brigada:', error);
+          this.notification.error('Error al actualizar la brigada');
+          this.submitting.set(false);
+        },
+      });
+    } else {
+      // Modo creación
+      const code = this.generateCode();
+      const payload: CreateBrigadeRequest = {
+        projectCommunityId: this.data.projectCommunityId,
+        code,
+        name: value.name.trim(),
+        description: value.description?.trim() || undefined,
+        qrCode: this.generateQr(code, value.name.trim()),
+      };
+
+      this.brigadesService.createBrigade(payload).subscribe({
+        next: () => {
+          this.notification.success('Brigada creada correctamente');
+          this.submitting.set(false);
+          this.dialogRef.close({ created: true });
+        },
+        error: (error) => {
+          console.error('Error creando brigada:', error);
+          this.notification.error('Error al crear la brigada');
+          this.submitting.set(false);
+        },
+      });
+    }
   }
 }

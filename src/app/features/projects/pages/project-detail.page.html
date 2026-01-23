@@ -85,7 +85,11 @@
 
         <!-- Tabs Header -->
         <div class="tabs-header">
-          <mat-tab-group [(selectedIndex)]="selectedTabIndex" class="project-tabs">
+          <mat-tab-group
+            [(selectedIndex)]="selectedTabIndex"
+            (selectedTabChange)="onTabChange($event.index)"
+            class="project-tabs"
+          >
             <mat-tab label="Resumen">
               <!-- Resumen Content -->
               <div class="tab-content">
@@ -413,14 +417,18 @@
 
             <mat-tab label="Recolectores">
               <div class="tab-content">
-                @if (loadingCollectors()) {
-                  <!-- Loading State -->
-                  <div class="loading-state">
-                    <mat-spinner diameter="48" />
-                    <p class="text-body text-neutral-subheading mt-4">Cargando recolectores...</p>
+                @if (!project()?.communityLink?.id) {
+                  <!-- No community link error -->
+                  <div class="empty-state">
+                    <div class="empty-icon">
+                      <mat-icon>error_outline</mat-icon>
+                    </div>
+                    <h3 class="text-body font-bold text-accent-titles">
+                      Error: No se encontró communityLink
+                    </h3>
                   </div>
-                } @else if (collectors().length === 0) {
-                  <!-- Empty State -->
+                } @else if (collectors().length === 0 && !tabsLoaded().has(1)) {
+                  <!-- Empty State - No collectors yet and tab not loaded -->
                   <div class="empty-state">
                     <div class="empty-icon">
                       <mat-icon>group_add</mat-icon>
@@ -446,12 +454,12 @@
                     </p>
                   </div>
                 } @else {
-                  <!-- Tabla de Recolectores -->
-                  <div class="collectors-table-container">
+                  <!-- Collectors Tab Component -->
+                  <div class="collectors-tab-wrapper">
                     <div class="table-header-actions">
                       <div class="header-info">
                         <h3 class="text-body font-bold text-accent-titles">
-                          Recolectores Registrados ({{ collectors().length }})
+                          Recolectores Registrados
                         </h3>
                         <p class="text-subtitle text-neutral-subheading">
                           Puedes generar un nuevo código QR para invitar más recolectores
@@ -469,141 +477,7 @@
                       </button>
                     </div>
 
-                    <div class="table-wrapper">
-                      <table
-                        mat-table
-                        [dataSource]="paginatedCollectors()"
-                        class="collectors-table"
-                      >
-                        <!-- Columna Nombre -->
-                        <ng-container matColumnDef="name">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">Nombre</th>
-                          <td mat-cell *matCellDef="let collector" class="table-cell">
-                            {{ collector.name }}
-                          </td>
-                        </ng-container>
-
-                        <!-- Columna Apellido -->
-                        <ng-container matColumnDef="lastName">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">Apellido</th>
-                          <td mat-cell *matCellDef="let collector" class="table-cell">
-                            {{ collector.lastName }}
-                          </td>
-                        </ng-container>
-
-                        <!-- Columna Tipo Documento -->
-                        <ng-container matColumnDef="documentType">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">Tipo Doc.</th>
-                          <td mat-cell *matCellDef="let collector" class="table-cell">
-                            {{ collector.documentType }}
-                          </td>
-                        </ng-container>
-
-                        <!-- Columna Número Documento -->
-                        <ng-container matColumnDef="documentNumber">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">
-                            N° Documento
-                          </th>
-                          <td mat-cell *matCellDef="let collector" class="table-cell">
-                            {{ collector.documentNumber }}
-                          </td>
-                        </ng-container>
-
-                        <!-- Columna Teléfono -->
-                        <ng-container matColumnDef="phone">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">Teléfono</th>
-                          <td mat-cell *matCellDef="let collector" class="table-cell">
-                            {{ collector.phone }}
-                          </td>
-                        </ng-container>
-
-                        <!-- Columna Brigada Asignada -->
-                        <ng-container matColumnDef="assignedBrigade">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">
-                            Brigada asignada
-                          </th>
-                          <td mat-cell *matCellDef="let collector" class="table-cell">
-                            <mat-form-field appearance="outline" class="brigade-selector">
-                              <mat-select
-                                [value]="collector.currentBrigadeId || ''"
-                                (selectionChange)="
-                                  assignCollectorToBrigade(collector, $event.value)
-                                "
-                                placeholder="Seleccionar brigada"
-                                [disabled]="collector.status === 'inactive'"
-                              >
-                                <mat-option [value]="''">
-                                  <span class="text-neutral-subheading">Sin asignar</span>
-                                </mat-option>
-                                @for (brigade of brigades(); track brigade.id) {
-                                  <mat-option [value]="brigade.id">
-                                    {{ brigade.name }}
-                                  </mat-option>
-                                }
-                              </mat-select>
-                            </mat-form-field>
-                          </td>
-                        </ng-container>
-
-                        <!-- Columna Estado -->
-                        <ng-container matColumnDef="status">
-                          <th mat-header-cell *matHeaderCellDef class="table-header">Estado</th>
-                          <td mat-cell *matCellDef="let collector" class="table-cell">
-                            <mat-chip [class]="getCollectorStatusClass(collector.status)">
-                              {{ getCollectorStatusLabel(collector.status) }}
-                            </mat-chip>
-                          </td>
-                        </ng-container>
-
-                        <!-- Columna Acciones -->
-                        <ng-container matColumnDef="actions">
-                          <th mat-header-cell *matHeaderCellDef class="table-header text-right">
-                            Acciones
-                          </th>
-                          <td mat-cell *matCellDef="let collector" class="table-cell text-right">
-                            @if (collector.status === 'active') {
-                              <button
-                                mat-icon-button
-                                class="btn-delete"
-                                (click)="deleteCollector(collector)"
-                                matTooltip="Inactivar recolector"
-                              >
-                                <mat-icon>person_off</mat-icon>
-                              </button>
-                            } @else {
-                              <button
-                                mat-raised-button
-                                color="primary"
-                                class="btn-activate"
-                                (click)="activateCollector(collector)"
-                              >
-                                <mat-icon>check_circle</mat-icon>
-                                <span class="hidden sm:inline">Activar</span>
-                              </button>
-                            }
-                          </td>
-                        </ng-container>
-
-                        <tr mat-header-row *matHeaderRowDef="collectorsDisplayedColumns"></tr>
-                        <tr
-                          mat-row
-                          *matRowDef="let row; columns: collectorsDisplayedColumns"
-                          class="table-row"
-                          [class.row-inactive]="row.status === 'inactive'"
-                        ></tr>
-                      </table>
-                    </div>
-
-                    <!-- Paginador -->
-                    <mat-paginator
-                      [length]="collectors().length"
-                      [pageSize]="collectorsPageSize()"
-                      [pageIndex]="collectorsPageIndex()"
-                      [pageSizeOptions]="[5, 10, 25, 50]"
-                      (page)="onCollectorsPageChange($event)"
-                      showFirstLastButtons
-                      class="collectors-paginator"
-                    />
+                    <app-collectors-tab [projectCommunityId]="project()!.communityLink!.id" />
                   </div>
                 }
               </div>
@@ -612,100 +486,36 @@
             @if (showBrigadesTab()) {
               <mat-tab label="Brigadas">
                 <div class="tab-content">
-                  @if (loadingBrigades()) {
-                    <!-- Loading State -->
-                    <div class="loading-state">
-                      <mat-spinner diameter="48" />
-                      <p class="text-body text-neutral-subheading mt-4">Cargando brigadas...</p>
-                    </div>
-                  } @else if (brigades().length === 0) {
-                    <!-- Empty State -->
+                  @if (!project()?.communityLink?.id) {
+                    <!-- No community link error -->
                     <div class="empty-state">
                       <div class="empty-icon">
-                        <mat-icon>groups</mat-icon>
+                        <mat-icon>error_outline</mat-icon>
                       </div>
                       <h3 class="text-body font-bold text-accent-titles">
-                        No hay brigadas registradas
+                        Error: No se encontró communityLink
                       </h3>
-                      <p class="text-subtitle text-neutral-subheading">
-                        Aún no se han registrado brigadas para este proyecto
-                      </p>
-                      <button
-                        mat-raised-button
-                        color="primary"
-                        class="create-brigade-button"
-                        (click)="openCreateBrigadeDialog()"
-                      >
-                        <mat-icon>add</mat-icon>
-                        <span>Crear brigada</span>
-                      </button>
                     </div>
                   } @else {
-                    <!-- Tabla de Brigadas -->
-                    <div class="brigades-table-container">
+                    <!-- Brigades Tab Component -->
+                    <div class="brigades-tab-wrapper">
                       <div class="brigades-header-actions">
                         <button
                           mat-raised-button
-                          color="primary"
-                          class="create-brigade-button"
+                          class="btn-primary create-brigade-button"
                           (click)="openCreateBrigadeDialog()"
                         >
                           <mat-icon>add</mat-icon>
                           <span>Crear brigada</span>
                         </button>
                       </div>
-                      <div class="table-wrapper">
-                        <table mat-table [dataSource]="brigades()" class="brigades-table">
-                          <!-- Columna Código -->
-                          <ng-container matColumnDef="code">
-                            <th mat-header-cell *matHeaderCellDef class="table-header">Código</th>
-                            <td mat-cell *matCellDef="let brigade" class="table-cell">
-                              {{ brigade.code }}
-                            </td>
-                          </ng-container>
 
-                          <!-- Columna Nombre -->
-                          <ng-container matColumnDef="name">
-                            <th mat-header-cell *matHeaderCellDef class="table-header">Nombre</th>
-                            <td mat-cell *matCellDef="let brigade" class="table-cell">
-                              {{ brigade.name }}
-                            </td>
-                          </ng-container>
-
-                          <!-- Columna Miembros -->
-                          <ng-container matColumnDef="members">
-                            <th mat-header-cell *matHeaderCellDef class="table-header">Miembros</th>
-                            <td mat-cell *matCellDef="let brigade" class="table-cell">
-                              <button
-                                mat-stroked-button
-                                color="primary"
-                                (click)="viewBrigadeMembers(brigade)"
-                                class="view-members-button"
-                              >
-                                <mat-icon>people</mat-icon>
-                                <span>Ver miembros</span>
-                              </button>
-                            </td>
-                          </ng-container>
-
-                          <tr mat-header-row *matHeaderRowDef="brigadesDisplayedColumns"></tr>
-                          <tr
-                            mat-row
-                            *matRowDef="let row; columns: brigadesDisplayedColumns"
-                            class="table-row"
-                          ></tr>
-                        </table>
-                      </div>
-
-                      <!-- Paginador Backend -->
-                      <mat-paginator
-                        [length]="brigadesTotalElements()"
-                        [pageSize]="brigadesPageSize()"
-                        [pageIndex]="brigadesPageIndex()"
-                        [pageSizeOptions]="[5, 10, 25, 50]"
-                        (page)="onBrigadesPageChange($event)"
-                        showFirstLastButtons
-                        class="brigades-paginator"
+                      <app-brigades-tab
+                        [projectCommunityId]="project()!.communityLink!.id"
+                        [shouldLoad]="tabsLoaded().has(brigadesTabIndex())"
+                        (createBrigade)="openCreateBrigadeDialog()"
+                        (editBrigade)="openEditBrigadeDialog($event)"
+                        (viewMembers)="viewBrigadeMembers($event)"
                       />
                     </div>
                   }
@@ -729,6 +539,7 @@
                 <div class="tab-content">
                   <app-pmf-generation
                     [projectId]="project()!.id"
+                    [shouldLoad]="tabsLoaded().has(pmfTabIndex())"
                     (reportGenerated)="onReportGenerated()"
                   />
                 </div>
@@ -737,36 +548,27 @@
 
             <mat-tab label="Documentos">
               <div class="tab-content">
-                <!-- Progress Card -->
-                <app-documents-progress-card
-                  [requirements]="documentRequirements()"
-                  [allDocsApproved]="allDocsApproved()"
-                />
-
-                <!-- Botón de Subir Documentos -->
-                <div class="documents-header mb-6 flex justify-between items-center">
-                  <h2 class="text-body font-bold text-accent-titles">Documentos del Proyecto</h2>
-                  <button
-                    mat-raised-button
-                    class="btn-primary"
-                    (click)="openUploadDialog()"
-                    [disabled]="loadingRequirements()"
-                  >
-                    <mat-icon>upload_file</mat-icon>
-                    <span class="hidden sm:inline">Subir Documentos</span>
-                    <span class="sm:hidden">Subir</span>
-                  </button>
-                </div>
-
-                <!-- Tabla de Documentos -->
-                <app-documents-table
-                  [documents]="documents()"
-                  [canReview]="true"
-                  [loading]="loadingDocuments()"
-                  (reviewDocument)="openReviewDialog($event)"
-                  (resubmitDocument)="openResubmitDialog($event)"
-                  (downloadDocument)="downloadDocument($event)"
-                />
+                @if (!project()?.id) {
+                  <!-- No project ID error -->
+                  <div class="empty-state">
+                    <div class="empty-icon">
+                      <mat-icon>error_outline</mat-icon>
+                    </div>
+                    <h3 class="text-body font-bold text-accent-titles">
+                      Error: No se encontró ID del proyecto
+                    </h3>
+                  </div>
+                } @else {
+                  <!-- Documents Tab Component -->
+                  <app-documents-tab
+                    [projectId]="project()!.id"
+                    [allDocsApproved]="allDocsApproved()"
+                    [shouldLoad]="tabsLoaded().has(documentsTabIndex())"
+                    (uploadDocument)="openUploadDialog()"
+                    (reviewDocument)="openReviewDialog($event)"
+                    (resubmitDocument)="openResubmitDialog($event)"
+                  />
+                }
               </div>
             </mat-tab>
 

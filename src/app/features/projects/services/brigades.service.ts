@@ -51,4 +51,13 @@ export class BrigadesService {
   createBrigade(data: CreateBrigadeRequest) {
     return this.http.post(`${this.apiUrl}`, data);
   }
+
+  /**
+   * Actualiza una brigada existente
+   * @param id - ID de la brigada
+   * @param data - Datos a actualizar (name, description, status)
+   */
+  updateBrigade(id: string, data: { name?: string; description?: string; status?: string }) {
+    return this.http.patch(`${this.apiUrl}/${id}`, data);
+  }
 }

@@ -52,13 +52,14 @@ import {
 import { NotificationService } from '@core/services/notification.service';
 import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
-import { DocumentsProgressCardComponent } from '../components/documents-progress-card.component';
-import { DocumentsTableComponent } from '../components/documents-table.component';
 import { InventoryEvaluationComponent } from '../components/inventory-evaluation.component';
 import { PmfGenerationComponent } from '../components/pmf-generation/pmf-generation.component';
 import { DocumentUploadDialogComponent } from '../components/document-upload-dialog.component';
 import { DocumentReviewDialogComponent } from '../components/document-review-dialog.component';
 import { DocumentResubmitDialogComponent } from '../components/document-resubmit-dialog.component';
+import { CollectorsTabComponent } from '../components/collectors-tab.component';
+import { BrigadesTabComponent } from '../components/brigades-tab.component';
+import { DocumentsTabComponent } from '../components/documents-tab.component';
 import { getProjectStageLabel, getProjectStageClass } from '../models/project.model';
 import * as L from 'leaflet';
 
@@ -85,10 +86,11 @@ interface ProjectStage {
     MatPaginatorModule,
     MatSelectModule,
     MatFormFieldModule,
-    DocumentsProgressCardComponent,
-    DocumentsTableComponent,
     InventoryEvaluationComponent,
     PmfGenerationComponent,
+    CollectorsTabComponent,
+    BrigadesTabComponent,
+    DocumentsTabComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -117,12 +119,17 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   private areaLabelsLayer: L.LayerGroup | null = null;
 
   @ViewChild('mapContainer', { static: false }) mapContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild(BrigadesTabComponent) brigadesTabComponent?: BrigadesTabComponent;
+  @ViewChild(DocumentsTabComponent) documentsTabComponent?: DocumentsTabComponent;
 
   project = signal<Project | null>(null);
   product = signal<Product | null>(null);
   community = signal<Community | null>(null);
   loading = signal(true);
   selectedTabIndex = signal(0);
+
+  // Track which tabs have loaded their data (lazy loading)
+  tabsLoaded = signal<Set<number>>(new Set([0])); // Tab 0 (Resumen) loads immediately
 
   // Map/Area state
   hasMap = signal(false);
@@ -175,7 +182,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   brigadesTotalElements = signal(0);
 
   // Columnas de la tabla de brigadas
-  brigadesDisplayedColumns: string[] = ['code', 'name', 'members'];
+  brigadesDisplayedColumns: string[] = ['code', 'name', 'status', 'members', 'actions'];
 
   // Documents state
   documentRequirements = signal<DocumentRequirements | null>(null);
@@ -199,13 +206,38 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
       const dialogRef = this.dialog.open(m.BrigadeFormDialogComponent, {
         width: '600px',
         maxWidth: '90vw',
-        data: { projectCommunityId },
+        data: { projectCommunityId, mode: 'create' },
         disableClose: true,
       });
       dialogRef.afterClosed().subscribe((result) => {
         if (result?.created) {
-          // Recargar brigadas desde primera página
-          this.loadBrigades(projectCommunityId, 0, this.brigadesPageSize());
+          // Recargar brigadas usando el componente
+          this.brigadesTabComponent?.reload();
+        }
+      });
+    });
+  }
+
+  /**
+   * Abre dialogo para editar brigada
+   */
+  openEditBrigadeDialog(brigade: Brigade): void {
+    const projectCommunityId = this.project()?.communityLink?.id;
+    if (!projectCommunityId) {
+      this.notification.error('No se puede editar brigada: falta projectCommunityId');
+      return;
+    }
+    import('../components/brigade-form.component').then((m) => {
+      const dialogRef = this.dialog.open(m.BrigadeFormDialogComponent, {
+        width: '600px',
+        maxWidth: '90vw',
+        data: { projectCommunityId, mode: 'edit', brigade },
+        disableClose: true,
+      });
+      dialogRef.afterClosed().subscribe((result) => {
+        if (result?.updated) {
+          // Recargar brigadas usando el componente
+          this.brigadesTabComponent?.reload();
         }
       });
     });
@@ -330,8 +362,9 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   });
 
   // Computed para mostrar/ocultar el tab de brigadas
+  // NOTA: Ahora siempre se muestra, ya que es un tab independiente con lazy loading
   showBrigadesTab = computed(() => {
-    return this.collectors().length > 0;
+    return true;
   });
 
   // Computed para mostrar/ocultar el tab de evaluación de inventario
@@ -347,6 +380,49 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     const pmfStageIndex = this.stages.findIndex((s) => s.key === 'pmf_development');
     const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
     return currentStageIndex >= pmfStageIndex && pmfStageIndex !== -1;
+  });
+
+  // Computed para calcular el índice dinámico del tab "Generar PMF"
+  pmfTabIndex = computed(() => {
+    let index = 0;
+    // Tab 0: Resumen (siempre presente)
+    index++;
+    // Tab 1: Recolectores (siempre presente)
+    index++;
+    // Tab 2: Brigadas (condicional)
+    if (this.showBrigadesTab()) index++;
+    // Tab 3: Evaluación de inventario (condicional)
+    if (this.showInventoryEvaluationTab()) index++;
+    // Tab 4: Generar PMF (condicional) - este es el índice que buscamos
+    return index;
+  });
+
+  // Computed para calcular el índice dinámico del tab "Brigadas"
+  brigadesTabIndex = computed(() => {
+    let index = 0;
+    // Tab 0: Resumen (siempre presente)
+    index++;
+    // Tab 1: Recolectores (siempre presente)
+    index++;
+    // Tab 2: Brigadas (condicional) - este es el índice que buscamos
+    return index;
+  });
+
+  // Computed para calcular el índice dinámico del tab "Documentos"
+  documentsTabIndex = computed(() => {
+    let index = 0;
+    // Tab 0: Resumen (siempre presente)
+    index++;
+    // Tab 1: Recolectores (siempre presente)
+    index++;
+    // Tab 2: Brigadas (condicional)
+    if (this.showBrigadesTab()) index++;
+    // Tab 3: Evaluación de inventario (condicional)
+    if (this.showInventoryEvaluationTab()) index++;
+    // Tab 4: Generar PMF (condicional)
+    if (this.showPmfGenerationTab()) index++;
+    // Tab 5: Documentos (siempre presente) - este es el índice que buscamos
+    return index;
   });
 
   // Helpers para etiquetas y estilos
@@ -402,17 +478,8 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
             );
             this.community.set(matchedCommunity || null);
 
-            // Cargar recolectores si existe communityLink.id
-            if (project.communityLink?.id) {
-              this.loadCollectors(project.communityLink.id);
-              this.loadBrigades(project.communityLink.id);
-            }
-
-            // Cargar documentos y requirements
-            this.loadDocumentRequirements(id);
-            this.loadDocuments(id);
-
-            // Cargar actividades para validación de etapas
+            // Solo cargar actividades (para validación de stages)
+            // Los recolectores, brigadas y documentos se cargarán cuando el usuario navegue a esos tabs
             this.loadProjectActivities(id);
 
             this.loading.set(false);
@@ -438,6 +505,29 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
   downloadReport(): void {
     this.notification.info('Función de descarga en desarrollo');
+  }
+
+  /**
+   * Maneja el cambio de tab para implementar lazy loading
+   * Solo carga los datos cuando el usuario navega al tab por primera vez
+   */
+  onTabChange(index: number): void {
+    const alreadyLoaded = this.tabsLoaded().has(index);
+
+    if (alreadyLoaded) {
+      // Ya se cargó este tab, no hacer nada
+      return;
+    }
+
+    // Marcar como cargado
+    this.tabsLoaded.update((tabs) => new Set(tabs).add(index));
+
+    // Tab 1: Recolectores - se carga con el componente CollectorsTabComponent
+    // Tab 2: Brigadas - se carga con el componente BrigadesTabComponent
+    // Tab 5: Documentos - ya se carga en ngOnInit para validación de etapas
+    // Tab 6: Configuración - no requiere carga adicional
+
+    // Tabs 3 (Inventario) y 4 (PMF) tienen sus propios componentes que manejan su carga
   }
 
   /**
@@ -1070,6 +1160,20 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Obtiene la etiqueta en español del estado de la brigada
+   */
+  getBrigadeStatusLabel(status: string): string {
+    return status === 'active' ? 'Activa' : 'Inactiva';
+  }
+
+  /**
+   * Obtiene la clase CSS para el chip de estado de la brigada
+   */
+  getBrigadeStatusClass(status: string): string {
+    return status === 'active' ? 'status-active' : 'status-inactive';
+  }
+
+  /**
    * Carga las brigadas del proyecto con paginación backend
    */
   loadBrigades(projectCommunityId: string, page = 0, size = 10): void {
@@ -1496,9 +1600,14 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result?.success) {
-        // Recargar requirements y documentos
-        this.loadDocumentRequirements(projectId);
-        this.loadDocuments(projectId);
+        // Recargar usando el componente
+        if (this.documentsTabComponent) {
+          this.documentsTabComponent.reload();
+        } else {
+          // Fallback: recargar desde servicio
+          this.loadDocumentRequirements(projectId);
+          this.loadDocuments(projectId);
+        }
       }
     });
   }
@@ -1516,9 +1625,12 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result?.action) {
-        // Recargar requirements y documentos
+        // Recargar usando el componente
         const projectId = this.project()?.id;
-        if (projectId) {
+        if (this.documentsTabComponent) {
+          this.documentsTabComponent.reload();
+        } else if (projectId) {
+          // Fallback: recargar desde servicio
           this.loadDocumentRequirements(projectId);
           this.loadDocuments(projectId);
         }
@@ -1545,9 +1657,14 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result?.success) {
-        // Recargar requirements y documentos
-        this.loadDocumentRequirements(projectId);
-        this.loadDocuments(projectId);
+        // Recargar usando el componente
+        if (this.documentsTabComponent) {
+          this.documentsTabComponent.reload();
+        } else {
+          // Fallback: recargar desde servicio
+          this.loadDocumentRequirements(projectId);
+          this.loadDocuments(projectId);
+        }
       }
     });
   }

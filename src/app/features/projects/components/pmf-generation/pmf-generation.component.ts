@@ -2,10 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   output,
-  OnInit,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -35,6 +35,7 @@ type PmfState =
 
 /**
  * Component for generating and viewing PMF (Plan de Manejo Forestal) documents
+ * Uses lazy loading: only loads existing PMF when shouldLoad input becomes true
  */
 @Component({
   selector: 'app-pmf-generation',
@@ -51,7 +52,7 @@ type PmfState =
   styleUrl: './pmf-generation.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PmfGenerationComponent implements OnInit {
+export class PmfGenerationComponent {
   private reportsService = inject(ReportsService);
   private azureStorage = inject(AzureStorageService);
   private notification = inject(NotificationService);
@@ -59,16 +60,18 @@ export class PmfGenerationComponent implements OnInit {
 
   // Inputs
   projectId = input.required<string>();
+  shouldLoad = input(false); // Lazy loading trigger
 
   // Outputs
   reportGenerated = output<void>();
 
   // State management
-  state = signal<PmfState>('loading-existing');
+  state = signal<PmfState>('initial');
   existingReportMetadata = signal<ReportExistsResponse | null>(null);
   pdfBlob = signal<Blob | null>(null);
   pdfUrl = signal<string>('');
   errorMessage = signal<string>('');
+  private hasLoaded = signal(false);
 
   // Computed state checks
   isLoadingExisting = computed(() => this.state() === 'loading-existing');
@@ -79,8 +82,14 @@ export class PmfGenerationComponent implements OnInit {
   isReady = computed(() => this.state() === 'ready');
   isError = computed(() => this.state() === 'error');
 
-  ngOnInit(): void {
-    this.loadExistingPMF();
+  constructor() {
+    // Load existing PMF when shouldLoad becomes true (only once)
+    effect(() => {
+      if (this.shouldLoad() && !this.hasLoaded()) {
+        this.hasLoaded.set(true);
+        this.loadExistingPMF();
+      }
+    });
   }
 
   /**
