@@ -23,4 +23,13 @@ export class CollectorsService {
     const params = new HttpParams().set('projectCommunityId', projectCommunityId);
     return this.http.get<Collector[]>(this.apiUrl, { params });
   }
+
+  /**
+   * Actualiza el estado de un recolector
+   * @param collectorId - ID del recolector
+   * @param status - Estado: 'active' o 'inactive'
+   */
+  updateCollectorStatus(collectorId: string, status: 'active' | 'inactive'): Observable<Collector> {
+    return this.http.patch<Collector>(`${this.apiUrl}/${collectorId}/status`, { status });
+  }
 }

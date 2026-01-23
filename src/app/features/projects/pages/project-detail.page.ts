@@ -163,6 +163,8 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     'documentNumber',
     'phone',
     'assignedBrigade',
+    'status',
+    'actions',
   ];
 
   // Brigades state (paginación backend)
@@ -964,6 +966,110 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Elimina (inactiva) un recolector
+   */
+  deleteCollector(collector: Collector): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Inactivar recolector?',
+        message: `Esta acción marcará a ${collector.name} ${collector.lastName} como inactivo. ¿Deseas continuar?`,
+        confirmText: 'Sí, inactivar',
+        type: 'warning',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.performDeleteCollector(collector);
+      }
+    });
+  }
+
+  /**
+   * Ejecuta la inactivación del recolector
+   */
+  private performDeleteCollector(collector: Collector): void {
+    if (!collector.id) {
+      this.notification.error('Error: ID de recolector no encontrado');
+      return;
+    }
+
+    this.collectorsService.updateCollectorStatus(collector.id, 'inactive').subscribe({
+      next: () => {
+        this.notification.success('Recolector inactivado correctamente');
+        const projectCommunityId = this.project()?.communityLink?.id;
+        if (projectCommunityId) {
+          this.loadCollectors(projectCommunityId);
+        }
+      },
+      error: (error) => {
+        console.error('Error deleting collector:', error);
+        const errorMessage = error?.error?.message || 'Error al inactivar recolector';
+        this.notification.error(errorMessage);
+      },
+    });
+  }
+
+  /**
+   * Activa un recolector inactivo
+   */
+  activateCollector(collector: Collector): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Activar recolector?',
+        message: `Esta acción marcará a ${collector.name} ${collector.lastName} como activo. ¿Deseas continuar?`,
+        confirmText: 'Sí, activar',
+        type: 'info',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.performActivateCollector(collector);
+      }
+    });
+  }
+
+  /**
+   * Ejecuta la activación del recolector
+   */
+  private performActivateCollector(collector: Collector): void {
+    if (!collector.id) {
+      this.notification.error('Error: ID de recolector no encontrado');
+      return;
+    }
+
+    this.collectorsService.updateCollectorStatus(collector.id, 'active').subscribe({
+      next: () => {
+        this.notification.success('Recolector activado correctamente');
+        const projectCommunityId = this.project()?.communityLink?.id;
+        if (projectCommunityId) {
+          this.loadCollectors(projectCommunityId);
+        }
+      },
+      error: (error) => {
+        console.error('Error activating collector:', error);
+        const errorMessage = error?.error?.message || 'Error al activar recolector';
+        this.notification.error(errorMessage);
+      },
+    });
+  }
+
+  /**
+   * Obtiene la etiqueta en español del estado del recolector
+   */
+  getCollectorStatusLabel(status: string): string {
+    return status === 'active' ? 'Activo' : 'Inactivo';
+  }
+
+  /**
+   * Obtiene la clase CSS para el chip de estado del recolector
+   */
+  getCollectorStatusClass(status: string): string {
+    return status === 'active' ? 'status-active' : 'status-inactive';
+  }
+
+  /**
    * Carga las brigadas del proyecto con paginación backend
    */
   loadBrigades(projectCommunityId: string, page = 0, size = 10): void {
@@ -1133,8 +1239,8 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   viewBrigadeMembers(brigade: Brigade): void {
     import('../components/brigade-collectors-dialog.component').then((m) => {
       this.dialog.open(m.BrigadeCollectorsDialogComponent, {
-        width: '600px',
-        maxWidth: '90vw',
+        width: '900px',
+        maxWidth: '95vw',
         data: {
           brigadeId: brigade.id,
           brigadeName: brigade.name,

@@ -6,8 +6,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BrigadeCollector } from '../models/brigade-collector.model';
 import { BrigadesService } from '../services/brigades.service';
+import { BrigadeAssignmentsService } from '../services/brigade-assignments.service';
 import { NotificationService } from '@core/services/notification.service';
 
 export interface BrigadeCollectorsDialogData {
@@ -25,6 +28,8 @@ export interface BrigadeCollectorsDialogData {
     MatTableModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    MatSlideToggleModule,
+    MatTooltipModule,
   ],
   template: `
     <div class="dialog-container">
@@ -125,11 +130,26 @@ export interface BrigadeCollectorsDialogData {
 
               <!-- Estado Column -->
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef class="table-th text-right">Estado</th>
-                <td mat-cell *matCellDef="let collector" class="table-td text-right">
+                <th mat-header-cell *matHeaderCellDef class="table-th">Estado</th>
+                <td mat-cell *matCellDef="let collector" class="table-td">
                   <span [class]="'status-badge status-' + collector.status.toLowerCase()">
                     {{ getStatusLabel(collector.status) }}
                   </span>
+                </td>
+              </ng-container>
+
+              <!-- Acciones Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="table-th text-right">Acciones</th>
+                <td mat-cell *matCellDef="let collector" class="table-td text-right">
+                  <mat-slide-toggle
+                    [checked]="collector.status.toLowerCase() === 'active'"
+                    (change)="toggleCollectorStatus(collector, $event.checked)"
+                    [matTooltip]="
+                      collector.status.toLowerCase() === 'active' ? 'Inactivar' : 'Activar'
+                    "
+                    color="primary"
+                  />
                 </td>
               </ng-container>
 
@@ -158,6 +178,14 @@ export interface BrigadeCollectorsDialogData {
                       {{ getStatusLabel(collector.status) }}
                     </span>
                   </div>
+                  <mat-slide-toggle
+                    [checked]="collector.status.toLowerCase() === 'active'"
+                    (change)="toggleCollectorStatus(collector, $event.checked)"
+                    [matTooltip]="
+                      collector.status.toLowerCase() === 'active' ? 'Inactivar' : 'Activar'
+                    "
+                    color="primary"
+                  />
                 </div>
 
                 <div class="card-details">
@@ -207,7 +235,7 @@ export interface BrigadeCollectorsDialogData {
       display: flex;
       flex-direction: column;
       width: 100%;
-      max-width: 800px;
+      max-width: 900px;
       max-height: 90vh;
       background: #ffffff;
     }
@@ -274,8 +302,10 @@ export interface BrigadeCollectorsDialogData {
       overflow-y: auto;
       padding: 24px;
       min-height: 300px;
+      max-height: calc(90vh - 200px);
       display: flex;
       flex-direction: column;
+      gap: 16px;
     }
 
     /* Loading */
@@ -334,6 +364,28 @@ export interface BrigadeCollectorsDialogData {
       border-radius: 8px;
       overflow: hidden;
       background: #ffffff;
+      max-height: 450px;
+      overflow-y: auto;
+      position: relative;
+
+      /* Estilos para el scrollbar */
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #218358;
+        border-radius: 4px;
+
+        &:hover {
+          background: #1a6b47;
+        }
+      }
     }
 
     /* Force hide mobile cards on desktop */
@@ -360,6 +412,9 @@ export interface BrigadeCollectorsDialogData {
         font-weight: 700;
         color: #0a0a0a;
         border-bottom: 2px solid #e5e5e5;
+        position: sticky;
+        top: 0;
+        z-index: 10;
       }
 
       .th-content {
@@ -400,6 +455,28 @@ export interface BrigadeCollectorsDialogData {
       display: flex;
       flex-direction: column;
       gap: 12px;
+      max-height: 450px;
+      overflow-y: auto;
+      padding-right: 4px;
+
+      /* Estilos para el scrollbar en mobile */
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #218358;
+        border-radius: 3px;
+
+        &:hover {
+          background: #1a6b47;
+        }
+      }
     }
 
     .collector-card {
@@ -513,6 +590,7 @@ export interface BrigadeCollectorsDialogData {
       background: #f9fafb;
       border: 1px solid #e5e5e5;
       border-radius: 8px;
+      flex-shrink: 0;
     }
 
     .summary-item {
@@ -572,6 +650,7 @@ export class BrigadeCollectorsDialogComponent {
   data = inject<BrigadeCollectorsDialogData>(MAT_DIALOG_DATA);
   private dialogRef = inject(MatDialogRef<BrigadeCollectorsDialogComponent>);
   private brigadesService = inject(BrigadesService);
+  private brigadeAssignmentsService = inject(BrigadeAssignmentsService);
   private notification = inject(NotificationService);
 
   collectors = signal<BrigadeCollector[]>([]);
@@ -584,6 +663,7 @@ export class BrigadeCollectorsDialogComponent {
     'startDate',
     'endDate',
     'status',
+    'actions',
   ];
 
   constructor() {
@@ -610,6 +690,25 @@ export class BrigadeCollectorsDialogComponent {
 
   close(): void {
     this.dialogRef.close();
+  }
+
+  toggleCollectorStatus(collector: BrigadeCollector, isActive: boolean): void {
+    const newStatus: 'active' | 'inactive' = isActive ? 'active' : 'inactive';
+    const actionLabel = isActive ? 'activado' : 'inactivado';
+
+    this.brigadeAssignmentsService.toggleAssignmentStatus(collector.id, newStatus).subscribe({
+      next: () => {
+        this.notification.success(`Recolector ${actionLabel} correctamente`);
+        this.loadCollectors();
+      },
+      error: (error) => {
+        console.error('Error toggling collector status:', error);
+        const errorMessage = error?.error?.message || `Error al cambiar el estado del recolector`;
+        this.notification.error(errorMessage);
+        // Recargar para revertir visualmente
+        this.loadCollectors();
+      },
+    });
   }
 
   getStatusLabel(status: string): string {

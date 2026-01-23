@@ -31,4 +31,19 @@ export class BrigadeAssignmentsService {
   reassignBrigade(data: ReassignBrigadeRequest): Observable<BrigadeAssignment> {
     return this.http.post<BrigadeAssignment>(`${this.apiUrl}/reassign`, data);
   }
+
+  /**
+   * Activa o inactiva un recolector en una asignación de brigada
+   * @param assignmentId - ID de la asignación
+   * @param status - Estado: 'active' o 'inactive'
+   */
+  toggleAssignmentStatus(
+    assignmentId: string,
+    status: 'active' | 'inactive',
+  ): Observable<BrigadeAssignment> {
+    return this.http.patch<BrigadeAssignment>(
+      `${this.apiUrl}/${assignmentId}/toggle-status?status=${status}`,
+      {},
+    );
+  }
 }

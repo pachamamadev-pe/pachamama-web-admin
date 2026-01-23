@@ -1079,12 +1079,81 @@
     &:last-child .table-cell {
       border-bottom: none;
     }
+
+    &.row-inactive {
+      opacity: 0.6;
+      background-color: #fafafa;
+
+      .table-cell {
+        color: #737373;
+      }
+    }
   }
 }
 
 .collectors-paginator {
   background-color: transparent;
   margin-top: 16px;
+}
+
+/* Status Chips for Collectors */
+.status-active {
+  background-color: #f4fbf6 !important;
+  color: #218358 !important;
+  border: 1px solid #218358;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 12px;
+}
+
+.status-inactive {
+  background-color: #fef3f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #dc2626;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 12px;
+}
+
+/* Action Buttons */
+.btn-delete {
+  color: #dc2626;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #fef3f2;
+    color: #b91c1c;
+  }
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.btn-activate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 6px 16px;
+  height: 36px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  @media (max-width: 640px) {
+    padding: 6px 12px;
+    min-width: auto;
+
+    mat-icon {
+      margin: 0;
+    }
+  }
 }
 
 /* Brigade Selector in Collectors Table */
