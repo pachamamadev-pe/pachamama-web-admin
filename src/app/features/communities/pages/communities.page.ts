@@ -8,6 +8,7 @@
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -57,6 +58,7 @@ export class CommunitiesPage implements OnInit {
   private communitiesService = inject(CommunitiesService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
+  private router = inject(Router);
 
   // Search and filtering
   searchTerm = signal('');
@@ -170,6 +172,10 @@ export class CommunitiesPage implements OnInit {
     this.currentPage.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
     // Si el backend soporta paginación, llamar loadCommunities() aquí
+  }
+
+  viewCommunityDetail(community: Community): void {
+    this.router.navigate(['/communities', community.id]);
   }
 
   private createCommunity(data: CreateCommunityRequest): void {

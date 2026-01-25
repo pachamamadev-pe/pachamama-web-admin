@@ -7,6 +7,7 @@ import type {
   CreateCommunityRequest,
   UpdateCommunityRequest,
 } from '../models/community.model';
+import type { CommunityProject } from '../models/community-project.model';
 
 /**
  * Servicio para gestionar comunidades nativas y campesinas
@@ -23,6 +24,22 @@ export class CommunitiesService {
    */
   getCommunities(): Observable<Community[]> {
     return this.http.get<Community[]>(this.apiUrl);
+  }
+
+  /**
+   * Obtiene una comunidad por su ID
+   * @param id UUID de la comunidad
+   */
+  getCommunityById(id: string): Observable<Community> {
+    return this.http.get<Community>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Obtiene los proyectos asociados a una comunidad
+   * @param communityId UUID de la comunidad
+   */
+  getCommunityProjects(communityId: string): Observable<CommunityProject[]> {
+    return this.http.get<CommunityProject[]>(`${this.apiUrl}/${communityId}/projects`);
   }
 
   /**

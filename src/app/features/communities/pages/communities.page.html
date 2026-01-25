@@ -68,7 +68,7 @@
       </div>
     } @else {
       <!-- Communities Table (Desktop only) -->
-      <div class="communities-table">
+      <section class="communities-table">
         <div class="products-table hidden md:block">
           <table mat-table [dataSource]="filteredCommunities()" class="w-full table-auto table-cm">
             <!-- Código Column -->
@@ -140,6 +140,11 @@
                 </button>
 
                 <mat-menu #tableMenu="matMenu">
+                  <button mat-menu-item (click)="viewCommunityDetail(community)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Ver detalle</span>
+                  </button>
+
                   <button mat-menu-item (click)="openEditDialog(community)">
                     <mat-icon>edit</mat-icon>
                     <span>Editar</span>
@@ -154,7 +159,12 @@
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns"
+              class="table-row"
+              (click)="viewCommunityDetail(row)"
+            ></tr>
           </table>
         </div>
 
@@ -167,12 +177,15 @@
           (page)="onPageChange($event)"
           showFirstLastButtons
         />
-      </div>
+      </section>
 
       <!-- Mobile Cards (visible only on mobile) -->
-      <div class="mobile-cards">
+      <section class="mobile-cards">
         @for (community of filteredCommunities(); track community.id) {
-          <div class="community-card bg-primary-white rounded-lg shadow p-4">
+          <div
+            class="community-card bg-primary-white rounded-lg shadow p-4"
+            (click)="viewCommunityDetail(community)"
+          >
             <!-- Header with menu -->
             <div class="card-header">
               <div class="card-title">
@@ -187,11 +200,17 @@
                   mat-icon-button
                   [matMenuTriggerFor]="mobileMenu"
                   aria-label="Menú de acciones"
+                  (click)="$event.stopPropagation()"
                 >
                   <mat-icon>more_vert</mat-icon>
                 </button>
 
                 <mat-menu #mobileMenu="matMenu">
+                  <button mat-menu-item (click)="viewCommunityDetail(community)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Ver detalle</span>
+                  </button>
+
                   <button mat-menu-item (click)="openEditDialog(community)">
                     <mat-icon>edit</mat-icon>
                     <span>Editar</span>
@@ -232,7 +251,7 @@
             </div>
           </div>
         }
-      </div>
+      </section>
     }
   </div>
 </div>

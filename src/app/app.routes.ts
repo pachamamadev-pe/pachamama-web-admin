@@ -56,6 +56,14 @@ export const appRoutes: Routes = [
           import('./features/communities/pages/communities.page').then((m) => m.CommunitiesPage),
       },
       {
+        path: 'communities/:id',
+        title: 'Detalle de comunidad',
+        loadComponent: () =>
+          import('./features/communities/pages/community-detail.page').then(
+            (m) => m.CommunityDetailPage,
+          ),
+      },
+      {
         path: 'company-users',
         title: 'Usuarios de Empresa',
         loadComponent: () =>

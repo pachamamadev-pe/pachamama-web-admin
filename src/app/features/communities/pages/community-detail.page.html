@@ -1,0 +1,126 @@
+<div class="page-container">
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48" />
+      <p class="text-body text-neutral-subheading mt-4">Cargando comunidad...</p>
+    </div>
+  }
+
+  <!-- Community Detail Content -->
+  @if (!loading() && community()) {
+    <!-- Header -->
+    <header class="community-header">
+      <div class="header-top">
+        <button mat-icon-button (click)="goBack()" class="back-button">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="breadcrumb text-subtitle text-neutral-subheading">
+          <span>Comunidades</span>
+          <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+          <span>{{ communityName() }}</span>
+        </div>
+      </div>
+
+      <div class="header-content">
+        <div class="header-left">
+          <!-- Community Icon -->
+          <div class="community-icon">
+            <div class="icon-placeholder">
+              <mat-icon>park</mat-icon>
+            </div>
+          </div>
+
+          <!-- Community Info -->
+          <div class="title-info">
+            <p class="community-label text-subtitle text-neutral-subheading">
+              {{ communityLocation() }}
+            </p>
+            <h1 class="community-name text-title font-bold text-accent-titles">
+              {{ communityName() }}
+            </h1>
+            <p class="growth-indicator text-subtitle">
+              <span class="growth-value text-secondary">{{ growthPercentage() }}</span>
+              <span class="text-neutral-subheading">respecto al mes pasado</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Community Image (derecha) -->
+        <div class="community-image-container">
+          <div class="image-placeholder">
+            <mat-icon class="text-neutral-subheading">groups</mat-icon>
+            <p class="text-subtitle text-neutral-subheading">Imagen de la comunidad</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Tabs Section -->
+    <section class="community-tabs">
+      <mat-tab-group class="custom-tabs" animationDuration="300ms">
+        <!-- Tab 1: Resumen -->
+        <mat-tab label="Resumen">
+          <div class="tab-content">
+            <div class="under-construction">
+              <mat-icon class="construction-icon">construction</mat-icon>
+              <h3 class="text-body font-bold text-accent-titles">En construcción</h3>
+              <p class="text-subtitle text-neutral-subheading">
+                Esta sección mostrará el resumen general de la comunidad.
+              </p>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab 2: Proyectos -->
+        <mat-tab label="Proyectos">
+          <div class="tab-content">
+            <app-community-projects-tab
+              [communityId]="community()?.id ?? ''"
+              [communityName]="communityName()"
+            />
+          </div>
+        </mat-tab>
+
+        <!-- Tab 3: Pagos -->
+        <mat-tab label="Pagos">
+          <div class="tab-content">
+            <div class="under-construction">
+              <mat-icon class="construction-icon">construction</mat-icon>
+              <h3 class="text-body font-bold text-accent-titles">En construcción</h3>
+              <p class="text-subtitle text-neutral-subheading">
+                Esta sección mostrará el historial de pagos de la comunidad.
+              </p>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab 4: Recolectores -->
+        <mat-tab label="Recolectores">
+          <div class="tab-content">
+            <div class="under-construction">
+              <mat-icon class="construction-icon">construction</mat-icon>
+              <h3 class="text-body font-bold text-accent-titles">En construcción</h3>
+              <p class="text-subtitle text-neutral-subheading">
+                Esta sección mostrará los recolectores activos de la comunidad.
+              </p>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab 5: Documentos -->
+        <mat-tab label="Documentos">
+          <div class="tab-content">
+            <div class="under-construction">
+              <mat-icon class="construction-icon">construction</mat-icon>
+              <h3 class="text-body font-bold text-accent-titles">En construcción</h3>
+              <p class="text-subtitle text-neutral-subheading">
+                Esta sección mostrará los documentos asociados a la comunidad.
+              </p>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </section>
+  }
+</div>

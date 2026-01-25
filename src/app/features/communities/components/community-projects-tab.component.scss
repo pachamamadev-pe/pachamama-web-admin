@@ -1,0 +1,256 @@
+.projects-tab-container {
+  width: 100%;
+}
+
+// ==========================================
+// Loading State
+// ==========================================
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+// ==========================================
+// Desktop Table (hidden on mobile)
+// ==========================================
+.projects-table {
+  display: none; // Hidden on mobile
+
+  @media (min-width: 768px) {
+    display: block; // Show on desktop
+  }
+}
+
+.table-wrapper {
+  background-color: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-th {
+  padding: 1rem;
+  font-size: 12px;
+  font-weight: 700;
+  color: #218358;
+  border-bottom: 1px solid #e5e5e5;
+  background-color: #f9faf3;
+}
+
+.table-td {
+  padding: 1rem;
+  font-size: 14px;
+  border-color: #e5e5e5 !important;
+}
+
+.table-row {
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f4fbf6 !important;
+  }
+}
+
+// ==========================================
+// Stage Badges
+// ==========================================
+.stage-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stage-planning {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.stage-inventory {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.stage-collection {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.stage-pmf {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.stage-serfor {
+  background-color: #e0f2f1;
+  color: #00897b;
+}
+
+.stage-ctp {
+  background-color: #fce4ec;
+  color: #c2185b;
+}
+
+.stage-transformation {
+  background-color: #fff9c4;
+  color: #f9a825;
+}
+
+.stage-map {
+  background-color: #ede7f6;
+  color: #5e35b1;
+}
+
+.stage-default {
+  background-color: #f5f5f5;
+  color: #616161;
+}
+
+// ==========================================
+// Collectors Badge
+// ==========================================
+.collectors-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  background-color: #f4fbf6;
+  border-radius: 16px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  span {
+    font-size: 14px;
+  }
+}
+
+// ==========================================
+// Mobile Cards (visible only on mobile)
+// ==========================================
+.mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  @media (min-width: 768px) {
+    display: none; // Hide on desktop
+  }
+}
+
+.project-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow:
+      0 4px 6px rgba(0, 0, 0, 0.1),
+      0 2px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.card-title {
+  flex: 1;
+  min-width: 0;
+
+  h3 {
+    margin: 0 0 0.25rem 0;
+    line-height: 1.4;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.card-stage {
+  margin-bottom: 0.75rem;
+}
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #737373;
+  flex-shrink: 0;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: #737373;
+  flex-shrink: 0;
+  min-width: 90px;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #0a0a0a;
+  flex: 1;
+  word-break: break-word;
+}
+
+// ==========================================
+// Pagination
+// ==========================================
+::ng-deep {
+  .mat-mdc-paginator {
+    background-color: white;
+    border-top: 1px solid #e5e5e5;
+
+    .mat-mdc-paginator-container {
+      justify-content: center;
+      padding: 0.5rem 1rem;
+
+      @media (min-width: 768px) {
+        justify-content: flex-end;
+      }
+    }
+  }
+}

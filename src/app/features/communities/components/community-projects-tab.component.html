@@ -1,0 +1,206 @@
+<div class="projects-tab-container">
+  @if (loading()) {
+    <!-- Loading state -->
+    <div class="loading-container">
+      <mat-spinner diameter="48" />
+      <p class="text-body text-neutral-subheading mt-4">Cargando proyectos...</p>
+    </div>
+  } @else if (projects().length === 0) {
+    <!-- Empty state -->
+    <app-empty-state
+      icon="folder_open"
+      [useMaterialIcon]="true"
+      title="No hay proyectos"
+      description="No hay proyectos asociados a esta comunidad"
+    />
+  } @else {
+    <!-- Desktop Table (hidden on mobile) -->
+    <section class="projects-table">
+      <div class="table-wrapper hidden md:block">
+        <table mat-table [dataSource]="paginatedProjects()" class="w-full">
+          <!-- Proyecto Column -->
+          <ng-container matColumnDef="projectName">
+            <th mat-header-cell *matHeaderCellDef class="table-th text-left">Proyecto</th>
+            <td mat-cell *matCellDef="let project" class="table-td">
+              <div class="flex flex-col">
+                <span class="text-body font-bold text-accent-titles">
+                  {{ project.projectName }}
+                </span>
+                <span class="text-subtitle text-neutral-subheading">
+                  {{ project.projectCode }}
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Fechas Column -->
+          <ng-container matColumnDef="dates">
+            <th mat-header-cell *matHeaderCellDef class="table-th text-left">Fechas</th>
+            <td mat-cell *matCellDef="let project" class="table-td">
+              <span class="text-body text-accent-titles">
+                {{ getProjectDates(project) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Etapa Column -->
+          <ng-container matColumnDef="stage">
+            <th mat-header-cell *matHeaderCellDef class="table-th text-left">Etapa</th>
+            <td mat-cell *matCellDef="let project" class="table-td">
+              <span class="stage-badge" [ngClass]="getStageClass(project.stage)">
+                {{ getStageLabel(project.stage) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Producto Column -->
+          <ng-container matColumnDef="product">
+            <th mat-header-cell *matHeaderCellDef class="table-th text-left">Producto</th>
+            <td mat-cell *matCellDef="let project" class="table-td">
+              <div class="flex flex-col">
+                <span class="text-body text-accent-titles">{{ project.productName }}</span>
+                <span class="text-subtitle text-neutral-subheading">
+                  {{ project.companyName }}
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Recolectores Column -->
+          <ng-container matColumnDef="collectors">
+            <th mat-header-cell *matHeaderCellDef class="table-th text-center">Recolectores</th>
+            <td mat-cell *matCellDef="let project" class="table-td text-center">
+              <div class="collectors-badge">
+                <mat-icon class="text-secondary">person</mat-icon>
+                <span class="text-body font-bold text-accent-titles">
+                  {{ project.collectorsCount }}
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Acciones Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="table-th text-right">Acciones</th>
+            <td mat-cell *matCellDef="let project" class="table-td text-right">
+              <button
+                mat-icon-button
+                [matMenuTriggerFor]="tableMenu"
+                (click)="$event.stopPropagation()"
+              >
+                <mat-icon>more_vert</mat-icon>
+              </button>
+
+              <mat-menu #tableMenu="matMenu">
+                <button mat-menu-item (click)="viewProjectDetail(project)">
+                  <mat-icon>visibility</mat-icon>
+                  <span>Ver detalle</span>
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            class="table-row"
+            (click)="viewProjectDetail(row)"
+          ></tr>
+        </table>
+      </div>
+
+      <!-- Pagination (Desktop) -->
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize()"
+        [pageIndex]="currentPage()"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      />
+    </section>
+
+    <!-- Mobile Cards (visible only on mobile) -->
+    <section class="mobile-cards">
+      @for (project of paginatedProjects(); track project.projectId) {
+        <div class="project-card" (click)="viewProjectDetail(project)">
+          <!-- Header -->
+          <div class="card-header">
+            <div class="card-title">
+              <h3 class="text-body font-bold text-accent-titles">
+                {{ project.projectName }}
+              </h3>
+              <p class="text-subtitle text-neutral-subheading">{{ project.projectCode }}</p>
+            </div>
+
+            <div class="card-actions">
+              <button
+                mat-icon-button
+                [matMenuTriggerFor]="mobileMenu"
+                (click)="$event.stopPropagation()"
+              >
+                <mat-icon>more_vert</mat-icon>
+              </button>
+
+              <mat-menu #mobileMenu="matMenu">
+                <button mat-menu-item (click)="viewProjectDetail(project)">
+                  <mat-icon>visibility</mat-icon>
+                  <span>Ver detalle</span>
+                </button>
+              </mat-menu>
+            </div>
+          </div>
+
+          <!-- Stage Badge -->
+          <div class="card-stage">
+            <span class="stage-badge" [ngClass]="getStageClass(project.stage)">
+              {{ getStageLabel(project.stage) }}
+            </span>
+          </div>
+
+          <!-- Details -->
+          <div class="card-details">
+            <!-- Fechas -->
+            <div class="detail-row">
+              <mat-icon class="detail-icon">calendar_today</mat-icon>
+              <span class="detail-label">Fechas:</span>
+              <span class="detail-value">{{ getProjectDates(project) }}</span>
+            </div>
+
+            <!-- Producto -->
+            <div class="detail-row">
+              <mat-icon class="detail-icon">spa</mat-icon>
+              <span class="detail-label">Producto:</span>
+              <span class="detail-value">{{ project.productName }}</span>
+            </div>
+
+            <!-- Empresa -->
+            <div class="detail-row">
+              <mat-icon class="detail-icon">business</mat-icon>
+              <span class="detail-label">Empresa:</span>
+              <span class="detail-value">{{ project.companyName }}</span>
+            </div>
+
+            <!-- Recolectores -->
+            <div class="detail-row">
+              <mat-icon class="detail-icon">person</mat-icon>
+              <span class="detail-label">Recolectores:</span>
+              <span class="detail-value font-bold">{{ project.collectorsCount }}</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Mobile Pagination -->
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize()"
+        [pageIndex]="currentPage()"
+        [pageSizeOptions]="[5, 10, 25]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      />
+    </section>
+  }
+</div>

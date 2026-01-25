@@ -87,6 +87,10 @@
 .table-row {
   @apply transition-colors bg-white duration-150 divide-neutral-border !important;
   @apply cursor-pointer;
+
+  &:hover {
+    @apply bg-secondary-light;
+  }
 }
 
 .mat-mdc-cell {
@@ -123,11 +127,16 @@
   flex-direction: column;
   gap: 0.75rem;
   transition: box-shadow 0.2s ease;
+  cursor: pointer;
 
   &:hover {
     box-shadow:
       0 4px 6px -1px rgba(0, 0, 0, 0.1),
       0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 }
 
