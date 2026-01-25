@@ -124,7 +124,13 @@
     <!-- Mobile Cards (visible only on mobile) -->
     <section class="mobile-cards">
       @for (project of paginatedProjects(); track project.projectId) {
-        <div class="project-card" (click)="viewProjectDetail(project)">
+        <div
+          class="project-card"
+          tabindex="0"
+          role="button"
+          (click)="viewProjectDetail(project)"
+          (keyup.enter)="viewProjectDetail(project)"
+        >
           <!-- Header -->
           <div class="card-header">
             <div class="card-title">

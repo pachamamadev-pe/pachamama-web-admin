@@ -184,7 +184,10 @@
         @for (community of filteredCommunities(); track community.id) {
           <div
             class="community-card bg-primary-white rounded-lg shadow p-4"
+            tabindex="0"
+            role="button"
             (click)="viewCommunityDetail(community)"
+            (keyup.enter)="viewCommunityDetail(community)"
           >
             <!-- Header with menu -->
             <div class="card-header">
