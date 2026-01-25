@@ -155,6 +155,7 @@ export class ProductCollectionProtocolComponent {
   /**
    * Obtiene el formulario activo para una etapa específica
    * Busca primero el formulario de la empresa del usuario, luego el global
+   * SIEMPRE retorna la versión más reciente (mayor número de versión)
    */
   getFormForStage(stage: ProjectStage): FormSchemaResponse | undefined {
     const forms = this.formsSignal();
@@ -162,23 +163,26 @@ export class ProductCollectionProtocolComponent {
     const userCompanyId = this.userCompanyIdSignal();
 
     // Buscar formularios que incluyan esta etapa
-    const formsForStage = forms.filter((form) => form.applicableStages.includes(stageLowerCase));
+    let formsForStage = forms.filter((form) => form.applicableStages.includes(stageLowerCase));
     if (formsForStage.length === 0) {
       return undefined;
     }
 
+    // Ordenar por versión descendente (versión más reciente primero)
+    formsForStage = formsForStage.sort((a, b) => b.version - a.version);
+
     // Si el usuario tiene companyId (ADMIN_EMPRESA)
     if (userCompanyId) {
-      // 1. Buscar formulario de su propia empresa
-      const ownCompanyForm = formsForStage.find((form) => form.companyId === userCompanyId);
-      if (ownCompanyForm) {
-        return ownCompanyForm;
+      // 1. Buscar formulario de su propia empresa (versión más reciente)
+      const ownCompanyForms = formsForStage.filter((form) => form.companyId === userCompanyId);
+      if (ownCompanyForms.length > 0) {
+        return ownCompanyForms[0]; // Ya está ordenado por versión desc
       }
 
-      // 2. Si no tiene propio, buscar formulario global (companyId null)
-      const globalForm = formsForStage.find((form) => form.companyId === null);
-      if (globalForm) {
-        return globalForm;
+      // 2. Si no tiene propio, buscar formulario global (companyId null, versión más reciente)
+      const globalForms = formsForStage.filter((form) => form.companyId === null);
+      if (globalForms.length > 0) {
+        return globalForms[0]; // Ya está ordenado por versión desc
       }
 
       // 3. Si solo existen formularios de otras empresas, retornar undefined
@@ -187,8 +191,73 @@ export class ProductCollectionProtocolComponent {
     }
 
     // Si el usuario es ADMIN_PACHAMAMA (userCompanyId es null)
-    // Buscar el formulario global
-    return formsForStage.find((form) => form.companyId === null);
+    // Buscar el formulario global con la versión más reciente
+    const globalForms = formsForStage.filter((form) => form.companyId === null);
+    return globalForms.length > 0 ? globalForms[0] : undefined;
+  }
+
+  /**
+   * Obtiene el estado visual del formulario para una etapa
+   * Retorna información para mostrar badges y mensajes
+   */
+  getFormStatus(stage: ProjectStage): {
+    hasForm: boolean;
+    status: 'draft' | 'published' | 'archived' | null;
+    statusLabel: string;
+    statusClass: string;
+    version: number | null;
+    validUntil: string | null;
+    isExpired: boolean;
+  } {
+    const form = this.getFormForStage(stage);
+
+    if (!form) {
+      return {
+        hasForm: false,
+        status: null,
+        statusLabel: '',
+        statusClass: '',
+        version: null,
+        validUntil: null,
+        isExpired: false,
+      };
+    }
+
+    // Verificar si el formulario está expirado
+    const isExpired = form.validUntil ? new Date(form.validUntil) < new Date() : false;
+
+    let statusLabel = '';
+    let statusClass = '';
+
+    switch (form.status) {
+      case 'published':
+        if (form.isPublished) {
+          statusLabel = isExpired ? 'Publicado (expirado)' : 'Publicado';
+          statusClass = isExpired ? 'status-expired' : 'status-published';
+        } else {
+          statusLabel = 'Despublicado';
+          statusClass = 'status-unpublished';
+        }
+        break;
+      case 'draft':
+        statusLabel = `Borrador v${form.version}`;
+        statusClass = 'status-draft';
+        break;
+      case 'archived':
+        statusLabel = 'Archivado';
+        statusClass = 'status-archived';
+        break;
+    }
+
+    return {
+      hasForm: true,
+      status: form.status,
+      statusLabel,
+      statusClass,
+      version: form.version,
+      validUntil: form.validUntil,
+      isExpired,
+    };
   }
 
   constructor() {

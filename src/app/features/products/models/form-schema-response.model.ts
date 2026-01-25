@@ -1,4 +1,9 @@
 /**
+ * Estado del formulario
+ */
+export type FormStatus = 'draft' | 'published' | 'archived';
+
+/**
  * Respuesta del API con la información completa de un formulario dinámico
  */
 export interface FormSchemaResponse {
@@ -17,30 +22,45 @@ export interface FormSchemaResponse {
   /** Nombre del producto */
   productName: string;
 
-  /** ID de la empresa propietaria del formulario */
-  companyId: string;
+  /** ID de la empresa propietaria del formulario (null = global) */
+  companyId: string | null;
 
   /** Versión del formulario */
   version: number;
 
-  /** Etapas del proyecto donde aplica (ej: ['INVENTORY', 'COLLECTION']) */
+  /** Estado del formulario: draft, published, archived */
+  status: FormStatus;
+
+  /** Etapas del proyecto donde aplica (ej: ['inventory', 'collection']) */
   applicableStages: string[];
 
   /** Esquema JSON del formulario (secciones, campos, validaciones) */
   schema: string;
 
   /** Configuración de preview */
-  previewConfig: string;
+  previewConfig: string | null;
 
   /** Fecha desde la cual es válido (ISO 8601 date string) */
-  validFrom: string;
+  validFrom: string | null;
 
   /** Fecha hasta la cual es válido (ISO 8601 date string) */
-  validUntil: string;
+  validUntil: string | null;
 
   /** Indica si está publicado */
   isPublished: boolean;
 
   /** Fecha de publicación (ISO 8601 timestamp) */
   publishedAt: string | null;
+
+  /** Fecha de creación */
+  createdAt: string;
+
+  /** Fecha de última actualización */
+  updatedAt: string;
+
+  /** ID del usuario que creó el formulario */
+  createdBy: string;
+
+  /** ID del usuario que actualizó el formulario */
+  updatedBy: string | null;
 }

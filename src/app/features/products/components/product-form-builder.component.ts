@@ -21,6 +21,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatBadgeModule } from '@angular/material/badge';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductsService } from '../services/products.service';
 import { ProductProtocolsService } from '../services/product-protocols.service';
@@ -59,6 +63,10 @@ export type ProjectStage =
     MatProgressSpinnerModule,
     MatChipsModule,
     MatRadioModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatDividerModule,
+    MatBadgeModule,
     DragDropModule,
   ],
   templateUrl: './product-form-builder.component.html',
@@ -87,6 +95,50 @@ export class ProductFormBuilderComponent implements OnInit {
   saving = signal(false);
   fieldTypes = signal<FieldType[]>([]);
   protocols = signal<ProductProtocol[]>([]);
+
+  // Form metadata and versioning
+  formStatus = signal<'draft' | 'published' | 'archived'>('draft');
+  formVersion = signal<number>(1);
+  isPublished = signal<boolean>(false);
+  publishedAt = signal<string | null>(null);
+  validFrom = signal<string | null>(null);
+  validUntil = signal<string | null>(null);
+  createdBy = signal<string | null>(null);
+  updatedBy = signal<string | null>(null);
+  createdAt = signal<string | null>(null);
+  updatedAt = signal<string | null>(null);
+
+  // UI state for publication panel
+  publicationPanelExpanded = signal(false);
+  historyPanelExpanded = signal(false);
+  formHistory = signal<FormSchemaResponse[]>([]);
+
+  // Computed for date validation
+  isValidDateRange = computed(() => {
+    const from = this.validFrom();
+    const until = this.validUntil();
+    if (!from || !until) return false; // Fechas obligatorias para publicar
+    return new Date(from) < new Date(until);
+  });
+
+  // Computed para verificar si las fechas están completas
+  hasRequiredDates = computed(() => {
+    return !!this.validFrom() && !!this.validUntil();
+  });
+
+  canPublish = computed(() => {
+    // Solo se puede publicar si:
+    // 1. Es modo edición (existe formId)
+    // 2. El estado actual es draft
+    // 3. Ambas fechas están presentes (obligatorias)
+    // 4. Las fechas forman un rango válido
+    return (
+      this.editMode() &&
+      this.formStatus() === 'draft' &&
+      this.hasRequiredDates() &&
+      this.isValidDateRange()
+    );
+  });
 
   // Secciones del formulario
   protocolLinkedSection = signal<FormSection>({
@@ -293,6 +345,18 @@ export class ProductFormBuilderComponent implements OnInit {
    */
   private parseAndLoadFormSchema(response: FormSchemaResponse): void {
     try {
+      // Cargar metadatos del formulario (versioning)
+      this.formStatus.set(response.status);
+      this.formVersion.set(response.version);
+      this.isPublished.set(response.isPublished);
+      this.publishedAt.set(response.publishedAt);
+      this.validFrom.set(response.validFrom);
+      this.validUntil.set(response.validUntil);
+      this.createdBy.set(response.createdBy);
+      this.updatedBy.set(response.updatedBy);
+      this.createdAt.set(response.createdAt);
+      this.updatedAt.set(response.updatedAt);
+
       // Parsear el string JSON del schema
       const schema: FormSchema = JSON.parse(response.schema);
 
@@ -1167,6 +1231,8 @@ export class ProductFormBuilderComponent implements OnInit {
       description: '',
       applicableStages: [this.getStageCode().toLowerCase()],
       schema: JSON.stringify(schema),
+      validFrom: this.validFrom() || undefined,
+      validUntil: this.validUntil() || undefined,
     };
 
     this.saving.set(true);
@@ -1193,6 +1259,136 @@ export class ProductFormBuilderComponent implements OnInit {
           error?.error?.message || error?.message || 'Error al guardar el formulario';
         this.notification.error(errorMessage);
         this.saving.set(false);
+      },
+    });
+  }
+
+  /**
+   * Publica el formulario (solo disponible para formularios en estado draft)
+   */
+  publishForm(): void {
+    // Validar que ambas fechas estén presentes
+    if (!this.validFrom() || !this.validUntil()) {
+      this.notification.error(
+        'Las fechas "Válido Desde" y "Válido Hasta" son obligatorias para publicar',
+      );
+      return;
+    }
+
+    if (!this.isValidDateRange()) {
+      this.notification.error('La fecha "Válido Desde" debe ser anterior a "Válido Hasta"');
+      return;
+    }
+
+    if (!this.canPublish()) {
+      this.notification.warning('No se puede publicar este formulario en su estado actual');
+      return;
+    }
+
+    this.saving.set(true);
+
+    // Convertir fechas a formato ISO (YYYY-MM-DD)
+    const validFromISO = this.formatDateToISO(this.validFrom()!);
+    const validUntilISO = this.formatDateToISO(this.validUntil()!);
+
+    this.productsService
+      .publishForm(this.productId(), this.formId()!, validFromISO, validUntilISO)
+      .subscribe({
+        next: (response) => {
+          console.log('Formulario publicado:', response);
+          this.notification.success('Formulario publicado correctamente');
+          this.parseAndLoadFormSchema(response);
+          this.saving.set(false);
+        },
+        error: (error) => {
+          console.error('Error publicando formulario:', error);
+          const errorMessage =
+            error?.error?.message || error?.message || 'Error al publicar el formulario';
+          this.notification.error(errorMessage);
+          this.saving.set(false);
+        },
+      });
+  }
+
+  /**
+   * Convierte una fecha (string o Date) al formato ISO YYYY-MM-DD
+   */
+  private formatDateToISO(date: string | Date): string {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * Despublica el formulario (temporarily deactivate)
+   */
+  unpublishForm(): void {
+    if (this.formStatus() !== 'published') {
+      this.notification.warning('Solo se pueden despublicar formularios publicados');
+      return;
+    }
+
+    this.saving.set(true);
+    this.productsService.unpublishForm(this.productId(), this.formId()!).subscribe({
+      next: (response) => {
+        console.log('Formulario despublicado:', response);
+        this.notification.success('Formulario despublicado correctamente');
+        this.parseAndLoadFormSchema(response);
+        this.saving.set(false);
+      },
+      error: (error) => {
+        console.error('Error despublicando formulario:', error);
+        const errorMessage =
+          error?.error?.message || error?.message || 'Error al despublicar el formulario';
+        this.notification.error(errorMessage);
+        this.saving.set(false);
+      },
+    });
+  }
+
+  /**
+   * Archiva el formulario (marca como obsoleto)
+   */
+  archiveForm(): void {
+    if (this.formStatus() === 'archived') {
+      this.notification.warning('Este formulario ya está archivado');
+      return;
+    }
+
+    this.saving.set(true);
+    this.productsService.archiveForm(this.productId(), this.formId()!).subscribe({
+      next: (response) => {
+        console.log('Formulario archivado:', response);
+        this.notification.success('Formulario archivado correctamente');
+        this.parseAndLoadFormSchema(response);
+        this.saving.set(false);
+      },
+      error: (error) => {
+        console.error('Error archivando formulario:', error);
+        const errorMessage =
+          error?.error?.message || error?.message || 'Error al archivar el formulario';
+        this.notification.error(errorMessage);
+        this.saving.set(false);
+      },
+    });
+  }
+
+  /**
+   * Carga el historial de versiones del formulario
+   */
+  loadFormHistory(): void {
+    if (!this.formId()) return;
+
+    this.productsService.getFormHistory(this.productId(), this.formId()!, this.stage()).subscribe({
+      next: (history) => {
+        console.log('Historial cargado:', history);
+        this.formHistory.set(history);
+      },
+      error: (error) => {
+        console.error('Error cargando historial:', error);
+        this.notification.error('Error al cargar el historial de versiones');
       },
     });
   }

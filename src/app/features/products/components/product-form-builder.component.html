@@ -39,6 +39,358 @@
   } @else {
     <!-- Content -->
     <div class="form-builder-content">
+      <!-- Panel de Versión y Publicación (solo en modo edición) -->
+      @if (editMode()) {
+        <mat-expansion-panel
+          [expanded]="publicationPanelExpanded()"
+          (expandedChange)="publicationPanelExpanded.set($event)"
+          class="publication-panel"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="panel-title-wrapper">
+                <div class="title-with-icon">
+                  <mat-icon class="panel-icon">
+                    @if (formStatus() === 'published' && isPublished()) {
+                      publish
+                    } @else if (formStatus() === 'draft') {
+                      edit_note
+                    } @else {
+                      archive
+                    }
+                  </mat-icon>
+                  <span class="text-body font-bold">Estado y Publicación</span>
+                </div>
+
+                <!-- Status Badge -->
+                <div class="status-badge-inline" [class]="'status-' + formStatus()">
+                  @if (formStatus() === 'published' && isPublished()) {
+                    <mat-icon>check_circle</mat-icon>
+                    <span>Publicado v{{ formVersion() }}</span>
+                  } @else if (formStatus() === 'draft') {
+                    <mat-icon>edit</mat-icon>
+                    <span>Borrador v{{ formVersion() }}</span>
+                  } @else {
+                    <mat-icon>archive</mat-icon>
+                    <span>Archivado v{{ formVersion() }}</span>
+                  }
+                </div>
+              </div>
+            </mat-panel-title>
+            <mat-panel-description>
+              Gestiona el estado y fechas de vigencia del formulario
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="panel-content publication-content">
+            <!-- Current Status Info -->
+            <div class="status-info-card">
+              <div class="info-row">
+                <div class="info-label">
+                  <mat-icon>info</mat-icon>
+                  <span class="text-subtitle text-neutral-subheading">Estado actual:</span>
+                </div>
+                <div class="info-value">
+                  <span class="text-body font-bold" [class]="'text-' + formStatus()">
+                    @if (formStatus() === 'published' && isPublished()) {
+                      Publicado y activo
+                    } @else if (formStatus() === 'draft') {
+                      Borrador (no visible para usuarios finales)
+                    } @else {
+                      Archivado (obsoleto)
+                    }
+                  </span>
+                </div>
+              </div>
+
+              @if (publishedAt()) {
+                <div class="info-row">
+                  <div class="info-label">
+                    <mat-icon>schedule</mat-icon>
+                    <span class="text-subtitle text-neutral-subheading">Fecha de publicación:</span>
+                  </div>
+                  <div class="info-value">
+                    <span class="text-body">{{ publishedAt() | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  </div>
+                </div>
+              }
+
+              <div class="info-row">
+                <div class="info-label">
+                  <mat-icon>tag</mat-icon>
+                  <span class="text-subtitle text-neutral-subheading">Versión:</span>
+                </div>
+                <div class="info-value">
+                  <span class="text-body font-bold">v{{ formVersion() }}</span>
+                </div>
+              </div>
+            </div>
+
+            <mat-divider class="my-4"></mat-divider>
+
+            <!-- Validity Dates -->
+            <div class="validity-section">
+              <h3 class="section-subtitle text-body font-bold text-accent-titles mb-3">
+                Fechas de Vigencia <span class="required-indicator">*</span>
+              </h3>
+              <p class="text-subtitle text-neutral-subheading mb-4">
+                Define el período en el que este formulario estará disponible para los usuarios.
+                <strong>Obligatorias para publicar.</strong>
+              </p>
+
+              <div class="date-fields">
+                <mat-form-field appearance="outline" class="date-field">
+                  <mat-label>Válido Desde *</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="pickerFrom"
+                    [(ngModel)]="validFrom"
+                    placeholder="Seleccionar fecha"
+                    required
+                  />
+                  <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerFrom></mat-datepicker>
+                  <mat-hint>Fecha desde la cual el formulario es válido</mat-hint>
+                  @if (!validFrom()) {
+                    <mat-error>Este campo es obligatorio para publicar</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="date-field">
+                  <mat-label>Válido Hasta *</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="pickerUntil"
+                    [(ngModel)]="validUntil"
+                    placeholder="Seleccionar fecha"
+                    required
+                  />
+                  <mat-datepicker-toggle matIconSuffix [for]="pickerUntil"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerUntil></mat-datepicker>
+                  <mat-hint>Fecha hasta la cual el formulario es válido</mat-hint>
+                  @if (!validUntil()) {
+                    <mat-error>Este campo es obligatorio para publicar</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              @if (!hasRequiredDates()) {
+                <div class="date-warning">
+                  <mat-icon>info</mat-icon>
+                  <span class="text-subtitle">
+                    Debes completar ambas fechas antes de poder publicar el formulario
+                  </span>
+                </div>
+              } @else if (!isValidDateRange()) {
+                <div class="date-error">
+                  <mat-icon>error</mat-icon>
+                  <span class="text-subtitle">
+                    La fecha "Válido Desde" debe ser anterior a "Válido Hasta"
+                  </span>
+                </div>
+              }
+            </div>
+
+            <mat-divider class="my-4"></mat-divider>
+
+            <!-- Actions -->
+            <div class="publication-actions">
+              <h3 class="section-subtitle text-body font-bold text-accent-titles mb-3">Acciones</h3>
+
+              @if (formStatus() === 'draft') {
+                <button
+                  mat-raised-button
+                  class="btn-publish"
+                  (click)="publishForm()"
+                  [disabled]="!canPublish() || saving()"
+                >
+                  <mat-icon>publish</mat-icon>
+                  <span>Publicar formulario</span>
+                </button>
+                <p class="text-subtitle text-neutral-subheading mt-2">
+                  Al publicar, el formulario estará disponible para los usuarios finales
+                </p>
+              } @else if (formStatus() === 'published' && isPublished()) {
+                <div class="action-buttons">
+                  <button
+                    mat-stroked-button
+                    class="btn-unpublish"
+                    (click)="unpublishForm()"
+                    [disabled]="saving()"
+                  >
+                    <mat-icon>unpublished</mat-icon>
+                    <span>Despublicar</span>
+                  </button>
+                  <button
+                    mat-stroked-button
+                    class="btn-archive"
+                    (click)="archiveForm()"
+                    [disabled]="saving()"
+                  >
+                    <mat-icon>archive</mat-icon>
+                    <span>Archivar</span>
+                  </button>
+                </div>
+                <p class="text-subtitle text-neutral-subheading mt-2">
+                  Despublicar: Oculta temporalmente el formulario. Archivar: Marca como obsoleto
+                </p>
+              } @else if (formStatus() === 'archived') {
+                <div class="archived-notice">
+                  <mat-icon>info</mat-icon>
+                  <p class="text-body">Este formulario está archivado y no puede ser modificado</p>
+                </div>
+              }
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Panel de Historial de Versiones -->
+        <mat-expansion-panel
+          [expanded]="historyPanelExpanded()"
+          (expandedChange)="
+            historyPanelExpanded.set($event); historyPanelExpanded() && loadFormHistory()
+          "
+          class="history-panel"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="panel-title-wrapper">
+                <div class="title-with-icon">
+                  <mat-icon class="panel-icon">history</mat-icon>
+                  <span class="text-body font-bold">Historial de Versiones</span>
+                  @if (formHistory().length > 0) {
+                    <span class="text-subtitle text-neutral-subheading ml-2">
+                      ({{ formHistory().length }} versiones)
+                    </span>
+                  }
+                </div>
+              </div>
+            </mat-panel-title>
+            <mat-panel-description>
+              Revisa todas las versiones anteriores de este formulario
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="panel-content history-content">
+            @if (formHistory().length === 0) {
+              <div class="empty-history">
+                <mat-icon>history</mat-icon>
+                <p class="text-body text-neutral-subheading">
+                  No hay historial de versiones disponible
+                </p>
+              </div>
+            } @else {
+              <div class="history-timeline">
+                @for (version of formHistory(); track version.id) {
+                  <div class="history-item" [class.is-current]="version.id === formId()">
+                    <!-- Version Badge -->
+                    <div class="version-indicator">
+                      <div class="version-badge-large" [class]="'status-' + version.status">
+                        <span class="version-number">v{{ version.version }}</span>
+                        @if (version.id === formId()) {
+                          <mat-icon class="current-icon">check_circle</mat-icon>
+                        }
+                      </div>
+                      @if ($index < formHistory().length - 1) {
+                        <div class="timeline-connector"></div>
+                      }
+                    </div>
+
+                    <!-- Version Content -->
+                    <div class="version-content">
+                      <div class="version-header">
+                        <div class="version-info">
+                          <h4 class="version-title text-body font-bold">
+                            Versión {{ version.version }}
+                            @if (version.id === formId()) {
+                              <span class="current-label">(Actual)</span>
+                            }
+                          </h4>
+                          <div class="version-meta">
+                            <!-- Status Badge -->
+                            <div class="status-badge-small" [class]="'status-' + version.status">
+                              <mat-icon>
+                                @if (version.status === 'published') {
+                                  publish
+                                } @else if (version.status === 'draft') {
+                                  edit_note
+                                } @else {
+                                  archive
+                                }
+                              </mat-icon>
+                              <span>
+                                @if (version.status === 'published') {
+                                  Publicado
+                                } @else if (version.status === 'draft') {
+                                  Borrador
+                                } @else {
+                                  Archivado
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Version Details -->
+                      <div class="version-details">
+                        @if (version.publishedAt) {
+                          <div class="detail-item">
+                            <mat-icon>event</mat-icon>
+                            <span class="text-subtitle">
+                              Publicado: {{ version.publishedAt | date: 'dd/MM/yyyy HH:mm' }}
+                            </span>
+                          </div>
+                        }
+
+                        @if (version.validFrom || version.validUntil) {
+                          <div class="detail-item">
+                            <mat-icon>date_range</mat-icon>
+                            <span class="text-subtitle">
+                              Vigencia:
+                              @if (version.validFrom) {
+                                {{ version.validFrom | date: 'dd/MM/yyyy' }}
+                              } @else {
+                                --
+                              }
+                              al
+                              @if (version.validUntil) {
+                                {{ version.validUntil | date: 'dd/MM/yyyy' }}
+                              } @else {
+                                --
+                              }
+                            </span>
+                          </div>
+                        }
+
+                        @if (version.updatedAt) {
+                          <div class="detail-item">
+                            <mat-icon>update</mat-icon>
+                            <span class="text-subtitle">
+                              Última modificación:
+                              {{ version.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+                            </span>
+                          </div>
+                        }
+
+                        @if (version.updatedBy) {
+                          <div class="detail-item">
+                            <mat-icon>person</mat-icon>
+                            <span class="text-subtitle"
+                              >Modificado por: {{ version.updatedBy }}</span
+                            >
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </mat-expansion-panel>
+      }
+
       <!-- Sección Unificada de Preguntas -->
       <mat-expansion-panel
         [expanded]="protocolPanelExpanded()"
