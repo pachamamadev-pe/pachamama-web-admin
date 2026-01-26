@@ -1580,6 +1580,13 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Maneja cuando se cargan los requirements desde el tab de documentos
+   */
+  onRequirementsLoaded(requirements: DocumentRequirements): void {
+    this.documentRequirements.set(requirements);
+  }
+
+  /**
    * Abre el dialog para subir documentos
    */
   openUploadDialog(): void {

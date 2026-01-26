@@ -143,6 +143,7 @@ export class DocumentsTabComponent {
   uploadDocument = output<void>();
   reviewDocument = output<ProjectDocument>();
   resubmitDocument = output<ProjectDocument>();
+  requirementsLoaded = output<DocumentRequirements>(); // Nuevo: emitir cuando se cargan los requirements
 
   // State
   documents = signal<ProjectDocument[]>([]);
@@ -176,6 +177,7 @@ export class DocumentsTabComponent {
     this.projectDocumentsService.getDocumentRequirements(projectId).subscribe({
       next: (requirements) => {
         this.documentRequirements.set(requirements);
+        this.requirementsLoaded.emit(requirements); // Emitir al parent
         this.loadingRequirements.set(false);
         this.checkLoadingComplete();
       },
