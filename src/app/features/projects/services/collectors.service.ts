@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@environments/environment';
 import { Collector } from '../models/collector.model';
+import { PageDto } from '../models/project.model';
 
 /**
  * Servicio para gestionar recolectores
@@ -16,12 +17,21 @@ export class CollectorsService {
   private apiUrl = `${environment.apiUrl}/api/v1/collectors`;
 
   /**
-   * Obtiene la lista de recolectores por projectCommunityId
+   * Obtiene la lista paginada de recolectores por projectCommunityId
    * @param projectCommunityId - ID del vínculo proyecto-comunidad
+   * @param page - Página (default 0)
+   * @param size - Tamaño de página (default 20)
    */
-  getCollectorsByProjectCommunity(projectCommunityId: string): Observable<Collector[]> {
-    const params = new HttpParams().set('projectCommunityId', projectCommunityId);
-    return this.http.get<Collector[]>(this.apiUrl, { params });
+  getCollectorsByProjectCommunity(
+    projectCommunityId: string,
+    page = 0,
+    size = 20,
+  ): Observable<PageDto<Collector>> {
+    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    return this.http.get<PageDto<Collector>>(
+      `${this.apiUrl}/project-community/${projectCommunityId}/paged`,
+      { params },
+    );
   }
 
   /**

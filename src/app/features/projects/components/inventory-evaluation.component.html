@@ -114,7 +114,7 @@
               </tr>
             </thead>
             <tbody class="table-body">
-              @for (activity of paginatedActivities(); track activity.id) {
+              @for (activity of filteredActivities(); track activity.id) {
                 <tr class="table-row">
                   <td class="table-td">
                     <span class="text-body font-bold text-accent-titles">{{
@@ -172,7 +172,7 @@
 
           <!-- Pagination -->
           <mat-paginator
-            [length]="filteredActivities().length"
+            [length]="totalElements()"
             [pageSize]="pageSize()"
             [pageIndex]="currentPage()"
             [pageSizeOptions]="[10, 20, 50, 100]"
@@ -183,7 +183,7 @@
 
         <!-- Mobile Cards (visible on mobile only) -->
         <div class="mobile-cards md:hidden">
-          @for (activity of paginatedActivities(); track activity.id) {
+          @for (activity of filteredActivities(); track activity.id) {
             <div class="form-card bg-primary-white rounded-lg shadow p-4">
               <div class="card-header">
                 <div class="card-title">
@@ -272,7 +272,7 @@
           <!-- Mobile Pagination -->
           <mat-paginator
             class="mt-4"
-            [length]="filteredActivities().length"
+            [length]="totalElements()"
             [pageSize]="pageSize()"
             [pageIndex]="currentPage()"
             [pageSizeOptions]="[10, 20, 50, 100]"

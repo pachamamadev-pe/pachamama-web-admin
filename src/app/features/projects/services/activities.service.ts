@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@environments/environment';
 import { ActivityResponse, ActivityEvaluationUpdateRequest } from '../models/activity.model';
+import { PageDto } from '../models/project.model';
 
 /**
  * Servicio para gestionar actividades de recolección
@@ -15,10 +16,23 @@ export class ActivitiesService {
   private apiUrl = `${environment.apiUrl}/api/v1/collectors/activities`;
 
   /**
-   * Obtiene todas las actividades de un proyecto
+   * Obtiene las actividades de un proyecto (paginado)
+   * @param projectId ID del proyecto
+   * @param page Número de página (0-based)
+   * @param size Tamaño de página
    */
-  getActivitiesByProject(projectId: string): Observable<ActivityResponse[]> {
-    return this.http.get<ActivityResponse[]>(`${this.apiUrl}/by-project/${projectId}`);
+  getActivitiesByProject(
+    projectId: string,
+    page = 0,
+    size = 20,
+  ): Observable<PageDto<ActivityResponse>> {
+    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    return this.http.get<PageDto<ActivityResponse>>(
+      `${this.apiUrl}/by-project/${projectId}/paged`,
+      {
+        params,
+      },
+    );
   }
 
   /**

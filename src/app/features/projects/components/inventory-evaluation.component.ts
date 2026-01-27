@@ -72,6 +72,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
   // State
   loading = signal(true);
   activities = signal<ActivityResponse[]>([]);
+  totalElements = signal(0); // Total de elementos para paginación
   selectedFilter = signal('all');
   refreshing = signal(false); // Indicador de refresh silencioso
   lastUpdated = signal<Date | null>(null); // Última actualización
@@ -80,7 +81,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
   // Search and pagination
   searchTerm = signal('');
   currentPage = signal(0);
-  pageSize = signal(10);
+  pageSize = signal(20); // Tamaño de página del backend
 
   // Auto-refresh configuration
   private autoRefreshInterval: number | null = null;
@@ -148,6 +149,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
   });
 
   // Filtrar actividades según el filtro seleccionado y término de búsqueda
+  // NOTA: El filtrado ahora se aplica sobre los datos ya paginados del backend
   filteredActivities = computed(() => {
     const allActivities = this.activities();
     const filter = this.selectedFilter();
@@ -194,19 +196,6 @@ export class InventoryEvaluationComponent implements OnDestroy {
       const dateB = b.deviceTimestamp ? new Date(b.deviceTimestamp).getTime() : 0;
       return dateB - dateA; // Descendente (más recientes primero)
     });
-  });
-
-  // Total de registros filtrados (para paginador)
-  totalFilteredRecords = computed(() => this.filteredActivities().length);
-
-  // Actividades paginadas
-  paginatedActivities = computed(() => {
-    const filtered = this.filteredActivities();
-    const page = this.currentPage();
-    const size = this.pageSize();
-    const start = page * size;
-    const end = start + size;
-    return filtered.slice(start, end);
   });
 
   constructor() {
@@ -263,6 +252,18 @@ export class InventoryEvaluationComponent implements OnDestroy {
   }
 
   /**
+   * Maneja el cambio de página del mat-paginator
+   */
+  onPageChange(event: PageEvent): void {
+    this.currentPage.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    const projId = this.projectId();
+    if (projId) {
+      this.loadActivities(projId, true);
+    }
+  }
+
+  /**
    * Carga las actividades del proyecto
    * @param projectId ID del proyecto
    * @param showLoader Si debe mostrar el spinner de carga (true para carga inicial, false para refresh)
@@ -274,9 +275,13 @@ export class InventoryEvaluationComponent implements OnDestroy {
       this.refreshing.set(true);
     }
 
-    this.activitiesService.getActivitiesByProject(projectId).subscribe({
-      next: (activities) => {
-        this.activities.set(activities);
+    const page = this.currentPage();
+    const size = this.pageSize();
+
+    this.activitiesService.getActivitiesByProject(projectId, page, size).subscribe({
+      next: (response) => {
+        this.activities.set(response.items);
+        this.totalElements.set(response.total);
         this.lastUpdated.set(new Date());
 
         if (showLoader) {
@@ -290,6 +295,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
         if (showLoader) {
           this.notification.error('Error al cargar las actividades');
           this.activities.set([]);
+          this.totalElements.set(0);
           this.loading.set(false);
         } else {
           // En refresh silencioso, no mostrar error invasivo
@@ -322,14 +328,6 @@ export class InventoryEvaluationComponent implements OnDestroy {
   clearSearch(): void {
     this.searchTerm.set('');
     this.currentPage.set(0);
-  }
-
-  /**
-   * Maneja el cambio de página
-   */
-  onPageChange(event: PageEvent): void {
-    this.currentPage.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
   }
 
   /**

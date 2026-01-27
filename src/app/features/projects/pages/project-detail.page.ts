@@ -42,7 +42,6 @@ import { Community } from '../../communities/models/community.model';
 import { Collector } from '../models/collector.model';
 import { Brigade } from '../models/brigade.model';
 import { DocumentRequirements, ProjectDocument } from '../models/project-document.model';
-import { ActivityResponse } from '../models/activity.model';
 import {
   GeoJSONFeatureCollection,
   AreaImportResponse,
@@ -144,35 +143,9 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   currentImportId = signal<string | null>(null);
   uploadError = signal<string | null>(null);
 
-  // Collectors state
-  collectors = signal<Collector[]>([]);
+  // Collectors state - only store total for validation
+  collectorsTotal = signal<number>(0);
   loadingCollectors = signal(false);
-
-  // Pagination state for collectors
-  collectorsPageSize = signal(10);
-  collectorsPageIndex = signal(0);
-
-  // Computed para collectors paginados
-  paginatedCollectors = computed(() => {
-    const allCollectors = this.collectors();
-    const pageSize = this.collectorsPageSize();
-    const pageIndex = this.collectorsPageIndex();
-    const startIndex = pageIndex * pageSize;
-    const endIndex = startIndex + pageSize;
-    return allCollectors.slice(startIndex, endIndex);
-  });
-
-  // Columnas de la tabla de recolectores
-  collectorsDisplayedColumns: string[] = [
-    'name',
-    'lastName',
-    'documentType',
-    'documentNumber',
-    'phone',
-    'assignedBrigade',
-    'status',
-    'actions',
-  ];
 
   // Brigades state (paginación backend)
   brigades = signal<Brigade[]>([]);
@@ -279,7 +252,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   // Computed para verificar si se puede iniciar el inventario
   canStartInventory = computed(() => {
     const stage = this.project()?.stage;
-    const hasCollectors = this.collectors().length > 0;
+    const hasCollectors = this.collectorsTotal() > 0;
     const hasBrigades = this.brigades().length > 0;
     const hasRequiredDocs = this.documentRequirements()?.isCompliant || false;
     const allDocsApproved = this.areAllRequiredDocumentsApproved();
@@ -295,14 +268,13 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     );
   });
 
-  // Activities state para validación de etapas
-  projectActivities = signal<ActivityResponse[]>([]);
-  loadingActivities = signal(false);
+  // Activities state para validación de etapas (solo guardamos el total, no el array completo)
+  projectActivitiesTotal = signal<number>(0);
 
   // Computed para verificar si se puede avanzar a PMF (de Inventario a PMF Development)
   canStartPMF = computed(() => {
     const stage = this.project()?.stage;
-    const hasActivities = this.projectActivities().length > 0;
+    const hasActivities = this.projectActivitiesTotal() > 0;
 
     // Solo se puede iniciar PMF si:
     // 1. Está en etapa 'inventory'
@@ -366,7 +338,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
     switch (stage) {
       case 'planning':
-        if (!this.collectors().length) blockers.push('• Registrar recolectores');
+        if (this.collectorsTotal() === 0) blockers.push('• Registrar recolectores');
         if (!this.brigades().length) blockers.push('• Crear al menos una brigada');
         if (!this.documentRequirements()?.isCompliant)
           blockers.push('• Subir documentos obligatorios');
@@ -374,7 +346,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
           blockers.push('• Aprobar documentos obligatorios');
         break;
       case 'inventory':
-        if (!this.projectActivities().length)
+        if (this.projectActivitiesTotal() === 0)
           blockers.push('• Registrar al menos una actividad de inventario');
         break;
       case 'pmf_development':
@@ -1069,30 +1041,23 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Carga los recolectores del proyecto
+   * Carga el total de recolectores del proyecto (solo para validación)
    */
   loadCollectors(projectCommunityId: string): void {
     this.loadingCollectors.set(true);
-    this.collectorsService.getCollectorsByProjectCommunity(projectCommunityId).subscribe({
-      next: (collectors) => {
-        this.collectors.set(collectors);
+    // Fetch only page 0 with size 1 to get the total count
+    this.collectorsService.getCollectorsByProjectCommunity(projectCommunityId, 0, 1).subscribe({
+      next: (response) => {
+        this.collectorsTotal.set(response.total ?? 0);
         this.loadingCollectors.set(false);
       },
       error: (error) => {
-        console.error('Error loading collectors:', error);
+        console.error('Error loading collectors count:', error);
         this.notification.error('Error al cargar recolectores');
-        this.collectors.set([]);
+        this.collectorsTotal.set(0);
         this.loadingCollectors.set(false);
       },
     });
-  }
-
-  /**
-   * Maneja el cambio de página en la tabla de recolectores
-   */
-  onCollectorsPageChange(event: PageEvent): void {
-    this.collectorsPageIndex.set(event.pageIndex);
-    this.collectorsPageSize.set(event.pageSize);
   }
 
   /**
@@ -1444,12 +1409,47 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   generateOnboardingInvitation(): void {
     const projectId = this.project()?.id;
     const communityId = this.community()?.id;
+    const projectCommunityId = this.project()?.communityLink?.id;
+    const maxCollectors = this.project()?.maxCollectors;
 
     if (!projectId || !communityId) {
       this.notification.error('No se pudo obtener los datos del proyecto o comunidad');
       return;
     }
 
+    // Validate max collectors if limit is set
+    if (maxCollectors !== null && maxCollectors !== undefined && projectCommunityId) {
+      // Fetch total collectors to validate against max
+      this.collectorsService.getCollectorsByProjectCommunity(projectCommunityId, 0, 1).subscribe({
+        next: (response) => {
+          const totalCollectors = response.total ?? 0;
+
+          if (totalCollectors >= maxCollectors) {
+            this.notification.error(
+              `No se puede generar QR de onboarding. Se ha alcanzado el máximo de ${maxCollectors} recolectores permitidos en el proyecto. Debe ampliar el límite.`,
+            );
+            return;
+          }
+
+          // Max not exceeded, proceed with invitation
+          this.proceedWithInvitationGeneration(projectId, communityId);
+        },
+        error: (error) => {
+          console.error('Error checking collectors count:', error);
+          this.notification.error('Error al validar el número de recolectores');
+        },
+      });
+      return;
+    }
+
+    // No max limit set, proceed directly
+    this.proceedWithInvitationGeneration(projectId, communityId);
+  }
+
+  /**
+   * Procede con la generación del código de invitación
+   */
+  private proceedWithInvitationGeneration(projectId: string, communityId: string): void {
     this.notification.info('Generando código de invitación...');
 
     this.projectInvitationsService.generateInvitation(projectId, communityId).subscribe({
@@ -1554,19 +1554,18 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Carga las actividades del proyecto para validación de etapas
+   * Carga el total de actividades del proyecto para validación de etapas
+   * Solo necesitamos saber si existe al menos 1 actividad, no cargar todas
    */
   loadProjectActivities(projectId: string): void {
-    this.loadingActivities.set(true);
-    this.activitiesService.getActivitiesByProject(projectId).subscribe({
-      next: (activities) => {
-        this.projectActivities.set(activities);
-        this.loadingActivities.set(false);
+    // Llamar con page=0, size=1 para obtener solo el total (más eficiente)
+    this.activitiesService.getActivitiesByProject(projectId, 0, 1).subscribe({
+      next: (response) => {
+        this.projectActivitiesTotal.set(response.total);
       },
       error: (error) => {
-        console.error('Error loading project activities:', error);
-        this.projectActivities.set([]);
-        this.loadingActivities.set(false);
+        console.error('Error loading project activities total:', error);
+        this.projectActivitiesTotal.set(0);
       },
     });
   }

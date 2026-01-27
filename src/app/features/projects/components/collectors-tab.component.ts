@@ -235,7 +235,7 @@ import { Brigade } from '../models/brigade.model';
 
         <!-- Pagination -->
         <mat-paginator
-          [length]="collectors().length"
+          [length]="totalElements()"
           [pageSize]="pageSize()"
           [pageIndex]="pageIndex()"
           [pageSizeOptions]="[5, 10, 25, 50]"
@@ -406,15 +406,11 @@ export class CollectorsTabComponent implements OnInit {
   loading = signal(false);
   pageIndex = signal(0);
   pageSize = signal(10);
+  totalElements = signal(0); // Total from backend
 
-  // Computed
+  // Computed - now using backend pagination
   paginatedCollectors = computed(() => {
-    const allCollectors = this.collectors();
-    const size = this.pageSize();
-    const index = this.pageIndex();
-    const startIndex = index * size;
-    const endIndex = startIndex + size;
-    return allCollectors.slice(startIndex, endIndex);
+    return this.collectors(); // Backend already returns paginated data
   });
 
   // Table columns
@@ -436,20 +432,26 @@ export class CollectorsTabComponent implements OnInit {
   private loadData(): void {
     this.loading.set(true);
     const projectCommunityId = this.projectCommunityId();
+    const page = this.pageIndex();
+    const size = this.pageSize();
 
-    // Load collectors and brigades in parallel
-    this.collectorsService.getCollectorsByProjectCommunity(projectCommunityId).subscribe({
-      next: (collectors) => {
-        this.collectors.set(collectors);
-        this.loadBrigades();
-      },
-      error: (error) => {
-        console.error('Error loading collectors:', error);
-        this.notification.error('Error al cargar recolectores');
-        this.collectors.set([]);
-        this.loading.set(false);
-      },
-    });
+    // Load collectors with pagination
+    this.collectorsService
+      .getCollectorsByProjectCommunity(projectCommunityId, page, size)
+      .subscribe({
+        next: (response) => {
+          this.collectors.set(response.items ?? []);
+          this.totalElements.set(response.total ?? 0);
+          this.loadBrigades();
+        },
+        error: (error) => {
+          console.error('Error loading collectors:', error);
+          this.notification.error('Error al cargar recolectores');
+          this.collectors.set([]);
+          this.totalElements.set(0);
+          this.loading.set(false);
+        },
+      });
   }
 
   private loadBrigades(): void {
@@ -472,6 +474,7 @@ export class CollectorsTabComponent implements OnInit {
   onPageChange(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
+    this.loadData(); // Reload data from backend with new page/size
   }
 
   onBrigadeChange(collector: Collector, brigadeId: string): void {
