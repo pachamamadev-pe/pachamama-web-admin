@@ -257,15 +257,29 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     const hasRequiredDocs = this.documentRequirements()?.isCompliant || false;
     const allDocsApproved = this.areAllRequiredDocumentsApproved();
 
+    // DEBUG LOGS
+    console.log('🔍 canStartInventory evaluation:', {
+      stage,
+      collectorsTotal: this.collectorsTotal(),
+      hasCollectors,
+      brigadesCount: this.brigades().length,
+      hasBrigades,
+      hasRequiredDocs,
+      allDocsApproved,
+      documentRequirements: this.documentRequirements(),
+      documentsCount: this.documents().length,
+    });
+
     // Solo se puede iniciar inventario si:
     // 1. Está en etapa 'planning'
     // 2. Hay recolectores registrados
     // 3. Hay al menos una brigada creada
     // 4. Todos los documentos obligatorios han sido subidos (isCompliant)
     // 5. Todos los documentos obligatorios están aprobados
-    return (
-      stage === 'planning' && hasCollectors && hasBrigades && hasRequiredDocs && allDocsApproved
-    );
+    const canStart =
+      stage === 'planning' && hasCollectors && hasBrigades && hasRequiredDocs && allDocsApproved;
+    console.log('✅ canStartInventory result:', canStart);
+    return canStart;
   });
 
   // Activities state para validación de etapas (solo guardamos el total, no el array completo)
@@ -276,10 +290,19 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     const stage = this.project()?.stage;
     const hasActivities = this.projectActivitiesTotal() > 0;
 
+    // DEBUG LOGS
+    console.log('🔍 canStartPMF evaluation:', {
+      stage,
+      projectActivitiesTotal: this.projectActivitiesTotal(),
+      hasActivities,
+    });
+
     // Solo se puede iniciar PMF si:
     // 1. Está en etapa 'inventory'
     // 2. Hay al menos una actividad registrada
-    return stage === 'inventory' && hasActivities;
+    const canStart = stage === 'inventory' && hasActivities;
+    console.log('✅ canStartPMF result:', canStart);
+    return canStart;
   });
 
   // Computed para verificar si se puede avanzar a Recolección (de PMF a Collection)
@@ -287,10 +310,20 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     const stage = this.project()?.stage;
     const pmfDocApproved = this.isPMFDocumentApproved();
 
+    // DEBUG LOGS
+    console.log('🔍 canStartCollection evaluation:', {
+      stage,
+      pmfDocApproved,
+      documentRequirements: this.documentRequirements(),
+      documentsCount: this.documents().length,
+    });
+
     // Solo se puede iniciar Recolección si:
     // 1. Está en etapa 'pmf_development'
     // 2. El documento PMF está aprobado
-    return stage === 'pmf_development' && pmfDocApproved;
+    const canStart = stage === 'pmf_development' && pmfDocApproved;
+    console.log('✅ canStartCollection result:', canStart);
+    return canStart;
   });
 
   // Computed para obtener la siguiente etapa
@@ -491,8 +524,57 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
             );
             this.community.set(matchedCommunity || null);
 
-            // Las actividades se cargarán solo cuando el usuario navegue al tab de inventario
-            // No cargar actividades aquí para evitar llamadas innecesarias
+            const currentStage = project.stage;
+            console.log('🔄 Loading validation data for stage:', currentStage);
+
+            // Cargar datos según el stage actual para evitar llamadas innecesarias
+            const projectCommunityId = project.communityLink?.id;
+
+            // STAGE: planning - necesita: collectors, brigades, documents
+            if (currentStage === 'planning') {
+              if (projectCommunityId) {
+                // Solo cargar TOTAL de collectors (size=1) para validación
+                // El tab de Recolectores cargará la lista completa cuando el usuario lo abra
+                this.loadCollectors(projectCommunityId);
+
+                // Solo cargar TOTAL de brigades (size=1) para validación
+                // El tab de Brigadas cargará su propia lista cuando se abra
+                this.loadBrigadesTotal(projectCommunityId);
+              }
+
+              // Cargar document requirements y documents para validación
+              this.loadDocumentRequirements(id);
+              this.loadDocuments(id);
+            }
+
+            // STAGE: inventory - necesita: activities
+            else if (currentStage === 'inventory') {
+              // Cargar total de actividades para validación de canStartPMF
+              this.loadProjectActivities(id);
+
+              // También cargar documents para cualquier otra validación
+              this.loadDocumentRequirements(id);
+              this.loadDocuments(id);
+            }
+
+            // STAGE: pmf_development - necesita: documents (para verificar PMF aprobado)
+            else if (currentStage === 'pmf_development') {
+              this.loadDocumentRequirements(id);
+              this.loadDocuments(id);
+            }
+
+            // STAGES: collection y posteriores - cargar activities para stats
+            else if (
+              currentStage === 'collection' ||
+              currentStage === 'serfor_evaluation' ||
+              currentStage === 'ctp_entry' ||
+              currentStage === 'primary_transformation' ||
+              currentStage === 'map_adjustment'
+            ) {
+              this.loadProjectActivities(id);
+              this.loadDocumentRequirements(id);
+              this.loadDocuments(id);
+            }
 
             this.loading.set(false);
           },
@@ -1194,6 +1276,28 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
       error: (error) => {
         console.error('Error loading brigades:', error);
         this.notification.error('Error al cargar brigadas');
+        this.brigades.set([]);
+        this.brigadesTotalElements.set(0);
+        this.loadingBrigades.set(false);
+      },
+    });
+  }
+
+  /**
+   * Carga solo el total de brigadas para validación (evita duplicar llamadas)
+   */
+  private loadBrigadesTotal(projectCommunityId: string): void {
+    this.loadingBrigades.set(true);
+    // Fetch only page 0 with size 1 to get the total count
+    this.brigadesService.getBrigadesByProjectCommunity(projectCommunityId, 0, 1).subscribe({
+      next: (response) => {
+        // Solo guardamos el total y los items necesarios para validación
+        this.brigades.set(response.items);
+        this.brigadesTotalElements.set(response.total);
+        this.loadingBrigades.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading brigades total:', error);
         this.brigades.set([]);
         this.brigadesTotalElements.set(0);
         this.loadingBrigades.set(false);
