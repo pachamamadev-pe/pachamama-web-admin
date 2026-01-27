@@ -67,6 +67,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
   // Inputs
   productId = input.required<string>();
   projectId = input.required<string>();
+  shouldLoad = input(false); // Lazy loading trigger
 
   // State
   loading = signal(true);
@@ -74,6 +75,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
   selectedFilter = signal('all');
   refreshing = signal(false); // Indicador de refresh silencioso
   lastUpdated = signal<Date | null>(null); // Última actualización
+  private hasLoaded = signal(false); // Control de carga única
 
   // Search and pagination
   searchTerm = signal('');
@@ -208,11 +210,15 @@ export class InventoryEvaluationComponent implements OnDestroy {
   });
 
   constructor() {
+    // Load activities when shouldLoad becomes true (only once)
     effect(() => {
-      const projId = this.projectId();
-      if (projId) {
-        this.loadActivities(projId, true); // Primera carga con spinner
-        // this.startAutoRefresh(projId);
+      if (this.shouldLoad() && !this.hasLoaded()) {
+        this.hasLoaded.set(true);
+        const projId = this.projectId();
+        if (projId) {
+          this.loadActivities(projId, true); // Primera carga con spinner
+          // this.startAutoRefresh(projId); // Descomentar si se necesita auto-refresh
+        }
       }
     });
   }

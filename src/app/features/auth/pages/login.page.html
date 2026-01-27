@@ -64,6 +64,10 @@
             >
               <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
             </button>
+            <mat-hint class="text-subtitle text-neutral-subheading">
+              <mat-icon class="hint-icon">info</mat-icon>
+              Primera vez: usa tu número de DNI
+            </mat-hint>
             @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
               <mat-error>
                 @if (loginForm.controls.password.hasError('required')) {

@@ -310,6 +310,17 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     return stage === 'inventory' && hasActivities;
   });
 
+  // Computed para verificar si se puede avanzar a Recolección (de PMF a Collection)
+  canStartCollection = computed(() => {
+    const stage = this.project()?.stage;
+    const pmfDocApproved = this.isPMFDocumentApproved();
+
+    // Solo se puede iniciar Recolección si:
+    // 1. Está en etapa 'pmf_development'
+    // 2. El documento PMF está aprobado
+    return stage === 'pmf_development' && pmfDocApproved;
+  });
+
   // Computed para obtener la siguiente etapa
   nextStage = computed(() => {
     const currentStage = this.project()?.stage;
@@ -332,33 +343,50 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
         return this.canStartInventory();
       case 'inventory':
         return this.canStartPMF();
+      case 'pmf_development':
+        return this.canStartCollection();
       // TODO: Agregar validaciones para otras transiciones de etapas cuando se definan
       default:
         return false;
     }
   });
 
-  // Computed para obtener el mensaje de por qué no se puede avanzar
+  // Computed para verificar si se puede editar el mapa (solo en planning)
+  canEditMap = computed(() => {
+    const stage = this.project()?.stage;
+    return stage === 'planning';
+  });
+
+  // Computed para obtener el mensaje de por qué no se puede avanzar (lista de TODAS las condiciones faltantes)
   stageAdvanceBlockerMessage = computed(() => {
     const stage = this.project()?.stage;
     if (!stage) return '';
 
+    const blockers: string[] = [];
+
     switch (stage) {
       case 'planning':
-        if (!this.collectors().length) return 'Debes registrar recolectores';
-        if (!this.brigades().length) return 'Debes crear al menos una brigada';
+        if (!this.collectors().length) blockers.push('• Registrar recolectores');
+        if (!this.brigades().length) blockers.push('• Crear al menos una brigada');
         if (!this.documentRequirements()?.isCompliant)
-          return 'Faltan subir documentos obligatorios';
+          blockers.push('• Subir documentos obligatorios');
         if (!this.areAllRequiredDocumentsApproved())
-          return 'Faltan aprobar documentos obligatorios';
-        return '';
+          blockers.push('• Aprobar documentos obligatorios');
+        break;
       case 'inventory':
         if (!this.projectActivities().length)
-          return 'Debes registrar al menos una actividad de inventario';
-        return '';
+          blockers.push('• Registrar al menos una actividad de inventario');
+        break;
+      case 'pmf_development':
+        if (!this.isPMFDocumentApproved())
+          blockers.push('• Aprobar el documento PMF en el tab Documentos');
+        break;
       default:
-        return 'No se puede avanzar desde esta etapa';
+        blockers.push('No se puede avanzar desde esta etapa');
     }
+
+    if (blockers.length === 0) return '';
+    return 'Para avanzar debes completar:\n' + blockers.join('\n');
   });
 
   // Computed para mostrar/ocultar el tab de brigadas
@@ -394,6 +422,19 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     // Tab 3: Evaluación de inventario (condicional)
     if (this.showInventoryEvaluationTab()) index++;
     // Tab 4: Generar PMF (condicional) - este es el índice que buscamos
+    return index;
+  });
+
+  // Computed para calcular el índice dinámico del tab "Evaluación de inventario"
+  inventoryTabIndex = computed(() => {
+    let index = 0;
+    // Tab 0: Resumen (siempre presente)
+    index++;
+    // Tab 1: Recolectores (siempre presente)
+    index++;
+    // Tab 2: Brigadas (condicional)
+    if (this.showBrigadesTab()) index++;
+    // Tab 3: Evaluación de inventario (condicional) - este es el índice que buscamos
     return index;
   });
 
@@ -478,9 +519,8 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
             );
             this.community.set(matchedCommunity || null);
 
-            // Solo cargar actividades (para validación de stages)
-            // Los recolectores, brigadas y documentos se cargarán cuando el usuario navegue a esos tabs
-            this.loadProjectActivities(id);
+            // Las actividades se cargarán solo cuando el usuario navegue al tab de inventario
+            // No cargar actividades aquí para evitar llamadas innecesarias
 
             this.loading.set(false);
           },
@@ -1713,6 +1753,37 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     });
 
     return allApproved;
+  }
+
+  /**
+   * Verifica si el documento PMF (Plan de Manejo Forestal) está aprobado
+   */
+  isPMFDocumentApproved(): boolean {
+    const requirements = this.documentRequirements();
+    if (!requirements) {
+      return false;
+    }
+
+    const documents = this.documents();
+
+    // Buscar el tipo de documento PMF
+    const pmfDocType = requirements.documentTypes.find(
+      (docType) =>
+        docType.name?.toLowerCase().includes('pmf') ||
+        docType.name?.toLowerCase().includes('plan de manejo'),
+    );
+
+    if (!pmfDocType) {
+      return false;
+    }
+
+    // Encontrar el documento PMF subido (última versión)
+    const pmfDoc = documents.find(
+      (d) => d.documentType.id === pmfDocType.documentTypeId && d.isLatestVersion,
+    );
+
+    // El documento debe existir y estar aprobado
+    return pmfDoc ? pmfDoc.validationStatus === 'approved' : false;
   }
 
   /**

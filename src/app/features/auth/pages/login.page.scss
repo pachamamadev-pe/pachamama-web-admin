@@ -223,6 +223,22 @@ $transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     color: $neutral-gray;
     margin-right: 8px;
   }
+
+  // Hint con ícono informativo
+  ::ng-deep .mat-mdc-form-field-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    margin-top: 4px;
+
+    .hint-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      opacity: 0.8;
+    }
+  }
 }
 
 // Opciones del formulario

@@ -32,6 +32,7 @@
             (click)="advanceToNextStage()"
             [matTooltip]="stageAdvanceBlockerMessage()"
             [matTooltipDisabled]="canAdvanceToNextStage()"
+            matTooltipClass="stage-blocker-tooltip"
           >
             <mat-icon>arrow_forward</mat-icon>
             <span>{{ nextStage() ? 'Avanzar a ' + nextStage()!.name : 'Siguiente Etapa' }}</span>
@@ -269,23 +270,30 @@
                               </div>
                               <h4 class="upload-title">No hay mapa cargado</h4>
                               <p class="upload-description">
-                                Sube uno o más archivos de áreas del proyecto
+                                @if (canEditMap()) {
+                                  Sube uno o más archivos de áreas del proyecto
+                                } @else {
+                                  El mapa solo se puede cargar en la etapa de Planificación
+                                }
                               </p>
 
                               <button
                                 mat-raised-button
                                 class="btn-primary mt-4"
                                 (click)="triggerFileInput()"
+                                [disabled]="!canEditMap()"
                               >
                                 <mat-icon>folder_open</mat-icon>
                                 Seleccionar archivo(s)
                               </button>
 
-                              <p class="upload-hint">
-                                Formatos: ZIP/RAR, Shapefiles (.shp + acompañantes), GeoJSON
-                                <br />
-                                Máximo 150MB por archivo
-                              </p>
+                              @if (canEditMap()) {
+                                <p class="upload-hint">
+                                  Formatos: ZIP/RAR, Shapefiles (.shp + acompañantes), GeoJSON
+                                  <br />
+                                  Máximo 150MB por archivo
+                                </p>
+                              }
                             </div>
                           </div>
                         }
@@ -343,15 +351,17 @@
                         <!-- Map Loaded Successfully -->
                         @else if (hasMap()) {
                           <div class="map-loaded">
-                            <!-- Edit Button (subtle) -->
-                            <button
-                              mat-icon-button
-                              class="map-edit-btn"
-                              (click)="enableEditMode()"
-                              matTooltip="Actualizar mapa"
-                            >
-                              <mat-icon>edit</mat-icon>
-                            </button>
+                            <!-- Edit Button (subtle) - Solo visible en planning -->
+                            @if (canEditMap()) {
+                              <button
+                                mat-icon-button
+                                class="map-edit-btn"
+                                (click)="enableEditMode()"
+                                matTooltip="Actualizar mapa"
+                              >
+                                <mat-icon>edit</mat-icon>
+                              </button>
+                            }
 
                             <!-- Map Stats -->
                             <div class="map-stats">
@@ -529,6 +539,7 @@
                   <app-inventory-evaluation
                     [productId]="project()!.productId"
                     [projectId]="project()!.id"
+                    [shouldLoad]="tabsLoaded().has(inventoryTabIndex())"
                   />
                 </div>
               </mat-tab>

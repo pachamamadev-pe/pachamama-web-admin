@@ -118,6 +118,53 @@ interface DialogData {
               <mat-hint align="end">Opcional</mat-hint>
             </mat-form-field>
 
+            <!-- Cuota aprobada y Máximo de recolectores -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Cuota aprobada -->
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Cuota aprobada de recolección</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="approvedQuota"
+                  placeholder="0.00"
+                  min="0.01"
+                  step="0.01"
+                  required
+                />
+                <span matTextSuffix class="ml-2 text-neutral-subheading">{{ productUnit }}</span>
+                @if (hasError('approvedQuota', 'required')) {
+                  <mat-error>La cuota es obligatoria</mat-error>
+                }
+                @if (hasError('approvedQuota', 'min')) {
+                  <mat-error>La cuota debe ser mayor a 0</mat-error>
+                }
+                <mat-hint>Máximo a recolectar en {{ productUnit }}</mat-hint>
+              </mat-form-field>
+
+              <!-- Máximo de recolectores -->
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Máximo de recolectores</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="maxCollectors"
+                  placeholder="0"
+                  min="1"
+                  step="1"
+                  required
+                />
+                <span matTextSuffix class="ml-2 text-neutral-subheading">personas</span>
+                @if (hasError('maxCollectors', 'required')) {
+                  <mat-error>El máximo es obligatorio</mat-error>
+                }
+                @if (hasError('maxCollectors', 'min')) {
+                  <mat-error>Debe ser al menos 1 recolector</mat-error>
+                }
+                <mat-hint>N° máximo de participantes</mat-hint>
+              </mat-form-field>
+            </div>
+
             <!-- Fechas -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <!-- Fecha de inicio -->
@@ -224,6 +271,17 @@ export class ProjectFormComponent implements OnInit {
   products = signal<Product[]>([]);
   communities = signal<Community[]>([]);
 
+  // Computed para obtener el producto seleccionado
+  get selectedProduct(): Product | undefined {
+    const productId = this.projectForm?.get('productId')?.value;
+    return this.products().find((p) => p.id === productId);
+  }
+
+  // Obtener la unidad del producto seleccionado
+  get productUnit(): string {
+    return this.selectedProduct?.unit || 'kg';
+  }
+
   get isEditMode(): boolean {
     return this.data.mode === 'edit';
   }
@@ -269,6 +327,8 @@ export class ProjectFormComponent implements OnInit {
         Validators.required,
       ],
       description: [project?.description || ''],
+      approvedQuota: [project?.approvedQuota || null, [Validators.required, Validators.min(0.01)]],
+      maxCollectors: [project?.maxCollectors || null, [Validators.required, Validators.min(1)]],
       startDate: [project?.startDate ? new Date(project.startDate) : null, Validators.required],
       endDate: [project?.endDate ? new Date(project.endDate) : null, Validators.required],
     });
@@ -291,6 +351,8 @@ export class ProjectFormComponent implements OnInit {
           name: formValue.name,
           productId: formValue.productId,
           description: formValue.description || undefined,
+          approvedQuota: formValue.approvedQuota,
+          maxCollectors: formValue.maxCollectors,
           startDate: formatDate(formValue.startDate),
           endDate: formatDate(formValue.endDate),
         };
@@ -309,6 +371,8 @@ export class ProjectFormComponent implements OnInit {
           productId: formValue.productId,
           companyId: '', // Will be set in the page component from SidebarService
           description: formValue.description || undefined,
+          approvedQuota: formValue.approvedQuota,
+          maxCollectors: formValue.maxCollectors,
           startDate: formatDate(formValue.startDate),
           endDate: formatDate(formValue.endDate),
           code: '', // Empty string as per requirements

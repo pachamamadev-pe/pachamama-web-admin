@@ -39,6 +39,8 @@ export interface Project {
   stage?: string; // 'planning', 'inventory', 'inventory_complete', etc.
   startDate?: string;
   endDate?: string;
+  approvedQuota?: number; // Cuota máxima de recolección
+  maxCollectors?: number; // Número máximo de recolectores
   communityLink?: CommunityProjectLink; // Vínculo con comunidad
 }
 
@@ -56,6 +58,8 @@ export interface CreateProjectRequest {
   productId: string;
   companyId: string;
   description?: string;
+  approvedQuota: number; // Cuota máxima de recolección
+  maxCollectors: number; // Número máximo de recolectores
   startDate?: string;
   endDate?: string;
   code: string; // Empty string as per requirements
@@ -68,6 +72,8 @@ export interface UpdateProjectRequest {
   name: string;
   productId: string;
   description?: string;
+  approvedQuota?: number; // Cuota máxima de recolección
+  maxCollectors?: number; // Número máximo de recolectores
   status?: ProjectStatus;
   code?: string;
   startDate?: string;
