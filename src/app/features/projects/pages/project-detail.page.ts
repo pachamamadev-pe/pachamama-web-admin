@@ -553,7 +553,7 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
           this.hasMap.set(true);
           this.currentGeoJSON.set(geoJSON);
           // Inicializar mapa después de un pequeño delay para asegurar que el DOM esté listo
-          setTimeout(() => this.initializeMap(), 100);
+          setTimeout(() => this.initializeMap(), 5000);
         } else {
           this.hasMap.set(false);
         }
