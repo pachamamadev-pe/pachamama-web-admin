@@ -1,0 +1,117 @@
+<div class="dialog-container">
+  <!-- Header -->
+  <div class="dialog-header">
+    <div class="header-info">
+      <mat-icon class="video-icon">videocam</mat-icon>
+      <div>
+        <h2 class="dialog-title">Video {{ data.videoNumber }}</h2>
+        <p class="dialog-subtitle">{{ data.metadata.fileName }}</p>
+      </div>
+    </div>
+    <button mat-icon-button class="close-button" (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="dialog-content">
+    <!-- Video Player -->
+    <div class="video-section">
+      <div class="video-container">
+        @if (!videoLoaded() && !videoError()) {
+          <div class="video-loading">
+            <mat-spinner diameter="48" />
+            <p class="loading-text">Cargando video...</p>
+          </div>
+        }
+
+        @if (videoError()) {
+          <div class="video-error">
+            <mat-icon>error_outline</mat-icon>
+            <p>Error al cargar el video</p>
+            <button mat-raised-button class="btn-primary" (click)="downloadVideo()">
+              <mat-icon>download</mat-icon>
+              Descargar Video
+            </button>
+          </div>
+        }
+
+        <video
+          #videoPlayer
+          [src]="data.videoUrl"
+          controls
+          preload="metadata"
+          (loadedmetadata)="onVideoLoad()"
+          (error)="onVideoError()"
+          [class.video-hidden]="!videoLoaded()"
+        >
+          Tu navegador no soporta la reproducción de videos.
+        </video>
+      </div>
+    </div>
+
+    <!-- Sidebar with Metadata and Map -->
+    <div class="info-sidebar">
+      <!-- Metadata Section -->
+      <div class="metadata-section">
+        <h3 class="section-title">
+          <mat-icon>info</mat-icon>
+          Información del Video
+        </h3>
+        <div class="metadata-grid">
+          <div class="metadata-item">
+            <span class="metadata-label">Resolución:</span>
+            <span class="metadata-value"
+              >{{ data.metadata.width }} x {{ data.metadata.height }}</span
+            >
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Tamaño:</span>
+            <span class="metadata-value">{{ formatFileSize(data.metadata.fileSizeBytes) }}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Capturado:</span>
+            <span class="metadata-value">{{ formatDate(data.metadata.createdAt) }}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">ID:</span>
+            <span class="metadata-value metadata-id">{{ data.metadata.photoId }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location Section -->
+      @if (data.location) {
+        <div class="location-section">
+          <h3 class="section-title">
+            <mat-icon>location_on</mat-icon>
+            Ubicación GPS
+          </h3>
+          <div class="location-coords">
+            <div class="coord-item">
+              <span class="coord-label">Latitud:</span>
+              <span class="coord-value">{{ data.location.latitude.toFixed(6) }}</span>
+            </div>
+            <div class="coord-item">
+              <span class="coord-label">Longitud:</span>
+              <span class="coord-value">{{ data.location.longitude.toFixed(6) }}</span>
+            </div>
+          </div>
+
+          <!-- Google Maps Container -->
+          <div class="map-container">
+            <div #mapContainer class="map-canvas"></div>
+          </div>
+        </div>
+      }
+
+      <!-- Action Button -->
+      <div class="action-section">
+        <button mat-raised-button class="btn-primary full-width" (click)="downloadVideo()">
+          <mat-icon>download</mat-icon>
+          Descargar Video
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

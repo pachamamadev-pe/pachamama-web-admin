@@ -848,3 +848,34 @@ mat-card {
     transform: translateY(0);
   }
 }
+
+.video-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #fe714b;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #fe714b;
+  font-weight: 600;
+  transition: all 0.2s ease;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background: #fff5f2;
+    border-color: #e6613f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(254, 113, 75, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}

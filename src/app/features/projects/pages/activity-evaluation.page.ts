@@ -60,6 +60,26 @@ interface PhotoFile {
 }
 
 /**
+ * Video file metadata
+ */
+interface VideoFileMetadata {
+  width: number;
+  height: number;
+  photoId: string; // Backend uses photoId for all media files
+  fileName: string;
+  createdAt: string;
+  fileSizeBytes: number;
+}
+
+/**
+ * Video file with metadata
+ */
+interface VideoFile {
+  file: string; // URL path
+  metadata: VideoFileMetadata;
+}
+
+/**
  * Form field from activity data
  */
 interface FormField {
@@ -67,7 +87,7 @@ interface FormField {
   required: boolean;
   response: {
     value?: unknown;
-    files?: PhotoFile[]; // Array de fotos con metadata
+    files?: PhotoFile[] | VideoFile[]; // Array of photos or videos with metadata
   };
   applies_to: string;
   field_type: string;
@@ -136,6 +156,9 @@ export class ActivityEvaluationPage implements OnInit {
 
   // Cache de URLs de imágenes con SAS token (path -> url)
   imageUrlCache = signal<Map<string, string>>(new Map());
+
+  // Cache de URLs de videos con SAS token (path -> url)
+  videoUrlCache = signal<Map<string, string>>(new Map());
 
   // Computed
   isApproved = computed(() => {
@@ -565,6 +588,103 @@ export class ActivityEvaluationPage implements OnInit {
       maxHeight: '900px',
       data: dialogData,
       panelClass: 'photo-detail-dialog-container',
+    });
+  }
+
+  /**
+   * Obtiene la URL del video con SAS token (con caché)
+   */
+  getVideoUrl(filePath: string | null): string | null {
+    if (!filePath) {
+      return null;
+    }
+
+    // Verificar si ya está en caché
+    const cache = this.videoUrlCache();
+    if (cache.has(filePath)) {
+      return cache.get(filePath)!;
+    }
+
+    // Solicitar URL con SAS token al servicio
+    this.azureStorage.getFileUrl(filePath, 5).subscribe({
+      next: (url) => {
+        // Actualizar caché de forma inmutable
+        this.videoUrlCache.update((currentCache) => {
+          const newCache = new Map(currentCache);
+          newCache.set(filePath, url);
+          return newCache;
+        });
+      },
+      error: (error) => {
+        console.error('Error al obtener URL de video con SAS token:', error);
+      },
+    });
+
+    // Retornar null mientras se carga
+    return null;
+  }
+
+  /**
+   * Abre el modal de detalle de video
+   */
+  openVideoDetail(videoFile: VideoFile, videoNumber: number): void {
+    // Primero obtener la URL con SAS token
+    const cache = this.videoUrlCache();
+    const filePath = videoFile.file;
+
+    if (cache.has(filePath)) {
+      // Ya está en caché, abrir inmediatamente
+      this.openVideoDialog(cache.get(filePath)!, videoFile.metadata, videoNumber);
+    } else {
+      // Solicitar SAS token primero
+      this.azureStorage.getFileUrl(filePath, 5).subscribe({
+        next: (url) => {
+          // Actualizar caché
+          this.videoUrlCache.update((currentCache) => {
+            const newCache = new Map(currentCache);
+            newCache.set(filePath, url);
+            return newCache;
+          });
+          // Abrir dialog
+          this.openVideoDialog(url, videoFile.metadata, videoNumber);
+        },
+        error: () => {
+          this.notification.error('Error al cargar el video');
+        },
+      });
+    }
+  }
+
+  /**
+   * Abre el diálogo con los datos del video
+   */
+  private async openVideoDialog(
+    videoUrl: string,
+    metadata: VideoFileMetadata,
+    videoNumber: number,
+  ): Promise<void> {
+    const activity = this.activity();
+    const location = activity?.location as { latitude: number; longitude: number } | undefined;
+
+    // Lazy load del componente VideoDetailDialogComponent
+    const { VideoDetailDialogComponent } = await import(
+      '../components/video-detail-dialog/video-detail-dialog.component'
+    );
+
+    const dialogData = {
+      videoUrl,
+      metadata,
+      location: location || null,
+      videoNumber,
+    };
+
+    this.dialog.open(VideoDetailDialogComponent, {
+      width: '95vw',
+      maxWidth: '1400px',
+      height: '90vh',
+      maxHeight: '900px',
+      data: dialogData,
+      panelClass: 'video-detail-dialog-container',
     });
   }
 

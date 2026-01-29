@@ -484,8 +484,11 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
       // Check for fragment to auto-select tab
       const fragment = this.route.snapshot.fragment;
       if (fragment === 'inventory') {
-        // Set to inventory evaluation tab (index 7 based on tab structure)
-        this.selectedTabIndex.set(2);
+        // Use the computed inventoryTabIndex to get the correct dynamic index
+        const tabIndex = this.inventoryTabIndex();
+        this.selectedTabIndex.set(tabIndex);
+        // Mark this tab as loaded so it displays data
+        this.tabsLoaded.update((tabs) => new Set(tabs).add(tabIndex));
       }
     } else {
       this.notification.error('ID de proyecto no válido');

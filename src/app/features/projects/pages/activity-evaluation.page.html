@@ -222,6 +222,27 @@
                           </button>
                         }
                       </div>
+                    } @else if (
+                      field.field_type === 'video' &&
+                      field.response.files &&
+                      field.response.files.length > 0
+                    ) {
+                      <div class="photo-buttons-grid">
+                        @for (
+                          file of field.response.files;
+                          track file.metadata.photoId;
+                          let idx = $index
+                        ) {
+                          <button
+                            mat-stroked-button
+                            class="video-button"
+                            (click)="openVideoDetail(file, idx + 1)"
+                          >
+                            <mat-icon>videocam</mat-icon>
+                            <span>Video {{ idx + 1 }}</span>
+                          </button>
+                        }
+                      </div>
                     } @else {
                       <div class="response-value text-body font-bold text-accent-titles">
                         {{ field.response.value ?? 'Sin respuesta' }}
