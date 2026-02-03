@@ -1,9 +1,9 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, computed, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { DocumentRequirements } from '../models/project-document.model';
+import { DocumentRequirements, ProjectDocument } from '../models/project-document.model';
 
 /**
  * Componente que muestra el progreso de completitud de documentos obligatorios
@@ -13,71 +13,115 @@ import { DocumentRequirements } from '../models/project-document.model';
   imports: [CommonModule, MatCardModule, MatIconModule, MatProgressBarModule],
   template: `
     <div class="progress-card bg-primary-white rounded-lg shadow-sm p-6 mb-6">
-      @if (requirements()) {
-        <!-- Progress Bar -->
-        <div class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="text-body font-bold text-accent-titles">Documentos Obligatorios</h3>
-            <span class="text-subtitle text-neutral-subheading">
-              {{ requirements()!.requiredUploaded }} de {{ requirements()!.totalRequired }}
-              completados
-            </span>
-          </div>
-          <mat-progress-bar
-            mode="determinate"
-            [value]="progressPercentage()"
-            [class.progress-complete]="isComplete()"
-            [class.progress-incomplete]="!isComplete()"
-          />
-          <p class="text-subtitle text-neutral-subheading mt-1">
-            {{ progressPercentage() }}% completado
-          </p>
-        </div>
-
-        <!-- Alert Banner si faltan documentos por subir o aprobar -->
-        @if (!requirements()!.isCompliant || !allDocsApproved()) {
-          <div class="alert-banner bg-secondary-light border-l-4 border-price p-4 rounded">
-            <div class="flex items-start">
-              <mat-icon class="text-price mr-3 mt-0.5">warning</mat-icon>
-              <div class="flex-1">
-                @if (!requirements()!.isCompliant) {
-                  <p class="text-body font-bold text-accent-titles mb-1">
-                    Faltan {{ pendingRequired() }} documento(s) obligatorio(s) por subir
-                  </p>
-                  <p class="text-subtitle text-neutral-subheading">
-                    Debes subir todos los documentos obligatorios para poder avanzar a la siguiente
-                    etapa.
-                  </p>
-                } @else if (!allDocsApproved()) {
-                  <p class="text-body font-bold text-accent-titles mb-1">
-                    Hay documentos obligatorios pendientes de aprobación
-                  </p>
-                  <p class="text-subtitle text-neutral-subheading">
-                    Todos los documentos obligatorios deben estar aprobados para poder avanzar a la
-                    siguiente etapa.
-                  </p>
+      @if (observedDocs().length > 0) {
+        <!-- Hay documentos observados -->
+        <div class="alert-banner bg-secondary-light border-l-4 border-price p-4 rounded">
+          <div class="flex items-start">
+            <mat-icon class="text-price mr-3 mt-0.5">error_outline</mat-icon>
+            <div class="flex-1">
+              <p class="text-body font-bold text-accent-titles mb-1">
+                Hay {{ observedDocs().length }} documento(s) observado(s)
+              </p>
+              <p class="text-subtitle text-neutral-subheading mb-2">
+                Debes subsanar las observaciones de los siguientes documentos:
+              </p>
+              <ul class="text-subtitle text-neutral-subheading list-disc list-inside ml-2">
+                @for (doc of observedDocs(); track doc.id) {
+                  <li>{{ doc.documentType.name }}</li>
                 }
+              </ul>
+            </div>
+          </div>
+        </div>
+      }
+      @if (requirements()) {
+        @if (stageRequiredDocs().length === 0) {
+          <!-- No hay documentos obligatorios para esta etapa -->
+          <div class="info-banner bg-secondary-light border-l-4 border-secondary p-4 rounded">
+            <div class="flex items-start">
+              <mat-icon class="text-secondary mr-3 mt-0.5">info</mat-icon>
+              <div class="flex-1">
+                <p class="text-body font-bold text-accent-titles mb-1">
+                  No hay documentos obligatorios en esta etapa
+                </p>
+                <p class="text-subtitle text-neutral-subheading">
+                  La etapa actual no requiere documentos obligatorios. Puedes continuar con las
+                  actividades del proyecto.
+                </p>
               </div>
             </div>
           </div>
         } @else {
-          <!-- Success Banner -->
-          <div class="success-banner bg-secondary-light border-l-4 border-secondary p-4 rounded">
-            <div class="flex items-start">
-              <mat-icon class="text-secondary mr-3 mt-0.5">check_circle</mat-icon>
-              <div class="flex-1">
-                <p class="text-body font-bold text-accent-titles">
-                  ¡Todos los documentos obligatorios están aprobados!
-                </p>
-                <p class="text-subtitle text-neutral-subheading">
-                  Puedes avanzar a la siguiente etapa del proyecto.
-                </p>
+          <!-- Progress Bar -->
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-body font-bold text-accent-titles">Documentos Obligatorios</h3>
+              <span class="text-subtitle text-neutral-subheading">
+                {{ stageUploadedCount() }} de {{ stageRequiredDocs().length }} completados
+              </span>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="progressPercentage()"
+              [class.progress-complete]="isComplete()"
+              [class.progress-incomplete]="!isComplete()"
+            />
+            <p class="text-subtitle text-neutral-subheading mt-1">
+              {{ progressPercentage() }}% completado
+            </p>
+          </div>
+
+          <!-- Alert Banner según el estado -->
+          @if (!allStageDocsUploaded()) {
+            <!-- Faltan documentos por subir -->
+            <div class="alert-banner bg-secondary-light border-l-4 border-price p-4 rounded">
+              <div class="flex items-start">
+                <mat-icon class="text-price mr-3 mt-0.5">warning</mat-icon>
+                <div class="flex-1">
+                  <p class="text-body font-bold text-accent-titles mb-1">
+                    Faltan {{ pendingUploadCount() }} documento(s) obligatorio(s) por subir
+                  </p>
+                  <p class="text-subtitle text-neutral-subheading">
+                    Debes subir todos los documentos obligatorios de esta etapa para poder avanzar.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          } @else if (!allStageDocsApproved()) {
+            <!-- Todos subidos pero no todos aprobados -->
+            <div class="alert-banner bg-secondary-light border-l-4 border-price p-4 rounded">
+              <div class="flex items-start">
+                <mat-icon class="text-price mr-3 mt-0.5">schedule</mat-icon>
+                <div class="flex-1">
+                  <p class="text-body font-bold text-accent-titles mb-1">
+                    Hay documentos pendientes de aprobación
+                  </p>
+                  <p class="text-subtitle text-neutral-subheading">
+                    Todos los documentos obligatorios de esta etapa deben estar aprobados para poder
+                    avanzar.
+                  </p>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <!-- Todos aprobados -->
+            <div class="success-banner bg-secondary-light border-l-4 border-secondary p-4 rounded">
+              <div class="flex items-start">
+                <mat-icon class="text-secondary mr-3 mt-0.5">check_circle</mat-icon>
+                <div class="flex-1">
+                  <p class="text-body font-bold text-accent-titles">
+                    ¡Todos los documentos obligatorios están aprobados!
+                  </p>
+                  <p class="text-subtitle text-neutral-subheading">
+                    Has cumplido con los requisitos documentales de esta etapa.
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
         }
 
-        <!-- Documentos Opcionales Info -->
+        <!-- Documentos Opcionales Info (solo si hay documentos opcionales) -->
         @if (requirements()!.totalOptional > 0) {
           <div class="optional-info mt-4 pt-4 border-t border-neutral-border">
             <p class="text-subtitle text-neutral-subheading">
@@ -126,7 +170,8 @@ import { DocumentRequirements } from '../models/project-document.model';
       }
 
       .alert-banner,
-      .success-banner {
+      .success-banner,
+      .info-banner {
         transition: all 0.3s ease;
       }
 
@@ -135,36 +180,115 @@ import { DocumentRequirements } from '../models/project-document.model';
         width: 24px;
         height: 24px;
       }
+
+      ul li {
+        margin-top: 4px;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocumentsProgressCardComponent {
   requirements = input<DocumentRequirements | null>(null);
-  allDocsApproved = input<boolean>(false);
+  documents = input<ProjectDocument[]>([]);
+
+  constructor() {
+    console.log('Initial requirements:', this.requirements());
+    console.log('Initial documents:', this.documents());
+
+    effect(() => {
+      console.log('Documents updated:', this.documents());
+    });
+  }
 
   /**
-   * Calcula el porcentaje de progreso
+   * Filtra los documentos obligatorios que aplican para la etapa actual
+   */
+  stageRequiredDocs = computed(() => {
+    const req = this.requirements();
+    if (!req) return [];
+
+    const currentStage = req.currentStage;
+
+    // Filtrar documentos que:
+    // 1. Son obligatorios (isRequired === true)
+    // 2. Aplican para la etapa actual (requiredForStages contiene currentStage)
+    return req.documentTypes.filter((doc) => {
+      return (
+        doc.isRequired && doc.requiredForStages && doc.requiredForStages.includes(currentStage)
+      );
+    });
+  });
+
+  observedRequiredDocs = computed(() => {
+    const req = this.requirements();
+    console.log({ req });
+    if (!req) return [];
+
+    // Filtrar documentos que:
+    // 1. Son obligatorios (isRequired === true)
+    return req.documentTypes.filter((doc) => {
+      return doc.isRequired;
+    });
+  });
+  /**
+   * Cuenta cuántos documentos obligatorios de la etapa están subidos
+   */
+  stageUploadedCount = computed(() => {
+    return this.stageRequiredDocs().filter((doc) => doc.isUploaded).length;
+  });
+
+  /**
+   * Obtiene los documentos obligatorios que están observados
+   */
+  observedDocs = computed(() => {
+    return this.documents().filter((doc) => doc.validationStatus === 'observed');
+  });
+
+  /**
+   * Calcula el porcentaje de progreso basado en la etapa actual
    */
   progressPercentage(): number {
-    const req = this.requirements();
-    if (!req || req.totalRequired === 0) return 0;
-    return Math.round((req.requiredUploaded / req.totalRequired) * 100);
+    const totalStage = this.stageRequiredDocs().length;
+    if (totalStage === 0) return 100; // No hay documentos obligatorios en esta etapa
+
+    const uploaded = this.stageUploadedCount();
+    return Math.round((uploaded / totalStage) * 100);
   }
 
   /**
-   * Verifica si todos los documentos obligatorios están completados
+   * Verifica si todos los documentos obligatorios de la etapa están subidos
+   */
+  allStageDocsUploaded(): boolean {
+    const totalStage = this.stageRequiredDocs().length;
+    if (totalStage === 0) return true; // No hay documentos obligatorios
+
+    return this.stageUploadedCount() === totalStage;
+  }
+
+  /**
+   * Verifica si todos los documentos obligatorios de la etapa están aprobados
+   */
+  allStageDocsApproved(): boolean {
+    const stageDocs = this.stageRequiredDocs();
+    if (stageDocs.length === 0) return true; // No hay documentos obligatorios
+
+    // Todos deben estar subidos Y aprobados
+    return stageDocs.every((doc) => doc.isUploaded && doc.uploadedStatus === 'approved');
+  }
+
+  /**
+   * Verifica si todos los documentos obligatorios de la etapa están completados
    */
   isComplete(): boolean {
-    return this.requirements()?.isCompliant || false;
+    return this.allStageDocsApproved();
   }
 
   /**
-   * Calcula cuántos documentos obligatorios faltan
+   * Calcula cuántos documentos obligatorios de la etapa faltan por subir
    */
-  pendingRequired(): number {
-    const req = this.requirements();
-    if (!req) return 0;
-    return req.totalRequired - req.requiredUploaded;
+  pendingUploadCount(): number {
+    const totalStage = this.stageRequiredDocs().length;
+    return totalStage - this.stageUploadedCount();
   }
 }

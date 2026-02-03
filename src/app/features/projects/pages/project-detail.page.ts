@@ -59,6 +59,7 @@ import { DocumentResubmitDialogComponent } from '../components/document-resubmit
 import { CollectorsTabComponent } from '../components/collectors-tab.component';
 import { BrigadesTabComponent } from '../components/brigades-tab.component';
 import { DocumentsTabComponent } from '../components/documents-tab.component';
+import { CollectionReviewTabComponent } from '../components/collection-review-tab.component';
 import { getProjectStageLabel, getProjectStageClass } from '../models/project.model';
 import * as L from 'leaflet';
 
@@ -90,6 +91,7 @@ interface ProjectStage {
     CollectorsTabComponent,
     BrigadesTabComponent,
     DocumentsTabComponent,
+    CollectionReviewTabComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -221,8 +223,8 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     { number: 1, name: 'Relacionamiento Comunitario', key: 'planning' },
     { number: 2, name: 'Inventario', key: 'inventory' },
     { number: 3, name: 'Elaboración de PMF', key: 'pmf_development' },
-    { number: 4, name: 'Recolección', key: 'collection' },
-    { number: 5, name: 'Evaluación y Aprobación (SERFOR)', key: 'serfor_evaluation' },
+    { number: 4, name: 'Evaluación y Aprobación (SERFOR)', key: 'serfor_evaluation' },
+    { number: 5, name: 'Recolección', key: 'collection' },
 
     { number: 6, name: 'Acopio / Ingreso a CTP', key: 'ctp_entry' },
     { number: 7, name: 'Transformación Primaria', key: 'primary_transformation' },
@@ -305,25 +307,36 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     return canStart;
   });
 
-  // Computed para verificar si se puede avanzar a Recolección (de PMF a Collection)
+  // Computed para verificar si se puede avanzar a Recolección (de serfor_evaluation a Collection)
   canStartCollection = computed(() => {
     const stage = this.project()?.stage;
-    const pmfDocApproved = this.isPMFDocumentApproved();
+    const requirements = this.documentRequirements();
 
     // DEBUG LOGS
     console.log('🔍 canStartCollection evaluation:', {
       stage,
-      pmfDocApproved,
-      documentRequirements: this.documentRequirements(),
+      documentRequirements: requirements,
       documentsCount: this.documents().length,
     });
 
     // Solo se puede iniciar Recolección si:
-    // 1. Está en etapa 'pmf_development'
-    // 2. El documento PMF está aprobado
-    const canStart = stage === 'pmf_development' && pmfDocApproved;
-    console.log('✅ canStartCollection result:', canStart);
-    return canStart;
+    // 1. Está en etapa 'serfor_evaluation'
+    // 2. Todos los documentos obligatorios de serfor_evaluation están subidos
+    // 3. Todos los documentos obligatorios de serfor_evaluation están aprobados
+    if (stage !== 'serfor_evaluation') {
+      console.log('✅ canStartCollection result: false (not in serfor_evaluation stage)');
+      return false;
+    }
+
+    if (!requirements) {
+      console.log('✅ canStartCollection result: false (no requirements)');
+      return false;
+    }
+
+    // Verificar si todos los documentos obligatorios de la etapa están aprobados
+    const allStageDocsApproved = this.areAllStageRequiredDocumentsApproved('serfor_evaluation');
+    console.log('✅ canStartCollection result:', allStageDocsApproved);
+    return allStageDocsApproved;
   });
 
   // Computed para obtener la siguiente etapa
@@ -349,6 +362,8 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
       case 'inventory':
         return this.canStartPMF();
       case 'pmf_development':
+        return this.canStartCollection();
+      case 'serfor_evaluation':
         return this.canStartCollection();
       // TODO: Agregar validaciones para otras transiciones de etapas cuando se definan
       default:
@@ -386,6 +401,10 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
         if (!this.isPMFDocumentApproved())
           blockers.push('• Aprobar el documento PMF en el tab Documentos');
         break;
+      case 'serfor_evaluation':
+        if (!this.areAllStageRequiredDocumentsApproved('serfor_evaluation'))
+          blockers.push('• Subir y aprobar todos los documentos obligatorios de esta etapa');
+        break;
       default:
         blockers.push('No se puede avanzar desde esta etapa');
     }
@@ -413,6 +432,15 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     const pmfStageIndex = this.stages.findIndex((s) => s.key === 'pmf_development');
     const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
     return currentStageIndex >= pmfStageIndex && pmfStageIndex !== -1;
+  });
+
+  // Computed para mostrar/ocultar el tab de revisión de solicitudes de recolección
+  showCollectionTab = computed(() => {
+    const stage = this.project()?.stage;
+    // Mostrar tab desde la etapa de collection en adelante
+    const collectionStageIndex = this.stages.findIndex((s) => s.key === 'collection');
+    const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
+    return currentStageIndex >= collectionStageIndex && collectionStageIndex !== -1;
   });
 
   // Computed para calcular el índice dinámico del tab "Generar PMF"
@@ -467,7 +495,26 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
     if (this.showInventoryEvaluationTab()) index++;
     // Tab 4: Generar PMF (condicional)
     if (this.showPmfGenerationTab()) index++;
-    // Tab 5: Documentos (siempre presente) - este es el índice que buscamos
+    // Tab 5: Revisión Solicitudes (condicional)
+    if (this.showCollectionTab()) index++;
+    // Tab 6: Documentos (siempre presente) - este es el índice que buscamos
+    return index;
+  });
+
+  // Computed para calcular el índice dinámico del tab "Revisión Solicitudes"
+  collectionTabIndex = computed(() => {
+    let index = 0;
+    // Tab 0: Resumen (siempre presente)
+    index++;
+    // Tab 1: Recolectores (siempre presente)
+    index++;
+    // Tab 2: Brigadas (condicional)
+    if (this.showBrigadesTab()) index++;
+    // Tab 3: Evaluación de inventario (condicional)
+    if (this.showInventoryEvaluationTab()) index++;
+    // Tab 4: Generar PMF (condicional)
+    if (this.showPmfGenerationTab()) index++;
+    // Tab 5: Revisión Solicitudes (condicional) - este es el índice que buscamos
     return index;
   });
 
@@ -1652,6 +1699,28 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
           this.notification.error('Error al avanzar a la etapa de PMF');
         },
       });
+    } else if (currentStage === 'serfor_evaluation' && next.key === 'collection') {
+      this.notification.info(`Avanzando a etapa: ${next.name}...`);
+
+      const targetStage = next.key;
+      if (!targetStage) {
+        console.error('Target stage is null or undefined:', next);
+        this.notification.error('Error: Etapa de destino inválida');
+        return;
+      }
+
+      console.log('Calling updateProjectStage with:', { projectId, targetStage });
+
+      this.projectsService.updateProjectStage(projectId, targetStage).subscribe({
+        next: (updatedProject) => {
+          this.project.set(updatedProject);
+          this.notification.success(`Etapa "${next.name}" iniciada correctamente`);
+        },
+        error: (error) => {
+          console.error('Error advancing to Collection stage:', error);
+          this.notification.error('Error al avanzar a la etapa de Recolección');
+        },
+      });
     } else {
       // Otras transiciones aún no implementadas en el backend
       this.notification.warning(
@@ -1714,6 +1783,27 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Maneja el avance de etapa cuando se regenera el PMF desde pmf_development
+   * Avanza automáticamente a la etapa serfor_evaluation
+   */
+  onPmfStageAdvanced(): void {
+    const projectId = this.project()?.id;
+    if (!projectId) return;
+
+    this.projectsService.updateProjectStage(projectId, 'serfor_evaluation').subscribe({
+      next: () => {
+        this.notification.success('Proyecto avanzado a Evaluación y Aprobación (SERFOR)');
+        this.loadProjectDetail(projectId);
+      },
+      error: (error) => {
+        console.error('Error advancing stage:', error);
+        const errorMessage = error?.error?.message || 'Error al avanzar etapa del proyecto';
+        this.notification.error(errorMessage);
+      },
+    });
+  }
+
+  /**
    * Maneja el evento cuando se genera un nuevo reporte PMF
    * Recarga la lista de documentos para mostrar el nuevo documento
    */
@@ -1753,14 +1843,13 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result?.success) {
-        // Recargar usando el componente
+        // Recargar documentos en el componente hijo
         if (this.documentsTabComponent) {
           this.documentsTabComponent.reload();
-        } else {
-          // Fallback: recargar desde servicio
-          this.loadDocumentRequirements(projectId);
-          this.loadDocuments(projectId);
         }
+        // SIEMPRE recargar signals del padre para mantener reactividad
+        this.loadDocumentRequirements(projectId);
+        this.loadDocuments(projectId);
       }
     });
   }
@@ -1778,14 +1867,20 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result?.action) {
-        // Recargar usando el componente
         const projectId = this.project()?.id;
+        if (!projectId) return;
+
+        // Recargar documentos en el componente hijo
         if (this.documentsTabComponent) {
           this.documentsTabComponent.reload();
-        } else if (projectId) {
-          // Fallback: recargar desde servicio
-          this.loadDocumentRequirements(projectId);
-          this.loadDocuments(projectId);
+        }
+        // SIEMPRE recargar signals del padre para mantener reactividad
+        this.loadDocumentRequirements(projectId);
+        this.loadDocuments(projectId);
+
+        // Si cambió de etapa (PMF observado en serfor_evaluation), recargar proyecto
+        if (result.stageChanged) {
+          this.loadProjectDetail(projectId);
         }
       }
     });
@@ -1810,16 +1905,55 @@ export class ProjectDetailPage implements OnInit, AfterViewInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result?.success) {
-        // Recargar usando el componente
+        // Recargar documentos en el componente hijo
         if (this.documentsTabComponent) {
           this.documentsTabComponent.reload();
-        } else {
-          // Fallback: recargar desde servicio
-          this.loadDocumentRequirements(projectId);
-          this.loadDocuments(projectId);
         }
+        // SIEMPRE recargar signals del padre para mantener reactividad
+        this.loadDocumentRequirements(projectId);
+        this.loadDocuments(projectId);
       }
     });
+  }
+
+  /**
+   * Verifica si todos los documentos obligatorios de una etapa específica están subidos y aprobados
+   */
+  areAllStageRequiredDocumentsApproved(stageKey: string): boolean {
+    const requirements = this.documentRequirements();
+    if (!requirements) {
+      return false;
+    }
+
+    const documents = this.documents();
+
+    // Obtener documentos obligatorios de la etapa específica
+    const stageRequiredDocs = requirements.documentTypes.filter(
+      (docType) =>
+        docType.isRequired &&
+        docType.requiredForStages &&
+        docType.requiredForStages.some((stage) => stage === stageKey),
+    );
+
+    // Si no hay documentos obligatorios para esta etapa, retornar true
+    if (stageRequiredDocs.length === 0) {
+      return true;
+    }
+
+    // Verificar que todos los documentos obligatorios de la etapa estén subidos y aprobados
+    const allApproved = stageRequiredDocs.every((docType) => {
+      const docTypeId = docType.documentTypeId;
+
+      // Encontrar el documento en la lista de documentos (última versión)
+      const doc = documents.find((d) => {
+        return d.documentType.id === docTypeId && d.isLatestVersion;
+      });
+
+      // El documento debe existir (estar subido) y estar aprobado
+      return doc && doc.validationStatus === 'approved';
+    });
+
+    return allApproved;
   }
 
   /**

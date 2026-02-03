@@ -106,6 +106,14 @@ export const appRoutes: Routes = [
           import('./features/projects/pages/project-detail.page').then((m) => m.ProjectDetailPage),
       },
       {
+        path: 'collection-requests',
+        title: 'Solicitudes de Recolección',
+        loadComponent: () =>
+          import('./features/collection-requests/pages/collection-requests.page').then(
+            (m) => m.CollectionRequestsPage,
+          ),
+      },
+      {
         path: 'brigades',
         title: 'Configuración',
         loadComponent: () =>

@@ -90,7 +90,16 @@
           </div>
         </div>
         <div class="toolbar-actions">
-          <button mat-stroked-button (click)="generatePmf()">
+          <button
+            mat-stroked-button
+            (click)="generatePmf()"
+            [disabled]="!canRegeneratePMF()"
+            [matTooltip]="
+              canRegeneratePMF()
+                ? ''
+                : 'El PMF solo puede regenerarse en la etapa de Elaboración de PMF'
+            "
+          >
             <mat-icon>refresh</mat-icon>
             <span class="hidden sm:inline">Regenerar PMF</span>
             <span class="sm:hidden">Regenerar</span>

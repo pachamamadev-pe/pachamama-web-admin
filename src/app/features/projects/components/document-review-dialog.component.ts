@@ -12,6 +12,7 @@ import { NotificationService } from '@core/services/notification.service';
 import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ProjectDocumentsService } from '../services/project-documents.service';
 import { ProjectDocument } from '../models/project-document.model';
+import { ProjectsService } from '../services/projects.service';
 
 export interface DocumentReviewDialogData {
   document: ProjectDocument;
@@ -40,6 +41,7 @@ export interface DocumentReviewDialogData {
 export class DocumentReviewDialogComponent {
   private dialogRef = inject(MatDialogRef<DocumentReviewDialogComponent>);
   private projectDocumentsService = inject(ProjectDocumentsService);
+  private projectsService = inject(ProjectsService);
   private azureStorage = inject(AzureStorageService);
   private notification = inject(NotificationService);
   data = inject<DocumentReviewDialogData>(MAT_DIALOG_DATA);
@@ -175,6 +177,7 @@ export class DocumentReviewDialogComponent {
 
   /**
    * Observa el documento
+   * Si es el documento PMF y el proyecto está en serfor_evaluation, retrocede a pmf_development
    */
   observe(): void {
     const notes = this.observationNotes().trim();
@@ -191,13 +194,58 @@ export class DocumentReviewDialogComponent {
       .subscribe({
         next: () => {
           this.notification.success('Documento observado correctamente');
-          this.dialogRef.close({ action: 'observed' });
+
+          // Si es el documento PMF (code: 'PMF'), verificar etapa del proyecto
+          const isPmfDocument = this.data.document.documentType.code === 'PMF';
+          if (isPmfDocument) {
+            this.handlePmfObservation();
+          } else {
+            this.dialogRef.close({ action: 'observed' });
+          }
         },
         error: (error) => {
           console.error('Error observing document:', error);
           this.processing.set(false);
         },
       });
+  }
+
+  /**
+   * Maneja la observación del documento PMF
+   * Si el proyecto está en serfor_evaluation, lo retrocede a pmf_development
+   */
+  private handlePmfObservation(): void {
+    const projectId = this.data.document.entityId;
+
+    // Obtener el proyecto actual para verificar su etapa
+    this.projectsService.getProjectById(projectId).subscribe({
+      next: (project) => {
+        // Si está en serfor_evaluation, retroceder a pmf_development
+        if (project.stage === 'serfor_evaluation') {
+          this.projectsService.updateProjectStage(projectId, 'pmf_development').subscribe({
+            next: () => {
+              this.notification.info(
+                'El proyecto ha retrocedido a Elaboración de PMF para correcciones',
+              );
+              this.dialogRef.close({ action: 'observed', stageChanged: true });
+            },
+            error: (error) => {
+              console.error('Error updating project stage:', error);
+              // Aún así cerrar el diálogo porque el documento fue observado
+              this.dialogRef.close({ action: 'observed' });
+            },
+          });
+        } else {
+          // Si no está en serfor_evaluation, solo cerrar el diálogo
+          this.dialogRef.close({ action: 'observed' });
+        }
+      },
+      error: (error) => {
+        console.error('Error getting project:', error);
+        // Aún así cerrar el diálogo porque el documento fue observado
+        this.dialogRef.close({ action: 'observed' });
+      },
+    });
   }
 
   /**

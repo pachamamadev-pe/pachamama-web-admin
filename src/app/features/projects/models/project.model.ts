@@ -41,6 +41,7 @@ export interface Project {
   endDate?: string;
   approvedQuota?: number; // Cuota máxima de recolección
   maxCollectors?: number; // Número máximo de recolectores
+  unit?: string; // Unidad de medida del producto (kg, ton, etc.)
   communityLink?: CommunityProjectLink; // Vínculo con comunidad
 }
 

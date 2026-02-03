@@ -247,6 +247,27 @@
   }
 }
 
+// Grupos de meta información
+.meta-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  @media (min-width: 768px) {
+    gap: 12px;
+  }
+
+  // Grupo de información básica (período y ubicación)
+  &.meta-group-basic {
+    margin-bottom: 8px;
+  }
+
+  // Grupo de límites operacionales (cuota y recolectores)
+  &.meta-group-limits {
+    // Sin margen adicional
+  }
+}
+
 .meta-chip {
   display: inline-flex;
   align-items: center;
@@ -256,6 +277,7 @@
   border: 1px solid #e5e5e5;
   border-radius: 20px;
   font-size: 12px;
+  white-space: nowrap;
 
   @media (min-width: 768px) {
     padding: 8px 16px;
@@ -278,6 +300,20 @@
       font-size: 18px;
       width: 18px;
       height: 18px;
+    }
+  }
+
+  // Quota chip styling
+  &.meta-chip-quota {
+    mat-icon {
+      color: #fe714b;
+    }
+  }
+
+  // Collectors chip styling
+  &.meta-chip-collectors {
+    mat-icon {
+      color: #218358;
     }
   }
 }

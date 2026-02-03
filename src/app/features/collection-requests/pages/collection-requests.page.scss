@@ -1,0 +1,346 @@
+// ===================================
+// Page Container
+// ===================================
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #f9fafb;
+}
+
+// ===================================
+// Header Section
+// ===================================
+.page-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.header-title {
+  flex: 1;
+
+  h1 {
+    margin: 0 0 0.25rem 0;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: stretch;
+
+    button {
+      flex: 1;
+    }
+  }
+}
+
+// ===================================
+// Filters Bar
+// ===================================
+.filters-bar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+.search-field {
+  flex: 1;
+  min-width: 300px;
+
+  @media (max-width: 768px) {
+    min-width: unset;
+    width: 100%;
+  }
+}
+
+.status-filter {
+  min-width: 200px;
+
+  @media (max-width: 768px) {
+    min-width: unset;
+    width: 100%;
+  }
+}
+
+// ===================================
+// Page Content
+// ===================================
+.page-content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+// ===================================
+// Loading State
+// ===================================
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+}
+
+// ===================================
+// Empty State
+// ===================================
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  text-align: center;
+
+  .empty-icon {
+    margin-bottom: 1rem;
+
+    mat-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: #d4d4d4;
+    }
+  }
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    margin: 0 0 1.5rem 0;
+    max-width: 400px;
+  }
+}
+
+// ===================================
+// Desktop Table (Siguiendo el estilo de Projects)
+// ===================================
+.requests-table {
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+// Mostrar solo en desktop (>= 768px)
+.desktop-only {
+  display: block;
+
+  @media (max-width: 767px) {
+    display: none !important;
+  }
+}
+
+// Header de tabla con fondo verde claro
+::ng-deep .mat-mdc-table {
+  background-color: transparent;
+}
+
+::ng-deep .mat-mdc-header-row {
+  border-bottom: 1px solid #e5e5e5;
+  background-color: #f9faf3;
+}
+
+::ng-deep .mat-mdc-row {
+  border-bottom: 1px solid #e5e5e5;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: #f4fbf6;
+    cursor: pointer;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.table-th {
+  font-size: 12px;
+  font-weight: 700;
+  color: #218358;
+  padding: 12px 16px;
+}
+
+.table-td {
+  font-size: 14px;
+  color: #0a0a0a;
+  padding: 12px 16px;
+}
+
+// ===================================
+// Status Chips
+// ===================================
+.status-pending {
+  background-color: #fff5f2 !important;
+  color: #fe714b !important;
+  font-weight: 600 !important;
+}
+
+.status-approved {
+  background-color: #f4fbf6 !important;
+  color: #218358 !important;
+  font-weight: 600 !important;
+}
+
+.status-rejected {
+  background-color: #fef2f2 !important;
+  color: #ef4444 !important;
+  font-weight: 600 !important;
+}
+
+.status-observed {
+  background-color: #fffbeb !important;
+  color: #f59e0b !important;
+  font-weight: 600 !important;
+}
+
+.status-cancelled {
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
+  font-weight: 600 !important;
+}
+
+// ===================================
+// Mobile Cards
+// ===================================
+// Mostrar solo en mobile (< 768px)
+.mobile-only {
+  display: block;
+
+  @media (min-width: 768px) {
+    display: none !important;
+  }
+}
+
+.mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.request-card {
+  border: 1px solid #e5e5e5;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #737373;
+  flex-shrink: 0;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: #737373;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #0a0a0a;
+  font-weight: 500;
+  flex: 1;
+  word-break: break-word;
+}
+
+// ===================================
+// Utilities
+// ===================================
+.btn-primary {
+  background-color: #218358;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0 1.5rem;
+
+  &:hover {
+    background-color: #f4fbf6;
+  }
+}

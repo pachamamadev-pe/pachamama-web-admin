@@ -56,14 +56,35 @@
               </h1>
 
               <div class="project-meta">
-                <mat-chip class="meta-chip">
-                  <mat-icon class="chip-icon">event</mat-icon>
-                  {{ getProjectPeriod(project()!.startDate, project()!.endDate) }}
-                </mat-chip>
-                <mat-chip class="meta-chip">
-                  <mat-icon class="chip-icon">location_on</mat-icon>
-                  {{ community()?.name || 'Comunidad' }}
-                </mat-chip>
+                <!-- Información básica: Período y Ubicación -->
+                <div class="meta-group meta-group-basic">
+                  <mat-chip class="meta-chip">
+                    <mat-icon class="chip-icon">event</mat-icon>
+                    {{ getProjectPeriod(project()!.startDate, project()!.endDate) }}
+                  </mat-chip>
+                  <mat-chip class="meta-chip">
+                    <mat-icon class="chip-icon">location_on</mat-icon>
+                    {{ community()?.name || 'Comunidad' }}
+                  </mat-chip>
+                </div>
+
+                <!-- Límites operacionales: Cuota y Recolectores -->
+                @if (project()!.approvedQuota || project()!.maxCollectors) {
+                  <div class="meta-group meta-group-limits">
+                    @if (project()!.approvedQuota) {
+                      <mat-chip class="meta-chip meta-chip-quota">
+                        <mat-icon class="chip-icon">scale</mat-icon>
+                        Cuota: {{ project()!.approvedQuota }} {{ project()!.unit || 'kg' }}
+                      </mat-chip>
+                    }
+                    @if (project()!.maxCollectors) {
+                      <mat-chip class="meta-chip meta-chip-collectors">
+                        <mat-icon class="chip-icon">group</mat-icon>
+                        Máx. recolectores: {{ project()!.maxCollectors }}
+                      </mat-chip>
+                    }
+                  </div>
+                }
               </div>
             </div>
 
@@ -550,9 +571,19 @@
                 <div class="tab-content">
                   <app-pmf-generation
                     [projectId]="project()!.id"
+                    [currentStage]="project()?.stage || ''"
                     [shouldLoad]="tabsLoaded().has(pmfTabIndex())"
                     (reportGenerated)="onReportGenerated()"
+                    (stageAdvanced)="onPmfStageAdvanced()"
                   />
+                </div>
+              </mat-tab>
+            }
+
+            @if (showCollectionTab()) {
+              <mat-tab label="Revisión Solicitudes">
+                <div class="tab-content">
+                  <app-collection-review-tab [projectId]="project()!.id" />
                 </div>
               </mat-tab>
             }
@@ -573,7 +604,6 @@
                   <!-- Documents Tab Component -->
                   <app-documents-tab
                     [projectId]="project()!.id"
-                    [allDocsApproved]="allDocsApproved()"
                     [shouldLoad]="tabsLoaded().has(documentsTabIndex())"
                     (uploadDocument)="openUploadDialog()"
                     (reviewDocument)="openReviewDialog($event)"

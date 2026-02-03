@@ -1,0 +1,266 @@
+<div class="page-container">
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="text-title font-bold text-accent-titles">Solicitudes de Recolección</h1>
+        <p class="text-subtitle text-neutral-subheading">
+          Gestiona las solicitudes de recolección de productos forestales
+        </p>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          <span class="hidden sm:inline">Nueva Solicitud</span>
+          <span class="sm:hidden">Nueva</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="filters-bar">
+      <!-- Search -->
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+        <input
+          matInput
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar por número, proyecto o solicitante..."
+          class="text-body"
+        />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <!-- Status Filter -->
+      <mat-form-field appearance="outline" class="status-filter">
+        <mat-label>Estado</mat-label>
+        <mat-select [value]="statusFilter()" (selectionChange)="onStatusFilterChange($event.value)">
+          @for (option of statusOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+        <mat-icon matPrefix>filter_list</mat-icon>
+      </mat-form-field>
+    </div>
+  </header>
+
+  <!-- Content Area -->
+  <div class="page-content">
+    @if (loading()) {
+      <!-- Loading State -->
+      <div class="loading-container">
+        <mat-spinner diameter="48" />
+        <p class="text-body text-neutral-subheading mt-4">Cargando solicitudes...</p>
+      </div>
+    } @else if (requests().length === 0 && !searchTerm() && statusFilter() === 'all') {
+      <!-- Empty State -->
+      <app-empty-state
+        icon="description"
+        [useMaterialIcon]="true"
+        title="No hay solicitudes registradas"
+        description="Comienza creando tu primera solicitud de recolección"
+        actionLabel="Crear primera solicitud"
+        (action)="openCreateDialog()"
+      />
+    } @else if (filteredRequests().length === 0) {
+      <!-- No Results State -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <mat-icon>search_off</mat-icon>
+        </div>
+        <h3 class="text-body font-bold text-accent-titles">No se encontraron solicitudes</h3>
+        <p class="text-subtitle text-neutral-subheading">
+          Intenta con otros términos de búsqueda o cambia el filtro de estado
+        </p>
+        <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
+      </div>
+    } @else {
+      <!-- Desktop Table (hidden on mobile) -->
+      <div class="requests-table desktop-only">
+        <div>
+          <table mat-table [dataSource]="filteredRequests()" class="w-full">
+            <!-- Request Number Column -->
+            <ng-container matColumnDef="requestNumber">
+              <th mat-header-cell *matHeaderCellDef class="table-th">N° Solicitud</th>
+              <td mat-cell *matCellDef="let request" class="table-td">
+                <span class="font-mono font-bold text-accent-titles">{{
+                  request.requestNumber
+                }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Project Name Column -->
+            <ng-container matColumnDef="projectName">
+              <th mat-header-cell *matHeaderCellDef class="table-th">Proyecto</th>
+              <td mat-cell *matCellDef="let request" class="table-td">
+                <span class="font-medium">{{ request.projectName }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Requested Weighing Column -->
+            <ng-container matColumnDef="requestedWeighing">
+              <th mat-header-cell *matHeaderCellDef class="table-th text-right">Peso</th>
+              <td mat-cell *matCellDef="let request" class="table-td text-right">
+                <span class="font-bold text-secondary">
+                  {{ request.requestedWeighing | number: '1.2-2' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Date Range Column -->
+            <ng-container matColumnDef="dateRange">
+              <th mat-header-cell *matHeaderCellDef class="table-th">Periodo</th>
+              <td mat-cell *matCellDef="let request" class="table-td">
+                <div class="flex items-center gap-1">
+                  <mat-icon class="text-neutral-subheading" style="font-size: 16px; width: 16px"
+                    >event</mat-icon
+                  >
+                  <span class="text-subtitle">{{
+                    formatDateRange(request.startDate, request.endDate)
+                  }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Requested By Column -->
+            <ng-container matColumnDef="requestedBy">
+              <th mat-header-cell *matHeaderCellDef class="table-th">Solicitante</th>
+              <td mat-cell *matCellDef="let request" class="table-td">
+                <div class="flex flex-col">
+                  <span class="text-body">{{ request.requestedByName }}</span>
+                  <span class="text-subtitle text-neutral-subheading">
+                    {{ request.requestedAt | date: 'dd/MM/yyyy HH:mm' }}
+                  </span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef class="table-th">Estado</th>
+              <td mat-cell *matCellDef="let request" class="table-td">
+                <mat-chip [class]="getStatusClass(request.status)">
+                  {{ getStatusLabel(request.status) }}
+                </mat-chip>
+                @if (request.observationCount > 0) {
+                  <span class="text-subtitle text-neutral-subheading ml-2">
+                    ({{ request.observationCount }} obs.)
+                  </span>
+                }
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="table-th text-right">Acciones</th>
+              <td mat-cell *matCellDef="let request" class="table-td text-right">
+                <button mat-icon-button [matMenuTriggerFor]="tableMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #tableMenu="matMenu">
+                  <button mat-menu-item (click)="viewDetail(request)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Ver Detalle</span>
+                  </button>
+                  @if (canEdit(request)) {
+                    <button mat-menu-item (click)="openEditDialog(request)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Actualizar</span>
+                    </button>
+                  }
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <mat-paginator
+          [length]="totalElements()"
+          [pageSize]="pageSize()"
+          [pageIndex]="currentPage()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+        />
+      </div>
+
+      <!-- Mobile Cards (visible on mobile only) -->
+      <div class="mobile-cards mobile-only">
+        @for (request of filteredRequests(); track request.id) {
+          <div class="request-card bg-primary-white rounded-lg shadow p-4">
+            <div class="card-header">
+              <div class="card-title">
+                <h3 class="text-body font-bold text-primary-black font-mono">
+                  {{ request.requestNumber }}
+                </h3>
+                <mat-chip [class]="getStatusClass(request.status)">
+                  {{ getStatusLabel(request.status) }}
+                </mat-chip>
+              </div>
+              <div class="card-actions">
+                <button mat-icon-button [matMenuTriggerFor]="mobileMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #mobileMenu="matMenu">
+                  <button mat-menu-item (click)="viewDetail(request)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Ver Detalle</span>
+                  </button>
+                  @if (canEdit(request)) {
+                    <button mat-menu-item (click)="openEditDialog(request)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Actualizar</span>
+                    </button>
+                  }
+                </mat-menu>
+              </div>
+            </div>
+
+            <div class="card-details">
+              <div class="detail-row">
+                <mat-icon class="detail-icon">folder</mat-icon>
+                <span class="detail-label">Proyecto:</span>
+                <span class="detail-value">{{ request.projectName }}</span>
+              </div>
+              <div class="detail-row">
+                <mat-icon class="detail-icon">scale</mat-icon>
+                <span class="detail-label">Peso:</span>
+                <span class="detail-value font-bold text-secondary">
+                  {{ request.requestedWeighing | number: '1.2-2' }} kg
+                </span>
+              </div>
+              <div class="detail-row">
+                <mat-icon class="detail-icon">event</mat-icon>
+                <span class="detail-label">Periodo:</span>
+                <span class="detail-value">{{
+                  formatDateRange(request.startDate, request.endDate)
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <mat-icon class="detail-icon">person</mat-icon>
+                <span class="detail-label">Solicitante:</span>
+                <span class="detail-value">{{ request.requestedByName }}</span>
+              </div>
+              @if (request.observationCount > 0) {
+                <div class="detail-row">
+                  <mat-icon class="detail-icon text-price">info</mat-icon>
+                  <span class="detail-label">Observaciones:</span>
+                  <span class="detail-value">{{ request.observationCount }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

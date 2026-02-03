@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { catchError, of, switchMap, tap } from 'rxjs';
@@ -45,6 +46,7 @@ type PmfState =
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     NgxExtendedPdfViewerModule,
     EmptyStateComponent,
   ],
@@ -61,9 +63,11 @@ export class PmfGenerationComponent {
   // Inputs
   projectId = input.required<string>();
   shouldLoad = input(false); // Lazy loading trigger
+  currentStage = input<string>(''); // Stage actual del proyecto
 
   // Outputs
   reportGenerated = output<void>();
+  stageAdvanced = output<void>(); // Emite cuando se debe avanzar a serfor_evaluation
 
   // State management
   state = signal<PmfState>('initial');
@@ -81,6 +85,7 @@ export class PmfGenerationComponent {
   isUploading = computed(() => this.state() === 'uploading');
   isReady = computed(() => this.state() === 'ready');
   isError = computed(() => this.state() === 'error');
+  canRegeneratePMF = computed(() => this.currentStage() === 'pmf_development');
 
   constructor() {
     // Load existing PMF when shouldLoad becomes true (only once)
@@ -260,6 +265,11 @@ export class PmfGenerationComponent {
 
             // Notify parent component to reload documents
             this.reportGenerated.emit();
+
+            // Si estamos en pmf_development, avanzar a serfor_evaluation
+            if (this.currentStage() === 'pmf_development') {
+              this.stageAdvanced.emit();
+            }
           }
         },
       });

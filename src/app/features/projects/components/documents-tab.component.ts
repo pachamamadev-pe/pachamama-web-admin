@@ -41,7 +41,7 @@ import { DocumentsTableComponent } from '../components/documents-table.component
         <!-- Progress Card -->
         <app-documents-progress-card
           [requirements]="documentRequirements()"
-          [allDocsApproved]="allDocsApproved()"
+          [documents]="documents()"
         />
 
         <!-- Header con botón de subir -->
@@ -136,7 +136,6 @@ export class DocumentsTabComponent {
 
   // Inputs
   projectId = input.required<string>();
-  allDocsApproved = input.required<boolean>();
   shouldLoad = input(false); // Lazy loading trigger
 
   // Outputs
