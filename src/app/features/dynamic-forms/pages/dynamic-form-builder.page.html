@@ -1,0 +1,722 @@
+<div class="builder-container">
+  <!-- HEADER -->
+  <header class="builder-header">
+    <button mat-icon-button (click)="goBack()" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-content">
+      <h1 class="text-title font-bold text-accent-titles">
+        {{ editMode() ? 'Editar Formulario Dinámico' : 'Crear Formulario Dinámico' }}
+      </h1>
+      <p class="text-subtitle text-neutral-subheading">
+        {{
+          editMode()
+            ? 'Modifica los campos del formulario'
+            : 'Define los metadatos y campos personalizados para tu producto'
+        }}
+      </p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <!-- LOADING STATE -->
+    <div class="loading-container">
+      <mat-spinner diameter="48" />
+      <p class="text-body text-neutral-subheading mt-4">Cargando formulario...</p>
+    </div>
+  } @else {
+    <!-- STEPPER -->
+    <mat-stepper [linear]="true" [selectedIndex]="currentStep()" #stepper class="builder-stepper">
+      <!-- ============================================ -->
+      <!-- PASO 1: METADATOS -->
+      <!-- ============================================ -->
+      <mat-step [completed]="canProceedToBuilder()">
+        <ng-template matStepLabel>Información Básica</ng-template>
+
+        <div class="step-content">
+          <div class="metadata-section">
+            <h2 class="section-title text-body font-bold text-primary-black">
+              Datos del Formulario
+            </h2>
+            <p class="section-subtitle text-subtitle text-neutral-subheading mb-4">
+              Configura el título, descripción y alcance del formulario
+            </p>
+
+            <!-- Imagen personalizada (opcional) -->
+            <div class="form-section mb-6">
+              <p class="section-label text-body font-bold text-accent-titles mb-2">
+                Logo personalizado (opcional)
+              </p>
+              <p class="text-subtitle text-neutral-subheading mb-3">
+                Sube una imagen que represente este formulario. Se mostrará en la app móvil.
+              </p>
+              <app-image-upload
+                [maxSizeMB]="5"
+                [allowedTypes]="['image/jpeg', 'image/png', 'image/svg+xml']"
+                [directory]="'dynamic-forms'"
+                [currentImageUrl]="currentLogoUrl() || null"
+                (fileUploaded)="onImageUploaded($event)"
+                (fileRemoved)="onImageRemoved()"
+              />
+            </div>
+
+            <div class="form-grid">
+              <!-- Título -->
+              <mat-form-field class="full-width" appearance="outline">
+                <mat-label>Título del formulario</mat-label>
+                <input matInput [ngModel]="title()" (ngModelChange)="title.set($event)" required />
+                <mat-icon matPrefix>title</mat-icon>
+              </mat-form-field>
+
+              <!-- Descripción -->
+              <mat-form-field class="full-width" appearance="outline">
+                <mat-label>Descripción</mat-label>
+                <textarea
+                  matInput
+                  [ngModel]="description()"
+                  (ngModelChange)="description.set($event)"
+                  rows="3"
+                  placeholder="Describe el propósito de este formulario..."
+                ></textarea>
+                <mat-icon matPrefix>description</mat-icon>
+              </mat-form-field>
+
+              <!-- Producto y Ámbito en la misma fila -->
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Producto</mat-label>
+                <mat-select
+                  [ngModel]="productId()"
+                  (ngModelChange)="onProductChange($event)"
+                  required
+                >
+                  @for (product of products(); track product.id) {
+                    <mat-option [value]="product.id">
+                      {{ product.name }}
+                    </mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>inventory_2</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Ámbito</mat-label>
+                <mat-select [ngModel]="scope()" (ngModelChange)="onScopeChange($event)" required>
+                  <mat-option value="company">Para toda la empresa</mat-option>
+                  <mat-option value="project">Para un proyecto específico</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>business</mat-icon>
+              </mat-form-field>
+
+              <!-- Proyecto (solo si ámbito = project) -->
+              @if (scopeRequiresProject()) {
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Proyecto</mat-label>
+                  <mat-select
+                    [ngModel]="projectId()"
+                    (ngModelChange)="projectId.set($event)"
+                    required
+                  >
+                    @if (loadingProjects()) {
+                      <mat-option disabled>Cargando proyectos...</mat-option>
+                    }
+                    @for (project of projects(); track project.id) {
+                      <mat-option [value]="project.id">
+                        {{ project.name }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                  <mat-icon matPrefix>folder</mat-icon>
+                </mat-form-field>
+              }
+
+              <!-- Etapas aplicables -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Etapas aplicables</mat-label>
+                <mat-select
+                  [ngModel]="selectedStages()"
+                  (ngModelChange)="selectedStages.set($event)"
+                  multiple
+                  required
+                >
+                  @for (stage of ALL_STAGES; track stage) {
+                    <mat-option [value]="stage">
+                      {{ STAGE_LABELS[stage] }}
+                    </mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>timeline</mat-icon>
+                <mat-hint>Selecciona en qué etapas del proyecto se usará este formulario</mat-hint>
+              </mat-form-field>
+            </div>
+
+            <!-- Stages chips display -->
+            @if (selectedStages().length > 0) {
+              <div class="stages-display">
+                <p class="text-subtitle text-neutral-subheading mb-2">Etapas seleccionadas:</p>
+                <div class="stages-chips">
+                  @for (stage of selectedStages(); track stage) {
+                    <mat-chip class="stage-chip" highlighted>
+                      <mat-icon>check_circle</mat-icon>
+                      {{ STAGE_LABELS[stage] }}
+                    </mat-chip>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Actions -->
+          <div class="step-actions mt-6">
+            <button mat-button (click)="goBack()">Cancelar</button>
+
+            @if (editMode()) {
+              <!-- Modo edición: Mostrar ambos botones -->
+              <button
+                mat-raised-button
+                class="btn-secondary"
+                [disabled]="!canProceedToBuilder()"
+                (click)="proceedToBuilder(stepper)"
+              >
+                Editar Preguntas
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+              <button
+                mat-raised-button
+                class="btn-primary"
+                [disabled]="saving() || !canProceedToBuilder()"
+                (click)="saveForm()"
+              >
+                @if (saving()) {
+                  <mat-spinner diameter="20" class="inline-spinner" />
+                  <span>Guardando...</span>
+                } @else {
+                  <ng-container>
+                    <mat-icon>save</mat-icon>
+                    <span>Guardar Cambios</span>
+                  </ng-container>
+                }
+              </button>
+            } @else {
+              <!-- Modo creación: Solo botón de continuar -->
+              <button
+                mat-raised-button
+                class="btn-primary"
+                [disabled]="!canProceedToBuilder()"
+                (click)="proceedToBuilder(stepper)"
+              >
+                Continuar al Builder
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            }
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- ============================================ -->
+      <!-- PASO 2: BUILDER DE PREGUNTAS -->
+      <!-- ============================================ -->
+      <mat-step>
+        <ng-template matStepLabel>Diseñar Preguntas</ng-template>
+
+        <div class="step-content builder-content">
+          <!-- Nueva pregunta panel -->
+          <mat-expansion-panel [expanded]="true" class="builder-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>{{ editingFieldId() ? 'edit' : 'add_circle' }}</mat-icon>
+                <span>{{ editingFieldId() ? 'Editar Pregunta' : 'Nueva Pregunta' }}</span>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="panel-content">
+              <!-- Pregunta -->
+              <!-- Pregunta -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Pregunta</mat-label>
+                <input
+                  matInput
+                  [ngModel]="newField().question"
+                  (ngModelChange)="updateQuestion($event)"
+                  placeholder="Ejemplo: ¿Cuál es el diámetro del árbol?"
+                  required
+                />
+                <mat-icon matPrefix>help_outline</mat-icon>
+              </mat-form-field>
+
+              <div class="field-row">
+                <!-- Protocol (opcional) -->
+                <mat-form-field appearance="outline" class="field-half">
+                  <mat-label>Protocolo (opcional)</mat-label>
+                  <mat-select
+                    [ngModel]="newField().protocolId"
+                    (ngModelChange)="updateProtocolId($event)"
+                  >
+                    <mat-option [value]="null">Sin protocolo</mat-option>
+                    @for (protocol of protocols(); track protocol.id) {
+                      <mat-option [value]="protocol.id">
+                        {{ protocol.attribute.name || 'N/A' }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                  <mat-icon matPrefix>link</mat-icon>
+                </mat-form-field>
+
+                <!-- Tipo de campo -->
+                <mat-form-field appearance="outline" class="field-half">
+                  <mat-label>Tipo de campo</mat-label>
+                  <mat-select
+                    [ngModel]="newField().fieldTypeId"
+                    (ngModelChange)="updateFieldTypeId($event)"
+                    required
+                  >
+                    @for (fieldType of fieldTypes(); track fieldType.id) {
+                      <mat-option [value]="fieldType.id">
+                        {{ fieldType.name }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                  <mat-icon matPrefix>input</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <div class="field-row">
+                <!-- Aplica a -->
+                <mat-form-field appearance="outline" class="field-half">
+                  <mat-label>Aplica a</mat-label>
+                  <mat-select
+                    [ngModel]="newField().appliesTo"
+                    (ngModelChange)="updateAppliesTo($event)"
+                  >
+                    <mat-option value="both">
+                      {{ APPLIES_TO_LABELS['both'] }}
+                    </mat-option>
+                    <mat-option value="tree">
+                      {{ APPLIES_TO_LABELS['tree'] }}
+                    </mat-option>
+                    <mat-option value="tree_stump">
+                      {{ APPLIES_TO_LABELS['tree_stump'] }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>nature</mat-icon>
+                  <mat-hint>Especifica si aplica a árboles, trozas o ambos</mat-hint>
+                </mat-form-field>
+
+                <!-- Requerido -->
+                <div class="field-half toggle-field">
+                  <mat-slide-toggle
+                    [ngModel]="newField().isRequired"
+                    (ngModelChange)="updateIsRequired($event)"
+                    color="primary"
+                  >
+                    Campo requerido
+                  </mat-slide-toggle>
+                </div>
+              </div>
+
+              <!-- Validaciones (según el tipo de campo) -->
+              @if (selectedFieldType()) {
+                <div class="validation-section">
+                  <h3 class="validation-title text-subtitle font-bold text-primary-black">
+                    Validaciones
+                  </h3>
+
+                  @for (validationKey of getValidationKeys(); track validationKey) {
+                    <div class="validation-item">
+                      @switch (getValidationType(validationKey)) {
+                        @case ('string') {
+                          <mat-form-field appearance="outline" class="validation-field">
+                            <mat-label>{{ validationKey }}</mat-label>
+                            <input
+                              matInput
+                              type="text"
+                              [ngModel]="getValidationValue(validationKey)"
+                              (ngModelChange)="updateValidation(validationKey, $event)"
+                            />
+                          </mat-form-field>
+                        }
+                        @case ('number') {
+                          <mat-form-field appearance="outline" class="validation-field">
+                            <mat-label>{{ validationKey }}</mat-label>
+                            <input
+                              matInput
+                              type="number"
+                              [ngModel]="getValidationValue(validationKey)"
+                              (ngModelChange)="updateValidation(validationKey, $event)"
+                            />
+                          </mat-form-field>
+                        }
+                        @case ('boolean') {
+                          <mat-slide-toggle
+                            [ngModel]="getValidationValue(validationKey)"
+                            (ngModelChange)="updateValidation(validationKey, $event)"
+                          >
+                            {{ validationKey }}
+                          </mat-slide-toggle>
+                        }
+                        @case ('date') {
+                          <mat-form-field appearance="outline" class="validation-field">
+                            <mat-label>{{ validationKey }}</mat-label>
+                            <input
+                              matInput
+                              [matDatepicker]="picker"
+                              [ngModel]="getValidationValue(validationKey)"
+                              (ngModelChange)="updateValidation(validationKey, $event)"
+                            />
+                            <mat-datepicker-toggle matSuffix [for]="picker" />
+                            <mat-datepicker #picker />
+                          </mat-form-field>
+                        }
+                        @case ('string[]') {
+                          <!-- Options array (como dropdown/select) -->
+                          @if (validationKey === 'options') {
+                            <div class="array-validation">
+                              <span class="array-label text-subtitle text-primary-black">{{
+                                validationKey
+                              }}</span>
+
+                              <!-- Add option -->
+                              <div class="array-input-row">
+                                <mat-form-field appearance="outline" class="array-input">
+                                  <mat-label>Nueva opción</mat-label>
+                                  <input
+                                    matInput
+                                    [ngModel]="tempOption()"
+                                    (ngModelChange)="tempOption.set($event)"
+                                    (keydown.enter)="addValidationOption()"
+                                  />
+                                </mat-form-field>
+                                <button
+                                  mat-icon-button
+                                  color="primary"
+                                  (click)="addValidationOption()"
+                                >
+                                  <mat-icon>add</mat-icon>
+                                </button>
+                              </div>
+
+                              <!-- Display options as chips -->
+                              <div class="chips-container">
+                                @for (
+                                  option of asArray(getValidationValue('options'));
+                                  track option
+                                ) {
+                                  <mat-chip-row (removed)="removeValidationOptionSafe(option)">
+                                    {{ option }}
+                                    <button matChipRemove>
+                                      <mat-icon>cancel</mat-icon>
+                                    </button>
+                                  </mat-chip-row>
+                                }
+                              </div>
+                            </div>
+                          } @else {
+                            <!-- Otros arrays -->
+                            <div class="array-validation">
+                              <span class="array-label text-subtitle text-primary-black">{{
+                                validationKey
+                              }}</span>
+
+                              <div class="array-input-row">
+                                <mat-form-field appearance="outline" class="array-input">
+                                  <mat-label>Nuevo valor</mat-label>
+                                  <input
+                                    matInput
+                                    [ngModel]="getTempArrayValue(validationKey)"
+                                    (ngModelChange)="updateTempArrayValue(validationKey, $event)"
+                                    (keydown.enter)="addArrayValue(validationKey)"
+                                  />
+                                </mat-form-field>
+                                <button
+                                  mat-icon-button
+                                  color="primary"
+                                  (click)="addArrayValue(validationKey)"
+                                >
+                                  <mat-icon>add</mat-icon>
+                                </button>
+                              </div>
+
+                              <div class="chips-container">
+                                @for (
+                                  value of asArray(getValidationValue(validationKey));
+                                  track value
+                                ) {
+                                  <mat-chip-row
+                                    (removed)="removeArrayValueSafe(validationKey, value)"
+                                  >
+                                    {{ value }}
+                                    <button matChipRemove>
+                                      <mat-icon>cancel</mat-icon>
+                                    </button>
+                                  </mat-chip-row>
+                                }
+                              </div>
+                            </div>
+                          }
+                        }
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Field actions -->
+              <div class="field-actions">
+                @if (editingFieldId()) {
+                  <button mat-button (click)="cancelEditField()">Cancelar</button>
+                  <button mat-raised-button class="btn-primary" (click)="updateField()">
+                    <mat-icon>check</mat-icon>
+                    Actualizar Pregunta
+                  </button>
+                } @else {
+                  <button mat-button (click)="resetNewField()">Limpiar</button>
+                  <button
+                    mat-raised-button
+                    class="btn-primary"
+                    [disabled]="!newField().question || !newField().fieldTypeId"
+                    (click)="addField()"
+                  >
+                    <mat-icon>add</mat-icon>
+                    Añadir Pregunta
+                  </button>
+                }
+              </div>
+            </div>
+          </mat-expansion-panel>
+
+          <mat-divider class="section-divider" />
+
+          <!-- Lista de preguntas creadas -->
+          <div class="fields-list-section">
+            <h2 class="section-title text-body font-bold text-primary-black">
+              Preguntas del Formulario
+            </h2>
+
+            <!-- Sección 1: Vinculadas a protocolo -->
+            @if (protocolLinkedSection().fields.length > 0) {
+              <div class="fields-subsection">
+                <h3 class="subsection-title text-subtitle font-bold text-accent-titles">
+                  📋 Preguntas vinculadas a protocolos
+                </h3>
+                <div class="fields-list">
+                  @for (field of protocolLinkedSection().fields; track field.id; let idx = $index) {
+                    <div class="field-card">
+                      <!-- Order controls -->
+                      <div class="order-controls">
+                        <button
+                          mat-icon-button
+                          [disabled]="idx === 0"
+                          (click)="moveFieldUp(idx, 'protocol_linked')"
+                          matTooltip="Subir"
+                        >
+                          <mat-icon>arrow_upward</mat-icon>
+                        </button>
+                        <span class="order-number text-subtitle text-neutral-subheading">
+                          {{ idx + 1 }}
+                        </span>
+                        <button
+                          mat-icon-button
+                          [disabled]="idx === protocolLinkedSection().fields.length - 1"
+                          (click)="moveFieldDown(idx, 'protocol_linked')"
+                          matTooltip="Bajar"
+                        >
+                          <mat-icon>arrow_downward</mat-icon>
+                        </button>
+                      </div>
+
+                      <!-- Field content -->
+                      <div class="field-main-content">
+                        <div class="field-header">
+                          <div class="question-row">
+                            <mat-icon class="question-icon">quiz</mat-icon>
+                            <span class="field-question text-body font-bold text-primary-black">
+                              {{ field.question }}
+                            </span>
+                          </div>
+                          @if (field.isRequired) {
+                            <mat-chip class="required-chip">
+                              <mat-icon>star</mat-icon>
+                              Requerido
+                            </mat-chip>
+                          }
+                        </div>
+
+                        <div class="field-meta">
+                          <div class="meta-item">
+                            <mat-icon>category</mat-icon>
+                            <span class="text-subtitle text-neutral-subheading">
+                              {{ getFieldTypeName(field.fieldTypeId) }}
+                            </span>
+                          </div>
+                          @if (field.protocolId) {
+                            <div class="meta-item">
+                              <mat-icon>link</mat-icon>
+                              <span class="text-subtitle text-neutral-subheading">
+                                {{ getProtocolName(field.protocolId) }}
+                              </span>
+                            </div>
+                          }
+                          <div class="meta-item">
+                            <mat-icon>nature</mat-icon>
+                            <span class="text-subtitle text-neutral-subheading">
+                              {{ APPLIES_TO_LABELS[field.appliesTo || 'both'] }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="field-card-actions">
+                        <button
+                          mat-icon-button
+                          (click)="editField(field, 'protocol_linked')"
+                          matTooltip="Editar pregunta"
+                        >
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          (click)="removeField(field.id!, 'protocol_linked')"
+                          matTooltip="Eliminar pregunta"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Sección 2: Preguntas libres -->
+            @if (freeFormSection().fields.length > 0) {
+              <div class="fields-subsection">
+                <h3 class="subsection-title text-subtitle font-bold text-accent-titles">
+                  ✏️ Preguntas personalizadas
+                </h3>
+                <div class="fields-list">
+                  @for (field of freeFormSection().fields; track field.id; let idx = $index) {
+                    <div class="field-card">
+                      <!-- Order controls -->
+                      <div class="order-controls">
+                        <button
+                          mat-icon-button
+                          [disabled]="idx === 0"
+                          (click)="moveFieldUp(idx, 'free_form')"
+                          matTooltip="Subir"
+                        >
+                          <mat-icon>arrow_upward</mat-icon>
+                        </button>
+                        <span class="order-number text-subtitle text-neutral-subheading">
+                          {{ idx + 1 }}
+                        </span>
+                        <button
+                          mat-icon-button
+                          [disabled]="idx === freeFormSection().fields.length - 1"
+                          (click)="moveFieldDown(idx, 'free_form')"
+                          matTooltip="Bajar"
+                        >
+                          <mat-icon>arrow_downward</mat-icon>
+                        </button>
+                      </div>
+
+                      <!-- Field content -->
+                      <div class="field-main-content">
+                        <div class="field-header">
+                          <div class="question-row">
+                            <mat-icon class="question-icon">quiz</mat-icon>
+                            <span class="field-question text-body font-bold text-primary-black">
+                              {{ field.question }}
+                            </span>
+                          </div>
+                          @if (field.isRequired) {
+                            <mat-chip class="required-chip">
+                              <mat-icon>star</mat-icon>
+                              Requerido
+                            </mat-chip>
+                          }
+                        </div>
+
+                        <div class="field-meta">
+                          <div class="meta-item">
+                            <mat-icon>category</mat-icon>
+                            <span class="text-subtitle text-neutral-subheading">
+                              {{ getFieldTypeName(field.fieldTypeId) }}
+                            </span>
+                          </div>
+                          <div class="meta-item">
+                            <mat-icon>nature</mat-icon>
+                            <span class="text-subtitle text-neutral-subheading">
+                              {{ APPLIES_TO_LABELS[field.appliesTo || 'both'] }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="field-card-actions">
+                        <button
+                          mat-icon-button
+                          (click)="editField(field, 'free_form')"
+                          matTooltip="Editar pregunta"
+                        >
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          (click)="removeField(field.id!, 'free_form')"
+                          matTooltip="Eliminar pregunta"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (
+              protocolLinkedSection().fields.length === 0 && freeFormSection().fields.length === 0
+            ) {
+              <div class="empty-fields">
+                <mat-icon class="empty-icon">quiz</mat-icon>
+                <p class="text-body text-neutral-subheading">
+                  No hay preguntas aún. Añade tu primera pregunta arriba.
+                </p>
+              </div>
+            }
+          </div>
+
+          <!-- Step actions -->
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>Volver</button>
+            <button
+              mat-raised-button
+              class="btn-primary"
+              [disabled]="
+                saving() ||
+                (protocolLinkedSection().fields.length === 0 &&
+                  freeFormSection().fields.length === 0)
+              "
+              (click)="saveForm()"
+            >
+              @if (saving()) {
+                <ng-container>
+                  <mat-spinner diameter="20" class="inline-spinner" />
+                  <span>Guardando...</span>
+                </ng-container>
+              } @else {
+                <ng-container>
+                  <mat-icon>save</mat-icon>
+                  <span>{{ editMode() ? 'Actualizar Formulario' : 'Crear Formulario' }}</span>
+                </ng-container>
+              }
+            </button>
+          </div>
+        </div>
+      </mat-step>
+    </mat-stepper>
+  }
+</div>

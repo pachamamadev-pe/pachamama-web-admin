@@ -630,6 +630,47 @@
 // Publication Panel Styles
 // ============================================
 
+// Metadata Panel (Nombre, Descripción, Logo)
+.metadata-panel {
+  margin-bottom: 1.5rem !important;
+  border: 2px solid #218358 !important; // secondary
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(33, 131, 88, 0.1) !important;
+
+  ::ng-deep .mat-expansion-panel-header {
+    background: linear-gradient(135deg, #f4fbf6 0%, rgba(33, 131, 88, 0.05) 100%);
+    padding: 1.25rem 1.5rem;
+
+    &:hover {
+      background: linear-gradient(135deg, #f4fbf6 0%, rgba(33, 131, 88, 0.08) 100%);
+    }
+  }
+
+  ::ng-deep .mat-expansion-panel-body {
+    padding: 1.5rem;
+    background: #ffffff;
+  }
+}
+
+.metadata-content {
+  .form-section {
+    margin-bottom: 1.5rem;
+
+    .section-label {
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .full-width {
+    width: 100%;
+  }
+}
+
 .publication-panel {
   margin-bottom: 1.5rem !important;
   border: 2px solid #218358 !important; // secondary

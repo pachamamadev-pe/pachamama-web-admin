@@ -114,6 +114,30 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'dynamic-forms',
+        title: 'Formularios Dinámicos',
+        loadComponent: () =>
+          import('./features/dynamic-forms/pages/dynamic-forms.page').then(
+            (m) => m.DynamicFormsPage,
+          ),
+      },
+      {
+        path: 'dynamic-forms/create',
+        title: 'Crear Formulario',
+        loadComponent: () =>
+          import('./features/dynamic-forms/pages/dynamic-form-builder.page').then(
+            (m) => m.DynamicFormBuilderPage,
+          ),
+      },
+      {
+        path: 'dynamic-forms/:productId/:formId/edit',
+        title: 'Editar Formulario',
+        loadComponent: () =>
+          import('./features/dynamic-forms/pages/dynamic-form-builder.page').then(
+            (m) => m.DynamicFormBuilderPage,
+          ),
+      },
+      {
         path: 'brigades',
         title: 'Configuración',
         loadComponent: () =>

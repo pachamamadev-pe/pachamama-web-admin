@@ -29,6 +29,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProductsService } from '../services/products.service';
 import { ProductProtocolsService } from '../services/product-protocols.service';
 import { NotificationService } from '@core/services/notification.service';
+import { AzureStorageService } from '@core/services/azure-storage.service';
+import { UploadResult } from '@core/services/file-upload.service';
+import { ImageUploadComponent } from '@shared/components/image-upload/image-upload.component';
 import { AppliesTo, FieldType, FormField, FormSection, ProductProtocol } from '../models';
 import { FormSchema, FormSchemaField, FormSchemaSection } from '../models/form-schema.model';
 import { FormSchemaResponse } from '../models/form-schema-response.model';
@@ -68,6 +71,7 @@ export type ProjectStage =
     MatDividerModule,
     MatBadgeModule,
     DragDropModule,
+    ImageUploadComponent,
   ],
   templateUrl: './product-form-builder.component.html',
   styleUrl: './product-form-builder.component.scss',
@@ -80,12 +84,19 @@ export class ProductFormBuilderComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private location = inject(Location);
+  private azureStorageService = inject(AzureStorageService);
 
   // Route params
   productId = signal<string>('');
   productName = signal<string>('Producto');
   stage = signal<ProjectStage>('planning');
   formId = signal<string | null>(null);
+
+  // Form metadata (nombre, descripción y logo personalizado)
+  formName = signal<string>('');
+  formDescription = signal<string>('');
+  customLogoUrl = signal<string | null>(null);
+  currentLogoUrl = signal<string | null>(null); // Para previsualizar con SAS token
 
   // Computed
   editMode = computed(() => !!this.formId());
@@ -269,6 +280,12 @@ export class ProductFormBuilderComponent implements OnInit {
     this.productsService.getProductById(productId).subscribe({
       next: (product) => {
         this.productName.set(product.name);
+
+        // Si es modo creación, generar nombre por defecto
+        if (!formId) {
+          const defaultName = `Formulario de ${this.getStageTitle()} - ${product.name}`;
+          this.formName.set(defaultName);
+        }
       },
       error: () => {
         this.productName.set('Producto');
@@ -356,6 +373,16 @@ export class ProductFormBuilderComponent implements OnInit {
       this.updatedBy.set(response.updatedBy);
       this.createdAt.set(response.createdAt);
       this.updatedAt.set(response.updatedAt);
+
+      // Cargar nombre, descripción y logo
+      this.formName.set(response.name || '');
+      this.formDescription.set(response.description || '');
+      this.customLogoUrl.set(response.customLogoUrl || null);
+
+      // Cargar logo con SAS token si existe
+      if (response.customLogoUrl) {
+        this.loadLogoWithSasToken(response.customLogoUrl);
+      }
 
       // Parsear el string JSON del schema
       const schema: FormSchema = JSON.parse(response.schema);
@@ -1222,13 +1249,18 @@ export class ProductFormBuilderComponent implements OnInit {
     // Generar el schema
     const schema = this.generateFormSchema();
 
-    // Construir el nombre del formulario
-    const formName = `Formulario de ${this.getStageTitle()} para el producto ${this.productName()}`;
+    // Validar que tenga nombre
+    const name = this.formName().trim();
+    if (!name) {
+      this.notification.warning('Debes ingresar un nombre para el formulario');
+      return;
+    }
 
     // Construir el request
     const formData = {
-      name: formName,
-      description: '',
+      name: name,
+      description: this.formDescription().trim() || '',
+      customLogoUrl: this.customLogoUrl() || undefined,
       applicableStages: [this.getStageCode().toLowerCase()],
       schema: JSON.stringify(schema),
       validFrom: this.validFrom() || undefined,
@@ -1391,6 +1423,38 @@ export class ProductFormBuilderComponent implements OnInit {
         this.notification.error('Error al cargar el historial de versiones');
       },
     });
+  }
+
+  /**
+   * Carga el logo con SAS token para previsualización
+   */
+  private loadLogoWithSasToken(relativePath: string): void {
+    this.azureStorageService.getFileUrl(relativePath, 5).subscribe({
+      next: (url: string) => {
+        this.currentLogoUrl.set(url);
+      },
+      error: (error: unknown) => {
+        console.error('Error obteniendo SAS token para logo:', error);
+        this.currentLogoUrl.set(null);
+      },
+    });
+  }
+
+  /**
+   * Maneja la subida de imagen para el logo personalizado
+   */
+  onImageUploaded(result: UploadResult): void {
+    this.customLogoUrl.set(result.relativePath);
+    // Actualizar preview con SAS token
+    this.loadLogoWithSasToken(result.relativePath);
+  }
+
+  /**
+   * Maneja la eliminación del logo
+   */
+  onImageRemoved(): void {
+    this.customLogoUrl.set(null);
+    this.currentLogoUrl.set(null);
   }
 
   /**

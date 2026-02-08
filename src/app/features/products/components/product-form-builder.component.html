@@ -39,6 +39,65 @@
   } @else {
     <!-- Content -->
     <div class="form-builder-content">
+      <!-- Sección de Metadatos (Nombre, Descripción, Logo) -->
+      <mat-expansion-panel [expanded]="true" class="metadata-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>info</mat-icon>
+            <span class="text-body font-bold">Información del Formulario</span>
+          </mat-panel-title>
+          <mat-panel-description> Nombre, descripción y logo personalizado </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <div class="panel-content metadata-content">
+          <!-- Logo personalizado (opcional) -->
+          <div class="form-section mb-6">
+            <p class="section-label text-body font-bold text-accent-titles mb-2">
+              Logo personalizado (opcional)
+            </p>
+            <p class="text-subtitle text-neutral-subheading mb-3">
+              Sube una imagen que represente este formulario. Se mostrará en la app móvil.
+            </p>
+            <app-image-upload
+              [maxSizeMB]="5"
+              [allowedTypes]="['image/jpeg', 'image/png', 'image/svg+xml']"
+              [directory]="'product-forms'"
+              [currentImageUrl]="currentLogoUrl() || null"
+              (fileUploaded)="onImageUploaded($event)"
+              (fileRemoved)="onImageRemoved()"
+            />
+          </div>
+
+          <!-- Nombre del formulario -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre del formulario</mat-label>
+            <input
+              matInput
+              [ngModel]="formName()"
+              (ngModelChange)="formName.set($event)"
+              placeholder="Ejemplo: Inventario de {{ getStageTitle() }}"
+              required
+            />
+            <mat-icon matPrefix>title</mat-icon>
+            <mat-hint>Este nombre se mostrará en la aplicación móvil</mat-hint>
+          </mat-form-field>
+
+          <!-- Descripción del formulario -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción (opcional)</mat-label>
+            <textarea
+              matInput
+              [ngModel]="formDescription()"
+              (ngModelChange)="formDescription.set($event)"
+              rows="3"
+              placeholder="Describe el propósito de este formulario..."
+            ></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+            <mat-hint>Información adicional sobre el uso de este formulario</mat-hint>
+          </mat-form-field>
+        </div>
+      </mat-expansion-panel>
+
       <!-- Panel de Versión y Publicación (solo en modo edición) -->
       @if (editMode()) {
         <mat-expansion-panel

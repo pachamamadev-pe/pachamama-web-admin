@@ -37,6 +37,9 @@ export interface FormSchemaResponse {
   /** Esquema JSON del formulario (secciones, campos, validaciones) */
   schema: string;
 
+  /** URL del logo personalizado */
+  customLogoUrl: string | null;
+
   /** Configuración de preview */
   previewConfig: string | null;
 
