@@ -149,6 +149,39 @@ mat-card {
         margin: 0;
         line-height: 1.5;
       }
+
+      .approved-metadata {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(33, 131, 88, 0.2);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .metadata-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 13px;
+
+          .metadata-icon {
+            color: #218358; // secondary
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+
+          .metadata-label {
+            color: #737373; // neutral-subheading
+            font-weight: 500;
+          }
+
+          .metadata-value {
+            color: #0a0a0a; // accent-titles
+            font-weight: 600;
+          }
+        }
+      }
     }
   }
 }

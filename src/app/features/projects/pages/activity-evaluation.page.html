@@ -55,6 +55,26 @@
                   Esta actividad ha sido aprobada y no puede ser modificada. Puedes revisar el
                   detalle de las respuestas y el estado de validación de cada pregunta.
                 </p>
+                @if (activity()!.validatedByName || activity()!.validatedAt) {
+                  <div class="approved-metadata">
+                    @if (activity()!.validatedByName) {
+                      <div class="metadata-item">
+                        <mat-icon class="metadata-icon">person</mat-icon>
+                        <span class="metadata-label">Aprobado por:</span>
+                        <span class="metadata-value">{{ activity()!.validatedByName }}</span>
+                      </div>
+                    }
+                    @if (activity()!.validatedAt) {
+                      <div class="metadata-item">
+                        <mat-icon class="metadata-icon">schedule</mat-icon>
+                        <span class="metadata-label">Fecha aprobación:</span>
+                        <span class="metadata-value">{{
+                          activity()!.validatedAt | date: 'dd/MM/yyyy HH:mm'
+                        }}</span>
+                      </div>
+                    }
+                  </div>
+                }
               </div>
             </div>
           </mat-card-content>
