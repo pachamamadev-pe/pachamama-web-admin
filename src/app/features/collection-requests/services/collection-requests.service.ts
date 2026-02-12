@@ -72,6 +72,13 @@ export class CollectionRequestsService {
   }
 
   /**
+   * Listar solicitudes aprobadas por proyecto
+   */
+  getApprovedRequestsByProject(projectId: string): Observable<CollectionRequest[]> {
+    return this.http.get<CollectionRequest[]>(`${this.apiUrl}/project/${projectId}/approved`);
+  }
+
+  /**
    * Listar solicitudes observadas
    */
   getObservedRequests(): Observable<CollectionRequest[]> {

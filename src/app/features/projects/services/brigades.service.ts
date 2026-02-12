@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@environments/environment';
-import { BrigadePageDto } from '../models/brigade.model';
+import { Brigade, BrigadePageDto } from '../models/brigade.model';
 import { CreateBrigadeRequest } from '../models/create-brigade.request';
 import { BrigadeCollectorsPageDto } from '../models/brigade-collector.model';
 
@@ -49,7 +49,7 @@ export class BrigadesService {
    * @param data datos de creación
    */
   createBrigade(data: CreateBrigadeRequest) {
-    return this.http.post(`${this.apiUrl}`, data);
+    return this.http.post<Brigade>(`${this.apiUrl}`, data);
   }
 
   /**
@@ -58,6 +58,16 @@ export class BrigadesService {
    * @param data - Datos a actualizar (name, description, status)
    */
   updateBrigade(id: string, data: { name?: string; description?: string; status?: string }) {
-    return this.http.patch(`${this.apiUrl}/${id}`, data);
+    return this.http.put<Brigade>(`${this.apiUrl}/${id}`, data);
+  }
+
+  /**
+   * Agrega recolectores a una brigada existente
+   */
+  addMembers(
+    brigadeId: string,
+    data: { collectorIds: string[]; startDate?: string; endDate?: string },
+  ): Observable<Brigade> {
+    return this.http.post<Brigade>(`${this.apiUrl}/${brigadeId}/members`, data);
   }
 }

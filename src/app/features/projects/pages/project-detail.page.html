@@ -546,6 +546,7 @@
                         [shouldLoad]="tabsLoaded().has(brigadesTabIndex())"
                         (createBrigade)="openCreateBrigadeDialog()"
                         (editBrigade)="openEditBrigadeDialog($event)"
+                        (addMembers)="openAddMembersDialog($event)"
                         (viewMembers)="viewBrigadeMembers($event)"
                       />
                     </div>
