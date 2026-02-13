@@ -276,13 +276,15 @@ export class DynamicFormBuilderPage implements OnInit {
   async loadProjects(): Promise<void> {
     this.loadingProjects.set(true);
     try {
-      const companyId = await this.authService.getUserCompanyId();
-      if (!companyId) {
-        this.notification.error('Error: No se pudo obtener la empresa');
+      const productId = this.productId();
+      if (!productId) {
+        this.projects.set([]);
         this.loadingProjects.set(false);
         return;
       }
-      this.projectsService.getProjects(companyId).subscribe({
+
+      // Para el builder solo necesitamos poblar el combo; pedir un tamaño mayor.
+      this.projectsService.getProjectsByProduct(productId, 0, 200).subscribe({
         next: (response) => {
           this.projects.set(response.items);
           this.loadingProjects.set(false);
@@ -502,6 +504,14 @@ export class DynamicFormBuilderPage implements OnInit {
    * Cuando cambia el ámbito a 'project', cargar proyectos
    */
   onScopeChange(scope: FormScope): void {
+    if (scope === 'project' && !this.productId()) {
+      // Guardia extra: el UI deshabilita el combo, pero evitamos estados inválidos.
+      this.notification.warning('Primero selecciona un producto');
+      this.scope.set('company');
+      this.projectId.set(null);
+      return;
+    }
+
     this.scope.set(scope);
     if (scope === 'project' && this.projects().length === 0) {
       this.loadProjects();
@@ -516,10 +526,24 @@ export class DynamicFormBuilderPage implements OnInit {
    */
   async onProductChange(productId: string | null): Promise<void> {
     this.productId.set(productId);
+
+    // El proyecto seleccionado deja de ser válido al cambiar de producto.
+    this.projectId.set(null);
+    this.projects.set([]);
+
+    if (!productId) {
+      this.scope.set('company');
+      return;
+    }
+
     if (productId) {
       // Pre-cargar field types y protocols para el paso 2
       this.loadFieldTypes(productId);
       this.loadProtocols(productId);
+
+      if (this.scope() === 'project') {
+        this.loadProjects();
+      }
     }
   }
 

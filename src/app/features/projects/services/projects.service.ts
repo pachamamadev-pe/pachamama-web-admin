@@ -39,6 +39,29 @@ export class ProjectsService {
   }
 
   /**
+   * Obtiene la lista paginada de proyectos por productId
+   * GET /api/v1/admin/projects/by-product/{productId}
+   * @param productId - ID del producto
+   * @param page - Número de página (default: 0)
+   * @param size - Tamaño de página (default: 20)
+   * @param q - Query de búsqueda (opcional)
+   */
+  getProjectsByProduct(
+    productId: string,
+    page = 0,
+    size = 20,
+    q?: string,
+  ): Observable<PageDto<Project>> {
+    let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+
+    if (q) {
+      params = params.set('q', q);
+    }
+
+    return this.http.get<PageDto<Project>>(`${this.apiUrl}/by-product/${productId}`, { params });
+  }
+
+  /**
    * Búsqueda avanzada de proyectos con filtros múltiples
    * @param page - Número de página (default: 0)
    * @param size - Tamaño de página (default: 20)
