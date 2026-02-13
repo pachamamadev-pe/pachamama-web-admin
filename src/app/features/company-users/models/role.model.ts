@@ -22,9 +22,11 @@ export interface AssignRoleRequest {
 export function getRoleBadgeColor(roleCode: string): string {
   const colors: Record<string, string> = {
     ADMIN_EMPRESA: '#218358', // Verde principal
-    SUPERVISOR: '#3B82F6', // Azul
-    OPERADOR: '#8B5CF6', // Morado
-    AUDITOR: '#EF4444', // Rojo
+    RECOLECTOR_ADMINISTRADOR: '#3B82F6', // Azul
+    GESTOR_RELACIONAMIENTO_COMUNITARIO: '#8B5CF6', // Morado
+    GESTOR_TRANSFORMACION_PRIMARIA: '#EF4444', // Rojo
+    GESTOR_ALMACENAMIENTO_TEMPORAL: '#F59E0B', // Naranja
+    GESTOR_TRANSFORMACION_SECUNDARIA: '#10B981', // Verde secundario
   };
   return colors[roleCode] || '#737373'; // Gris por defecto
 }

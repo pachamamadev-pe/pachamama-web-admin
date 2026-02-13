@@ -69,6 +69,7 @@ export class VideoDetailDialogComponent implements AfterViewInit {
   videoLoaded = signal(false);
   videoError = signal(false);
   mapLoaded = signal(false);
+  isBuffering = signal(false);
 
   ngAfterViewInit(): void {
     // Inicializar el mapa cuando esté listo
@@ -106,10 +107,33 @@ export class VideoDetailDialogComponent implements AfterViewInit {
 
   onVideoLoad(): void {
     this.videoLoaded.set(true);
+    this.isBuffering.set(false);
   }
 
   onVideoError(): void {
     this.videoError.set(true);
+    this.isBuffering.set(false);
+  }
+
+  /**
+   * Se ejecuta cuando el video está esperando más datos (buffering)
+   */
+  onBuffering(): void {
+    this.isBuffering.set(true);
+  }
+
+  /**
+   * Se ejecuta cuando el video vuelve a reproducirse
+   */
+  onPlaying(): void {
+    this.isBuffering.set(false);
+  }
+
+  /**
+   * Se ejecuta cuando hay suficientes datos para reproducir
+   */
+  onCanPlay(): void {
+    this.isBuffering.set(false);
   }
 
   close(): void {

@@ -1,0 +1,145 @@
+<mat-card class="summary-card map-card" [class.map-fullscreen]="isMapFullscreen()">
+  <mat-card-header class="map-card-header">
+    <mat-card-title
+      class="map-card-title"
+      [matTooltip]="'Perímetro de ' + projectName()"
+      matTooltipPosition="below"
+    >
+      <mat-icon class="title-icon">map</mat-icon>
+      <span class="map-title-text">Perímetro de {{ projectName() }}</span>
+    </mat-card-title>
+    @if (hasMap()) {
+      <div class="map-actions">
+        <button
+          mat-icon-button
+          class="map-action-btn"
+          (click)="downloadGeoJSON()"
+          matTooltip="Descargar GeoJSON"
+        >
+          <mat-icon>download</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          class="map-action-btn"
+          (click)="toggleMapFullscreen()"
+          matTooltip="Pantalla completa"
+        >
+          <mat-icon>{{ isMapFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    }
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (loadingMap()) {
+      <div class="map-loading">
+        <mat-spinner diameter="40" />
+        <p class="text-subtitle text-neutral-subheading mt-3">Verificando mapa...</p>
+      </div>
+    } @else if (!hasMap() && !uploadingFile()) {
+      <div class="map-upload-area">
+        <input
+          type="file"
+          id="project-map-input"
+          accept=".zip,.rar,.shp,.dbf,.shx,.prj,.cpg,.qmd,.sbn,.sbx,.xml,.geojson,.json"
+          multiple
+          (change)="onFileSelected($event)"
+          style="display: none"
+        />
+
+        <div class="upload-content">
+          <div class="upload-icon">
+            <mat-icon>cloud_upload</mat-icon>
+          </div>
+          <h4 class="upload-title">No hay mapa cargado</h4>
+          <p class="upload-description">
+            @if (canEditMap()) {
+              Sube uno o más archivos de áreas del proyecto
+            } @else {
+              El mapa solo se puede cargar en la etapa de Planificación
+            }
+          </p>
+
+          <button
+            mat-raised-button
+            class="btn-primary mt-4"
+            (click)="triggerFileInput()"
+            [disabled]="!canEditMap()"
+          >
+            <mat-icon>folder_open</mat-icon>
+            Seleccionar archivo(s)
+          </button>
+
+          @if (canEditMap()) {
+            <p class="upload-hint">
+              Formatos: ZIP/RAR, Shapefiles (.shp + acompañantes), GeoJSON
+              <br />
+              Máximo 150MB por archivo
+            </p>
+          }
+        </div>
+      </div>
+    } @else if (uploadingFile()) {
+      <div class="map-uploading">
+        @if (!uploadError()) {
+          <div class="upload-progress">
+            <div class="progress-icon">
+              <mat-spinner diameter="48" />
+            </div>
+
+            <h4 class="progress-title">Procesando shapefile...</h4>
+
+            @if (importStatus() === 'PENDING') {
+              <p class="progress-text">Preparando archivo...</p>
+            } @else if (importStatus() === 'PROCESSING') {
+              <p class="progress-text">Importando coordenadas: {{ uploadProgress() }}%</p>
+              <mat-progress-bar mode="determinate" [value]="uploadProgress()" class="mt-3" />
+            }
+
+            <p class="progress-hint">Este proceso puede tardar varios minutos...</p>
+          </div>
+        } @else {
+          <div class="upload-error">
+            <div class="error-icon">
+              <mat-icon>error_outline</mat-icon>
+            </div>
+            <h4 class="error-title">Error al procesar archivo</h4>
+            <p class="error-message">{{ uploadError() }}</p>
+
+            <button mat-raised-button class="btn-primary mt-4" (click)="retryUpload()">
+              <mat-icon>refresh</mat-icon>
+              Intentar nuevamente
+            </button>
+          </div>
+        }
+      </div>
+    } @else if (hasMap()) {
+      <div class="map-loaded">
+        @if (canEditMap()) {
+          <button
+            mat-icon-button
+            class="map-edit-btn"
+            (click)="enableEditMode()"
+            matTooltip="Actualizar mapa"
+          >
+            <mat-icon>edit</mat-icon>
+          </button>
+        }
+
+        <div class="map-stats">
+          <mat-icon class="stats-icon">terrain</mat-icon>
+          <span class="stats-text"
+            >{{ currentGeoJSON()?.features?.length || 0 }} área(s) delimitada(s)</span
+          >
+        </div>
+
+        <div class="map-hint">
+          <mat-icon class="hint-icon">info</mat-icon>
+          <span class="hint-text">Usa los botones +/- o doble clic para hacer zoom</span>
+        </div>
+
+        <div #mapContainer class="leaflet-map-container"></div>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

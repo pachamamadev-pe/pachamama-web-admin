@@ -1,3 +1,4 @@
+0
 <div class="dialog-container">
   <!-- Header -->
   <div class="dialog-header">
@@ -40,13 +41,26 @@
           #videoPlayer
           [src]="data.videoUrl"
           controls
-          preload="metadata"
-          (loadedmetadata)="onVideoLoad()"
+          preload="auto"
+          playsinline
+          controlsList="nodownload"
+          (loadeddata)="onVideoLoad()"
           (error)="onVideoError()"
+          (waiting)="onBuffering()"
+          (playing)="onPlaying()"
+          (canplay)="onCanPlay()"
           [class.video-hidden]="!videoLoaded()"
         >
           Tu navegador no soporta la reproducción de videos.
         </video>
+
+        <!-- Buffering Overlay -->
+        @if (isBuffering()) {
+          <div class="buffering-overlay">
+            <mat-spinner diameter="40" />
+            <p class="buffering-text">Cargando...</p>
+          </div>
+        }
       </div>
     </div>
 
