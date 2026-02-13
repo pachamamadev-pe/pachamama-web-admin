@@ -43,3 +43,11 @@ export interface ReassignBrigadeRequest {
   startDate: string; // YYYY-MM-DD
   notes?: string;
 }
+
+/**
+ * Request para finalizar una asignacion antes de fecha fin
+ */
+export interface CompleteBrigadeAssignmentRequest {
+  endDate: string; // YYYY-MM-DD
+  notes?: string;
+}

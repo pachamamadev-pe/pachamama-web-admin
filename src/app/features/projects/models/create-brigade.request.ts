@@ -1,7 +1,10 @@
 export interface CreateBrigadeRequest {
   projectCommunityId: string;
-  code: string;
   name: string;
   description?: string;
+  collectionRequestId?: string | null;
+  collectorIds?: string[];
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
   qrCode?: string;
 }

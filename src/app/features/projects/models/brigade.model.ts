@@ -6,6 +6,7 @@ import { Collector } from './collector.model';
 export enum BrigadeStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
+  ARCHIVED = 'archived',
 }
 
 /**
@@ -16,6 +17,7 @@ export interface Brigade {
   companyId: string;
   projectId: string;
   communityId: string;
+  collectionRequestId?: string | null;
   code: string;
   name: string;
   description?: string;

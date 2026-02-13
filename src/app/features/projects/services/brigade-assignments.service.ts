@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import {
   BrigadeAssignment,
   CreateBrigadeAssignmentRequest,
+  CompleteBrigadeAssignmentRequest,
   ReassignBrigadeRequest,
 } from '../models/brigade-assignment.model';
 
@@ -45,5 +46,22 @@ export class BrigadeAssignmentsService {
       `${this.apiUrl}/${assignmentId}/toggle-status?status=${status}`,
       {},
     );
+  }
+
+  /**
+   * Obtiene el historial de asignaciones de un recolector
+   */
+  getCollectorHistory(collectorId: string): Observable<BrigadeAssignment[]> {
+    return this.http.get<BrigadeAssignment[]>(`${this.apiUrl}/collector/${collectorId}/history`);
+  }
+
+  /**
+   * Finaliza una asignacion antes de su fecha fin
+   */
+  completeAssignment(
+    assignmentId: string,
+    data: CompleteBrigadeAssignmentRequest,
+  ): Observable<BrigadeAssignment> {
+    return this.http.patch<BrigadeAssignment>(`${this.apiUrl}/${assignmentId}/complete`, data);
   }
 }

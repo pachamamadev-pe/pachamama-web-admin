@@ -92,6 +92,13 @@ import { Brigade } from '../models/brigade.model';
               <ng-container matColumnDef="assignedBrigade">
                 <th mat-header-cell *matHeaderCellDef class="table-th text-left">Brigada</th>
                 <td mat-cell *matCellDef="let collector" class="table-td">
+                  {{ collector.currentBrigadeName || '-' }}
+                </td>
+              </ng-container>
+
+              <!--               <ng-container matColumnDef="assignedBrigade">
+                <th mat-header-cell *matHeaderCellDef class="table-th text-left">Brigada</th>
+                <td mat-cell *matCellDef="let collector" class="table-td">
                   <mat-form-field class="brigade-selector" appearance="outline">
                     <mat-select
                       [value]="collector.currentBrigadeId || ''"
@@ -107,7 +114,7 @@ import { Brigade } from '../models/brigade.model';
                     </mat-select>
                   </mat-form-field>
                 </td>
-              </ng-container>
+              </ng-container> -->
 
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef class="table-th text-left">Estado</th>

@@ -53,6 +53,7 @@ import { DocumentsTabComponent } from '../components/documents-tab.component';
 import { CollectionReviewTabComponent } from '../components/collection-review-tab.component';
 import { ProjectMapComponent } from '../components/project-map.component';
 import { getProjectStageLabel, getProjectStageClass } from '../models/project.model';
+import { BrigadeFormDialogComponent } from '../components/brigade-form.component';
 
 interface ProjectStage {
   number: number;
@@ -146,23 +147,27 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
    */
   openCreateBrigadeDialog(): void {
     const projectCommunityId = this.project()?.communityLink?.id;
+    const projectId = this.project()?.id;
+    const projectStage = this.project()?.stage;
     if (!projectCommunityId) {
       this.notification.error('No se puede crear brigada: falta projectCommunityId');
       return;
     }
-    import('../components/brigade-form.component').then((m) => {
-      const dialogRef = this.dialog.open(m.BrigadeFormDialogComponent, {
-        width: '600px',
-        maxWidth: '90vw',
-        data: { projectCommunityId, mode: 'create' },
-        disableClose: true,
-      });
-      dialogRef.afterClosed().subscribe((result) => {
-        if (result?.created) {
-          // Recargar brigadas usando el componente
-          this.brigadesTabComponent?.reload();
-        }
-      });
+    if (!projectId) {
+      this.notification.error('No se puede crear brigada: falta projectId');
+      return;
+    }
+    const dialogRef = this.dialog.open(BrigadeFormDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      data: { projectCommunityId, projectId, projectStage, mode: 'create' },
+      disableClose: true,
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.created) {
+        // Recargar brigadas usando el componente
+        this.brigadesTabComponent?.reload();
+      }
     });
   }
 
@@ -171,23 +176,56 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
    */
   openEditBrigadeDialog(brigade: Brigade): void {
     const projectCommunityId = this.project()?.communityLink?.id;
+    const projectId = this.project()?.id;
+    const projectStage = this.project()?.stage;
     if (!projectCommunityId) {
       this.notification.error('No se puede editar brigada: falta projectCommunityId');
       return;
     }
-    import('../components/brigade-form.component').then((m) => {
-      const dialogRef = this.dialog.open(m.BrigadeFormDialogComponent, {
-        width: '600px',
-        maxWidth: '90vw',
-        data: { projectCommunityId, mode: 'edit', brigade },
-        disableClose: true,
-      });
-      dialogRef.afterClosed().subscribe((result) => {
-        if (result?.updated) {
-          // Recargar brigadas usando el componente
-          this.brigadesTabComponent?.reload();
-        }
-      });
+    if (!projectId) {
+      this.notification.error('No se puede editar brigada: falta projectId');
+      return;
+    }
+    const dialogRef = this.dialog.open(BrigadeFormDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      data: { projectCommunityId, projectId, projectStage, mode: 'edit', brigade },
+      disableClose: true,
+    });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.updated) {
+        // Recargar brigadas usando el componente
+        this.brigadesTabComponent?.reload();
+      }
+    });
+  }
+
+  /**
+   * Abre dialogo para agregar recolectores a una brigada
+   */
+  openAddMembersDialog(brigade: Brigade): void {
+    const projectCommunityId = this.project()?.communityLink?.id;
+    const projectId = this.project()?.id;
+    const projectStage = this.project()?.stage;
+    if (!projectCommunityId) {
+      this.notification.error('No se puede agregar recolectores: falta projectCommunityId');
+      return;
+    }
+    if (!projectId) {
+      this.notification.error('No se puede agregar recolectores: falta projectId');
+      return;
+    }
+    const dialogRef = this.dialog.open(BrigadeFormDialogComponent, {
+      width: '700px',
+      maxWidth: '95vw',
+      data: { projectCommunityId, projectId, projectStage, mode: 'add-members', brigade },
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.membersAdded) {
+        this.brigadesTabComponent?.reload();
+      }
     });
   }
 

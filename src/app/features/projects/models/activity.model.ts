@@ -75,6 +75,13 @@ export interface ActivityResponse {
   /** Fecha de última actualización */
   updatedAt: string;
 
+  /** ID del usuario que validó */
+  validatedBy?: string | null;
+  /** Nombre del usuario que validó */
+  validatedByName?: string | null;
+  /** Fecha/hora de validación */
+  validatedAt?: string | null;
+
   validationNotes?: string | null;
 }
 

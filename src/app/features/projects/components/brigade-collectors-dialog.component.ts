@@ -1,6 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule,
+  MAT_DIALOG_DATA,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
@@ -142,14 +147,33 @@ export interface BrigadeCollectorsDialogData {
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef class="table-th text-right">Acciones</th>
                 <td mat-cell *matCellDef="let collector" class="table-td text-right">
-                  <mat-slide-toggle
-                    [checked]="collector.status.toLowerCase() === 'active'"
-                    (change)="toggleCollectorStatus(collector, $event.checked)"
-                    [matTooltip]="
-                      collector.status.toLowerCase() === 'active' ? 'Inactivar' : 'Activar'
-                    "
-                    color="primary"
-                  />
+                  <div class="actions-cell">
+                    <button
+                      mat-icon-button
+                      class="btn-history"
+                      (click)="openHistory(collector)"
+                      matTooltip="Ver historial"
+                    >
+                      <mat-icon>history</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      class="btn-complete"
+                      (click)="openCompleteAssignment(collector)"
+                      [disabled]="collector.status.toLowerCase() !== 'active'"
+                      matTooltip="Finalizar asignacion"
+                    >
+                      <mat-icon>event_busy</mat-icon>
+                    </button>
+                    <mat-slide-toggle
+                      [checked]="collector.status.toLowerCase() === 'active'"
+                      (change)="toggleCollectorStatus(collector, $event.checked)"
+                      [matTooltip]="
+                        collector.status.toLowerCase() === 'active' ? 'Inactivar' : 'Activar'
+                      "
+                      color="primary"
+                    />
+                  </div>
                 </td>
               </ng-container>
 
@@ -206,6 +230,26 @@ export interface BrigadeCollectorsDialogData {
                       <span class="detail-value">{{ collector.endDate }}</span>
                     </div>
                   }
+                </div>
+
+                <div class="card-actions">
+                  <button
+                    mat-stroked-button
+                    class="btn-history-mobile"
+                    (click)="openHistory(collector)"
+                  >
+                    <mat-icon>history</mat-icon>
+                    <span>Historial</span>
+                  </button>
+                  <button
+                    mat-stroked-button
+                    class="btn-complete-mobile"
+                    (click)="openCompleteAssignment(collector)"
+                    [disabled]="collector.status.toLowerCase() !== 'active'"
+                  >
+                    <mat-icon>event_busy</mat-icon>
+                    <span>Finalizar</span>
+                  </button>
                 </div>
               </div>
             }
@@ -580,6 +624,38 @@ export interface BrigadeCollectorsDialogData {
       border: 1px solid #9ca3af;
     }
 
+    .actions-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn-history {
+      color: #0284c7;
+    }
+
+    .btn-complete {
+      color: #dc2626;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-history-mobile {
+      color: #0284c7;
+      border-color: #0284c7;
+      flex: 1;
+    }
+
+    .btn-complete-mobile {
+      color: #dc2626;
+      border-color: #dc2626;
+      flex: 1;
+    }
+
     /* Summary Bar */
     .summary-bar {
       display: flex;
@@ -649,6 +725,7 @@ export interface BrigadeCollectorsDialogData {
 export class BrigadeCollectorsDialogComponent {
   data = inject<BrigadeCollectorsDialogData>(MAT_DIALOG_DATA);
   private dialogRef = inject(MatDialogRef<BrigadeCollectorsDialogComponent>);
+  private dialog = inject(MatDialog);
   private brigadesService = inject(BrigadesService);
   private brigadeAssignmentsService = inject(BrigadeAssignmentsService);
   private notification = inject(NotificationService);
@@ -708,6 +785,57 @@ export class BrigadeCollectorsDialogComponent {
         // Recargar para revertir visualmente
         this.loadCollectors();
       },
+    });
+  }
+
+  openHistory(collector: BrigadeCollector): void {
+    import('./collector-history-dialog.component').then((m) => {
+      this.dialog.open(m.CollectorHistoryDialogComponent, {
+        width: '800px',
+        maxWidth: '95vw',
+        data: {
+          collectorId: collector.collectorId,
+          collectorName: collector.collectorName,
+        },
+      });
+    });
+  }
+
+  openCompleteAssignment(collector: BrigadeCollector): void {
+    if (collector.status.toLowerCase() !== 'active') {
+      return;
+    }
+
+    import('./complete-assignment-dialog.component').then((m) => {
+      const dialogRef = this.dialog.open(m.CompleteAssignmentDialogComponent, {
+        width: '520px',
+        maxWidth: '95vw',
+        data: {
+          assignmentId: collector.id,
+          collectorName: collector.collectorName,
+          brigadeName: collector.brigadeName,
+          startDate: collector.startDate,
+        },
+        disableClose: true,
+      });
+
+      dialogRef.afterClosed().subscribe((result) => {
+        if (!result) {
+          return;
+        }
+
+        this.brigadeAssignmentsService.completeAssignment(collector.id, result).subscribe({
+          next: () => {
+            this.notification.success('Asignacion finalizada correctamente');
+            this.loadCollectors();
+          },
+          error: (error) => {
+            console.error('Error completing assignment:', error);
+            const errorMessage = error?.error?.message || 'Error al finalizar asignacion';
+            this.notification.error(errorMessage);
+          },
+        });
+      });
     });
   }
 
