@@ -41,7 +41,7 @@
         <input
           type="file"
           id="project-map-input"
-          accept=".zip,.rar,.shp,.dbf,.shx,.prj,.cpg,.qmd,.sbn,.sbx,.xml,.geojson,.json"
+          accept=".zip,.rar,.shp,.dbf,.shx,.prj,.cpg,.qmd,.sbn,.sbx,.xml,.geojson,.json,.kml"
           multiple
           (change)="onFileSelected($event)"
           style="display: none"
@@ -72,7 +72,7 @@
 
           @if (canEditMap()) {
             <p class="upload-hint">
-              Formatos: ZIP/RAR, Shapefiles (.shp + acompañantes), GeoJSON
+              Formatos: ZIP/RAR, Shapefiles (.shp + acompañantes), GeoJSON, KML
               <br />
               Máximo 150MB por archivo
             </p>

@@ -167,6 +167,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
       '.shp.xml',
       '.geojson',
       '.json',
+      '.kml',
     ];
 
     const invalidFiles: string[] = [];
@@ -190,7 +191,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
     if (invalidFiles.length > 0) {
       this.notification.error(
         `Formato no soportado: ${invalidFiles.join(', ')}. ` +
-          'Formatos permitidos: ZIP, RAR, Shapefiles, GeoJSON',
+          'Formatos permitidos: ZIP, RAR, Shapefiles, GeoJSON, KML',
       );
       input.value = '';
       return;
