@@ -397,6 +397,26 @@
     text-align: center;
     border: 2px solid #218358;
   }
+
+  .inventory-stage-label {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .inventory-stage-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9999px;
+    background-color: #218358;
+    border: 2px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    font-size: 16px;
+    line-height: 1;
+  }
 }
 
 .title-icon {

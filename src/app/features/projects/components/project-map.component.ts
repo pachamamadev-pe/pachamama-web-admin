@@ -62,6 +62,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
   private map: L.Map | null = null;
   private geoJsonLayer: L.GeoJSON | null = null;
   private areaLabelsLayer: L.LayerGroup | null = null;
+  private inventoryStageLayer: L.LayerGroup | null = null;
 
   hasMap = signal(false);
   loadingMap = signal(true);
@@ -387,11 +388,10 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
         },
         onEachFeature: (feature: GeoJSON.Feature, layer: L.Layer) => {
           if (feature.properties) {
-            const popupContent = Object.entries(feature.properties)
-              .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
-              .join('<br>');
+            const popupContent = this.buildPopupContent(feature.properties);
             (layer as L.Path).bindPopup(popupContent);
             this.addAreaLabel(feature);
+            this.addInventoryStageIcon(feature, popupContent);
           }
         },
       }).addTo(this.map);
@@ -473,6 +473,10 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
       this.areaLabelsLayer.clearLayers();
       this.areaLabelsLayer = null;
     }
+    if (this.inventoryStageLayer) {
+      this.inventoryStageLayer.clearLayers();
+      this.inventoryStageLayer = null;
+    }
     if (this.geoJsonLayer) {
       this.geoJsonLayer.remove();
       this.geoJsonLayer = null;
@@ -509,6 +513,42 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  private addInventoryStageIcon(feature: GeoJSON.Feature, popupContent: string): void {
+    if (!this.map || !feature.properties) return;
+
+    const projectStage = feature.properties['project_stage'];
+    if (typeof projectStage !== 'string' || projectStage.trim().toLowerCase() !== 'inventory') {
+      return;
+    }
+
+    const center = this.getFeatureCenter(feature);
+    if (!center) {
+      return;
+    }
+
+    const inventoryIcon = L.divIcon({
+      className: 'inventory-stage-label',
+      html: '<div class="inventory-stage-icon" title="Etapa inventory">🌳</div>',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+    });
+
+    const marker = L.marker(center, { icon: inventoryIcon });
+    marker.bindPopup(popupContent);
+
+    if (!this.inventoryStageLayer) {
+      this.inventoryStageLayer = L.layerGroup().addTo(this.map);
+    }
+
+    this.inventoryStageLayer.addLayer(marker);
+  }
+
+  private buildPopupContent(properties: Record<string, unknown>): string {
+    return Object.entries(properties)
+      .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
+      .join('<br>');
+  }
+
   private getAreaNumber(properties: Record<string, unknown>): string | null {
     const possibleKeys = ['Numero'];
 
@@ -537,6 +577,26 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
       if (count > 0) {
         return L.latLng(latSum / count, lngSum / count);
       }
+    }
+
+    return null;
+  }
+
+  private getFeatureCenter(feature: GeoJSON.Feature): L.LatLng | null {
+    if (!feature.geometry) {
+      return null;
+    }
+
+    if (feature.geometry.type === 'Point') {
+      const [lng, lat] = feature.geometry.coordinates as [number, number];
+      return L.latLng(lat, lng);
+    }
+
+    const tempLayer = L.geoJSON(feature as GeoJSON.GeoJsonObject);
+    const bounds = tempLayer.getBounds();
+
+    if (bounds.isValid()) {
+      return bounds.getCenter();
     }
 
     return null;
