@@ -66,6 +66,7 @@ export interface ProjectDocument {
   daysUntilExpiration?: number;
   validationStatus: DocumentValidationStatus;
   validatedBy: string | null;
+  validatedByName: string | null;
   validatedAt: string | null; // ISO datetime
   validationNotes: string | null;
   validationAttachmentUrl?: string | null; // URL del archivo adjuntado durante la validación

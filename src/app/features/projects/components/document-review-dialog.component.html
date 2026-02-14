@@ -109,6 +109,22 @@
               Este documento ha sido aprobado y no puede ser modificado. Puedes ver la información
               de validación arriba.
             </p>
+            @if (data.document.validatedByName || data.document.validatedAt) {
+              <div class="approved-details">
+                @if (data.document.validatedByName) {
+                  <p class="approved-detail-item">
+                    <span class="detail-label">Aprobado por:</span>
+                    <span class="detail-value">{{ data.document.validatedByName }}</span>
+                  </p>
+                }
+                @if (data.document.validatedAt) {
+                  <p class="approved-detail-item">
+                    <span class="detail-label">Fecha aprobación:</span>
+                    <span class="detail-value">{{ formatDate(data.document.validatedAt) }}</span>
+                  </p>
+                }
+              </div>
+            }
           </div>
         </div>
       </div>

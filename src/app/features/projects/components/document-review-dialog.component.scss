@@ -134,6 +134,32 @@
             color: #737373; // neutral-subheading
             margin: 0;
           }
+
+          .approved-details {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+
+            .approved-detail-item {
+              font-size: 13px;
+              color: #0a0a0a; // accent-titles
+              margin: 0;
+              display: flex;
+              gap: 8px;
+              align-items: baseline;
+
+              .detail-label {
+                font-weight: 600;
+                color: #218358; // secondary
+              }
+
+              .detail-value {
+                font-weight: 500;
+                color: #0a0a0a; // accent-titles
+              }
+            }
+          }
         }
       }
     }
