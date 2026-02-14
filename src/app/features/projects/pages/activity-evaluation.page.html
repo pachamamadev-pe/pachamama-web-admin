@@ -264,9 +264,15 @@
                         }
                       </div>
                     } @else {
-                      <div class="response-value text-body font-bold text-accent-titles">
-                        {{ field.response.value ?? 'Sin respuesta' }}
-                      </div>
+                      @if (field.response) {
+                        <div class="response-value text-body font-bold text-accent-titles">
+                          {{ field.response.value ?? 'Sin respuesta' }}
+                        </div>
+                      } @else {
+                        <div class="response-value text-body font-bold text-accent-titles">
+                          Sin respuesta
+                        </div>
+                      }
                     }
                   </div>
 
