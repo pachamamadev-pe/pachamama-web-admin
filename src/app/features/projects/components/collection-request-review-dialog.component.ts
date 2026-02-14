@@ -15,6 +15,7 @@ import {
   CollectionRequest,
   CollectionRequestHistoryDto,
 } from '@features/collection-requests/models/collection-request.model';
+import { parseDateValue } from '@shared/utils/date-helpers';
 
 interface DialogData {
   request: CollectionRequest;
@@ -925,25 +926,31 @@ export class CollectionRequestReviewDialogComponent {
   }
 
   formatDateRange(): string {
-    const start = new Date(this.request.startDate).toLocaleDateString('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-    const end = new Date(this.request.endDate).toLocaleDateString('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    const start = (parseDateValue(this.request.startDate) ?? new Date(NaN)).toLocaleDateString(
+      'es-PE',
+      {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      },
+    );
+    const end = (parseDateValue(this.request.endDate) ?? new Date(NaN)).toLocaleDateString(
+      'es-PE',
+      {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      },
+    );
     return `${start} - ${end}`;
   }
 
   formatHistoryDateRange(entry: CollectionRequestHistoryDto): string {
-    const start = new Date(entry.startDate).toLocaleDateString('es-PE', {
+    const start = (parseDateValue(entry.startDate) ?? new Date(NaN)).toLocaleDateString('es-PE', {
       day: '2-digit',
       month: 'short',
     });
-    const end = new Date(entry.endDate).toLocaleDateString('es-PE', {
+    const end = (parseDateValue(entry.endDate) ?? new Date(NaN)).toLocaleDateString('es-PE', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',

@@ -1,4 +1,5 @@
 import { AbstractControl, FormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { parseDateValue } from './date-helpers';
 
 /**
  * Validator para códigos únicos.
@@ -88,8 +89,12 @@ export function dateRangeValidator(startDateKey: string, endDateKey: string): Va
       return null;
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = parseDateValue(startDate);
+    const end = parseDateValue(endDate);
+
+    if (!start || !end) {
+      return null;
+    }
 
     if (start >= end) {
       return { dateRange: { startDate, endDate } };

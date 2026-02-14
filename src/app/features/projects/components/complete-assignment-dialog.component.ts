@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { formatDateISO, parseDateValue } from '@shared/utils/date-helpers';
 
 export interface CompleteAssignmentDialogData {
   assignmentId: string;
@@ -186,7 +187,7 @@ export class CompleteAssignmentDialogComponent {
   private fb = inject(FormBuilder);
 
   saving = signal(false);
-  minDate = new Date(this.data.startDate);
+  minDate = parseDateValue(this.data.startDate) ?? new Date();
 
   form = this.fb.group({
     endDate: [null, [Validators.required]],
@@ -212,10 +213,7 @@ export class CompleteAssignmentDialogComponent {
     if (!value) {
       return '';
     }
-    const date = new Date(value);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const date = parseDateValue(value);
+    return formatDateISO(date);
   }
 }

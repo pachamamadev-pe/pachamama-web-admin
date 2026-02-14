@@ -23,8 +23,10 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
 import { NotificationService } from '@core/services/notification.service';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { formatDate } from '@shared/utils/date-helpers';
 import { CollectionRequestsService } from '../services/collection-requests.service';
 import { CollectionRequestFormComponent } from '../components/collection-request-form.component';
+import { CollectionRequestDetailDialogComponent } from '../components/collection-request-detail-dialog.component';
 import {
   CollectionRequest,
   CollectionRequestStatus,
@@ -177,9 +179,15 @@ export class CollectionRequestsPage implements OnInit {
     });
   }
 
-  viewDetail(_request: CollectionRequest): void {
-    this.notification.info('Detalle de solicitud en desarrollo');
-    // TODO: Implementar vista de detalle
+  viewDetail(request: CollectionRequest): void {
+    this.dialog.open(CollectionRequestDetailDialogComponent, {
+      width: '100%',
+      maxWidth: '820px',
+      minWidth: '320px',
+      data: request,
+      autoFocus: false,
+      panelClass: 'collection-detail-dialog',
+    });
   }
 
   onSearchChange(term: string): void {
@@ -269,16 +277,6 @@ export class CollectionRequestsPage implements OnInit {
    * Formatea un rango de fechas
    */
   formatDateRange(startDate: string, endDate: string): string {
-    const start = new Date(startDate).toLocaleDateString('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-    const end = new Date(endDate).toLocaleDateString('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-    return `${start} - ${end}`;
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
   }
 }
