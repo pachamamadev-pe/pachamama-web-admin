@@ -391,7 +391,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
             const popupContent = this.buildPopupContent(feature.properties);
             (layer as L.Path).bindPopup(popupContent);
             this.addAreaLabel(feature);
-            this.addInventoryStageIcon(feature, popupContent);
+            // this.addInventoryStageIcon(feature, popupContent);
           }
         },
       }).addTo(this.map);
