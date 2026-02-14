@@ -15,6 +15,7 @@ import { ProductsService } from '../../products/services/products.service';
 import { Product } from '../../products/models/product.model';
 import { CommunitiesService } from '../../communities/services/communities.service';
 import { Community } from '../../communities/models/community.model';
+import { formatDateISO, parseDateValue } from '@shared/utils/date-helpers';
 
 interface DialogData {
   mode: 'create' | 'edit';
@@ -329,8 +330,11 @@ export class ProjectFormComponent implements OnInit {
       description: [project?.description || ''],
       approvedQuota: [project?.approvedQuota || null, [Validators.required, Validators.min(0.01)]],
       maxCollectors: [project?.maxCollectors || null, [Validators.required, Validators.min(1)]],
-      startDate: [project?.startDate ? new Date(project.startDate) : null, Validators.required],
-      endDate: [project?.endDate ? new Date(project.endDate) : null, Validators.required],
+      startDate: [
+        project?.startDate ? parseDateValue(project.startDate) : null,
+        Validators.required,
+      ],
+      endDate: [project?.endDate ? parseDateValue(project.endDate) : null, Validators.required],
     });
   }
 
@@ -340,10 +344,10 @@ export class ProjectFormComponent implements OnInit {
 
       const formValue = this.projectForm.value;
 
-      // Format dates to ISO string (YYYY-MM-DD)
-      const formatDate = (date: Date | null): string | undefined => {
+      // Format dates to ISO string (YYYY-MM-DD) sin desfase por timezone
+      const toIsoDate = (date: Date | null): string | undefined => {
         if (!date) return undefined;
-        return date.toISOString().split('T')[0];
+        return formatDateISO(date);
       };
 
       if (this.isEditMode) {
@@ -353,8 +357,8 @@ export class ProjectFormComponent implements OnInit {
           description: formValue.description || undefined,
           approvedQuota: formValue.approvedQuota,
           maxCollectors: formValue.maxCollectors,
-          startDate: formatDate(formValue.startDate),
-          endDate: formatDate(formValue.endDate),
+          startDate: toIsoDate(formValue.startDate),
+          endDate: toIsoDate(formValue.endDate),
         };
 
         // Retornar también el communityId para actualizar el vínculo si cambió
@@ -373,8 +377,8 @@ export class ProjectFormComponent implements OnInit {
           description: formValue.description || undefined,
           approvedQuota: formValue.approvedQuota,
           maxCollectors: formValue.maxCollectors,
-          startDate: formatDate(formValue.startDate),
-          endDate: formatDate(formValue.endDate),
+          startDate: toIsoDate(formValue.startDate),
+          endDate: toIsoDate(formValue.endDate),
           code: '', // Empty string as per requirements
         };
 

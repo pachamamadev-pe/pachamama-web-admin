@@ -19,6 +19,7 @@ import { NotificationService } from '@core/services/notification.service';
 import { CollectionRequestsService } from '@features/collection-requests/services/collection-requests.service';
 import { CollectionRequest } from '@features/collection-requests/models/collection-request.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { parseDateValue } from '@shared/utils/date-helpers';
 
 /**
  * Tab de revisión de solicitudes de recolección
@@ -466,11 +467,11 @@ export class CollectionReviewTabComponent implements OnInit {
   }
 
   formatDateRange(request: CollectionRequest): string {
-    const start = new Date(request.startDate).toLocaleDateString('es-PE', {
+    const start = (parseDateValue(request.startDate) ?? new Date(NaN)).toLocaleDateString('es-PE', {
       day: '2-digit',
       month: 'short',
     });
-    const end = new Date(request.endDate).toLocaleDateString('es-PE', {
+    const end = (parseDateValue(request.endDate) ?? new Date(NaN)).toLocaleDateString('es-PE', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',

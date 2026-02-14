@@ -28,6 +28,7 @@ import { CollectorsService } from '../services/collectors.service';
 import { Collector } from '../models/collector.model';
 import { CollectionRequestsService } from '../../collection-requests/services/collection-requests.service';
 import { CollectionRequest } from '../../collection-requests/models/collection-request.model';
+import { formatDateISO, parseDateValue } from '@shared/utils/date-helpers';
 
 interface BrigadeFormDialogData {
   projectCommunityId: string;
@@ -45,8 +46,12 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
     return null;
   }
 
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = parseDateValue(startDate);
+  const end = parseDateValue(endDate);
+
+  if (!start || !end) {
+    return null;
+  }
 
   if (end < start) {
     return { invalidDateRange: true };
@@ -1049,10 +1054,7 @@ export class BrigadeFormDialogComponent {
     if (!value) {
       return '';
     }
-    const date = new Date(value);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const date = parseDateValue(value);
+    return formatDateISO(date);
   }
 }

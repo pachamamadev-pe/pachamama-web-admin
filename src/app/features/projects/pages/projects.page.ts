@@ -34,6 +34,7 @@ import {
 import { Product } from '../../products/models/product.model';
 import { Community } from '../../communities/models/community.model';
 import { ProjectFormComponent } from '../components/project-form.component';
+import { formatDate } from '@shared/utils/date-helpers';
 
 @Component({
   selector: 'app-projects-page',
@@ -267,17 +268,13 @@ export class ProjectsPage implements OnInit {
   getProjectPeriod(startDate?: string, endDate?: string): string {
     if (!startDate && !endDate) return '-';
 
-    const formatDate = (dateStr?: string): string => {
+    const formatPeriodDate = (dateStr?: string): string => {
       if (!dateStr) return '-';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('es-PE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      });
+      const formatted = formatDate(dateStr);
+      return formatted || '-';
     };
 
-    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+    return `${formatPeriodDate(startDate)} - ${formatPeriodDate(endDate)}`;
   }
 
   /**

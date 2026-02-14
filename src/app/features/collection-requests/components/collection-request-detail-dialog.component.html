@@ -1,0 +1,179 @@
+<div class="dialog-container">
+  <!-- Hero Header with gradient -->
+  <header class="hero-header">
+    <div class="hero-content">
+      <div class="hero-top">
+        <div class="hero-left">
+          <div class="icon-badge">
+            <mat-icon>description</mat-icon>
+          </div>
+          <div class="hero-text">
+            <h2 class="hero-title">Detalle de Solicitud</h2>
+            <p class="hero-subtitle">{{ request.projectName || 'Sin proyecto' }}</p>
+          </div>
+        </div>
+        <button mat-icon-button class="close-btn" (click)="close()" matTooltip="Cerrar">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Request number and status -->
+      <div class="hero-badges">
+        <div class="request-number">
+          <mat-icon class="request-icon">tag</mat-icon>
+          <span class="request-code">{{ request.requestNumber }}</span>
+        </div>
+        <mat-chip class="status-badge" [class]="getStatusClass(request.status)">
+          <mat-icon class="status-icon">{{ getStatusIcon(request.status) }}</mat-icon>
+          {{ getStatusLabel(request.status) }}
+        </mat-chip>
+      </div>
+    </div>
+  </header>
+
+  <div class="dialog-content">
+    <!-- Highlight Card: Peso solicitado -->
+    <div class="highlight-card">
+      <div class="highlight-icon-wrapper">
+        <mat-icon class="highlight-icon">scale</mat-icon>
+      </div>
+      <div class="highlight-content">
+        <span class="highlight-label">Peso Solicitado</span>
+        <span class="highlight-value">{{ requestedWeighingLabel() }}</span>
+      </div>
+    </div>
+
+    <!-- Info Grid -->
+    <div class="info-grid">
+      <!-- Periodo Card -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <mat-icon class="card-icon card-icon-orange">event</mat-icon>
+          <h3 class="card-title">Periodo</h3>
+        </div>
+        <div class="card-content">
+          <p class="card-value">{{ periodLabel() }}</p>
+        </div>
+      </div>
+
+      <!-- Solicitante Card -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <mat-icon class="card-icon card-icon-blue">person</mat-icon>
+          <h3 class="card-title">Solicitante</h3>
+        </div>
+        <div class="card-content">
+          <p class="card-value">{{ request.requestedByName || '-' }}</p>
+          <p class="card-meta">
+            <mat-icon class="meta-icon">schedule</mat-icon>
+            {{ request.requestedAt ? (request.requestedAt | date: 'dd/MM/yyyy HH:mm') : '-' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revisión Card (solo si existe) -->
+    @if (request.reviewedByName || request.reviewedAt || request.reviewNotes) {
+      <div class="section-card review-card">
+        <div class="section-card-header">
+          <div class="section-card-icon-wrapper success">
+            <mat-icon class="section-card-icon">fact_check</mat-icon>
+          </div>
+          <div class="section-card-title-wrapper">
+            <h3 class="section-card-title">Revisión</h3>
+            <p class="section-card-subtitle">Estado de aprobación</p>
+          </div>
+        </div>
+        <div class="section-card-body">
+          <div class="detail-row">
+            <div class="detail-item">
+              <span class="detail-label">
+                <mat-icon class="detail-icon">person_outline</mat-icon>
+                Revisado por
+              </span>
+              <span class="detail-value">{{ request.reviewedByName || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">
+                <mat-icon class="detail-icon">schedule</mat-icon>
+                Fecha
+              </span>
+              <span class="detail-value">
+                {{ request.reviewedAt ? (request.reviewedAt | date: 'dd/MM/yyyy HH:mm') : '-' }}
+              </span>
+            </div>
+          </div>
+          @if (request.reviewNotes) {
+            <div class="notes-box">
+              <div class="notes-header">
+                <mat-icon class="notes-icon">note</mat-icon>
+                <span class="notes-title">Notas de revisión</span>
+              </div>
+              <p class="notes-content">{{ request.reviewNotes }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Observaciones Card (solo si existe) -->
+    @if (request.observationCount > 0 || request.observationNotes) {
+      <div class="section-card observation-card">
+        <div class="section-card-header">
+          <div class="section-card-icon-wrapper warning">
+            <mat-icon class="section-card-icon">info</mat-icon>
+          </div>
+          <div class="section-card-title-wrapper">
+            <h3 class="section-card-title">Observaciones</h3>
+            <p class="section-card-subtitle">{{ request.observationCount }} observación(es)</p>
+          </div>
+        </div>
+        <div class="section-card-body">
+          @if (request.observationNotes) {
+            <div class="notes-box warning-notes">
+              <div class="notes-header">
+                <mat-icon class="notes-icon">warning_amber</mat-icon>
+                <span class="notes-title">Detalle</span>
+              </div>
+              <p class="notes-content">{{ request.observationNotes }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Auditoría Compact -->
+    <div class="audit-section">
+      <h4 class="audit-title">
+        <mat-icon class="audit-icon">history</mat-icon>
+        Información de auditoría
+      </h4>
+      <div class="audit-grid">
+        <div class="audit-item">
+          <span class="audit-label">Creado</span>
+          <span class="audit-value">
+            {{ request.createdAt ? (request.createdAt | date: 'dd/MM/yyyy HH:mm') : '-' }}
+          </span>
+        </div>
+        <div class="audit-item">
+          <span class="audit-label">Actualizado</span>
+          <span class="audit-value">
+            {{ request.updatedAt ? (request.updatedAt | date: 'dd/MM/yyyy HH:mm') : '-' }}
+          </span>
+        </div>
+      </div>
+      <div class="audit-id">
+        <span class="audit-id-label">ID:</span>
+        <span class="audit-id-value">{{ request.id }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="dialog-footer">
+    <button mat-raised-button color="primary" (click)="close()" class="close-button">
+      <mat-icon>check</mat-icon>
+      Cerrar
+    </button>
+  </div>
+</div>

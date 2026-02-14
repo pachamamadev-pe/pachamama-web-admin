@@ -1,4 +1,5 @@
 ﻿import { ApplicationConfig } from '@angular/core';
+import { DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
 import { provideRouter, PreloadAllModules, withPreloading } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -16,6 +17,10 @@ import { provideQuillConfig } from 'ngx-quill';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    // Backend envía timestamps en UTC (con sufijo 'Z').
+    // Por defecto Angular los muestra en zona local, lo que puede verse como "día anterior".
+    // Fijamos UTC para una visualización consistente en todo el proyecto.
+    { provide: DATE_PIPE_DEFAULT_OPTIONS, useValue: { timezone: 'UTC' } },
     provideRouter(appRoutes, withPreloading(PreloadAllModules)),
     provideHttpClient(
       withInterceptors([

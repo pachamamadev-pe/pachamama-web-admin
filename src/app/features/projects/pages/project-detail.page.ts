@@ -40,6 +40,7 @@ import { Collector } from '../models/collector.model';
 import { Brigade } from '../models/brigade.model';
 import { DocumentRequirements, ProjectDocument } from '../models/project-document.model';
 import { NotificationService } from '@core/services/notification.service';
+import { parseDateValue } from '@shared/utils/date-helpers';
 import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { InventoryEvaluationComponent } from '../components/inventory-evaluation.component';
@@ -680,7 +681,8 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
 
     const formatDate = (dateStr?: string): string => {
       if (!dateStr) return '-';
-      const date = new Date(dateStr);
+      const date = parseDateValue(dateStr);
+      if (!date) return '-';
       return date.toLocaleDateString('es-PE', {
         day: '2-digit',
         month: 'short',

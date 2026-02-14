@@ -21,6 +21,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { ProjectsService } from '@features/projects/services/projects.service';
 import { CompaniesService } from '@features/companies/services/companies.service';
 import { NotificationService } from '@core/services/notification.service';
+import { parseDateValue } from '@shared/utils/date-helpers';
 import { CollectionRequest } from '../models/collection-request.model';
 import { Project } from '@features/projects/models/project.model';
 import { Company } from '@features/companies/models/company.model';
@@ -343,8 +344,8 @@ export class CollectionRequestFormComponent implements OnInit {
         this.form.patchValue({
           projectId: this.data.request.projectId,
           requestedWeighing: this.data.request.requestedWeighing,
-          startDate: new Date(this.data.request.startDate),
-          endDate: new Date(this.data.request.endDate),
+          startDate: parseDateValue(this.data.request.startDate),
+          endDate: parseDateValue(this.data.request.endDate),
         });
         // Deshabilitar proyecto en modo edición
         this.form.get('projectId')?.disable();
