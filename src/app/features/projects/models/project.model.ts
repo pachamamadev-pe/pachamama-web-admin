@@ -111,6 +111,7 @@ export function getProjectStageLabel(stage?: string): string {
     inventory: 'Inventario',
     inventory_complete: 'Inventario Completo',
     pmf_development: 'Elaboración de PMF',
+    serfor_evaluation: 'Evaluación SERFOR',
     area_generation: 'Generación de Áreas',
     pending_approval: 'Pendiente de Aprobación',
     approved: 'Aprobado',
