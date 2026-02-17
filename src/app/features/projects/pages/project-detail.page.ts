@@ -55,6 +55,7 @@ import { CollectionReviewTabComponent } from '../components/collection-review-ta
 import { ProjectMapComponent } from '../components/project-map.component';
 import { getProjectStageLabel, getProjectStageClass } from '../models/project.model';
 import { BrigadeFormDialogComponent } from '../components/brigade-form.component';
+import { ConfigurationTabComponent } from '../components/configuration-tab.component';
 
 interface ProjectStage {
   number: number;
@@ -86,6 +87,7 @@ interface ProjectStage {
     DocumentsTabComponent,
     CollectionReviewTabComponent,
     ProjectMapComponent,
+    ConfigurationTabComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -527,6 +529,27 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     // Tab 4: Generar PMF (condicional)
     if (this.showPmfGenerationTab()) index++;
     // Tab 5: Revisión Solicitudes (condicional) - este es el índice que buscamos
+    return index;
+  });
+
+  // Computed para calcular el índice dinámico del tab "Configuración"
+  getConfigurationTabIndex = computed(() => {
+    let index = 0;
+    // Tab 0: Resumen (siempre presente)
+    index++;
+    // Tab 1: Recolectores (siempre presente)
+    index++;
+    // Tab 2: Brigadas (condicional)
+    if (this.showBrigadesTab()) index++;
+    // Tab 3: Evaluación de inventario (condicional)
+    if (this.showInventoryEvaluationTab()) index++;
+    // Tab 4: Generar PMF (condicional)
+    if (this.showPmfGenerationTab()) index++;
+    // Tab 5: Revisión Solicitudes (condicional)
+    if (this.showCollectionTab()) index++;
+    // Tab 6: Documentos (siempre presente)
+    index++;
+    // Tab 7: Configuración (siempre presente) - este es el índice que buscamos
     return index;
   });
 

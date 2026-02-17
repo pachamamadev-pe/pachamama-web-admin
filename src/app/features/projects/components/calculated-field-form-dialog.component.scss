@@ -1,0 +1,179 @@
+.dialog-container {
+  @apply flex flex-col;
+  max-height: 90vh;
+}
+
+/* Header */
+.dialog-header {
+  @apply flex items-start justify-between p-6 pb-4;
+  flex-shrink: 0;
+}
+
+.header-content {
+  @apply flex items-start gap-4 flex-1;
+}
+
+.header-icon {
+  @apply flex items-center justify-center rounded-lg flex-shrink-0;
+  width: 56px;
+  height: 56px;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  &.activity-icon {
+    @apply bg-secondary text-primary-white;
+  }
+
+  &.aggregation-icon {
+    background: linear-gradient(135deg, #fe714b 0%, #ff8c5a 100%);
+    @apply text-primary-white;
+  }
+}
+
+.header-text {
+  @apply flex-1;
+
+  h2 {
+    @apply mb-1;
+    margin: 0;
+  }
+
+  p {
+    @apply mt-2;
+    line-height: 1.5;
+  }
+}
+
+.close-button {
+  @apply flex-shrink-0;
+  margin: -8px -8px 0 0;
+}
+
+/* Content */
+.dialog-content {
+  @apply flex flex-col gap-4 px-6 py-4;
+  overflow-y: auto;
+  flex: 1 1 auto;
+
+  @media (max-width: 640px) {
+    padding: 1rem;
+  }
+}
+
+.full-width {
+  @apply w-full;
+}
+
+/* Expression Section */
+.expression-section {
+  @apply flex flex-col gap-4;
+}
+
+.attributes-section {
+  @apply bg-secondary-light rounded-lg p-4;
+}
+
+.attributes-chips {
+  @apply flex flex-wrap gap-2;
+}
+
+.attribute-chip {
+  @apply bg-primary-white border-2 border-secondary text-secondary;
+  @apply hover:bg-secondary hover:text-primary-white hover:border-secondary;
+  @apply transition-all duration-200;
+  @apply flex items-center gap-2;
+  padding: 8px 12px;
+  height: auto;
+  min-height: 36px;
+
+  .chip-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .chip-label {
+    @apply text-subtitle font-semibold;
+  }
+
+  .chip-code {
+    @apply text-subtitle font-mono;
+    opacity: 0.7;
+  }
+}
+
+/* Aggregation Section */
+.aggregation-section {
+  @apply flex flex-col gap-4;
+}
+
+/* Actions */
+.dialog-actions {
+  @apply flex items-center justify-end gap-3 px-6 py-4;
+  flex-shrink: 0;
+  border-top: 1px solid #e5e5e5;
+
+  button {
+    @apply min-w-[100px];
+  }
+}
+
+.btn-save {
+  @apply bg-secondary text-primary-white;
+  @apply hover:bg-[#1a6b47] transition-colors;
+  @apply flex items-center gap-2;
+
+  &:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .inline-spinner {
+    ::ng-deep circle {
+      stroke: currentColor;
+    }
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Form Field Customization */
+::ng-deep {
+  .mat-mdc-form-field {
+    .mat-mdc-text-field-wrapper {
+      @apply bg-primary-white;
+    }
+
+    .mdc-text-field--outlined {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #e5e5e5;
+      }
+
+      &:hover {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: #218358;
+        }
+      }
+    }
+
+    &.mat-focused {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #218358 !important;
+        border-width: 2px;
+      }
+    }
+  }
+}

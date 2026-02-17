@@ -1,0 +1,261 @@
+.configuration-container {
+  @apply w-full h-full flex flex-col;
+  padding: 1.5rem;
+  background: linear-gradient(to bottom, #f4fbf6 0%, #ffffff 100%);
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+/* Loading State */
+.loading-container {
+  @apply flex flex-col items-center justify-center;
+  min-height: 400px;
+}
+
+/* Header Section */
+.configuration-header {
+  @apply mb-6;
+}
+
+.header-content {
+  @apply flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4;
+}
+
+.header-title {
+  @apply flex-1;
+
+  h2 {
+    @apply mb-1;
+  }
+
+  p {
+    @apply mt-2;
+  }
+}
+
+.header-actions {
+  @apply flex-shrink-0;
+}
+
+.btn-recalculate {
+  @apply bg-primary-white text-secondary border-2 border-secondary;
+  @apply hover:bg-secondary hover:text-primary-white;
+  @apply transition-all duration-200;
+  @apply flex items-center gap-2;
+
+  &:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .inline-spinner {
+    @apply mr-2;
+
+    ::ng-deep circle {
+      stroke: currentColor;
+    }
+  }
+}
+
+/* Content */
+.configuration-content {
+  @apply flex flex-col gap-8;
+}
+
+/* Section */
+.config-section {
+  @apply bg-primary-white rounded-lg shadow p-6;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+.section-header {
+  @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f4fbf6;
+}
+
+.section-title {
+  @apply flex items-start gap-3;
+}
+
+.title-icon {
+  @apply flex items-center justify-center rounded-lg;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  &.activity-icon {
+    @apply bg-secondary text-primary-white;
+  }
+
+  &.aggregation-icon {
+    background: linear-gradient(135deg, #fe714b 0%, #ff8c5a 100%);
+    @apply text-primary-white;
+  }
+}
+
+/* Cards Grid */
+.cards-grid {
+  @apply grid gap-4;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Formula Card */
+.formula-card {
+  @apply bg-primary-white rounded-lg border border-neutral-border;
+  @apply transition-all duration-200;
+  padding: 1.25rem;
+
+  &:hover {
+    @apply shadow-md;
+    border-color: #218358;
+  }
+
+  &.aggregation-card:hover {
+    border-color: #fe714b;
+  }
+}
+
+.card-header {
+  @apply flex items-start justify-between mb-4;
+}
+
+.card-title-section {
+  @apply flex items-start gap-3 flex-1;
+}
+
+.card-icon {
+  @apply flex-shrink-0;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+
+  &.activity-color {
+    @apply text-secondary;
+  }
+
+  &.aggregation-color {
+    color: #fe714b;
+  }
+}
+
+.card-title-text {
+  @apply flex-1;
+
+  h4 {
+    @apply mb-1;
+    word-break: break-word;
+  }
+
+  p {
+    @apply mt-1;
+    line-height: 1.4;
+  }
+}
+
+.card-menu-button {
+  @apply flex-shrink-0;
+  margin: -8px -8px 0 0;
+}
+
+/* Card Content */
+.card-content {
+  @apply flex flex-col gap-3;
+}
+
+.formula-expression {
+  @apply bg-secondary-light rounded-lg p-3;
+}
+
+.expression-label {
+  @apply flex items-center gap-2 mb-2;
+
+  .small-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.expression-value {
+  code {
+    @apply text-primary-black font-mono;
+    word-break: break-all;
+    display: block;
+    line-height: 1.5;
+  }
+}
+
+.formula-meta {
+  @apply flex items-center gap-2;
+
+  .small-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Aggregation Info */
+.aggregation-info {
+  @apply flex items-center gap-2;
+}
+
+.type-chip {
+  @apply bg-secondary-light text-secondary;
+  @apply flex items-center gap-1;
+  height: 32px;
+  font-size: 13px;
+  font-weight: 600;
+
+  .chip-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.aggregation-card .type-chip {
+  background: rgba(254, 113, 75, 0.1);
+  color: #fe714b;
+}
+
+/* Buttons */
+.btn-primary {
+  @apply bg-secondary text-primary-white;
+  @apply hover:bg-[#1a6b47] transition-colors;
+  @apply flex items-center gap-2;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #fe714b 0%, #ff8c5a 100%);
+  @apply text-primary-white;
+  @apply hover:opacity-90 transition-opacity;
+  @apply flex items-center gap-2;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}

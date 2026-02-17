@@ -440,11 +440,10 @@
             </mat-tab>
 
             <mat-tab label="Configuración">
-              <div class="tab-content">
-                <p class="text-body text-neutral-subheading">
-                  Contenido de Configuración en desarrollo...
-                </p>
-              </div>
+              <app-configuration-tab
+                [projectId]="project()!.id"
+                [shouldLoad]="selectedTabIndex() === getConfigurationTabIndex()"
+              />
             </mat-tab>
           </mat-tab-group>
         </div>

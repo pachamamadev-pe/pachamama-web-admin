@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { formatDateISO, parseDateValue } from '@shared/utils/date-helpers';
 
 export interface CompleteAssignmentDialogData {
@@ -33,8 +33,8 @@ export interface CompleteAssignmentDialogResult {
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
-    MatNativeDateModule,
   ],
+  providers: [provideNativeDateAdapter()],
   template: `
     <div class="dialog-container">
       <header class="dialog-header">
@@ -43,7 +43,7 @@ export interface CompleteAssignmentDialogResult {
             <mat-icon class="text-secondary">event_busy</mat-icon>
           </div>
           <div class="header-text">
-            <h2 class="text-title font-bold text-accent-titles">Finalizar asignacion</h2>
+            <h2 class="text-title font-bold text-accent-titles">Finalizar asignación</h2>
             <p class="text-subtitle text-neutral-subheading">
               {{ data.collectorName }} · {{ data.brigadeName }}
             </p>

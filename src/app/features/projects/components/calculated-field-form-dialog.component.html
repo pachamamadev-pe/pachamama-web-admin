@@ -1,0 +1,157 @@
+<div class="dialog-container">
+  <!-- Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div
+        class="header-icon"
+        [class.activity-icon]="isActivityScope()"
+        [class.aggregation-icon]="isProjectScope()"
+      >
+        @if (isActivityScope()) {
+          <mat-icon>functions</mat-icon>
+        } @else {
+          <mat-icon>analytics</mat-icon>
+        }
+      </div>
+      <div class="header-text">
+        <h2 mat-dialog-title class="text-title font-bold text-accent-titles">
+          {{ dialogTitle() }}
+        </h2>
+        <p class="text-subtitle text-neutral-subheading">
+          @if (isActivityScope()) {
+            Define una expresión matemática que se calculará para cada actividad
+          } @else {
+            Selecciona cómo consolidar los datos de todas las actividades
+          }
+        </p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="onCancel()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-divider />
+
+  <!-- Form -->
+  <form [formGroup]="form" (ngSubmit)="onSave()" class="dialog-content">
+    <!-- Name -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre de la columna</mat-label>
+      <input matInput formControlName="name" placeholder="Ej: Área Basal Total" maxlength="100" />
+      <mat-icon matPrefix>label</mat-icon>
+      @if (form.controls.name.hasError('required')) {
+        <mat-error>El nombre es requerido</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- Description -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripción (opcional)</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        placeholder="Describe qué calcula esta columna"
+        rows="2"
+        maxlength="500"
+      ></textarea>
+      <mat-icon matPrefix>notes</mat-icon>
+    </mat-form-field>
+
+    <!-- Activity Scope: Expression -->
+    @if (isActivityScope()) {
+      <div class="expression-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Expresión matemática</mat-label>
+          <textarea
+            matInput
+            formControlName="expression"
+            placeholder="Ej: $&#123;TREE_HEIGHT&#125; * $&#123;TRUNK_CIRCUMFERENCE&#125; / 2"
+            rows="3"
+          ></textarea>
+          <mat-icon matPrefix>code</mat-icon>
+          <mat-hint>Usa $&#123;CODIGO_CAMPO&#125; para referenciar atributos</mat-hint>
+          @if (form.controls.expression.hasError('required')) {
+            <mat-error>La expresión es requerida</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Available Attributes -->
+        <div class="attributes-section">
+          <h4 class="text-body font-bold text-accent-titles mb-2">Atributos disponibles</h4>
+          <p class="text-subtitle text-neutral-subheading mb-3">
+            Haz clic en un atributo para insertarlo en la expresión
+          </p>
+          <div class="attributes-chips">
+            @for (attr of data.availableAttributes; track attr.id) {
+              <button
+                type="button"
+                mat-stroked-button
+                class="attribute-chip"
+                (click)="insertAttributeIntoExpression(attr.code)"
+              >
+                <mat-icon class="chip-icon">data_object</mat-icon>
+                <span class="chip-label">{{ attr.name }}</span>
+                <code class="chip-code">{{ attr.code }}</code>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Project Scope: Aggregation Type & Source Field -->
+    @if (isProjectScope()) {
+      <div class="aggregation-section">
+        <!-- Aggregation Type -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Tipo de agregación</mat-label>
+          <mat-select formControlName="aggregationType">
+            @for (type of aggregationTypes; track type) {
+              <mat-option [value]="type">{{ AGGREGATION_TYPE_LABELS[type] }}</mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix>analytics</mat-icon>
+          @if (form.controls.aggregationType.hasError('required')) {
+            <mat-error>El tipo de agregación es requerido</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Source Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Campo origen</mat-label>
+          <mat-select formControlName="sourceFieldKey">
+            @for (attr of data.availableAttributes; track attr.id) {
+              <mat-option [value]="attr.code"> {{ attr.name }} ({{ attr.code }}) </mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix>data_object</mat-icon>
+          <mat-hint>Selecciona el campo sobre el que se aplicará la agregación</mat-hint>
+          @if (form.controls.sourceFieldKey.hasError('required')) {
+            <mat-error>El campo origen es requerido</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    }
+  </form>
+
+  <mat-divider />
+
+  <!-- Actions -->
+  <div class="dialog-actions" mat-dialog-actions>
+    <button mat-button (click)="onCancel()" type="button">Cancelar</button>
+    <button
+      mat-raised-button
+      class="btn-save"
+      (click)="onSave()"
+      [disabled]="form.invalid || saving()"
+    >
+      @if (saving()) {
+        <mat-spinner diameter="16" class="inline-spinner" />
+      } @else {
+        <mat-icon>save</mat-icon>
+      }
+      <span>{{ isEditMode() ? 'Actualizar' : 'Crear' }}</span>
+    </button>
+  </div>
+</div>
