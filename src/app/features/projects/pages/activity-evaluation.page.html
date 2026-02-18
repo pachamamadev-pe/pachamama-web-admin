@@ -325,26 +325,28 @@
       }
 
       <!-- Notas de Validación -->
-      <mat-card class="validation-notes-card">
-        <mat-card-header>
-          <mat-card-title class="text-body font-bold text-accent-titles"
-            >Notas de Validación</mat-card-title
-          >
-        </mat-card-header>
-        <mat-card-content>
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Comentarios sobre la evaluación (opcional)</mat-label>
-            <textarea
-              matInput
-              [(ngModel)]="validationNotes"
-              placeholder="Agrega observaciones o comentarios sobre esta evaluación..."
-              rows="4"
-              class="text-body"
-            ></textarea>
-            <mat-hint>Estos comentarios serán visibles en el historial de la actividad</mat-hint>
-          </mat-form-field>
-        </mat-card-content>
-      </mat-card>
+      @if (!isReadOnly()) {
+        <mat-card class="validation-notes-card">
+          <mat-card-header>
+            <mat-card-title class="text-body font-bold text-accent-titles"
+              >Notas de Validación</mat-card-title
+            >
+          </mat-card-header>
+          <mat-card-content>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Comentarios sobre la evaluación (opcional)</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="validationNotes"
+                placeholder="Agrega observaciones o comentarios sobre esta evaluación..."
+                rows="4"
+                class="text-body"
+              ></textarea>
+              <mat-hint>Estos comentarios serán visibles en el historial de la actividad</mat-hint>
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
+      }
 
       <!-- Summary Card -->
       <mat-card class="summary-card">

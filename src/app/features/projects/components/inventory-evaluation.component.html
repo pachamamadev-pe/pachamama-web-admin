@@ -6,7 +6,7 @@
       <p class="text-body text-neutral-subheading mt-4">Cargando evaluación...</p>
     </div>
   } @else {
-    <!-- Registros Section -->
+    <!-- Registros Section
     <section class="records-section">
       <div class="section-header">
         <h2 class="text-title font-bold text-accent-titles">Registros</h2>
@@ -15,7 +15,6 @@
         </p>
       </div>
 
-      <!-- Chart Card -->
       <mat-card class="chart-card">
         <mat-card-content>
           <div class="chart-header">
@@ -33,7 +32,7 @@
           </div>
         </mat-card-content>
       </mat-card>
-    </section>
+    </section>-->
 
     <!-- Evaluación de inventario Section -->
     <section class="evaluation-section">
@@ -46,16 +45,34 @@
               Última actualización: {{ lastUpdated()! | date: 'dd/MM/yy HH:mm:ss' }}
             </p>
           }
-          <button
-            mat-stroked-button
-            (click)="refreshActivities()"
-            [disabled]="refreshing()"
-            class="refresh-button mt-2"
-            matTooltip="Actualizar registros"
-          >
-            <mat-icon [class.spinning]="refreshing()">refresh</mat-icon>
-            Actualizar
-          </button>
+          <div class="action-buttons mt-2">
+            <button
+              mat-stroked-button
+              (click)="refreshActivities()"
+              [disabled]="refreshing()"
+              class="refresh-button"
+              matTooltip="Actualizar registros"
+            >
+              <mat-icon [class.spinning]="refreshing()">refresh</mat-icon>
+              Actualizar
+            </button>
+            @if (showRecalculateButton()) {
+              <button
+                mat-raised-button
+                class="btn-recalculate"
+                (click)="recalculateAll()"
+                [disabled]="recalculating()"
+                matTooltip="Aplica todas las fórmulas activas a las actividades aprobadas"
+              >
+                @if (recalculating()) {
+                  <mat-spinner diameter="16" class="inline-spinner" />
+                } @else {
+                  <mat-icon>calculate</mat-icon>
+                }
+                <span>Recalcular Columnas</span>
+              </button>
+            }
+          </div>
         </div>
         <div class="header-right">
           <mat-form-field appearance="outline" class="filter-field">
@@ -160,9 +177,7 @@
                       class="btn-primary"
                       (click)="evaluateActivity(activity)"
                     >
-                      {{
-                        activity.overallValidationStatus === 'approved' ? 'Ver Detalle' : 'Evaluar'
-                      }}
+                      {{ getActivityButtonLabel(activity) }}
                     </button>
                   </td>
                 </tr>
@@ -202,9 +217,7 @@
                   <mat-menu #mobileMenu="matMenu">
                     <button mat-menu-item (click)="evaluateActivity(activity)">
                       <mat-icon>rate_review</mat-icon>
-                      <span>{{
-                        activity.overallValidationStatus === 'approved' ? 'Ver Detalle' : 'Evaluar'
-                      }}</span>
+                      <span>{{ getActivityButtonLabel(activity) }}</span>
                     </button>
                     <button mat-menu-item (click)="downloadActivity(activity)">
                       <mat-icon>download</mat-icon>
@@ -260,9 +273,7 @@
                     class="btn-primary w-full"
                     (click)="evaluateActivity(activity)"
                   >
-                    {{
-                      activity.overallValidationStatus === 'approved' ? 'Ver Detalle' : 'Evaluar'
-                    }}
+                    {{ getActivityButtonLabel(activity) }}
                   </button>
                 </div>
               </div>

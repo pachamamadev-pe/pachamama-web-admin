@@ -85,6 +85,50 @@
   }
 }
 
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+.btn-recalculate {
+  @apply bg-secondary text-primary-white;
+  flex-shrink: 0;
+
+  &:hover:not([disabled]) {
+    @apply bg-secondary;
+    filter: brightness(0.9);
+  }
+
+  &[disabled] {
+    @apply bg-neutral-subheading text-primary-white;
+    opacity: 0.6;
+  }
+
+  mat-icon {
+    margin-right: 0.5rem;
+  }
+
+  .inline-spinner {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+
+    ::ng-deep circle {
+      stroke: white;
+    }
+  }
+}
+
 .filter-field {
   width: 100%;
   max-width: 250px;

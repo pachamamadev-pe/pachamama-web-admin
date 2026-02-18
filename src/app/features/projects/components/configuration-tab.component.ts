@@ -26,7 +26,6 @@ import {
   AGGREGATION_TYPE_LABELS,
   AGGREGATION_TYPE_ICONS,
   DomainAttribute,
-  RecalculateResponse,
   CreateCalculatedFieldRequest,
   UpdateCalculatedFieldRequest,
 } from '../models/calculated-field.model';
@@ -64,7 +63,6 @@ export class ConfigurationTabComponent {
 
   // State
   loading = signal(true);
-  recalculating = signal(false);
   fields = signal<CalculatedField[]>([]);
   availableAttributes = signal<DomainAttribute[]>([]);
   private hasLoaded = false;
@@ -188,24 +186,6 @@ export class ConfigurationTabComponent {
     });
   }
 
-  recalculateAll(): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: '¿Recalcular todas las columnas?',
-        message:
-          'Esto aplicará todas las fórmulas activas a las actividades aprobadas del proyecto. El proceso puede tardar unos minutos.',
-        confirmText: 'Recalcular',
-        type: 'info',
-      },
-    });
-
-    dialogRef.afterClosed().subscribe((confirmed) => {
-      if (confirmed) {
-        this.performRecalculation();
-      }
-    });
-  }
-
   private createField(data: CreateCalculatedFieldRequest): void {
     this.calculatedFieldsService.createCalculatedField(data).subscribe({
       next: () => {
@@ -245,25 +225,6 @@ export class ConfigurationTabComponent {
       error: (error) => {
         console.error('Error archiving field:', error);
         this.notification.error('Error al archivar fórmula');
-      },
-    });
-  }
-
-  private performRecalculation(): void {
-    this.recalculating.set(true);
-    this.notification.info('Recalculando columnas...');
-
-    this.calculatedFieldsService.recalculateProject(this.projectId()).subscribe({
-      next: (result: RecalculateResponse) => {
-        this.recalculating.set(false);
-        this.notification.success(
-          `Recálculo completado: ${result.activitiesRecalculated} actividades actualizadas`,
-        );
-      },
-      error: (error) => {
-        console.error('Error recalculating:', error);
-        this.recalculating.set(false);
-        this.notification.error('Error al recalcular columnas');
       },
     });
   }

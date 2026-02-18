@@ -385,6 +385,7 @@
                   <app-inventory-evaluation
                     [productId]="project()!.productId"
                     [projectId]="project()!.id"
+                    [projectStage]="project()!.stage || ''"
                     [shouldLoad]="tabsLoaded().has(inventoryTabIndex())"
                   />
                 </div>

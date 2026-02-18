@@ -119,6 +119,7 @@ export interface ActivityEvaluationUpdateRequest {
  * Tipos de actividad
  */
 export type ActivityType =
+  | 'inventory'
   | 'TREE_REGISTRATION'
   | 'TREE_COLLECTION'
   | 'TREE_STUMP_REGISTRATION'

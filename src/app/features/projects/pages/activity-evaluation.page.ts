@@ -151,6 +151,7 @@ export class ActivityEvaluationPage implements OnInit {
   activity = signal<ActivityResponse | null>(null);
   projectId = signal<string>('');
   activityId = signal<string>('');
+  navigationMode = signal<string>('evaluate'); // 'evaluate' o 'readOnly'
   fieldEvaluations = signal<Map<string, FieldEvaluationState>>(new Map());
   validationNotes = signal<string>('');
 
@@ -166,7 +167,15 @@ export class ActivityEvaluationPage implements OnInit {
     return act && act.overallValidationStatus === 'approved';
   });
 
-  isReadOnly = computed(() => this.isApproved());
+  /**
+   * Determina si la vista está en modo solo lectura
+   * - Si navigationMode es 'readOnly' → true
+   * - Si la actividad está aprobada → true
+   * - De lo contrario → false
+   */
+  isReadOnly = computed(() => {
+    return this.navigationMode() === 'readOnly' || this.isApproved();
+  });
 
   formSections = computed(() => {
     const act = this.activity();
@@ -197,12 +206,15 @@ export class ActivityEvaluationPage implements OnInit {
 
   ngOnInit(): void {
     const params = this.route.snapshot.paramMap;
+    const queryParams = this.route.snapshot.queryParamMap;
     const projId = params.get('projectId');
     const actId = params.get('activityId');
+    const mode = queryParams.get('mode') || 'evaluate'; // Por defecto 'evaluate'
 
     if (projId && actId) {
       this.projectId.set(projId);
       this.activityId.set(actId);
+      this.navigationMode.set(mode);
       this.loadActivity(actId);
     } else {
       this.notification.error('Parámetros inválidos');

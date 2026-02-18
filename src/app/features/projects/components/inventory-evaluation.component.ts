@@ -20,12 +20,15 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
+import { MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NotificationService } from '@core/services/notification.service';
-import { LineChartComponent } from '@shared/components/line-chart/line-chart.component';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { ActivitiesService } from '../services/activities.service';
 import { ActivityResponse, ValidationStatus } from '../models/activity.model';
+import { CalculatedFieldsService } from '../services/calculated-fields.service';
+import { RecalculateResponse } from '../models/calculated-field.model';
 
 interface RecordStats {
   date: string;
@@ -53,7 +56,6 @@ interface RecordStats {
     MatPaginatorModule,
     MatInputModule,
     FormsModule,
-    LineChartComponent,
   ],
   templateUrl: './inventory-evaluation.component.html',
   styleUrl: './inventory-evaluation.component.scss',
@@ -61,12 +63,15 @@ interface RecordStats {
 })
 export class InventoryEvaluationComponent implements OnDestroy {
   private activitiesService = inject(ActivitiesService);
+  private calculatedFieldsService = inject(CalculatedFieldsService);
   private notification = inject(NotificationService);
+  private dialog = inject(MatDialog);
   private router = inject(Router);
 
   // Inputs
   productId = input.required<string>();
   projectId = input.required<string>();
+  projectStage = input<string>(''); // Stage del proyecto para controlar visibilidad de botones
   shouldLoad = input(false); // Lazy loading trigger
 
   // State
@@ -75,6 +80,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
   totalElements = signal(0); // Total de elementos para paginación
   selectedFilter = signal('all');
   refreshing = signal(false); // Indicador de refresh silencioso
+  recalculating = signal(false); // Indicador de recálculo en progreso
   lastUpdated = signal<Date | null>(null); // Última actualización
   private hasLoaded = signal(false); // Control de carga única
 
@@ -147,6 +153,50 @@ export class InventoryEvaluationComponent implements OnDestroy {
   totalRecords = computed(() => {
     return this.activities().length;
   });
+
+  /**
+   * Determina si el botón "Recalcular Columnas" debe mostrarse
+   * Se oculta cuando el stage es: collection, ctp_entry, primary_transformation, map_adjustment
+   */
+  showRecalculateButton = computed(() => {
+    const stage = this.projectStage().toLowerCase();
+    const hiddenStages = ['collection', 'ctp_entry', 'primary_transformation', 'map_adjustment'];
+    return !hiddenStages.includes(stage);
+  });
+
+  /**
+   * Determina la etiqueta y acción del botón principal de actividad
+   *
+   * Para activityType === 'inventory':
+   * - Si está pending Y stage permite aprobación → "Evaluar"
+   * - Si está pending Y stage NO permite aprobación → "Ver Detalle"
+   * - Si está approved o rejected → "Ver Detalle"
+   *
+   * Para otros activityTypes:
+   * - Si está approved → "Ver Detalle"
+   * - Si está pending o rejected → "Evaluar"
+   */
+  getActivityButtonLabel = (activity: ActivityResponse): string => {
+    const stage = this.projectStage().toLowerCase();
+    const restrictedStages = [
+      'collection',
+      'ctp_entry',
+      'primary_transformation',
+      'map_adjustment',
+    ];
+    const canApprove = !restrictedStages.includes(stage);
+
+    if (activity.activityType === 'inventory') {
+      // Para actividades de inventario
+      if (activity.overallValidationStatus === 'pending' && canApprove) {
+        return 'Evaluar'; // Puede aprobar
+      }
+      return 'Ver Detalle'; // No puede aprobar o ya está aprobada/rechazada
+    }
+
+    // Para otros tipos de actividades
+    return activity.overallValidationStatus === 'approved' ? 'Ver Detalle' : 'Evaluar';
+  };
 
   // Filtrar actividades según el filtro seleccionado y término de búsqueda
   // NOTA: El filtrado ahora se aplica sobre los datos ya paginados del backend
@@ -252,6 +302,54 @@ export class InventoryEvaluationComponent implements OnDestroy {
   }
 
   /**
+   * Recalcula todas las columnas calculadas del proyecto
+   */
+  recalculateAll(): void {
+    const projId = this.projectId();
+    if (!projId) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Recalcular columnas?',
+        message:
+          'Esta acción aplicará todas las fórmulas activas a las actividades aprobadas del proyecto. ¿Deseas continuar?',
+        confirmText: 'Recalcular',
+        type: 'info',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.performRecalculation(projId);
+      }
+    });
+  }
+
+  /**
+   * Ejecuta el recálculo de columnas calculadas
+   */
+  private performRecalculation(projectId: string): void {
+    this.recalculating.set(true);
+    this.notification.info('Recalculando columnas...');
+
+    this.calculatedFieldsService.recalculateProject(projectId).subscribe({
+      next: (result: RecalculateResponse) => {
+        this.recalculating.set(false);
+        this.notification.success(
+          `Recálculo completado: ${result.activitiesRecalculated} actividades actualizadas`,
+        );
+        // Refrescar la tabla después del recálculo
+        this.loadActivities(projectId, false);
+      },
+      error: (error) => {
+        console.error('Error recalculating:', error);
+        this.recalculating.set(false);
+        this.notification.error('Error al recalcular columnas');
+      },
+    });
+  }
+
+  /**
    * Maneja el cambio de página del mat-paginator
    */
   onPageChange(event: PageEvent): void {
@@ -332,6 +430,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
 
   /**
    * Navega a la evaluación de una actividad
+   * Determina automáticamente el modo (readOnly o evaluate) según el contexto
    */
   evaluateActivity(activity: ActivityResponse): void {
     console.log('evaluateActivity');
@@ -348,8 +447,34 @@ export class InventoryEvaluationComponent implements OnDestroy {
       return;
     }
 
+    // Determinar el modo basado en la misma lógica del botón
+    const stage = this.projectStage().toLowerCase();
+    const restrictedStages = [
+      'collection',
+      'ctp_entry',
+      'primary_transformation',
+      'map_adjustment',
+    ];
+    const canApprove = !restrictedStages.includes(stage);
+
+    let mode = 'evaluate'; // Por defecto modo evaluación
+
+    if (activity.activityType === 'inventory') {
+      // Para actividades de inventario
+      if (activity.overallValidationStatus !== 'pending' || !canApprove) {
+        mode = 'readOnly'; // Solo lectura si no está pending o no puede aprobar
+      }
+    } else {
+      // Para otros tipos de actividades
+      if (activity.overallValidationStatus === 'approved') {
+        mode = 'readOnly'; // Solo lectura si está aprobada
+      }
+    }
+
     this.router
-      .navigate(['/projects', projectId, 'activities', activityId, 'evaluate'])
+      .navigate(['/projects', projectId, 'activities', activityId, 'evaluate'], {
+        queryParams: { mode },
+      })
       .then((ok) => {
         if (!ok) {
           this.notification.error('No se pudo navegar a la evaluación');
@@ -410,6 +535,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
    */
   getActivityTypeLabel(type: string): string {
     const labels: Record<string, string> = {
+      inventory: 'Inventario',
       TREE_REGISTRATION: 'Registro de árbol',
       TREE_COLLECTION: 'Recolección de árbol',
       TREE_STUMP_REGISTRATION: 'Registro de troza',

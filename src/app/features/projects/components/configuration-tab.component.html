@@ -18,22 +18,6 @@
             nivel proyecto
           </p>
         </div>
-        <div class="header-actions">
-          <button
-            mat-raised-button
-            class="btn-recalculate"
-            (click)="recalculateAll()"
-            [disabled]="recalculating()"
-            matTooltip="Aplica todas las fórmulas activas a las actividades"
-          >
-            @if (recalculating()) {
-              <mat-spinner diameter="16" class="inline-spinner" />
-            } @else {
-              <mat-icon>refresh</mat-icon>
-            }
-            <span>Recalcular Todo</span>
-          </button>
-        </div>
       </div>
     </header>
 
