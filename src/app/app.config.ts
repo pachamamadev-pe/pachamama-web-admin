@@ -17,10 +17,9 @@ import { provideQuillConfig } from 'ngx-quill';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Backend envía timestamps en UTC (con sufijo 'Z').
-    // Por defecto Angular los muestra en zona local, lo que puede verse como "día anterior".
-    // Fijamos UTC para una visualización consistente en todo el proyecto.
-    { provide: DATE_PIPE_DEFAULT_OPTIONS, useValue: { timezone: 'UTC' } },
+    // Usar timezone local del navegador para mostrar fechas
+    // Esto permite que cada usuario vea las fechas en su zona horaria
+    { provide: DATE_PIPE_DEFAULT_OPTIONS, useValue: { timezone: undefined } },
     provideRouter(appRoutes, withPreloading(PreloadAllModules)),
     provideHttpClient(
       withInterceptors([
