@@ -222,7 +222,9 @@
                       >Respuesta del recolector:</span
                     >
                     @if (
-                      field.field_type === 'photo' &&
+                      (field.field_type === 'photo' ||
+                        field.field_type === 'photo_selfie' ||
+                        field.field_type === 'signature') &&
                       field.response.files &&
                       field.response.files.length > 0
                     ) {
@@ -237,8 +239,20 @@
                             class="photo-button"
                             (click)="openPhotoDetail(file, idx + 1)"
                           >
-                            <mat-icon>photo_camera</mat-icon>
-                            <span>Foto {{ idx + 1 }}</span>
+                            @if (field.field_type === 'photo_selfie') {
+                              <mat-icon>face</mat-icon>
+                            } @else if (field.field_type === 'signature') {
+                              <mat-icon>edit</mat-icon>
+                            } @else {
+                              <mat-icon>photo_camera</mat-icon>
+                            }
+                            @if (field.field_type === 'photo_selfie') {
+                              <span>Selfie {{ idx + 1 }}</span>
+                            } @else if (field.field_type === 'signature') {
+                              <span>Firma {{ idx + 1 }}</span>
+                            } @else {
+                              <span>Foto {{ idx + 1 }}</span>
+                            }
                           </button>
                         }
                       </div>
