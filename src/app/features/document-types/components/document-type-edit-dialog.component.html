@@ -1,0 +1,353 @@
+<div class="dialog-container">
+  <!-- Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <h2 class="dialog-title">
+        {{ isCreateMode ? 'Crear tipo de documento' : 'Editar tipo de documento' }}
+      </h2>
+      @if (!isCreateMode) {
+        @if (isGlobal()) {
+          <span class="scope-badge global-badge">
+            <mat-icon>public</mat-icon>
+            <span>Global</span>
+          </span>
+        } @else {
+          <span class="scope-badge company-badge">
+            <mat-icon>business</mat-icon>
+            <span>Empresa</span>
+          </span>
+        }
+      }
+    </div>
+    <button mat-icon-button class="close-button" (click)="close()" aria-label="Cerrar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="dialog-content">
+    <form [formGroup]="form">
+      <!-- Sección General -->
+      <div class="section">
+        <h3 class="section-title">General</h3>
+
+        <div class="form-grid">
+          <!-- Código -->
+          <mat-form-field appearance="outline">
+            <mat-label>Código</mat-label>
+            <input matInput formControlName="code" placeholder="PMF" maxlength="50" />
+            @if (form.get('code')?.invalid && form.get('code')?.touched) {
+              <mat-error>{{ getErrorMessage('code') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Display Order -->
+          <mat-form-field appearance="outline">
+            <mat-label>Orden de visualización</mat-label>
+            <input matInput type="number" formControlName="displayOrder" min="0" />
+            @if (form.get('displayOrder')?.invalid && form.get('displayOrder')?.touched) {
+              <mat-error>{{ getErrorMessage('displayOrder') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Nombre (full width) -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre</mat-label>
+            <input
+              matInput
+              formControlName="name"
+              placeholder="Plan de Manejo Forestal (PMF)"
+              maxlength="100"
+            />
+            @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+              <mat-error>{{ getErrorMessage('name') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Descripción (full width) -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción</mat-label>
+            <textarea
+              matInput
+              formControlName="description"
+              placeholder="Descripción del tipo de documento"
+              rows="3"
+              maxlength="1000"
+            ></textarea>
+          </mat-form-field>
+
+          <!-- Categoría -->
+          <mat-form-field appearance="outline">
+            <mat-label>Categoría</mat-label>
+            <input matInput formControlName="category" placeholder="certification" />
+          </mat-form-field>
+
+          <!-- Icono -->
+          <mat-form-field appearance="outline">
+            <mat-label>Icono (Material Icon)</mat-label>
+            <input matInput formControlName="icon" placeholder="assignment" />
+            <mat-icon matPrefix>{{ form.get('icon')?.value || 'description' }}</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <mat-divider />
+
+      <!-- Sección Aplicación y reglas -->
+      <div class="section">
+        <h3 class="section-title">Aplicación y reglas</h3>
+
+        <div class="form-grid">
+          <!-- Etapas del proyecto (full width) -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Etapas del proyecto (visible en)</mat-label>
+            <mat-select formControlName="requiredForProjectStages" multiple>
+              @for (stage of projectStageOptions; track stage) {
+                <mat-option [value]="stage">{{ stage }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Seleccione las etapas donde este documento debe estar visible</mat-hint>
+          </mat-form-field>
+
+          <!-- Es requerido -->
+          <div class="toggle-field full-width">
+            <mat-slide-toggle formControlName="isRequired">
+              <span class="toggle-label">¿Es requerido?</span>
+            </mat-slide-toggle>
+            @if (form.get('isRequired')?.value) {
+              <p class="field-hint">
+                <mat-icon class="hint-icon">info</mat-icon>
+                Si el documento es requerido, debe especificar al menos una etapa del proyecto
+              </p>
+            }
+          </div>
+
+          <!-- Requerido para tipos de licencia (full width) -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Requerido para tipos de licencia</mat-label>
+            <mat-select formControlName="requiredForLicense" multiple>
+              @for (licenseType of licenseTypeOptions; track licenseType) {
+                <mat-option [value]="licenseType">{{ licenseType }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Opcional - Dejar vacío si aplica a todos los tipos de licencia</mat-hint>
+          </mat-form-field>
+
+          <!-- Tiene expiración -->
+          <div class="toggle-field full-width">
+            <mat-slide-toggle formControlName="hasExpiration">
+              <span class="toggle-label">¿Tiene expiración?</span>
+            </mat-slide-toggle>
+          </div>
+
+          <!-- Días de advertencia (solo si hasExpiration) -->
+          @if (form.get('hasExpiration')?.value) {
+            <mat-form-field appearance="outline">
+              <mat-label>Días de advertencia de expiración</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="expirationWarningDays"
+                min="1"
+                placeholder="365"
+              />
+              <mat-hint>Días antes de expirar para enviar alertas</mat-hint>
+              @if (
+                form.get('expirationWarningDays')?.invalid &&
+                form.get('expirationWarningDays')?.touched
+              ) {
+                <mat-error>{{ getErrorMessage('expirationWarningDays') }}</mat-error>
+              }
+            </mat-form-field>
+          }
+        </div>
+      </div>
+
+      <mat-divider />
+
+      <!-- Sección Archivos -->
+      <div class="section">
+        <h3 class="section-title">Archivos</h3>
+
+        <div class="form-grid">
+          <!-- Tamaño máximo -->
+          <mat-form-field appearance="outline">
+            <mat-label>Tamaño máximo (MB)</mat-label>
+            <input matInput type="number" formControlName="maxFileSizeMb" min="1" />
+            @if (form.get('maxFileSizeMb')?.invalid && form.get('maxFileSizeMb')?.touched) {
+              <mat-error>{{ getErrorMessage('maxFileSizeMb') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Tipos MIME permitidos (full width) -->
+          <div class="chips-field full-width">
+            <span class="chips-label">Tipos MIME permitidos *</span>
+
+            <div class="chips-input-container">
+              <mat-form-field appearance="outline" class="chips-input">
+                <mat-label>Agregar tipo MIME</mat-label>
+                <input
+                  matInput
+                  [formControl]="allowedMimeTypesInput"
+                  placeholder="application/pdf"
+                  (keyup.enter)="addAllowedMimeType()"
+                />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  (click)="addAllowedMimeType()"
+                  [disabled]="!allowedMimeTypesInput.value"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
+
+            <div class="chips-container">
+              @for (mimeType of form.get('allowedMimeTypes')?.value || []; track mimeType) {
+                <mat-chip class="mime-chip" (removed)="removeAllowedMimeType(mimeType)">
+                  {{ mimeType }}
+                  <button matChipRemove type="button">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip>
+              }
+            </div>
+
+            @if (
+              (form.get('allowedMimeTypes')?.value || []).length === 0 &&
+              form.get('allowedMimeTypes')?.touched
+            ) {
+              <p class="field-error">Debe especificar al menos un tipo MIME</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <mat-divider />
+
+      <!-- Sección Validación -->
+      <div class="section">
+        <h3 class="section-title">Validación</h3>
+
+        <div class="form-grid">
+          <!-- Requiere aprobación -->
+          <div class="toggle-field full-width">
+            <mat-slide-toggle formControlName="requiresApproval">
+              <span class="toggle-label">¿Requiere aprobación?</span>
+            </mat-slide-toggle>
+          </div>
+
+          @if (form.get('requiresApproval')?.value) {
+            <!-- Requiere adjunto durante validación -->
+            <div class="toggle-field full-width">
+              <mat-slide-toggle formControlName="requiresValidationAttachment">
+                <span class="toggle-label">¿Requiere adjunto durante validación?</span>
+              </mat-slide-toggle>
+            </div>
+
+            @if (form.get('requiresValidationAttachment')?.value) {
+              <!-- Tipos MIME para adjuntos de validación (full width) -->
+              <div class="chips-field full-width">
+                <span class="chips-label">Tipos MIME para adjuntos de validación</span>
+
+                <div class="chips-input-container">
+                  <mat-form-field appearance="outline" class="chips-input">
+                    <mat-label>Agregar tipo MIME</mat-label>
+                    <input
+                      matInput
+                      [formControl]="validationMimeTypesInput"
+                      placeholder="application/pdf"
+                      (keyup.enter)="addValidationMimeType()"
+                    />
+                    <button
+                      mat-icon-button
+                      matSuffix
+                      type="button"
+                      (click)="addValidationMimeType()"
+                      [disabled]="!validationMimeTypesInput.value"
+                    >
+                      <mat-icon>add</mat-icon>
+                    </button>
+                  </mat-form-field>
+                </div>
+
+                <div class="chips-container">
+                  @for (
+                    mimeType of form.get('validationAttachmentMimeTypes')?.value || [];
+                    track mimeType
+                  ) {
+                    <mat-chip class="mime-chip" (removed)="removeValidationMimeType(mimeType)">
+                      {{ mimeType }}
+                      <button matChipRemove type="button">
+                        <mat-icon>cancel</mat-icon>
+                      </button>
+                    </mat-chip>
+                  }
+                </div>
+              </div>
+
+              <!-- Tamaño máximo para adjuntos de validación -->
+              <mat-form-field appearance="outline">
+                <mat-label>Tamaño máximo para adjuntos de validación (MB)</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="validationAttachmentMaxSizeMb"
+                  min="1"
+                />
+                @if (
+                  form.get('validationAttachmentMaxSizeMb')?.invalid &&
+                  form.get('validationAttachmentMaxSizeMb')?.touched
+                ) {
+                  <mat-error>{{ getErrorMessage('validationAttachmentMaxSizeMb') }}</mat-error>
+                }
+              </mat-form-field>
+            }
+          }
+        </div>
+      </div>
+
+      <mat-divider />
+
+      <!-- Sección Auditoría (read-only) -->
+      <div class="section">
+        <h3 class="section-title">Auditoría</h3>
+
+        <div class="detail-grid">
+          @if (data.createdAt) {
+            <div class="detail-item">
+              <span class="detail-label">Fecha de creación</span>
+              <span class="detail-value">{{ data.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          } @else {
+            <div class="detail-item">
+              <span class="detail-label">Fecha de creación</span>
+              <span class="detail-value text-neutral-subheading">—</span>
+            </div>
+          }
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Footer -->
+  <div class="dialog-footer">
+    <button mat-button type="button" (click)="close()" [disabled]="saving()">Cancelar</button>
+    <button
+      mat-raised-button
+      class="btn-primary"
+      type="button"
+      (click)="save()"
+      [disabled]="!form.valid || saving()"
+    >
+      @if (saving()) {
+        <mat-spinner diameter="20" class="inline-spinner" />
+        <span>{{ isCreateMode ? 'Creando...' : 'Guardando...' }}</span>
+      } @else {
+        <span>{{ isCreateMode ? 'Crear tipo de documento' : 'Guardar cambios' }}</span>
+      }
+    </button>
+  </div>
+</div>
