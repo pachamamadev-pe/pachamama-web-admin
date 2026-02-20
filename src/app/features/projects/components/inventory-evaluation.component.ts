@@ -20,6 +20,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -55,6 +56,7 @@ interface RecordStats {
     MatTooltipModule,
     MatPaginatorModule,
     MatInputModule,
+    MatTabsModule,
     FormsModule,
   ],
   templateUrl: './inventory-evaluation.component.html',
@@ -79,6 +81,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
   activities = signal<ActivityResponse[]>([]);
   totalElements = signal(0); // Total de elementos para paginación
   selectedFilter = signal('all');
+  activeTab = signal<'inventory' | 'harvest'>('inventory'); // Tab activo
   refreshing = signal(false); // Indicador de refresh silencioso
   recalculating = signal(false); // Indicador de recálculo en progreso
   lastUpdated = signal<Date | null>(null); // Última actualización
@@ -204,19 +207,18 @@ export class InventoryEvaluationComponent implements OnDestroy {
     const allActivities = this.activities();
     const filter = this.selectedFilter();
     const search = this.searchTerm().toLowerCase().trim();
-
     // Aplicar filtro por estado
     let filtered = allActivities;
+
+    // Filter by tab is now handled by backend query param
+
+    // Aplicar filtro por estado
     if (filter === 'pending') {
-      filtered = allActivities.filter((activity) => activity.overallValidationStatus === 'pending');
+      filtered = filtered.filter((activity) => activity.overallValidationStatus === 'pending');
     } else if (filter === 'approved') {
-      filtered = allActivities.filter(
-        (activity) => activity.overallValidationStatus === 'approved',
-      );
+      filtered = filtered.filter((activity) => activity.overallValidationStatus === 'approved');
     } else if (filter === 'rejected') {
-      filtered = allActivities.filter(
-        (activity) => activity.overallValidationStatus === 'rejected',
-      );
+      filtered = filtered.filter((activity) => activity.overallValidationStatus === 'rejected');
     }
 
     // Aplicar búsqueda si existe término
@@ -247,6 +249,19 @@ export class InventoryEvaluationComponent implements OnDestroy {
       return dateB - dateA; // Descendente (más recientes primero)
     });
   });
+
+  // Títulos para estado vacío
+  emptyStateTitle = computed(() =>
+    this.activeTab() === 'inventory'
+      ? 'No hay actividades de inventario'
+      : 'No hay actividades de recolección',
+  );
+
+  emptyStateDescription = computed(() =>
+    this.activeTab() === 'inventory'
+      ? 'No se encontraron registros de inventario para este proyecto'
+      : 'No se encontraron registros de recolección para este proyecto',
+  );
 
   constructor() {
     // Load activities when shouldLoad becomes true (only once)
@@ -375,8 +390,9 @@ export class InventoryEvaluationComponent implements OnDestroy {
 
     const page = this.currentPage();
     const size = this.pageSize();
+    const activityTypes = this.activeTab() === 'inventory' ? 'inventory' : 'harvest';
 
-    this.activitiesService.getActivitiesByProject(projectId, page, size).subscribe({
+    this.activitiesService.getActivitiesByProject(projectId, page, size, activityTypes).subscribe({
       next: (response) => {
         this.activities.set(response.items);
         this.totalElements.set(response.total);
@@ -402,6 +418,19 @@ export class InventoryEvaluationComponent implements OnDestroy {
         }
       },
     });
+  }
+
+  /**
+   * Maneja el cambio de tab
+   */
+  onTabChange(index: number): void {
+    const tab = index === 0 ? 'inventory' : 'harvest';
+    this.activeTab.set(tab);
+    this.currentPage.set(0); // Resetear paginación local
+    const projId = this.projectId();
+    if (projId) {
+      this.loadActivities(projId, true);
+    }
   }
 
   /**
@@ -535,6 +564,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
    */
   getActivityTypeLabel(type: string): string {
     const labels: Record<string, string> = {
+      harvest: 'Recolección',
       inventory: 'Inventario',
       TREE_REGISTRATION: 'Registro de árbol',
       TREE_COLLECTION: 'Recolección de árbol',

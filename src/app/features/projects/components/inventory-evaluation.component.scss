@@ -18,6 +18,34 @@
 }
 
 /* ============================================
+   TABS CUSTOMIZATION
+============================================ */
+::ng-deep .mat-mdc-tab-group {
+  --mdc-tab-indicator-active-indicator-color: #218358; // Secondary color
+  --mat-tab-header-active-label-text-color: #218358; // Secondary color
+  --mat-tab-header-inactive-label-text-color: #737373; // Neutral subheading
+  --mat-tab-header-active-ripple-color: rgba(33, 131, 88, 0.1);
+  --mat-tab-header-inactive-ripple-color: rgba(0, 0, 0, 0.1);
+
+  .mdc-tab__text-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  // Ensure active tab label is bold
+  .mdc-tab--active .mdc-tab__text-label {
+    font-weight: 700;
+  }
+
+  // Force ink bar color and visibility
+  .mdc-tab-indicator__content--underline {
+    border-color: var(--mdc-tab-indicator-active-indicator-color) !important;
+    border-top-width: 3px !important;
+  }
+}
+
+/* ============================================
    REGISTROS SECTION
 ============================================ */
 .records-section {
@@ -217,7 +245,7 @@
 }
 
 /* ============================================
-   EVALUACIÓN DE INVENTARIO SECTION
+   REGISTRO DE ACTIVIDADES SECTION
 ============================================ */
 .evaluation-section {
   display: flex;

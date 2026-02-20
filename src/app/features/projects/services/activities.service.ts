@@ -25,8 +25,14 @@ export class ActivitiesService {
     projectId: string,
     page = 0,
     size = 20,
+    activityTypes?: string,
   ): Observable<PageDto<ActivityResponse>> {
-    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+
+    if (activityTypes) {
+      params = params.set('activityType', activityTypes);
+    }
+
     return this.http.get<PageDto<ActivityResponse>>(
       `${this.apiUrl}/by-project/${projectId}/paged`,
       {

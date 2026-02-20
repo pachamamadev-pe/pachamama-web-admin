@@ -701,7 +701,7 @@ export class ActivityEvaluationPage implements OnInit {
   }
 
   /**
-   * Regresa a la evaluación de inventario (marca el tab automáticamente)
+   * Regresa al registro de actividades (marca el tab automáticamente)
    */
   goBack(): void {
     const projectId = this.projectId();

@@ -34,11 +34,11 @@
       </mat-card>
     </section>-->
 
-    <!-- Evaluación de inventario Section -->
+    <!-- Registro de actividades Section -->
     <section class="evaluation-section">
       <div class="section-header">
         <div class="header-left">
-          <h2 class="text-title font-bold text-accent-titles">Evaluación de inventario</h2>
+          <h2 class="text-title font-bold text-accent-titles">Registro de actividades</h2>
           @if (lastUpdated()) {
             <p class="text-subtitle text-neutral-subheading">
               <mat-icon class="inline-icon">access_time</mat-icon>
@@ -88,6 +88,18 @@
         </div>
       </div>
 
+      <!-- Tabs -->
+      <mat-tab-group
+        [selectedIndex]="activeTab() === 'inventory' ? 0 : 1"
+        (selectedIndexChange)="onTabChange($event)"
+        class="mb-4"
+        mat-stretch-tabs="false"
+        animationDuration="0ms"
+      >
+        <mat-tab label="Actividades de Inventario"></mat-tab>
+        <mat-tab label="Actividades de Recolección"></mat-tab>
+      </mat-tab-group>
+
       <!-- Search Bar -->
       <div class="search-container">
         <mat-form-field class="search-field" appearance="outline">
@@ -111,9 +123,9 @@
         <!-- Empty State -->
         <div class="empty-state">
           <mat-icon class="empty-icon">description_off</mat-icon>
-          <h3 class="text-body font-bold text-accent-titles">No hay registros</h3>
+          <h3 class="text-body font-bold text-accent-titles">{{ emptyStateTitle() }}</h3>
           <p class="text-subtitle text-neutral-subheading">
-            No se encontraron registros de actividades para este proyecto
+            {{ emptyStateDescription() }}
           </p>
         </div>
       } @else {
