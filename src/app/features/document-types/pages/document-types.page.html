@@ -1,0 +1,334 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="text-title font-bold text-accent-titles">Tipos de Documento</h1>
+        <p class="text-subtitle text-neutral-subheading">
+          Gestiona los tipos de documentos requeridos para proyectos
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          <span class="hidden sm:inline">Añadir tipo</span>
+          <span class="sm:hidden">Añadir</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-container">
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+        <input
+          matInput
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar tipos de documento..."
+          class="text-body"
+        />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()" matTooltip="Limpiar búsqueda">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="filter-container">
+      <mat-button-toggle-group
+        [value]="statusFilter()"
+        (change)="onStatusFilterChange($event.value)"
+        class="status-filter-toggle"
+      >
+        <mat-button-toggle value="active">
+          <mat-icon>check_circle</mat-icon>
+          <span>Activos</span>
+        </mat-button-toggle>
+        <mat-button-toggle value="archived">
+          <mat-icon>archive</mat-icon>
+          <span>Archivados</span>
+        </mat-button-toggle>
+        <mat-button-toggle value="all">
+          <mat-icon>list</mat-icon>
+          <span>Todos</span>
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="page-content">
+    @if (loading()) {
+      <!-- Loading state -->
+      <div class="loading-container">
+        <mat-spinner diameter="48" />
+        <p class="text-body text-neutral-subheading mt-4">Cargando tipos de documento...</p>
+      </div>
+    } @else if (documentTypes().length === 0 && !searchTerm()) {
+      <!-- Empty state general (sin datos del backend) -->
+      <app-empty-state
+        icon="description"
+        [useMaterialIcon]="true"
+        title="No hay tipos de documento configurados"
+        message="Comienza creando tipos de documento para requerir en tus proyectos"
+        actionLabel="Crear primer tipo"
+        (action)="openCreateDialog()"
+      />
+    } @else if (
+      filteredDocumentTypes().length === 0 && !searchTerm() && documentTypes().length > 0
+    ) {
+      <!-- Empty state por filtro de estado -->
+      <app-empty-state
+        icon="filter_list"
+        [useMaterialIcon]="true"
+        [title]="getFilterEmptyStateTitle()"
+        [message]="getFilterEmptyStateDescription()"
+      />
+    } @else if (filteredDocumentTypes().length === 0 && searchTerm()) {
+      <!-- No Results State (búsqueda sin resultados) -->
+      <app-empty-state
+        icon="search_off"
+        [useMaterialIcon]="true"
+        title="No se encontraron tipos de documento"
+        message="Intenta con otros términos de búsqueda"
+        actionLabel="Limpiar búsqueda"
+        (action)="clearSearch()"
+      />
+    } @else {
+      <!-- Document Types Table (Desktop only) -->
+      <div class="document-types-table">
+        <div class="products-table hidden md:block">
+          <table class="table-auto w-full">
+            <thead class="table-header">
+              <tr>
+                <th class="table-th text-left">Código</th>
+                <th class="table-th text-left">Nombre</th>
+                <th class="table-th text-left hidden xl:table-cell">Descripción</th>
+                <th class="table-th text-center">Requerido</th>
+                <th class="table-th text-left hidden lg:table-cell">Etapas del Proyecto</th>
+                <th class="table-th text-left">Estado</th>
+                <th class="table-th text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="table-body">
+              @for (docType of filteredDocumentTypes(); track docType.id) {
+                <tr class="table-row" (click)="viewDetails(docType)">
+                  <!-- Código -->
+                  <td class="table-td">
+                    <span class="text-body font-mono text-secondary font-bold">
+                      {{ docType.code }}
+                    </span>
+                  </td>
+
+                  <!-- Nombre -->
+                  <td class="table-td">
+                    <div class="flex flex-col">
+                      <span class="text-body font-bold text-accent-titles">
+                        {{ docType.name }}
+                      </span>
+                      @if (docType.category) {
+                        <span class="text-subtitle text-neutral-subheading">
+                          <mat-icon class="category-icon">folder</mat-icon>
+                          {{ docType.category }}
+                        </span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Descripción (solo XL) -->
+                  <td class="table-td hidden xl:table-cell">
+                    <span
+                      class="text-subtitle text-neutral-subheading"
+                      [matTooltip]="docType.description || ''"
+                    >
+                      {{ truncateText(docType.description, 60) }}
+                    </span>
+                  </td>
+
+                  <!-- Requerido -->
+                  <td class="table-td text-center">
+                    @if (docType.isRequired) {
+                      <mat-icon class="text-red-600" matTooltip="Documento obligatorio">
+                        error
+                      </mat-icon>
+                    } @else {
+                      <mat-icon class="text-neutral-subheading" matTooltip="Documento opcional">
+                        check_circle_outline
+                      </mat-icon>
+                    }
+                  </td>
+
+                  <!-- Etapas del Proyecto -->
+                  <td class="table-td hidden lg:table-cell">
+                    @if (
+                      docType.requiredForProjectStages &&
+                      docType.requiredForProjectStages.length > 0
+                    ) {
+                      <div class="flex flex-wrap gap-1">
+                        @for (stage of docType.requiredForProjectStages; track stage) {
+                          <span class="stage-chip text-subtitle">{{ stage }}</span>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-subtitle text-neutral-subheading">-</span>
+                    }
+                  </td>
+
+                  <!-- Estado -->
+                  <td class="table-td">
+                    <span
+                      class="status-badge-small text-subtitle rounded px-2 py-1"
+                      [ngClass]="getStatusClass(docType.status)"
+                    >
+                      {{ getStatusLabel(docType.status) }}
+                    </span>
+                  </td>
+
+                  <!-- Acciones -->
+                  <td class="table-td text-right" (click)="$event.stopPropagation()">
+                    <button mat-icon-button [matMenuTriggerFor]="tableMenu">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #tableMenu="matMenu">
+                      <button mat-menu-item (click)="viewDetails(docType)">
+                        <mat-icon>visibility</mat-icon>
+                        <span>Ver detalles</span>
+                      </button>
+                      @if (docType.status === 'active') {
+                        <button mat-menu-item (click)="openEditDialog(docType)">
+                          <mat-icon>edit</mat-icon>
+                          <span>Editar</span>
+                        </button>
+                        <button mat-menu-item (click)="archiveDocumentType(docType)">
+                          <mat-icon>archive</mat-icon>
+                          <span>Archivar</span>
+                        </button>
+                      }
+                    </mat-menu>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <mat-paginator
+          [length]="totalElements()"
+          [pageSize]="pageSize()"
+          [pageIndex]="currentPage()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+        />
+      </div>
+
+      <!-- Mobile Cards (visible on mobile only) -->
+      <div class="mobile-cards md:hidden">
+        @for (docType of filteredDocumentTypes(); track docType.id) {
+          <div
+            class="document-type-card bg-primary-white rounded-lg shadow p-4"
+            role="button"
+            tabindex="0"
+            (click)="viewDetails(docType)"
+            (keydown.enter)="viewDetails(docType)"
+            (keydown.space)="viewDetails(docType); $event.preventDefault()"
+          >
+            <div class="card-header">
+              <div class="card-title">
+                <h3 class="text-body font-bold text-primary-black">{{ docType.name }}</h3>
+                <span class="text-subtitle text-neutral-subheading font-mono">{{
+                  docType.code
+                }}</span>
+              </div>
+              <div class="card-actions">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="mobileMenu"
+                  (click)="$event.stopPropagation()"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #mobileMenu="matMenu">
+                  <button mat-menu-item (click)="viewDetails(docType)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Ver detalles</span>
+                  </button>
+                  @if (docType.status === 'active') {
+                    <button mat-menu-item (click)="openEditDialog(docType)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar</span>
+                    </button>
+                    <button mat-menu-item (click)="archiveDocumentType(docType)">
+                      <mat-icon>archive</mat-icon>
+                      <span>Archivar</span>
+                    </button>
+                  }
+                </mat-menu>
+              </div>
+            </div>
+
+            <div class="card-details">
+              <!-- Descripción -->
+              @if (docType.description) {
+                <div class="detail-row">
+                  <mat-icon class="detail-icon">description</mat-icon>
+                  <span class="detail-value">{{ truncateText(docType.description, 80) }}</span>
+                </div>
+              }
+
+              <!-- Categoría -->
+              @if (docType.category) {
+                <div class="detail-row">
+                  <mat-icon class="detail-icon">folder</mat-icon>
+                  <span class="detail-label">Categoría:</span>
+                  <span class="detail-value">{{ docType.category }}</span>
+                </div>
+              }
+
+              <!-- Requerido -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">{{
+                  docType.isRequired ? 'error' : 'check_circle_outline'
+                }}</mat-icon>
+                <span class="detail-label">Requerido:</span>
+                <span class="detail-value">{{ docType.isRequired ? 'Sí' : 'No' }}</span>
+              </div>
+
+              <!-- Etapas del Proyecto -->
+              @if (
+                docType.requiredForProjectStages && docType.requiredForProjectStages.length > 0
+              ) {
+                <div class="detail-row">
+                  <mat-icon class="detail-icon">timeline</mat-icon>
+                  <span class="detail-label">Etapas:</span>
+                  <div class="flex flex-wrap gap-1">
+                    @for (stage of docType.requiredForProjectStages; track stage) {
+                      <span class="stage-chip text-subtitle">{{ stage }}</span>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Estado -->
+              <div class="detail-row">
+                <mat-icon class="detail-icon">circle</mat-icon>
+                <span class="detail-label">Estado:</span>
+                <span
+                  class="status-badge-small text-subtitle rounded px-2 py-1"
+                  [ngClass]="getStatusClass(docType.status)"
+                >
+                  {{ getStatusLabel(docType.status) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

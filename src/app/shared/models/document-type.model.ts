@@ -10,7 +10,7 @@ export interface DocumentType {
   description?: string;
   applicableTo: string[]; // ["companies", "projects", "collectors"]
   isRequired: boolean;
-  requiredForLicense?: string[]; // ["premium"] - Req. para ciertos tipos
+  requiredForLicense?: string[] | null; // ["premium"] - Req. para ciertos tipos
   maxFileSizeMb: number;
   allowedMimeTypes: string[]; // ["application/pdf", "image/jpeg"]
   hasExpiration: boolean;
@@ -18,12 +18,19 @@ export interface DocumentType {
   displayOrder: number;
   category?: string; // "fiscal", "legal", "branding"
   icon?: string; // Nombre del icono Material
+  requiresApproval?: boolean; // ¿El documento requiere aprobación?
+  requiresValidationAttachment?: boolean; // ¿Requiere adjunto de validación?
+  validationAttachmentMimeTypes?: string[] | null; // Tipos MIME para adjuntos de validación
+  validationAttachmentMaxSizeMb?: number | null; // Tamaño máximo en MB para adjuntos de validación
+  requiredForProjectStages?: string[] | null; // Etapas del proyecto en las que este documento es requerido
   status: DocumentTypeStatus;
+  createdAt?: string; // Fecha de creación (ISO string)
 }
 
 export enum DocumentTypeStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
+  active = 'active',
+  inactive = 'inactive',
+  archived = 'archived',
 }
 
 /**

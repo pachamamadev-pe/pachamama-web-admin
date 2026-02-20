@@ -148,6 +148,14 @@ export const appRoutes: Routes = [
         title: 'Mi Perfil',
         loadComponent: () => import('./features/profile/pages/profile.page'),
       },
+      {
+        path: 'document-types',
+        title: 'Tipos de Documento',
+        loadComponent: () =>
+          import('./features/document-types/pages/document-types.page').then(
+            (m) => m.DocumentTypesPage,
+          ),
+      },
       { path: '**', redirectTo: 'home' },
     ],
   },
