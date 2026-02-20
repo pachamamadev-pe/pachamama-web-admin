@@ -349,7 +349,7 @@ export class DocumentTypeEditDialogComponent implements OnInit {
       applicableTo: this.data.applicableTo || ['projects'], // Default si no existe
       isRequired: formValue.isRequired,
       requiredForLicense:
-        formValue.requiredForLicense?.length > 0 ? formValue.requiredForLicense : undefined,
+        (formValue.requiredForLicense?.length ?? 0) > 0 ? formValue.requiredForLicense : undefined,
       maxFileSizeMb: formValue.maxFileSizeMb,
       allowedMimeTypes: formValue.allowedMimeTypes,
       hasExpiration: formValue.hasExpiration,
@@ -359,7 +359,7 @@ export class DocumentTypeEditDialogComponent implements OnInit {
       icon: formValue.icon || undefined,
       status: this.data.status, // Mantener status actual (o el que viene de prepareTemplateData)
       requiredForProjectStages:
-        formValue.requiredForProjectStages?.length > 0
+        (formValue.requiredForProjectStages?.length ?? 0) > 0
           ? formValue.requiredForProjectStages
           : undefined,
       requiresApproval: formValue.requiresApproval,
@@ -368,7 +368,7 @@ export class DocumentTypeEditDialogComponent implements OnInit {
         : false,
       validationAttachmentMimeTypes:
         formValue.requiresApproval && formValue.requiresValidationAttachment
-          ? formValue.validationAttachmentMimeTypes?.length > 0
+          ? (formValue.validationAttachmentMimeTypes?.length ?? 0) > 0
             ? formValue.validationAttachmentMimeTypes
             : undefined
           : undefined,
