@@ -165,14 +165,14 @@ export interface BrigadeCollectorsDialogData {
                     >
                       <mat-icon>event_busy</mat-icon>
                     </button>
-                    <mat-slide-toggle
+                    <!-- <mat-slide-toggle
                       [checked]="collector.status.toLowerCase() === 'active'"
                       (change)="toggleCollectorStatus(collector, $event.checked)"
                       [matTooltip]="
                         collector.status.toLowerCase() === 'active' ? 'Inactivar' : 'Activar'
                       "
                       color="primary"
-                    />
+                    /> -->
                   </div>
                 </td>
               </ng-container>

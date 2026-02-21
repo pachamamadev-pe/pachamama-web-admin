@@ -63,7 +63,7 @@ import { Brigade } from '../models/brigade.model';
         <!-- Brigades Table (Desktop) -->
         <div class="desktop-only">
           <div class="brigades-table">
-            <table mat-table [dataSource]="brigades()" class="table-auto w-full">
+            <table mat-table [dataSource]="brigades()" class="table-auto w-full responsive-table">
               <ng-container matColumnDef="code">
                 <th mat-header-cell *matHeaderCellDef class="table-th text-left">Código</th>
                 <td mat-cell *matCellDef="let brigade" class="table-td">
@@ -282,8 +282,14 @@ import { Brigade } from '../models/brigade.model';
     .brigades-table {
       background: white;
       border-radius: 8px;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .responsive-table {
+      min-width: 860px;
     }
 
     .table-th {
@@ -388,6 +394,17 @@ import { Brigade } from '../models/brigade.model';
       display: flex;
       flex-direction: column;
       gap: 1rem;
+    }
+
+    @media (max-width: 767px) {
+      .brigades-container {
+        padding: 0.75rem;
+      }
+
+      .empty-state,
+      .loading-container {
+        padding: 2rem 1rem;
+      }
     }
 
     .brigade-card {

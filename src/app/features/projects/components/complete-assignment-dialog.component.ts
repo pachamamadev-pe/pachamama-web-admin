@@ -188,9 +188,13 @@ export class CompleteAssignmentDialogComponent {
 
   saving = signal(false);
   minDate = parseDateValue(this.data.startDate) ?? new Date();
+  private defaultEndDate = new Date();
 
   form = this.fb.group({
-    endDate: [null, [Validators.required]],
+    endDate: [
+      this.defaultEndDate < this.minDate ? this.minDate : this.defaultEndDate,
+      [Validators.required],
+    ],
     notes: ['', [Validators.maxLength(500)]],
   });
 
