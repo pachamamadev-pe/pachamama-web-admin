@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow-x: hidden;
   background: white;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 }
