@@ -10,10 +10,13 @@ import { LayoutService } from './layout.service';
   selector: 'app-shell',
   imports: [RouterOutlet, SidebarComponent, HeaderComponent, LoadingComponent],
   template: `
-    <div class="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[280px_1fr]">
+    <div
+      class="min-h-screen bg-gray-50 lg:grid"
+      [style.gridTemplateColumns]="layoutService.isSidebarCollapsed() ? '88px 1fr' : '280px 1fr'"
+    >
       <!-- Sidebar -->
       <aside
-        class="fixed inset-y-0 left-0 z-20 w-72 -translate-x-full transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0"
+        class="fixed inset-y-0 left-0 z-20 w-72 -translate-x-full transform transition-transform duration-300 ease-in-out lg:relative lg:w-full lg:translate-x-0"
         [class.translate-x-0]="layoutService.isSidebarVisible()"
       >
         <app-sidebar />

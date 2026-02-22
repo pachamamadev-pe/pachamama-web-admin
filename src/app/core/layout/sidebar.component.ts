@@ -41,6 +41,19 @@ export interface NavItem {
             <img src="/images/logo/logo.svg" alt="Pachamama" />
           }
         </div>
+        <button
+          mat-icon-button
+          (click)="layoutService.toggleSidebarCollapse()"
+          class="collapse-button"
+          [matTooltip]="layoutService.isSidebarCollapsed() ? 'Expandir menú' : 'Minimizar menú'"
+          [attr.aria-label]="
+            layoutService.isSidebarCollapsed() ? 'Expandir menú lateral' : 'Minimizar menú lateral'
+          "
+        >
+          <mat-icon>
+            {{ layoutService.isSidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
+          </mat-icon>
+        </button>
         <!-- Close button (mobile only) -->
         <button
           mat-icon-button
@@ -92,6 +105,7 @@ export interface NavItem {
   `,
   host: {
     class: 'block h-full',
+    '[class.sidebar-collapsed]': 'layoutService.isSidebarCollapsed()',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
