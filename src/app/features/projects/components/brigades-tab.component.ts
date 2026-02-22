@@ -78,14 +78,19 @@ import { Brigade } from '../models/brigade.model';
                 </td>
               </ng-container>
 
-              <ng-container matColumnDef="request">
-                <th mat-header-cell *matHeaderCellDef class="table-th text-left">Solicitud</th>
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef class="table-th text-left">Tipo</th>
                 <td mat-cell *matCellDef="let brigade" class="table-td">
-                  @if (brigade.collectionRequestId) {
-                    <mat-chip class="request-chip">Aprobada</mat-chip>
-                  } @else {
-                    <span class="text-subtitle text-neutral-subheading">Sin solicitud</span>
-                  }
+                  {{ brigade.collectionRequestId ? 'Recolección' : 'Inventario' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="request">
+                <th mat-header-cell *matHeaderCellDef class="table-th text-left">
+                  Número de solicitud
+                </th>
+                <td mat-cell *matCellDef="let brigade" class="table-td">
+                  {{ brigade.collectionRequestCode || '-' }}
                 </td>
               </ng-container>
 
@@ -166,10 +171,17 @@ import { Brigade } from '../models/brigade.model';
 
                 <div class="card-details space-y-2">
                   <div class="detail-row">
-                    <mat-icon class="detail-icon">assignment</mat-icon>
-                    <span class="detail-label">Solicitud:</span>
+                    <mat-icon class="detail-icon">category</mat-icon>
+                    <span class="detail-label">Tipo:</span>
                     <span class="detail-value">
-                      {{ brigade.collectionRequestId ? 'Aprobada' : 'Sin solicitud' }}
+                      {{ brigade.collectionRequestId ? 'Recolección' : 'Inventario' }}
+                    </span>
+                  </div>
+                  <div class="detail-row">
+                    <mat-icon class="detail-icon">assignment</mat-icon>
+                    <span class="detail-label">Número de solicitud:</span>
+                    <span class="detail-value">
+                      {{ brigade.collectionRequestCode || '-' }}
                     </span>
                   </div>
                   <div class="detail-row">
@@ -463,7 +475,7 @@ export class BrigadesTabComponent {
   totalElements = signal(0);
 
   // Table columns
-  displayedColumns: string[] = ['code', 'name', 'request', 'status', 'members', 'actions'];
+  displayedColumns: string[] = ['code', 'name', 'type', 'request', 'status', 'members', 'actions'];
 
   constructor() {
     // Load brigades when shouldLoad becomes true (only once)

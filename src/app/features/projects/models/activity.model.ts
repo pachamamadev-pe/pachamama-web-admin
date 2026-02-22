@@ -32,6 +32,8 @@ export interface ActivityResponse {
   forestCode: string;
   /** Código manual del árbol */
   forestManualCode?: string;
+  /** Código manual del árbol padre */
+  forestParentUnitManualCode?: string | null;
   /** Tipo de actividad */
   activityType: ActivityType;
   /** Ubicación GPS {latitude, longitude} */

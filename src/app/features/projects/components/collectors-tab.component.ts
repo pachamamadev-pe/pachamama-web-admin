@@ -193,8 +193,15 @@ import { Brigade } from '../models/brigade.model';
                       <span class="detail-value">{{ collector.phone }}</span>
                     </div>
                   }
+                  @if (collector.currentBrigadeName) {
+                    <div class="detail-row">
+                      <mat-icon class="detail-icon">groups</mat-icon>
+                      <span class="detail-label">Brigada:</span>
+                      <span class="detail-value">{{ collector.currentBrigadeName }}</span>
+                    </div>
+                  }
 
-                  <div class="detail-row">
+                  <!--  <div class="detail-row">
                     <mat-icon class="detail-icon">groups</mat-icon>
                     <span class="detail-label">Brigada:</span>
                     <mat-form-field class="brigade-selector-mobile" appearance="outline">
@@ -211,7 +218,7 @@ import { Brigade } from '../models/brigade.model';
                         }
                       </mat-select>
                     </mat-form-field>
-                  </div>
+                  </div> -->
                 </div>
 
                 <div class="card-actions mt-4">
