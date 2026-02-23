@@ -184,10 +184,10 @@ export class DocumentTypesPage implements OnInit {
 
   /**
    * Obtener datos mínimos para crear desde cero
+   * NO incluye code - el backend lo autogenera
    */
   private getBlankDocumentTypeData(): Partial<DocumentType> {
     return {
-      code: '',
       name: '',
       description: '',
       applicableTo: ['projects'],

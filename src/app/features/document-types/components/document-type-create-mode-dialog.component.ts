@@ -119,7 +119,6 @@ export interface CreateModeResult {
                       </div>
                       <div class="template-info">
                         <h4 class="template-name">{{ template.name }}</h4>
-                        <span class="template-code">{{ template.code }}</span>
                       </div>
                       @if (template.isRequired) {
                         <mat-icon class="required-icon" matTooltip="Documento obligatorio">
@@ -359,16 +358,9 @@ export interface CreateModeResult {
         font-size: 1rem;
         font-weight: 700;
         color: #0a0a0a;
-        margin: 0 0 0.25rem 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .template-code {
-        font-size: 0.75rem;
-        color: #737373;
-        font-family: monospace;
+        margin: 0;
+        white-space: normal;
+        line-height: 1.4;
       }
 
       .required-icon {
@@ -417,6 +409,7 @@ export interface CreateModeResult {
       }
 
       .template-footer {
+        margin-top: auto;
         display: flex;
         justify-content: flex-end;
         padding-top: 0.75rem;

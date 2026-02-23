@@ -20,7 +20,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { DocumentType } from '@shared/models/document-type.model';
-import { DocumentTypesService, ValidateCodeResponse } from '@core/services/document-types.service';
+import { DocumentTypesService } from '@core/services/document-types.service';
 import { NotificationService } from '@core/services/notification.service';
 
 /**
@@ -96,7 +96,6 @@ export class DocumentTypeEditDialogComponent implements OnInit {
   private initForm(): void {
     this.form = this.fb.group({
       // General
-      code: [this.data.code || '', [Validators.required, Validators.maxLength(50)]],
       name: [this.data.name || '', [Validators.required, Validators.maxLength(100)]],
       description: [this.data.description || '', Validators.maxLength(1000)],
       displayOrder: [this.data.displayOrder ?? 0, [Validators.required, Validators.min(0)]],
@@ -148,21 +147,6 @@ export class DocumentTypeEditDialogComponent implements OnInit {
    * Configurar suscripciones para manejar dependencias entre campos
    */
   private setupFormSubscriptions(): void {
-    // Limpiar error de código no disponible cuando el usuario cambia el código
-    this.form.get('code')?.valueChanges.subscribe(() => {
-      const codeControl = this.form.get('code');
-      if (codeControl?.hasError('codeNotAvailable')) {
-        codeControl.setErrors(
-          Object.keys(codeControl.errors!)
-            .filter((key) => key !== 'codeNotAvailable')
-            .reduce(
-              (acc, key) => ({ ...acc, [key]: codeControl.errors![key] }),
-              {} as Record<string, unknown>,
-            ) || null,
-        );
-      }
-    });
-
     // Dependencia: hasExpiration
     this.form.get('hasExpiration')?.valueChanges.subscribe((hasExpiration) => {
       const expirationWarningDaysControl = this.form.get('expirationWarningDays');
@@ -291,7 +275,9 @@ export class DocumentTypeEditDialogComponent implements OnInit {
 
   /**
    * Guardar cambios (edición) o crear (creación)
-   * Valida el código antes de ejecutar la operación
+   * - Crear desde cero: backend autogenera code
+   * - Crear desde plantilla: usa code de plantilla
+   * - Editar: usa code existente
    */
   save(): void {
     if (!this.form.valid) {
@@ -304,46 +290,28 @@ export class DocumentTypeEditDialogComponent implements OnInit {
       return;
     }
 
+    // En modo edición, validar que existe el código
+    if (!this.isCreateMode && !this.data.code) {
+      this.notification.error('Error: No se encontró el código del tipo de documento');
+      return;
+    }
+
     this.saving.set(true);
 
-    // Obtener código del formulario
     const formValue = this.form.getRawValue();
-    const code = formValue.code.trim();
-
-    // Validar disponibilidad del código
-    const excludeId = !this.isCreateMode ? this.data.id : undefined;
-    this.documentTypesService.validateCode(code, excludeId).subscribe({
-      next: (validation: ValidateCodeResponse) => {
-        if (!validation.available) {
-          // Código no disponible
-          const scopeText = validation.scope === 'global' ? ' (global)' : '';
-          this.notification.error(`El código "${code}" ya está en uso${scopeText}. Elige otro.`);
-
-          // Marcar campo como inválido
-          this.form.get('code')?.setErrors({ codeNotAvailable: true });
-          this.form.get('code')?.markAsTouched();
-
-          this.saving.set(false);
-          return;
-        }
-
-        // Código disponible, continuar con guardado
-        this.performSave(formValue);
-      },
-      error: (error) => {
-        console.error('Error validating code:', error);
-        this.notification.error('No se pudo validar el código. Intente nuevamente.');
-        this.saving.set(false);
-      },
-    });
+    this.performSave(formValue);
   }
 
   /**
-   * Ejecutar guardado después de validar el código
+   * Ejecutar guardado
+   * - Crear desde cero: NO incluye code (backend autogenera)
+   * - Crear desde plantilla: incluye code de plantilla
+   * - Editar: incluye code existente
    */
   private performSave(formValue: Partial<DocumentType>): void {
     const payload: Partial<DocumentType> = {
-      code: formValue.code,
+      // Solo incluir code si existe (edición o plantilla), omitir si crear desde cero
+      ...(this.data.code ? { code: this.data.code } : {}),
       name: formValue.name,
       description: formValue.description || undefined,
       applicableTo: this.data.applicableTo || ['projects'], // Default si no existe
@@ -423,7 +391,6 @@ export class DocumentTypeEditDialogComponent implements OnInit {
     if (!control || !control.errors) return '';
 
     if (control.errors['required']) return 'Este campo es requerido';
-    if (control.errors['codeNotAvailable']) return 'Este código ya está en uso';
     if (control.errors['min']) return `Valor mínimo: ${control.errors['min'].min}`;
     if (control.errors['maxlength'])
       return `Máximo ${control.errors['maxlength'].requiredLength} caracteres`;
