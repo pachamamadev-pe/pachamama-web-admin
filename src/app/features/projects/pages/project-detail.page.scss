@@ -1,6 +1,6 @@
 .project-detail-container {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow: visible;
 }
 
 .loading-state {
@@ -13,8 +13,8 @@
 
 .detail-layout {
   display: flex;
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow: visible;
 }
 
 /* Sidebar with Stages */
@@ -23,17 +23,42 @@
   background-color: #f9fafb;
   border-right: 1px solid #e5e5e5;
   padding: 24px 16px;
-  overflow-y: auto;
+  overflow-y: visible;
   flex-shrink: 0;
+  align-self: flex-start;
+  transition: width 0.2s ease;
 
   @media (max-width: 768px) {
     display: none;
   }
 }
 
-.sidebar-title {
+.stages-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
   margin-bottom: 20px;
-  padding-left: 8px;
+}
+
+.stages-toggle-button {
+  flex-shrink: 0;
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 10px;
+  border-color: #e5e5e5;
+  color: #218358;
+  font-weight: 600;
+
+  mat-icon {
+    margin-right: 0.35rem;
+    color: #218358;
+  }
+}
+
+.sidebar-title {
+  margin-bottom: 0;
+  padding-left: 0;
 }
 
 .stages-list {
@@ -95,30 +120,60 @@
   color: #0a0a0a;
 }
 
+.stages-sidebar-collapsed {
+  width: 132px;
+  padding: 24px 8px;
+
+  .stages-header {
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .sidebar-title {
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .stages-toggle-button {
+    width: 100%;
+    justify-content: center;
+
+    span {
+      font-size: 12px;
+    }
+  }
+
+  .stages-list {
+    align-items: center;
+  }
+
+  .stage-item {
+    justify-content: center;
+    padding: 10px 8px;
+    width: 100%;
+    gap: 0;
+  }
+}
+
 /* Main Content */
 .main-content {
   flex: 1;
-  overflow-y: auto;
+  overflow: visible;
+  min-width: 0;
   position: relative;
 }
 
-/* Floating Action Button - Opción A */
-.floating-action-button {
-  position: sticky;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
+/* Stage Action Button */
+.stage-action-button {
   display: flex;
   justify-content: flex-end;
-  padding: 0 24px 16px 24px;
-  pointer-events: none;
+  margin-bottom: 12px;
 
   button {
-    pointer-events: all;
     box-shadow: 0 4px 12px rgba(33, 131, 88, 0.3);
     font-size: 16px;
     padding: 12px 24px;
-    animation: pulse 2s ease-in-out infinite;
 
     mat-icon {
       font-size: 24px;
@@ -134,36 +189,16 @@
   }
 
   @media (max-width: 768px) {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    top: unset;
-    padding: 0;
+    margin-bottom: 8px;
 
     button {
-      border-radius: 50%;
-      width: 64px;
-      height: 64px;
-      padding: 0;
-
-      span {
-        display: none;
-      }
-
-      mat-icon {
-        margin-right: 0;
-      }
+      font-size: 14px;
+      padding: 10px 16px;
     }
   }
-}
 
-@keyframes pulse {
-  0%,
-  100% {
-    box-shadow: 0 4px 12px rgba(33, 131, 88, 0.3);
-  }
-  50% {
-    box-shadow: 0 4px 16px rgba(33, 131, 88, 0.5);
+  @media (min-width: 768px) {
+    padding-right: 0;
   }
 }
 
@@ -260,11 +295,6 @@
   // Grupo de información básica (período y ubicación)
   &.meta-group-basic {
     margin-bottom: 8px;
-  }
-
-  // Grupo de límites operacionales (cuota y recolectores)
-  &.meta-group-limits {
-    // Sin margen adicional
   }
 }
 

@@ -118,6 +118,7 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   community = signal<Community | null>(null);
   loading = signal(true);
   selectedTabIndex = signal(0);
+  stagesSidebarCollapsed = signal(false);
 
   // Track which tabs have loaded their data (lazy loading)
   tabsLoaded = signal<Set<number>>(new Set([0])); // Tab 0 (Resumen) loads immediately
@@ -250,6 +251,10 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     const currentStage = this.project()?.stage;
     return (stageKey: string) => currentStage === stageKey;
   });
+
+  toggleStagesSidebar(): void {
+    this.stagesSidebarCollapsed.update((value) => !value);
+  }
 
   // Computed para calcular el progreso basado en la etapa actual
   projectProgress = computed(() => {

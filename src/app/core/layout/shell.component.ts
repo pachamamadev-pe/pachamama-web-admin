@@ -11,14 +11,14 @@ import { LayoutService } from './layout.service';
   imports: [RouterOutlet, SidebarComponent, HeaderComponent, LoadingComponent],
   template: `
     <div
-      class="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 lg:grid"
+      class="h-screen w-full max-w-full overflow-hidden bg-gray-50 lg:grid"
       [style.gridTemplateColumns]="
         layoutService.isSidebarCollapsed() ? '88px minmax(0, 1fr)' : '280px minmax(0, 1fr)'
       "
     >
       <!-- Sidebar -->
       <aside
-        class="fixed inset-y-0 left-0 z-20 w-72 -translate-x-full transform transition-transform duration-300 ease-in-out lg:relative lg:w-full lg:translate-x-0"
+        class="fixed inset-y-0 left-0 z-20 w-72 -translate-x-full transform transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:w-full lg:translate-x-0"
         [class.translate-x-0]="layoutService.isSidebarVisible()"
       >
         <app-sidebar />
@@ -37,9 +37,9 @@ import { LayoutService } from './layout.service';
       }
 
       <!-- Main content -->
-      <main class="flex min-h-screen min-w-0 flex-col bg-gray-50">
+      <main class="flex h-screen min-w-0 flex-col overflow-hidden bg-gray-50">
         <app-header />
-        <section class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
+        <section class="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <router-outlet />
         </section>
       </main>

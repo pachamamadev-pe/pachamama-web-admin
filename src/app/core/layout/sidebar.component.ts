@@ -51,7 +51,7 @@ export interface NavItem {
           "
         >
           <mat-icon>
-            {{ layoutService.isSidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
+            {{ 'menu' }}
           </mat-icon>
         </button>
         <!-- Close button (mobile only) -->
