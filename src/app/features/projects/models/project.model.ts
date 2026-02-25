@@ -119,6 +119,7 @@ export function getProjectStageLabel(stage?: string): string {
     collection: 'Recolección',
     completed: 'Completado',
     archived: 'Archivado',
+    ctp_entry: 'Acopio',
   };
 
   return labels[stage] || stage;
@@ -141,6 +142,7 @@ export function getProjectStageClass(stage?: string): string {
     collection: 'bg-amber-100 text-amber-700',
     completed: 'bg-emerald-100 text-emerald-700',
     archived: 'bg-gray-100 text-gray-600',
+    ctp_entry: 'bg-teal-100 text-teal-700',
   };
 
   return classes[stage] || 'bg-gray-100 text-gray-600';
