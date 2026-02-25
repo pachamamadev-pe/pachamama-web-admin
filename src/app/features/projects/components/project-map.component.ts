@@ -57,7 +57,16 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
 
   mapLoaded = output<GeoJSONFeatureCollection>();
 
-  @ViewChild('mapContainer', { static: false }) mapContainer?: ElementRef<HTMLDivElement>;
+  private mapContainerRef?: ElementRef<HTMLDivElement>;
+
+  @ViewChild('mapContainer', { static: false })
+  set mapContainer(value: ElementRef<HTMLDivElement> | undefined) {
+    this.mapContainerRef = value;
+
+    if (value && this.hasMap() && this.currentGeoJSON()) {
+      this.scheduleInitializeMap();
+    }
+  }
 
   private map: L.Map | null = null;
   private geoJsonLayer: L.GeoJSON | null = null;
@@ -111,7 +120,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private scheduleInitializeMap(attempt = 0): void {
-    const maxAttempts = 30; // ~1.5s
+    const maxAttempts = 120; // ~6s
 
     if (this.pendingInitTimer !== null) {
       window.clearTimeout(this.pendingInitTimer);
@@ -122,7 +131,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
       this.pendingInitTimer = null;
 
       const geoJSON = this.currentGeoJSON();
-      const container = this.mapContainer?.nativeElement;
+      const container = this.mapContainerRef?.nativeElement;
 
       if (!geoJSON || !container) {
         if (attempt < maxAttempts) {
@@ -132,10 +141,8 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
       }
 
       const hasSize = container.offsetWidth > 0 && container.offsetHeight > 0;
-      if (!hasSize) {
-        if (attempt < maxAttempts) {
-          this.scheduleInitializeMap(attempt + 1);
-        }
+      if (!hasSize && attempt < maxAttempts) {
+        this.scheduleInitializeMap(attempt + 1);
         return;
       }
 
@@ -340,7 +347,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
 
   private initializeMap(): void {
     const geoJSON = this.currentGeoJSON();
-    if (!geoJSON || !this.mapContainer) {
+    if (!geoJSON || !this.mapContainerRef) {
       return;
     }
 
@@ -362,7 +369,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
       });
       L.Marker.prototype.options.icon = iconDefault;
 
-      this.map = L.map(this.mapContainer.nativeElement, {
+      this.map = L.map(this.mapContainerRef.nativeElement, {
         zoomControl: true,
         attributionControl: true,
         scrollWheelZoom: false,
@@ -439,7 +446,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private setupResizeObserver(): void {
-    const container = this.mapContainer?.nativeElement;
+    const container = this.mapContainerRef?.nativeElement;
     if (!container) return;
 
     if (this.resizeObserver) {
