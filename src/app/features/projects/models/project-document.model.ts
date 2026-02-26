@@ -96,6 +96,37 @@ export interface DocumentRequirements {
 }
 
 /**
+ * Tipo de documento retornado por el endpoint de plantilla de requerimientos.
+ * Usa documentTypeId como campo propio (no hereda de DocumentType cuyo PK es 'id').
+ * No incluye campos de estado de carga propios de un proyecto específico.
+ */
+export interface TemplateDocumentType {
+  documentTypeId: string;
+  code: string;
+  name: string;
+  description?: string;
+  isRequired: boolean;
+  requiresApproval: boolean;
+  requiredForStages: ProjectStage[] | null;
+  maxFileSizeMb: number;
+  allowedMimeTypes: string[];
+  hasExpiration: boolean;
+  expirationWarningDays: number | null;
+  category: string;
+}
+
+/**
+ * Respuesta del endpoint de plantilla de requerimientos de documentos
+ * GET /api/v1/admin/documents/projects/requirements?stages=...
+ * (sin projectId - requerimientos de template sin contexto de proyecto)
+ */
+export interface TemplateRequirementsResponse {
+  documentTypes: TemplateDocumentType[];
+  totalRequired: number;
+  totalOptional: number;
+}
+
+/**
  * Request para subir un documento
  */
 export interface UploadDocumentRequest {

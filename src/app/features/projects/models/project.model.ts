@@ -64,6 +64,10 @@ export interface CreateProjectRequest {
   startDate?: string;
   endDate?: string;
   code: string; // Empty string as per requirements
+  /** Etapa inicial del proyecto: 'planning' (por defecto) o 'collection' */
+  initialStage?: string;
+  /** Estado inicial: 'active' (planning) o 'inactive' (collection, hasta activar con documentos) */
+  initialStatus?: string;
 }
 
 /**

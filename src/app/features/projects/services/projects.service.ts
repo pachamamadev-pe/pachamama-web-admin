@@ -137,6 +137,15 @@ export class ProjectsService {
   }
 
   /**
+   * Activa un proyecto (pasa de inactive a active)
+   * PATCH /api/v1/admin/projects/{projectId}/activate
+   * @param id - UUID del proyecto
+   */
+  activateProject(id: string): Observable<Project> {
+    return this.http.patch<Project>(`${this.apiUrl}/${id}/activate`, {});
+  }
+
+  /**
    * Elimina un proyecto
    * @param id - UUID del proyecto
    */

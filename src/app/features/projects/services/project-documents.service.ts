@@ -5,6 +5,7 @@ import { environment } from '@environments/environment';
 import {
   DocumentRequirements,
   ProjectDocument,
+  TemplateRequirementsResponse,
   UploadDocumentRequest,
   DocumentValidationResponse,
 } from '../models/project-document.model';
@@ -20,6 +21,16 @@ import { EntityDocument } from '@shared/models/entity-document.model';
 export class ProjectDocumentsService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/admin/documents/projects`;
+
+  /**
+   * Obtiene los requerimientos de documentos de plantilla (sin projectId)
+   * GET /api/v1/admin/documents/projects/requirements?stages=...
+   * @param stages - Lista de etapas para filtrar los tipos de documentos
+   */
+  getTemplateRequirements(stages: string[]): Observable<TemplateRequirementsResponse> {
+    const params = new HttpParams().set('stages', stages.join(','));
+    return this.http.get<TemplateRequirementsResponse>(`${this.apiUrl}/requirements`, { params });
+  }
 
   /**
    * Obtiene los requerimientos de documentos para un proyecto
