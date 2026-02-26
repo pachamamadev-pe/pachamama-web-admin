@@ -33,13 +33,7 @@ export interface NavItem {
       <!-- Header -->
       <div class="sidebar-header">
         <div class="logo-container">
-          @if (sidebarService.companyName()) {
-            <span class="company-name">
-              {{ sidebarService.companyName() }}
-            </span>
-          } @else {
-            <img src="/images/logo/logo.svg" alt="Pachamama" />
-          }
+          <img src="/images/logo/logo_lineal.svg" alt="Pachamama" />
         </div>
         <button
           mat-icon-button

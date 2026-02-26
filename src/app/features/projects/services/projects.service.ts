@@ -8,6 +8,9 @@ import {
   UpdateProjectRequest,
   ProjectStageUpdateDto,
   PageDto,
+  ProjectActivityTypeKpiResponse,
+  CollectorsGenderKpiResponse,
+  ActivityValidationStatusKpiResponse,
 } from '../models/project.model';
 
 /**
@@ -139,5 +142,39 @@ export class ProjectsService {
    */
   deleteProject(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Obtiene KPIs sincronizados por tipo de actividad para un proyecto
+   * GET /api/v1/admin/kpis/sync/by-activity-type?projectId={projectId}
+   */
+  getActivityTypeKpis(projectId: string): Observable<ProjectActivityTypeKpiResponse> {
+    const params = new HttpParams().set('projectId', projectId);
+    return this.http.get<ProjectActivityTypeKpiResponse>(
+      `${environment.apiUrl}/api/v1/admin/kpis/sync/by-activity-type`,
+      { params },
+    );
+  }
+
+  /**
+   * Obtiene KPIs de participación por género de recolectores para un proyecto
+   * GET /api/v1/admin/kpis/sync/collectors/gender/by-project/{projectId}
+   */
+  getCollectorsGenderKpis(projectId: string): Observable<CollectorsGenderKpiResponse> {
+    return this.http.get<CollectorsGenderKpiResponse>(
+      `${environment.apiUrl}/api/v1/admin/kpis/sync/collectors/gender/by-project/${projectId}`,
+    );
+  }
+
+  /**
+   * Obtiene KPIs de estado de validación de actividades por tipo para un proyecto
+   * GET /api/v1/admin/kpis/sync/activities/validation-status/by-project/{projectId}
+   */
+  getActivityValidationStatusKpis(
+    projectId: string,
+  ): Observable<ActivityValidationStatusKpiResponse> {
+    return this.http.get<ActivityValidationStatusKpiResponse>(
+      `${environment.apiUrl}/api/v1/admin/kpis/sync/activities/validation-status/by-project/${projectId}`,
+    );
   }
 }
