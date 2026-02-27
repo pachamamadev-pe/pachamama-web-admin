@@ -162,4 +162,12 @@ export class CollectionBatchesService {
   submitBatch(batchId: string): Observable<CollectionBatch> {
     return this.http.post<CollectionBatch>(`${this.apiUrl}/${batchId}/submit`, {});
   }
+
+  /**
+   * Marca el lote como documentos generados
+   * PATCH /{id}/documents-generated
+   */
+  markDocumentsGenerated(batchId: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${batchId}/documents-generated`, {});
+  }
 }

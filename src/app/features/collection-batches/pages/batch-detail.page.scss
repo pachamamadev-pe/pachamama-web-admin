@@ -93,6 +93,10 @@
     background: #e5e7eb;
     color: #374151;
   }
+  &.status-badge--documents_generated {
+    background: #dbeafe;
+    color: #1e40af;
+  }
 }
 
 // ─── Document Progress Bar ────────────────────────────────────────────────────
@@ -275,6 +279,13 @@
 .split-view {
   @apply flex flex-col lg:flex-row gap-4 mt-2;
   min-height: 600px;
+
+  &--readonly {
+    .pdf-panel {
+      flex: 1 1 100%;
+      max-width: 100%;
+    }
+  }
 }
 
 // ─── PDF Panel ────────────────────────────────────────────────────────────────

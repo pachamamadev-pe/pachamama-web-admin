@@ -5,7 +5,7 @@
 /**
  * Estado del lote de acopio
  */
-export type BatchStatus = 'draft' | 'pending' | 'validated' | 'closed';
+export type BatchStatus = 'draft' | 'pending' | 'validated' | 'closed' | 'documents_generated';
 
 /**
  * Tipo de transporte
@@ -485,6 +485,7 @@ export const BATCH_STATUS_LABELS: Record<BatchStatus, string> = {
   pending: 'Pendiente',
   validated: 'Validado',
   closed: 'Cerrado',
+  documents_generated: 'Docs. Generados',
 };
 
 /**
@@ -495,4 +496,5 @@ export const BATCH_STATUS_CLASSES: Record<BatchStatus, string> = {
   pending: 'status-pending',
   validated: 'status-validated',
   closed: 'status-closed',
+  documents_generated: 'status-documents-generated',
 };

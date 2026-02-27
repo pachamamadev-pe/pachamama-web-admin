@@ -217,22 +217,27 @@ export class BatchDetailPage implements OnInit {
   });
 
   /** El lote se puede enviar si los 3 documentos están generados y está en draft */
-  canSubmit = computed(() => {
+  allDocsGenerated = computed(() => {
     const b = this.batch();
     return (
-      b?.status === 'draft' &&
       !!b?.handlingRecordGenerated &&
       !!b?.originCertificateGenerated &&
       !!b?.transportWaybillGenerated
     );
   });
 
-  /** El lote está en modo solo lectura */
+  /** El lote está en modo solo lectura (formularios y botones de guardar ocultos) */
   isReadOnly = computed(
     () =>
       this.batch()?.status === 'pending' ||
       this.batch()?.status === 'validated' ||
-      this.batch()?.status === 'closed',
+      this.batch()?.status === 'closed' ||
+      this.batch()?.status === 'documents_generated',
+  );
+
+  /** Puede mostrar el botón de finalizar generación: docs generados y estado draft */
+  canFinalizeDocuments = computed(
+    () => this.batch()?.status === 'draft' && this.allDocsGenerated(),
   );
 
   /** Recolectores del resumen de actividades (para Doc 1) */
@@ -351,10 +356,8 @@ export class BatchDetailPage implements OnInit {
     const originDoc = batch.documents?.find((d) => d.codeDocument?.includes('ORIGIN_CERTIFICATE'));
     const originDocPath = this.getDocumentBlobPath(originDoc);
     if (originDocPath) {
-      console.debug('[BatchDetail] ORIGIN_CERTIFICATE path resolved:', originDocPath);
       this.azureStorage.getFileUrl(originDocPath).subscribe({
         next: (sasUrl) => {
-          console.debug('[BatchDetail] ORIGIN_CERTIFICATE SAS URL received');
           this.pdfUrls.update((urls) => ({ ...urls, 'transport-permit': sasUrl }));
         },
         error: () => console.warn('No se pudo cargar el PDF del certificado de procedencia'),
@@ -374,12 +377,32 @@ export class BatchDetailPage implements OnInit {
     }
   }
 
-  /** Pre-rellena fechas del formulario Doc 1 desde la solicitud asociada al lote */
+  /** Pre-rellena el formulario Doc 1 (contrato, fechas) desde metadata del lote y solicitud */
   private prefillHandlingRecordDates(batch: CollectionBatch): void {
-    const patch: Partial<{ startDate: Date; endDate: Date }> = {};
-    if (batch.requestStartDate)
+    const meta = batch.metadata;
+    const patch: Partial<{ contract: string; startDate: Date; endDate: Date }> = {};
+
+    // Contrato: desde metadata si está disponible
+    if (meta?.['contract'] && typeof meta['contract'] === 'string') {
+      patch.contract = meta['contract'];
+    }
+
+    // Fecha inicio: prefiere metadata, si no requestStartDate
+    const metaStart = meta?.['startDate'];
+    if (metaStart && typeof metaStart === 'string') {
+      patch.startDate = parseDateValue(metaStart) ?? undefined;
+    } else if (batch.requestStartDate) {
       patch.startDate = parseDateValue(batch.requestStartDate) ?? undefined;
-    if (batch.requestEndDate) patch.endDate = parseDateValue(batch.requestEndDate) ?? undefined;
+    }
+
+    // Fecha fin: prefiere metadata, si no requestEndDate
+    const metaEnd = meta?.['endDate'];
+    if (metaEnd && typeof metaEnd === 'string') {
+      patch.endDate = parseDateValue(metaEnd) ?? undefined;
+    } else if (batch.requestEndDate) {
+      patch.endDate = parseDateValue(batch.requestEndDate) ?? undefined;
+    }
+
     if (Object.keys(patch).length > 0) {
       this.handlingRecordForm.patchValue(patch);
     }
@@ -506,19 +529,20 @@ export class BatchDetailPage implements OnInit {
     this.batchesService.saveHandlingRecord(batch.id, data).subscribe({
       next: (updatedBatch) => {
         this.batch.set(updatedBatch);
-        this.initDocumentStatuses(updatedBatch);
+        this.refreshDocumentFlags(updatedBatch);
         this.notification.success('Ficha de registro guardada y documento generado');
         this.savingDoc.set(null);
-        // Load PDF from the returned document
         const doc = updatedBatch.documents?.find((d) =>
           d.codeDocument?.includes('HANDLING_RECORD'),
         );
         const docPath = this.getDocumentBlobPath(doc);
         if (docPath) {
+          // Invalidar caché y forzar remontaje del viewer con la nueva URL
+          this.azureStorage.clearCacheEntry(docPath);
+          this.pdfUrls.update((urls) => ({ ...urls, 'collectors-register': '' }));
           this.azureStorage.getFileUrl(docPath).subscribe({
             next: (sasUrl) => {
               this.pdfUrls.update((urls) => ({ ...urls, 'collectors-register': sasUrl }));
-              this.updateDocumentStatus('collectors-register', 'generated', sasUrl);
             },
             error: () =>
               this.notification.error('Documento generado pero no se pudo cargar el PDF'),
@@ -527,7 +551,6 @@ export class BatchDetailPage implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.notification.error('Error al guardar la ficha de registro');
         this.savingDoc.set(null);
       },
     });
@@ -569,7 +592,7 @@ export class BatchDetailPage implements OnInit {
     this.batchesService.saveOriginCertificate(batch.id, data).subscribe({
       next: (updatedBatch) => {
         this.batch.set(updatedBatch);
-        this.initDocumentStatuses(updatedBatch);
+        this.refreshDocumentFlags(updatedBatch);
         this.notification.success('Certificado de procedencia guardado y documento generado');
         this.savingDoc.set(null);
         const doc = updatedBatch.documents?.find((d) =>
@@ -577,12 +600,12 @@ export class BatchDetailPage implements OnInit {
         );
         const docPath = this.getDocumentBlobPath(doc);
         if (docPath) {
-          console.debug('[BatchDetail] saveOriginCertificate doc path resolved:', docPath);
+          // Invalidar caché y forzar remontaje del viewer con la nueva URL
+          this.azureStorage.clearCacheEntry(docPath);
+          this.pdfUrls.update((urls) => ({ ...urls, 'transport-permit': '' }));
           this.azureStorage.getFileUrl(docPath).subscribe({
             next: (sasUrl) => {
-              console.debug('[BatchDetail] saveOriginCertificate SAS URL received');
               this.pdfUrls.update((urls) => ({ ...urls, 'transport-permit': sasUrl }));
-              this.updateDocumentStatus('transport-permit', 'generated', sasUrl);
             },
             error: () =>
               this.notification.error('Documento generado pero no se pudo cargar el PDF'),
@@ -591,7 +614,6 @@ export class BatchDetailPage implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.notification.error('Error al guardar el certificado de procedencia');
         this.savingDoc.set(null);
       },
     });
@@ -650,7 +672,7 @@ export class BatchDetailPage implements OnInit {
     this.batchesService.saveTransportWaybill(batch.id, data).subscribe({
       next: (updatedBatch) => {
         this.batch.set(updatedBatch);
-        this.initDocumentStatuses(updatedBatch);
+        this.refreshDocumentFlags(updatedBatch);
         this.notification.success('Guía de transporte guardada y documento generado');
         this.savingDoc.set(null);
         const doc = updatedBatch.documents?.find((d) =>
@@ -658,10 +680,12 @@ export class BatchDetailPage implements OnInit {
         );
         const docPath = this.getDocumentBlobPath(doc);
         if (docPath) {
+          // Invalidar caché y forzar remontaje del viewer con la nueva URL
+          this.azureStorage.clearCacheEntry(docPath);
+          this.pdfUrls.update((urls) => ({ ...urls, 'transport-info': '' }));
           this.azureStorage.getFileUrl(docPath).subscribe({
             next: (sasUrl) => {
               this.pdfUrls.update((urls) => ({ ...urls, 'transport-info': sasUrl }));
-              this.updateDocumentStatus('transport-info', 'generated', sasUrl);
             },
             error: () =>
               this.notification.error('Documento generado pero no se pudo cargar el PDF'),
@@ -670,7 +694,6 @@ export class BatchDetailPage implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.notification.error('Error al guardar la guía de transporte');
         this.savingDoc.set(null);
       },
     });
@@ -687,43 +710,48 @@ export class BatchDetailPage implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.notification.error('Error al generar el documento');
         this.generatingDoc.set(null);
       },
     });
   }
 
-  // ─── Submit batch ────────────────────────────────────────────────────────────
-  confirmSubmit(): void {
+  // ─── Finalize documents ───────────────────────────────────────────────────────
+  confirmFinalizeDocuments(): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: '¿Enviar lote a aprobación?',
+        title: '¿Finalizar generación de documentos?',
         message:
-          'Una vez enviado, no podrás editar los documentos. El lote pasará a estado "Pendiente" hasta que sea revisado.',
-        confirmText: 'Confirmar envío',
+          'Una vez finalizado, no podrás editar ningún documento del lote. Esta acción es permanente.',
+        confirmText: 'Finalizar',
         type: 'warning',
       },
     });
 
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.submitBatch();
+        this.finalizeDocumentsGenerated();
       }
     });
   }
 
-  private submitBatch(): void {
+  private finalizeDocumentsGenerated(): void {
     this.submitting.set(true);
     const batchId = this.batch()!.id;
-    this.batchesService.submitBatch(batchId).subscribe({
-      next: (updated) => {
-        this.batch.set(updated);
-        this.notification.success('Lote enviado a aprobación correctamente');
-        this.submitting.set(false);
+    this.batchesService.markDocumentsGenerated(batchId).subscribe({
+      next: () => {
+        this.batchesService.getBatchById(batchId).subscribe({
+          next: (updated) => {
+            this.batch.set(updated);
+            this.notification.success(
+              'Documentos finalizados. El lote ya no puede ser modificado.',
+            );
+            this.submitting.set(false);
+          },
+          error: () => this.submitting.set(false),
+        });
       },
       error: (err) => {
         console.error(err);
-        this.notification.error('Error al enviar el lote a aprobación');
         this.submitting.set(false);
       },
     });
@@ -740,6 +768,16 @@ export class BatchDetailPage implements OnInit {
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+  /** Actualiza los flags de estado de documentos sin lanzar llamadas Azure */
+  private refreshDocumentFlags(batch: CollectionBatch): void {
+    if (batch.handlingRecordGenerated)
+      this.updateDocumentStatus('collectors-register', 'generated');
+    if (batch.originCertificateGenerated)
+      this.updateDocumentStatus('transport-permit', 'generated');
+    if (batch.transportWaybillGenerated) this.updateDocumentStatus('transport-info', 'generated');
+  }
+
   formatDate(dateString: string): string {
     const date = parseDateValue(dateString);
     if (!date) return '-';
@@ -762,6 +800,7 @@ export class BatchDetailPage implements OnInit {
       pending: 'status-pending',
       validated: 'status-validated',
       closed: 'status-closed',
+      documents_generated: 'status-documents-generated',
     };
     return map[status] ?? 'status-draft';
   }
