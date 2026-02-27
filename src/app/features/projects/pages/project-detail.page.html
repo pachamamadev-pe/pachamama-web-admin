@@ -9,13 +9,37 @@
     <!-- Main Content -->
     <div class="detail-layout">
       <!-- Sidebar with Stages -->
-      <aside class="stages-sidebar">
-        <h3 class="sidebar-title text-body font-bold text-accent-titles">Etapas del Proyecto</h3>
+      <aside class="stages-sidebar" [class.stages-sidebar-collapsed]="stagesSidebarCollapsed()">
+        <div class="stages-header">
+          <h3 class="sidebar-title text-body font-bold text-accent-titles">Etapas del Proyecto</h3>
+          <button
+            mat-stroked-button
+            type="button"
+            class="stages-toggle-button"
+            (click)="toggleStagesSidebar()"
+            [matTooltip]="stagesSidebarCollapsed() ? 'Expandir etapas' : 'Minimizar etapas'"
+            [attr.aria-label]="
+              stagesSidebarCollapsed()
+                ? 'Expandir etapas del proyecto'
+                : 'Minimizar etapas del proyecto'
+            "
+          >
+            <mat-icon>{{ stagesSidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+            <span>{{ stagesSidebarCollapsed() ? 'Expandir' : 'Minimizar' }}</span>
+          </button>
+        </div>
         <nav class="stages-list">
           @for (stage of stages; track stage.number) {
-            <div class="stage-item" [class.stage-active]="isStageActive()(stage.key)">
+            <div
+              class="stage-item"
+              [class.stage-active]="isStageActive()(stage.key)"
+              [matTooltip]="stage.name"
+              [matTooltipDisabled]="!stagesSidebarCollapsed()"
+            >
               <div class="stage-number">{{ stage.number }}</div>
-              <div class="stage-name">{{ stage.name }}</div>
+              @if (!stagesSidebarCollapsed()) {
+                <div class="stage-name">{{ stage.name }}</div>
+              }
             </div>
           }
         </nav>
@@ -23,27 +47,27 @@
 
       <!-- Main Content Area -->
       <main class="main-content">
-        <!-- Botón Flotante: Avanzar a Siguiente Etapa -->
-        <div class="floating-action-button">
-          <button
-            mat-raised-button
-            class="btn-primary btn-lg"
-            [disabled]="!canAdvanceToNextStage()"
-            (click)="advanceToNextStage()"
-            [matTooltip]="stageAdvanceBlockerMessage()"
-            [matTooltipDisabled]="canAdvanceToNextStage()"
-            matTooltipClass="stage-blocker-tooltip"
-          >
-            <mat-icon>arrow_forward</mat-icon>
-            <span>{{ nextStage() ? 'Avanzar a ' + nextStage()!.name : 'Siguiente Etapa' }}</span>
-          </button>
-        </div>
-
         <!-- Project Header -->
         <header class="project-header">
           <button mat-icon-button (click)="goBack()" class="back-button">
             <mat-icon>arrow_back</mat-icon>
           </button>
+
+          <!-- Botón: Avanzar a Siguiente Etapa -->
+          <div class="stage-action-button">
+            <button
+              mat-raised-button
+              class="btn-primary btn-lg"
+              [disabled]="!canAdvanceToNextStage()"
+              (click)="advanceToNextStage()"
+              [matTooltip]="stageAdvanceBlockerMessage()"
+              [matTooltipDisabled]="canAdvanceToNextStage()"
+              matTooltipClass="stage-blocker-tooltip"
+            >
+              <mat-icon>arrow_forward</mat-icon>
+              <span>{{ nextStage() ? 'Avanzar a ' + nextStage()!.name : 'Siguiente Etapa' }}</span>
+            </button>
+          </div>
 
           <div class="header-content-wrapper">
             <!-- Project Info -->
@@ -148,33 +172,64 @@
                         <mat-card-title>Participación por género</mat-card-title>
                       </mat-card-header>
                       <mat-card-content>
-                        <div class="participation-chart">
-                          <div class="chart-placeholder">
-                            <div class="pie-chart">
-                              <div class="pie-segment male"></div>
-                              <div class="pie-segment female"></div>
-                              <div class="pie-center">
-                                <span class="pie-value">18</span>
-                                <span class="pie-label">Participantes</span>
+                        @if (loadingCollectorsGenderKpis()) {
+                          <div class="chart-loading-state">
+                            <mat-spinner diameter="28" />
+                            <span class="text-subtitle text-neutral-subheading"
+                              >Cargando participación...</span
+                            >
+                          </div>
+                        } @else if (getCollectorsGenderTotal() === 0) {
+                          <div class="chart-empty-state">
+                            <mat-icon>groups</mat-icon>
+                            <span class="text-subtitle text-neutral-subheading"
+                              >Sin datos de participación aún</span
+                            >
+                          </div>
+                        } @else {
+                          <div class="participation-chart">
+                            <div class="chart-placeholder">
+                              <div class="pie-chart" [style.background]="getGenderChartGradient()">
+                                <div class="pie-center">
+                                  <span class="pie-value">{{ getCollectorsGenderTotal() }}</span>
+                                  <span class="pie-label">Participantes</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div class="chart-legend">
-                            <div class="legend-item">
-                              <span class="legend-dot male"></span>
-                              <span class="legend-text">Hombres</span>
+                            <div class="chart-legend">
+                              <div class="legend-item">
+                                <span class="legend-dot male"></span>
+                                <span class="legend-text"
+                                  >Hombres: {{ collectorsGenderKpis().male }} ({{
+                                    getGenderPercentage(collectorsGenderKpis().male)
+                                      | number: '1.0-0'
+                                  }}%)</span
+                                >
+                              </div>
+                              <div class="legend-item">
+                                <span class="legend-dot female"></span>
+                                <span class="legend-text"
+                                  >Mujeres: {{ collectorsGenderKpis().female }} ({{
+                                    getGenderPercentage(collectorsGenderKpis().female)
+                                      | number: '1.0-0'
+                                  }}%)</span
+                                >
+                              </div>
+                              <!--        <div class="legend-item">
+                                <span class="legend-dot other"></span>
+                                <span class="legend-text"
+                                  >Otro: {{ collectorsGenderKpis().other }}
+                                  ({{ getGenderPercentage(collectorsGenderKpis().other) | number: '1.0-0' }}%)</span
+                                >
+                              </div> -->
                             </div>
-                            <div class="legend-item">
-                              <span class="legend-dot female"></span>
-                              <span class="legend-text">Mujeres</span>
-                            </div>
                           </div>
-                        </div>
+                        }
                       </mat-card-content>
                     </mat-card>
 
                     <!-- Income Chart -->
-                    <mat-card class="summary-card">
+                    <!--      <mat-card class="summary-card">
                       <mat-card-header>
                         <mat-card-title>Ingresos generados para la comunidad (S/.)</mat-card-title>
                         <mat-card-subtitle>Enero - Junio 2025</mat-card-subtitle>
@@ -182,7 +237,7 @@
                       <mat-card-content>
                         <div class="income-chart">
                           <div class="chart-placeholder">
-                            <!-- Mock line chart -->
+                             Mock line chart 
                             <svg viewBox="0 0 400 150" class="line-chart">
                               <polyline
                                 points="0,100 50,80 100,60 150,90 200,70 250,50 300,65 350,55 400,60"
@@ -219,7 +274,7 @@
                           </div>
                         </div>
                       </mat-card-content>
-                    </mat-card>
+                    </mat-card> -->
                   </div>
 
                   <!-- Right Column -->
@@ -231,39 +286,123 @@
                       [canEditMap]="canEditMap()"
                     />
 
-                    <!-- Community Stats -->
+                    <!-- KPIs por tipo de actividad -->
                     <div class="stats-group">
-                      <mat-card class="stat-card">
-                        <mat-card-content>
-                          <div class="stat-icon">
-                            <mat-icon>groups</mat-icon>
-                          </div>
-                          <div class="stat-info">
-                            <div class="stat-label">Empleo de personas con discapacidad</div>
-                            <div class="stat-value">2</div>
-                            <div class="stat-change positive">
-                              <mat-icon>trending_up</mat-icon>
-                              Crecimiento este mes
+                      @if (loadingActivityTypeKpis()) {
+                        <mat-card class="stat-card">
+                          <mat-card-content class="stat-loading-content">
+                            <mat-spinner diameter="24" />
+                            <span class="text-subtitle text-neutral-subheading"
+                              >Cargando KPIs del proyecto...</span
+                            >
+                          </mat-card-content>
+                        </mat-card>
+                      } @else if (activityTypeKpis().length === 0) {
+                        <mat-card class="stat-card">
+                          <mat-card-content>
+                            <div class="stat-icon">
+                              <mat-icon>insights</mat-icon>
                             </div>
-                          </div>
-                        </mat-card-content>
-                      </mat-card>
+                            <div class="stat-info">
+                              <div class="stat-label">KPIs por tipo de actividad</div>
+                              <div class="stat-empty-message text-subtitle text-neutral-subheading">
+                                Aún no hay estadísticas disponibles para este proyecto.
+                              </div>
+                            </div>
+                          </mat-card-content>
+                        </mat-card>
+                      } @else {
+                        <mat-card class="summary-card kpi-chart-card">
+                          <mat-card-header>
+                            <mat-card-title>Estado de validación por tipo</mat-card-title>
+                            <mat-card-subtitle
+                              >Pendientes, aprobadas y rechazadas</mat-card-subtitle
+                            >
+                          </mat-card-header>
+                          <mat-card-content>
+                            @if (loadingActivityValidationStatusKpis()) {
+                              <div class="chart-loading-state">
+                                <mat-spinner diameter="24" />
+                                <span class="text-subtitle text-neutral-subheading"
+                                  >Cargando estados de validación...</span
+                                >
+                              </div>
+                            } @else if (activityValidationStatusChartItems().length === 0) {
+                              <div class="chart-empty-state">
+                                <mat-icon>insights</mat-icon>
+                                <span class="text-subtitle text-neutral-subheading"
+                                  >Sin estados de validación disponibles</span
+                                >
+                              </div>
+                            } @else {
+                              <div class="validation-chart-list">
+                                @for (
+                                  item of activityValidationStatusChartItems();
+                                  track item.activityType
+                                ) {
+                                  <div class="validation-chart-row">
+                                    <div class="validation-row-header">
+                                      <span class="validation-type">{{
+                                        getActivityTypeDisplayName(item.activityType)
+                                      }}</span>
+                                      <span class="validation-total"
+                                        >{{ item.status.total }} total</span
+                                      >
+                                    </div>
 
-                      <mat-card class="stat-card">
-                        <mat-card-content>
-                          <div class="stat-icon">
-                            <mat-icon>person_add</mat-icon>
-                          </div>
-                          <div class="stat-info">
-                            <div class="stat-label">Nuevos comuneros</div>
-                            <div class="stat-value">4</div>
-                            <div class="stat-change positive">
-                              <mat-icon>trending_up</mat-icon>
-                              Crecimiento este mes
-                            </div>
-                          </div>
-                        </mat-card-content>
-                      </mat-card>
+                                    <div class="validation-bars">
+                                      <div class="validation-bar-row">
+                                        <span class="validation-bar-label pending">Pendiente</span>
+                                        <div class="validation-bar-track">
+                                          <div
+                                            class="validation-bar-fill validation-pending"
+                                            [style.width.%]="
+                                              getValidationStatusWidth(item.status, 'pending')
+                                            "
+                                          ></div>
+                                        </div>
+                                        <span class="validation-bar-value">{{
+                                          item.status.pending
+                                        }}</span>
+                                      </div>
+
+                                      <div class="validation-bar-row">
+                                        <span class="validation-bar-label approved">Aprobada</span>
+                                        <div class="validation-bar-track">
+                                          <div
+                                            class="validation-bar-fill validation-approved"
+                                            [style.width.%]="
+                                              getValidationStatusWidth(item.status, 'approved')
+                                            "
+                                          ></div>
+                                        </div>
+                                        <span class="validation-bar-value">{{
+                                          item.status.approved
+                                        }}</span>
+                                      </div>
+
+                                      <div class="validation-bar-row">
+                                        <span class="validation-bar-label rejected">Rechazada</span>
+                                        <div class="validation-bar-track">
+                                          <div
+                                            class="validation-bar-fill validation-rejected"
+                                            [style.width.%]="
+                                              getValidationStatusWidth(item.status, 'rejected')
+                                            "
+                                          ></div>
+                                        </div>
+                                        <span class="validation-bar-value">{{
+                                          item.status.rejected
+                                        }}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </mat-card-content>
+                        </mat-card>
+                      }
                     </div>
                   </div>
                 </div>

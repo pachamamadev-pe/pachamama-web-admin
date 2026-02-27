@@ -53,7 +53,13 @@ import { BrigadesTabComponent } from '../components/brigades-tab.component';
 import { DocumentsTabComponent } from '../components/documents-tab.component';
 import { CollectionReviewTabComponent } from '../components/collection-review-tab.component';
 import { ProjectMapComponent } from '../components/project-map.component';
-import { getProjectStageLabel, getProjectStageClass } from '../models/project.model';
+import {
+  getProjectStageLabel,
+  getProjectStageClass,
+  ProjectActivityTypeKpi,
+  CollectorsGenderKpi,
+  ActivityValidationStatusKpi,
+} from '../models/project.model';
 import { BrigadeFormDialogComponent } from '../components/brigade-form.component';
 import { ConfigurationTabComponent } from '../components/configuration-tab.component';
 import { CollectionBatchesTabComponent } from '../../collection-batches/components/collection-batches-tab.component';
@@ -62,6 +68,11 @@ interface ProjectStage {
   number: number;
   name: string;
   key: string;
+}
+
+interface ActivityValidationStatusChartItem {
+  activityType: string;
+  status: ActivityValidationStatusKpi;
 }
 
 @Component({
@@ -120,6 +131,18 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   community = signal<Community | null>(null);
   loading = signal(true);
   selectedTabIndex = signal(0);
+  stagesSidebarCollapsed = signal(false);
+  activityTypeKpis = signal<ProjectActivityTypeKpi[]>([]);
+  loadingActivityTypeKpis = signal(false);
+  collectorsGenderKpis = signal<CollectorsGenderKpi>({
+    male: 0,
+    female: 0,
+    other: 0,
+    total: 0,
+  });
+  loadingCollectorsGenderKpis = signal(false);
+  activityValidationStatusKpis = signal<Record<string, ActivityValidationStatusKpi>>({});
+  loadingActivityValidationStatusKpis = signal(false);
 
   // Track which tabs have loaded their data (lazy loading)
   tabsLoaded = signal<Set<number>>(new Set([0])); // Tab 0 (Resumen) loads immediately
@@ -252,6 +275,10 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     const currentStage = this.project()?.stage;
     return (stageKey: string) => currentStage === stageKey;
   });
+
+  toggleStagesSidebar(): void {
+    this.stagesSidebarCollapsed.update((value) => !value);
+  }
 
   // Computed para calcular el progreso basado en la etapa actual
   projectProgress = computed(() => {
@@ -588,6 +615,9 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     this.projectsService.getProjectById(id).subscribe({
       next: (project) => {
         this.project.set(project);
+        this.loadActivityTypeKpis(id);
+        this.loadCollectorsGenderKpis(id);
+        this.loadActivityValidationStatusKpis(id);
 
         //  comunidad relacionados
         forkJoin({
@@ -1266,6 +1296,163 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         this.projectActivitiesTotal.set(0);
       },
     });
+  }
+
+  /**
+   * Carga KPIs por tipo de actividad para el resumen del proyecto
+   */
+  loadActivityTypeKpis(projectId: string): void {
+    this.loadingActivityTypeKpis.set(true);
+    this.projectsService.getActivityTypeKpis(projectId).subscribe({
+      next: (response) => {
+        this.activityTypeKpis.set(response.data ?? []);
+        this.loadingActivityTypeKpis.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading activity type KPIs:', error);
+        this.activityTypeKpis.set([]);
+        this.loadingActivityTypeKpis.set(false);
+      },
+    });
+  }
+
+  /**
+   * Carga KPIs de participación por género para el resumen del proyecto
+   */
+  loadCollectorsGenderKpis(projectId: string): void {
+    this.loadingCollectorsGenderKpis.set(true);
+    this.projectsService.getCollectorsGenderKpis(projectId).subscribe({
+      next: (response) => {
+        this.collectorsGenderKpis.set(response.data);
+        this.loadingCollectorsGenderKpis.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading collectors gender KPIs:', error);
+        this.collectorsGenderKpis.set({ male: 0, female: 0, other: 0, total: 0 });
+        this.loadingCollectorsGenderKpis.set(false);
+      },
+    });
+  }
+
+  /**
+   * Carga KPIs de estado de validación por tipo de actividad
+   */
+  loadActivityValidationStatusKpis(projectId: string): void {
+    this.loadingActivityValidationStatusKpis.set(true);
+    this.projectsService.getActivityValidationStatusKpis(projectId).subscribe({
+      next: (response) => {
+        this.activityValidationStatusKpis.set(response.data ?? {});
+        this.loadingActivityValidationStatusKpis.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading activity validation status KPIs:', error);
+        this.activityValidationStatusKpis.set({});
+        this.loadingActivityValidationStatusKpis.set(false);
+      },
+    });
+  }
+
+  /**
+   * Obtiene una etiqueta legible para el tipo de actividad
+   */
+  getActivityTypeDisplayName(activityType: string): string {
+    const labels: Record<string, string> = {
+      inventory: 'Inventario',
+      harvest: 'Cosecha',
+      collection: 'Recolección',
+      ctp_entry: 'Acopio / Ingreso a CTP',
+      primary_transformation: 'Transformación primaria',
+      map_adjustment: 'Ajuste de mapas',
+    };
+
+    return labels[activityType] ?? activityType;
+  }
+
+  getActivityKpiBarWidth(value: number): number {
+    const maxValue = Math.max(...this.activityTypeKpis().map((kpi) => kpi.totalActivities), 0);
+    if (maxValue <= 0) {
+      return 0;
+    }
+
+    return (value / maxValue) * 100;
+  }
+
+  activityValidationStatusChartItems = computed<ActivityValidationStatusChartItem[]>(() => {
+    const data = this.activityValidationStatusKpis();
+    return Object.entries(data).map(([activityType, status]) => ({
+      activityType,
+      status,
+    }));
+  });
+
+  getValidationStatusWidth(
+    status: ActivityValidationStatusKpi,
+    validationStatus: 'pending' | 'approved' | 'rejected',
+  ): number {
+    const total = status.total || status.pending + status.approved + status.rejected;
+    if (total <= 0) {
+      return 0;
+    }
+
+    return (status[validationStatus] / total) * 100;
+  }
+
+  getActivityMetricBarWidth(
+    kpi: ProjectActivityTypeKpi,
+    metric: 'failed' | 'retries' | 'recovered',
+  ): number {
+    const metricValue =
+      metric === 'failed'
+        ? kpi.failedActivities
+        : metric === 'retries'
+          ? kpi.retries
+          : kpi.recovered;
+
+    const reference = Math.max(
+      kpi.totalActivities,
+      kpi.failedActivities,
+      kpi.retries,
+      kpi.recovered,
+      1,
+    );
+
+    return (metricValue / reference) * 100;
+  }
+
+  private getGenderTotal(): number {
+    const data = this.collectorsGenderKpis();
+    const calculatedTotal = data.male + data.female + data.other;
+    return data.total > 0 ? data.total : calculatedTotal;
+  }
+
+  getGenderPercentage(value: number): number {
+    const total = this.getGenderTotal();
+    if (total <= 0) {
+      return 0;
+    }
+
+    return (value / total) * 100;
+  }
+
+  getCollectorsGenderTotal(): number {
+    return this.getGenderTotal();
+  }
+
+  getGenderChartGradient(): string {
+    const male = this.getGenderPercentage(this.collectorsGenderKpis().male);
+    const female = this.getGenderPercentage(this.collectorsGenderKpis().female);
+    const other = this.getGenderPercentage(this.collectorsGenderKpis().other);
+
+    const maleEnd = male;
+    const femaleEnd = male + female;
+    const otherEnd = femaleEnd + other;
+
+    return `conic-gradient(
+      #3b82f6 0% ${maleEnd}%,
+      #ec4899 ${maleEnd}% ${femaleEnd}%,
+      #f59e0b ${femaleEnd}% ${otherEnd}%,
+      #e5e5e5 ${otherEnd}% 100%
+    )`;
   }
 
   /**

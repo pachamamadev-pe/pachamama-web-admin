@@ -64,6 +64,10 @@ export interface CreateProjectRequest {
   startDate?: string;
   endDate?: string;
   code: string; // Empty string as per requirements
+  /** Etapa inicial del proyecto: 'planning' (por defecto) o 'collection' */
+  initialStage?: string;
+  /** Estado inicial: 'active' (planning) o 'inactive' (collection, hasta activar con documentos) */
+  initialStatus?: string;
 }
 
 /**
@@ -101,6 +105,71 @@ export interface PageDto<T> {
 }
 
 /**
+ * KPI por tipo de actividad en un proyecto
+ */
+export interface ProjectActivityTypeKpi {
+  activityType: string;
+  totalActivities: number;
+  failedActivities: number;
+  retries: number;
+  recovered: number;
+}
+
+/**
+ * Meta de respuesta para KPIs por tipo de actividad
+ */
+export interface ProjectKpiMeta {
+  limit: number | null;
+  offset: number | null;
+  dateFrom: string | null;
+  dateTo: string | null;
+}
+
+/**
+ * Respuesta del endpoint de KPIs por tipo de actividad
+ */
+export interface ProjectActivityTypeKpiResponse {
+  data: ProjectActivityTypeKpi[];
+  meta: ProjectKpiMeta;
+}
+
+/**
+ * KPIs de participación por género de recolectores en un proyecto
+ */
+export interface CollectorsGenderKpi {
+  male: number;
+  female: number;
+  other: number;
+  total: number;
+}
+
+/**
+ * Respuesta del endpoint de KPIs de género por proyecto
+ */
+export interface CollectorsGenderKpiResponse {
+  data: CollectorsGenderKpi;
+  meta: ProjectKpiMeta;
+}
+
+/**
+ * KPI de estado de validación por tipo de actividad
+ */
+export interface ActivityValidationStatusKpi {
+  pending: number;
+  approved: number;
+  rejected: number;
+  total: number;
+}
+
+/**
+ * Respuesta del endpoint de validación de actividades por proyecto
+ */
+export interface ActivityValidationStatusKpiResponse {
+  data: Record<string, ActivityValidationStatusKpi>;
+  meta: ProjectKpiMeta;
+}
+
+/**
  * Helper para obtener el label en español de una etapa
  */
 export function getProjectStageLabel(stage?: string): string {
@@ -119,6 +188,7 @@ export function getProjectStageLabel(stage?: string): string {
     collection: 'Recolección',
     completed: 'Completado',
     archived: 'Archivado',
+    ctp_entry: 'Acopio',
   };
 
   return labels[stage] || stage;
@@ -141,6 +211,7 @@ export function getProjectStageClass(stage?: string): string {
     collection: 'bg-amber-100 text-amber-700',
     completed: 'bg-emerald-100 text-emerald-700',
     archived: 'bg-gray-100 text-gray-600',
+    ctp_entry: 'bg-teal-100 text-teal-700',
   };
 
   return classes[stage] || 'bg-gray-100 text-gray-600';

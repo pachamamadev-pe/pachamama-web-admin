@@ -33,14 +33,21 @@ export interface NavItem {
       <!-- Header -->
       <div class="sidebar-header">
         <div class="logo-container">
-          @if (sidebarService.companyName()) {
-            <span class="company-name">
-              {{ sidebarService.companyName() }}
-            </span>
-          } @else {
-            <img src="/images/logo/logo.svg" alt="Pachamama" />
-          }
+          <img src="/images/logo/logo_lineal.svg" alt="Pachamama" />
         </div>
+        <button
+          mat-icon-button
+          (click)="layoutService.toggleSidebarCollapse()"
+          class="collapse-button"
+          [matTooltip]="layoutService.isSidebarCollapsed() ? 'Expandir menú' : 'Minimizar menú'"
+          [attr.aria-label]="
+            layoutService.isSidebarCollapsed() ? 'Expandir menú lateral' : 'Minimizar menú lateral'
+          "
+        >
+          <mat-icon>
+            {{ 'menu' }}
+          </mat-icon>
+        </button>
         <!-- Close button (mobile only) -->
         <button
           mat-icon-button
@@ -92,6 +99,7 @@ export interface NavItem {
   `,
   host: {
     class: 'block h-full',
+    '[class.sidebar-collapsed]': 'layoutService.isSidebarCollapsed()',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -173,6 +173,13 @@ export class ProjectsPage implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
+      // Nuevo flujo autónomo: el modal ya ejecutó todos los endpoints internamente
+      if (result?.success) {
+        this.loadProjects();
+        return;
+      }
+
+      // Flujo legacy (compatibilidad)
       if (result && result.mode === 'create') {
         const companyId = this.sidebarService.tenantId();
         if (!companyId) {
@@ -180,13 +187,11 @@ export class ProjectsPage implements OnInit {
           return;
         }
 
-        // Set companyId from SidebarService
         const createData: CreateProjectRequest = {
           ...result.data,
           companyId: companyId,
         };
 
-        // Crear proyecto y luego vincular con comunidad
         this.createProjectWithCommunity(createData, result.communityId);
       }
     });

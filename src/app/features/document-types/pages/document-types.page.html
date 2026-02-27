@@ -105,7 +105,6 @@
           <table class="table-auto w-full">
             <thead class="table-header">
               <tr>
-                <th class="table-th text-left">Código</th>
                 <th class="table-th text-left">Nombre</th>
                 <th class="table-th text-left hidden xl:table-cell">Descripción</th>
                 <th class="table-th text-center">Requerido</th>
@@ -117,13 +116,6 @@
             <tbody class="table-body">
               @for (docType of filteredDocumentTypes(); track docType.id) {
                 <tr class="table-row" (click)="viewDetails(docType)">
-                  <!-- Código -->
-                  <td class="table-td">
-                    <span class="text-body font-mono text-secondary font-bold">
-                      {{ docType.code }}
-                    </span>
-                  </td>
-
                   <!-- Nombre -->
                   <td class="table-td">
                     <div class="flex flex-col">

@@ -131,11 +131,16 @@
       } @else {
         <!-- Desktop Table (hidden on mobile) -->
         <div class="forms-table hidden md:block">
-          <table class="table-auto w-full">
+          <table class="table-auto w-full responsive-table">
             <thead class="table-header">
               <tr>
                 <th class="table-th text-left">Registro</th>
-                <th class="table-th text-left">Código árbol</th>
+                <th class="table-th text-left">
+                  {{ activeTab() === 'harvest' ? 'Código árbol o troza' : 'Código árbol' }}
+                </th>
+                @if (activeTab() === 'harvest') {
+                  <th class="table-th text-left">Código de árbol padre</th>
+                }
                 <th class="table-th text-left">Fecha de captura</th>
                 <th class="table-th text-left">Tipo</th>
                 <th class="table-th text-left">Estado</th>
@@ -158,6 +163,13 @@
                       {{ getForestCodeDisplay(activity) }}
                     </span>
                   </td>
+                  @if (activeTab() === 'harvest') {
+                    <td class="table-td">
+                      <span class="text-body text-accent-titles">
+                        {{ activity.forestParentUnitManualCode || '-' }}
+                      </span>
+                    </td>
+                  }
                   <td class="table-td">
                     <span class="text-body text-neutral-subheading">
                       {{ activity.deviceTimestamp | date: 'dd/MM/yy HH:mm' }}
@@ -246,6 +258,15 @@
                     {{ getForestCodeDisplay(activity) }}
                   </span>
                 </div>
+                @if (activeTab() === 'harvest') {
+                  <div class="detail-row">
+                    <mat-icon class="detail-icon">account_tree</mat-icon>
+                    <span class="detail-label">Código de árbol padre:</span>
+                    <span class="detail-value">
+                      {{ activity.forestParentUnitManualCode || '-' }}
+                    </span>
+                  </div>
+                }
                 <div class="detail-row">
                   <mat-icon class="detail-icon">calendar_today</mat-icon>
                   <span class="detail-label">Fecha:</span>

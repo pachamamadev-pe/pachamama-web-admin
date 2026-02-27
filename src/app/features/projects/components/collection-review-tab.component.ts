@@ -76,7 +76,11 @@ import { parseDateValue } from '@shared/utils/date-helpers';
 
         <!-- Requests Table -->
         <div class="requests-table-container">
-          <table mat-table [dataSource]="filteredRequests()" class="requests-table">
+          <table
+            mat-table
+            [dataSource]="filteredRequests()"
+            class="requests-table responsive-table"
+          >
             <!-- Request Number -->
             <ng-container matColumnDef="requestNumber">
               <th mat-header-cell *matHeaderCellDef class="table-th">N° Solicitud</th>
@@ -227,11 +231,17 @@ import { parseDateValue } from '@shared/utils/date-helpers';
         background-color: white;
         border: 1px solid #e5e5e5;
         border-radius: 12px;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
       }
 
       .requests-table {
         width: 100%;
+      }
+
+      .responsive-table {
+        min-width: 980px;
       }
 
       ::ng-deep .mat-mdc-header-row {

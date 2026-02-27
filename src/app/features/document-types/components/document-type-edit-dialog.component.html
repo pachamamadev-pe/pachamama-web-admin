@@ -32,24 +32,6 @@
         <h3 class="section-title">General</h3>
 
         <div class="form-grid">
-          <!-- Código -->
-          <mat-form-field appearance="outline">
-            <mat-label>Código</mat-label>
-            <input matInput formControlName="code" placeholder="PMF" maxlength="50" />
-            @if (form.get('code')?.invalid && form.get('code')?.touched) {
-              <mat-error>{{ getErrorMessage('code') }}</mat-error>
-            }
-          </mat-form-field>
-
-          <!-- Display Order -->
-          <mat-form-field appearance="outline">
-            <mat-label>Orden de visualización</mat-label>
-            <input matInput type="number" formControlName="displayOrder" min="0" />
-            @if (form.get('displayOrder')?.invalid && form.get('displayOrder')?.touched) {
-              <mat-error>{{ getErrorMessage('displayOrder') }}</mat-error>
-            }
-          </mat-form-field>
-
           <!-- Nombre (full width) -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Nombre</mat-label>
@@ -87,6 +69,15 @@
             <mat-label>Icono (Material Icon)</mat-label>
             <input matInput formControlName="icon" placeholder="assignment" />
             <mat-icon matPrefix>{{ form.get('icon')?.value || 'description' }}</mat-icon>
+          </mat-form-field>
+
+          <!-- Display Order -->
+          <mat-form-field appearance="outline">
+            <mat-label>Orden de visualización</mat-label>
+            <input matInput type="number" formControlName="displayOrder" min="0" />
+            @if (form.get('displayOrder')?.invalid && form.get('displayOrder')?.touched) {
+              <mat-error>{{ getErrorMessage('displayOrder') }}</mat-error>
+            }
           </mat-form-field>
         </div>
       </div>

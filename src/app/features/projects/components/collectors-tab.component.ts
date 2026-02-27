@@ -53,7 +53,11 @@ import { Brigade } from '../models/brigade.model';
         <!-- Collectors Table (Desktop) -->
         <div class="desktop-only">
           <div class="collectors-table">
-            <table mat-table [dataSource]="paginatedCollectors()" class="table-auto w-full">
+            <table
+              mat-table
+              [dataSource]="paginatedCollectors()"
+              class="table-auto w-full responsive-table"
+            >
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef class="table-th text-left">Nombres</th>
                 <td mat-cell *matCellDef="let collector" class="table-td">
@@ -193,8 +197,15 @@ import { Brigade } from '../models/brigade.model';
                       <span class="detail-value">{{ collector.phone }}</span>
                     </div>
                   }
+                  @if (collector.currentBrigadeName) {
+                    <div class="detail-row">
+                      <mat-icon class="detail-icon">groups</mat-icon>
+                      <span class="detail-label">Brigada:</span>
+                      <span class="detail-value">{{ collector.currentBrigadeName }}</span>
+                    </div>
+                  }
 
-                  <div class="detail-row">
+                  <!--  <div class="detail-row">
                     <mat-icon class="detail-icon">groups</mat-icon>
                     <span class="detail-label">Brigada:</span>
                     <mat-form-field class="brigade-selector-mobile" appearance="outline">
@@ -211,7 +222,7 @@ import { Brigade } from '../models/brigade.model';
                         }
                       </mat-select>
                     </mat-form-field>
-                  </div>
+                  </div> -->
                 </div>
 
                 <div class="card-actions mt-4">
@@ -290,8 +301,14 @@ import { Brigade } from '../models/brigade.model';
     .collectors-table {
       background: white;
       border-radius: 8px;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .responsive-table {
+      min-width: 980px;
     }
 
     .table-th {

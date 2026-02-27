@@ -63,7 +63,7 @@ import { Brigade } from '../models/brigade.model';
         <!-- Brigades Table (Desktop) -->
         <div class="desktop-only">
           <div class="brigades-table">
-            <table mat-table [dataSource]="brigades()" class="table-auto w-full">
+            <table mat-table [dataSource]="brigades()" class="table-auto w-full responsive-table">
               <ng-container matColumnDef="code">
                 <th mat-header-cell *matHeaderCellDef class="table-th text-left">Código</th>
                 <td mat-cell *matCellDef="let brigade" class="table-td">
@@ -78,14 +78,19 @@ import { Brigade } from '../models/brigade.model';
                 </td>
               </ng-container>
 
-              <ng-container matColumnDef="request">
-                <th mat-header-cell *matHeaderCellDef class="table-th text-left">Solicitud</th>
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef class="table-th text-left">Tipo</th>
                 <td mat-cell *matCellDef="let brigade" class="table-td">
-                  @if (brigade.collectionRequestId) {
-                    <mat-chip class="request-chip">Aprobada</mat-chip>
-                  } @else {
-                    <span class="text-subtitle text-neutral-subheading">Sin solicitud</span>
-                  }
+                  {{ brigade.collectionRequestId ? 'Recolección' : 'Inventario' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="request">
+                <th mat-header-cell *matHeaderCellDef class="table-th text-left">
+                  Número de solicitud
+                </th>
+                <td mat-cell *matCellDef="let brigade" class="table-td">
+                  {{ brigade.collectionRequestCode || '-' }}
                 </td>
               </ng-container>
 
@@ -166,10 +171,17 @@ import { Brigade } from '../models/brigade.model';
 
                 <div class="card-details space-y-2">
                   <div class="detail-row">
-                    <mat-icon class="detail-icon">assignment</mat-icon>
-                    <span class="detail-label">Solicitud:</span>
+                    <mat-icon class="detail-icon">category</mat-icon>
+                    <span class="detail-label">Tipo:</span>
                     <span class="detail-value">
-                      {{ brigade.collectionRequestId ? 'Aprobada' : 'Sin solicitud' }}
+                      {{ brigade.collectionRequestId ? 'Recolección' : 'Inventario' }}
+                    </span>
+                  </div>
+                  <div class="detail-row">
+                    <mat-icon class="detail-icon">assignment</mat-icon>
+                    <span class="detail-label">Número de solicitud:</span>
+                    <span class="detail-value">
+                      {{ brigade.collectionRequestCode || '-' }}
                     </span>
                   </div>
                   <div class="detail-row">
@@ -282,8 +294,14 @@ import { Brigade } from '../models/brigade.model';
     .brigades-table {
       background: white;
       border-radius: 8px;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .responsive-table {
+      min-width: 860px;
     }
 
     .table-th {
@@ -390,6 +408,17 @@ import { Brigade } from '../models/brigade.model';
       gap: 1rem;
     }
 
+    @media (max-width: 767px) {
+      .brigades-container {
+        padding: 0.75rem;
+      }
+
+      .empty-state,
+      .loading-container {
+        padding: 2rem 1rem;
+      }
+    }
+
     .brigade-card {
       border: 1px solid #e5e5e5;
     }
@@ -446,7 +475,7 @@ export class BrigadesTabComponent {
   totalElements = signal(0);
 
   // Table columns
-  displayedColumns: string[] = ['code', 'name', 'request', 'status', 'members', 'actions'];
+  displayedColumns: string[] = ['code', 'name', 'type', 'request', 'status', 'members', 'actions'];
 
   constructor() {
     // Load brigades when shouldLoad becomes true (only once)

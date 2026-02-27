@@ -281,7 +281,9 @@
 ============================================ */
 .forms-table {
   @apply bg-primary-white rounded-lg shadow;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 
   // Hide on mobile
   display: none;
@@ -293,6 +295,10 @@
   table {
     width: 100%;
     border-collapse: collapse;
+  }
+
+  .responsive-table {
+    min-width: 980px;
   }
 
   .table-header {

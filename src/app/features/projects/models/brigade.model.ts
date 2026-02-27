@@ -18,6 +18,7 @@ export interface Brigade {
   projectId: string;
   communityId: string;
   collectionRequestId?: string | null;
+  collectionRequestCode?: string | null;
   code: string;
   name: string;
   description?: string;
