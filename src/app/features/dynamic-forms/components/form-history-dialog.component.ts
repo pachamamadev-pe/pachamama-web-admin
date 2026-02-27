@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { CompanyFormService } from '../services/company-form.service';
 import { FormSchemaResponse, FormStatus } from '../models/dynamic-form.model';
 import { NotificationService } from '@core/services/notification.service';
+import { parseDateValue } from '@shared/utils/date-helpers';
 import {
   FormDetailViewDialogComponent,
   FormDetailViewDialogData,
@@ -394,12 +395,16 @@ export class FormHistoryDialogComponent implements OnInit {
    */
   formatDateRange(from: string | null, until: string | null): string {
     if (!from || !until) return 'Sin definir';
-    const fromDate = new Date(from).toLocaleDateString('es-PE', {
+    const fromParsed = parseDateValue(from);
+    const untilParsed = parseDateValue(until);
+    if (!fromParsed || !untilParsed) return 'Sin definir';
+
+    const fromDate = fromParsed.toLocaleDateString('es-PE', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
     });
-    const untilDate = new Date(until).toLocaleDateString('es-PE', {
+    const untilDate = untilParsed.toLocaleDateString('es-PE', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -411,7 +416,8 @@ export class FormHistoryDialogComponent implements OnInit {
    * Formatea fecha y hora
    */
   formatDateTime(dateString: string): string {
-    const date = new Date(dateString);
+    const date = parseDateValue(dateString);
+    if (!date) return 'Fecha inválida';
     return date.toLocaleDateString('es-PE', {
       day: '2-digit',
       month: 'short',

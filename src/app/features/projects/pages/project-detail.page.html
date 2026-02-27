@@ -414,6 +414,17 @@
               </mat-tab>
             }
 
+            @if (showAcopioBatchesTab()) {
+              <mat-tab label="Lotes de Acopio">
+                <div class="tab-content">
+                  <app-collection-batches-tab
+                    [projectId]="project()!.id"
+                    [shouldLoad]="tabsLoaded().has(acopioBatchesTabIndex())"
+                  />
+                </div>
+              </mat-tab>
+            }
+
             <mat-tab label="Documentos">
               <div class="tab-content">
                 @if (!project()?.id) {

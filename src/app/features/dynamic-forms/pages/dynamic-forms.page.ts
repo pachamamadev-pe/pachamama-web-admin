@@ -30,6 +30,7 @@ import { ProjectsService } from '@features/projects/services/projects.service';
 import { CompanyFormService } from '../services/company-form.service';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { parseDateValue } from '@shared/utils/date-helpers';
 import {
   PublishFormDialogComponent,
   PublishFormDialogResult,
@@ -517,12 +518,16 @@ export class DynamicFormsPage implements OnInit {
    */
   formatDateRange(from: string | null, until: string | null): string {
     if (!from || !until) return 'Sin definir';
-    const fromDate = new Date(from).toLocaleDateString('es-PE', {
+    const fromParsed = parseDateValue(from);
+    const untilParsed = parseDateValue(until);
+    if (!fromParsed || !untilParsed) return 'Sin definir';
+
+    const fromDate = fromParsed.toLocaleDateString('es-PE', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
     });
-    const untilDate = new Date(until).toLocaleDateString('es-PE', {
+    const untilDate = untilParsed.toLocaleDateString('es-PE', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',

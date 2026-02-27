@@ -1,0 +1,143 @@
+<div class="batches-container">
+  <!-- Header Section -->
+  <header class="batches-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h2 class="text-title font-bold text-accent-titles">Lotes de Acopio</h2>
+        <p class="text-subtitle text-neutral-subheading">
+          Gestiona los lotes de acopio del proyecto
+        </p>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateBatchDialog()">
+          <mat-icon>add</mat-icon>
+          <span class="hidden sm:inline">Crear Nuevo Lote</span>
+          <span class="sm:hidden">Crear</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content Area -->
+  <div class="batches-content">
+    @if (loading()) {
+      <!-- Loading State -->
+      <div class="loading-container">
+        <mat-spinner diameter="48" />
+        <p class="text-body text-neutral-subheading mt-4">Cargando lotes de acopio...</p>
+      </div>
+    } @else if (batches().length === 0) {
+      <!-- Empty State -->
+      <app-empty-state
+        icon="inventory_2"
+        [useMaterialIcon]="true"
+        title="No hay lotes de acopio registrados"
+        description="Comienza creando el primer lote de acopio para gestionar las solicitudes aprobadas"
+        actionLabel="Crear Primer Lote"
+        (action)="openCreateBatchDialog()"
+      />
+    } @else {
+      <!-- Batches Grid -->
+      <div class="batches-grid">
+        @for (batch of batches(); track batch.id) {
+          <div
+            class="batch-card"
+            [class]="'batch-card batch-card--' + batch.status"
+            role="button"
+            tabindex="0"
+            (click)="openBatchDetail(batch)"
+            (keyup.enter)="openBatchDetail(batch)"
+            (keyup.space)="openBatchDetail(batch)"
+          >
+            <!-- Card Header -->
+            <div class="card-header">
+              <div class="card-header-left">
+                <h3 class="batch-number">{{ batch.batchNumber }}</h3>
+                <span [class]="'status-badge status-badge--' + batch.status">
+                  {{ BATCH_STATUS_LABELS[batch.status] }}
+                </span>
+              </div>
+              <div class="card-header-right">
+                @if (batch.transportInfo?.transportType === 'fluvial') {
+                  <div class="transport-type-icon transport-type-icon--fluvial">
+                    <mat-icon>directions_boat</mat-icon>
+                  </div>
+                } @else {
+                  <div class="transport-type-icon transport-type-icon--terrestre">
+                    <mat-icon>local_shipping</mat-icon>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Date row -->
+            <div class="batch-date">
+              <mat-icon>event</mat-icon>
+              <span>{{ formatDate(batch.batchDate) }}</span>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-icon-wrap">
+                  <mat-icon>checklist</mat-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ batch.totalActivities || 0 }}</span>
+                  <span class="stat-label">Actividades</span>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <div class="stat-icon-wrap">
+                  <mat-icon>scale</mat-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ batch.totalWeightKg | number: '1.0-1' }}</span>
+                  <span class="stat-label">kg total</span>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <div class="stat-icon-wrap">
+                  <mat-icon>shopping_bag</mat-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ batch.totalSacks || 0 }}</span>
+                  <span class="stat-label">Sacos</span>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <div class="stat-icon-wrap">
+                  <mat-icon>grain</mat-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ batch.totalUnits || 0 }}</span>
+                  <span class="stat-label">Unidades</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer (transporte) -->
+            @if (batch.transportInfo) {
+              <div class="card-footer">
+                <mat-icon>{{
+                  batch.transportInfo.transportType === 'fluvial'
+                    ? 'directions_boat'
+                    : 'local_shipping'
+                }}</mat-icon>
+                <span class="footer-transporter">
+                  {{ batch.transportInfo.transporterName }}
+                </span>
+                @if (batch.transportInfo.vehiclePlate) {
+                  <span class="footer-plate">{{ batch.transportInfo.vehiclePlate }}</span>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

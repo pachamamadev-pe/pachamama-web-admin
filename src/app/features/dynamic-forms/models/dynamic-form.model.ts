@@ -151,7 +151,7 @@ export const ALL_STAGES: ProjectStage[] = [
 /**
  * A qué tipo de entidad aplica el campo
  */
-export type AppliesTo = 'tree' | 'tree_stump' | 'both';
+export type AppliesTo = 'tree' | 'tree_stump';
 
 /**
  * Labels para AppliesTo
@@ -159,7 +159,6 @@ export type AppliesTo = 'tree' | 'tree_stump' | 'both';
 export const APPLIES_TO_LABELS: Record<AppliesTo, string> = {
   tree: 'Árbol',
   tree_stump: 'Troza',
-  both: 'Ambos (Árbol y Troza)',
 };
 
 /**

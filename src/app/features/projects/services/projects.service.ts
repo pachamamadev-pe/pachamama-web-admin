@@ -62,6 +62,34 @@ export class ProjectsService {
   }
 
   /**
+   * Obtiene la lista paginada de proyectos por productId y companyId
+   * GET /api/v1/admin/projects/by-product/{productId}/by-company/{companyId}
+   * @param productId - ID del producto
+   * @param companyId - ID de la compañía
+   * @param page - Número de página (default: 0)
+   * @param size - Tamaño de página (default: 20)
+   * @param q - Query de búsqueda (opcional)
+   */
+  getProjectsByProductAndCompany(
+    productId: string,
+    companyId: string,
+    page = 0,
+    size = 20,
+    q?: string,
+  ): Observable<PageDto<Project>> {
+    let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+
+    if (q) {
+      params = params.set('q', q);
+    }
+
+    return this.http.get<PageDto<Project>>(
+      `${this.apiUrl}/by-product/${productId}/by-company/${companyId}`,
+      { params },
+    );
+  }
+
+  /**
    * Búsqueda avanzada de proyectos con filtros múltiples
    * @param page - Número de página (default: 0)
    * @param size - Tamaño de página (default: 20)
@@ -120,6 +148,16 @@ export class ProjectsService {
   startInventory(id: string): Observable<Project> {
     // No body requerido; backend determina cambio de etapa
     return this.http.patch<Project>(`${this.apiUrl}/${id}/start-inventory`, {});
+  }
+
+  /**
+   * Inicia la etapa de acopio del proyecto (transición backend específica)
+   * PATCH /projects/{id}/start-acopio
+   * Transiciona el proyecto a 'ctp_entry' si existen solicitudes y actividades aprobadas
+   */
+  startAcopio(id: string): Observable<Project> {
+    // No body requerido; backend valida solicitudes y actividades aprobadas
+    return this.http.patch<Project>(`${this.apiUrl}/${id}/start-acopio`, {});
   }
 
   /**

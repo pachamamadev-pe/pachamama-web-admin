@@ -19,6 +19,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { CommunitiesService } from '../services/communities.service';
 import { NotificationService } from '@core/services/notification.service';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { parseDateValue } from '@shared/utils/date-helpers';
 import type { CommunityProject } from '../models/community-project.model';
 
 /**
@@ -141,12 +142,16 @@ export class CommunityProjectsTabComponent implements OnInit {
    * Formatea las fechas del proyecto
    */
   getProjectDates(project: CommunityProject): string {
-    const start = new Date(project.startDate).toLocaleDateString('es-PE', {
+    const startParsed = parseDateValue(project.startDate);
+    const endParsed = parseDateValue(project.endDate);
+    if (!startParsed || !endParsed) return 'Fechas inválidas';
+
+    const start = startParsed.toLocaleDateString('es-PE', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
     });
-    const end = new Date(project.endDate).toLocaleDateString('es-PE', {
+    const end = endParsed.toLocaleDateString('es-PE', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
