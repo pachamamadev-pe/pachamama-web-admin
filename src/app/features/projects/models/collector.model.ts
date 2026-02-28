@@ -4,6 +4,7 @@
 export enum CollectorStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
+  ARCHIVED = 'archived',
 }
 
 /**
@@ -22,6 +23,7 @@ export interface Collector {
   qrCode?: string | null;
   notes?: string | null;
   status: CollectorStatus;
+  assignmentStatus?: CollectorStatus | null;
   createdAt: string;
   updatedAt: string;
   createdBy?: string | null;
