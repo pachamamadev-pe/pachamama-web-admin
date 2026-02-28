@@ -1,0 +1,239 @@
+// Batches Container
+.batches-container {
+  @apply flex flex-col h-full;
+}
+
+// Header Section
+.batches-header {
+  @apply mb-6;
+
+  .header-content {
+    @apply flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6;
+  }
+
+  .header-title {
+    h2 {
+      @apply text-title font-bold text-accent-titles mb-2;
+    }
+
+    p {
+      @apply text-subtitle text-neutral-subheading;
+    }
+  }
+
+  .header-actions {
+    @apply flex gap-2 sm:mt-0;
+
+    button {
+      @apply flex items-center gap-2;
+    }
+  }
+}
+
+// Content Area
+.batches-content {
+  @apply flex-1 overflow-y-auto;
+
+  .loading-container {
+    @apply flex flex-col items-center justify-center py-12;
+  }
+}
+
+// Batches Grid
+.batches-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5;
+}
+
+// ─── Batch Card ──────────────────────────────────────────────────────────────
+.batch-card {
+  @apply flex flex-col bg-primary-white rounded-xl cursor-pointer transition-all duration-200;
+  border: 1px solid theme('colors.neutral.border');
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-left: 4px solid theme('colors.neutral.border');
+  overflow: hidden;
+
+  &:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid theme('colors.secondary.DEFAULT');
+    outline-offset: 2px;
+  }
+
+  // Left accent per status
+  &.batch-card--draft {
+    border-left-color: #9ca3af;
+  }
+  &.batch-card--pending {
+    border-left-color: #f59e0b;
+  }
+  &.batch-card--validated {
+    border-left-color: theme('colors.secondary.DEFAULT');
+  }
+  &.batch-card--closed {
+    border-left-color: #6b7280;
+  }
+}
+
+// ─── Card Header ─────────────────────────────────────────────────────────────
+.card-header {
+  @apply flex items-start justify-between px-5 pt-5 pb-4;
+  border-bottom: 1px solid #f3f4f6;
+
+  .card-header-left {
+    @apply flex flex-col gap-2;
+
+    .batch-number {
+      @apply text-body font-bold;
+      color: #0a0a0a;
+      letter-spacing: 0.01em;
+    }
+  }
+
+  .card-header-right {
+    @apply flex-shrink-0 ml-3;
+  }
+}
+
+// ─── Status Badge ─────────────────────────────────────────────────────────────
+.status-badge {
+  @apply inline-flex items-center text-subtitle font-semibold rounded-full px-2.5 py-0.5;
+  width: fit-content;
+
+  &.status-badge--draft {
+    background-color: #f3f4f6;
+    color: #6b7280;
+  }
+
+  &.status-badge--pending {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+
+  &.status-badge--validated {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+
+  &.status-badge--closed {
+    background-color: #e5e7eb;
+    color: #374151;
+  }
+}
+
+// ─── Transport type icon bubble ───────────────────────────────────────────────
+.transport-type-icon {
+  @apply flex items-center justify-center rounded-full;
+  width: 36px;
+  height: 36px;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.transport-type-icon--terrestre {
+    background-color: #eff6ff;
+    color: #2563eb;
+  }
+
+  &.transport-type-icon--fluvial {
+    background-color: #ecfdf5;
+    color: theme('colors.secondary.DEFAULT');
+  }
+}
+
+// ─── Date row ────────────────────────────────────────────────────────────────
+.batch-date {
+  @apply flex items-center gap-1.5 px-5 pb-4 text-subtitle;
+  color: #6b7280;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: theme('colors.secondary.DEFAULT');
+  }
+}
+
+// ─── Stats Grid ──────────────────────────────────────────────────────────────
+.stats-grid {
+  @apply grid grid-cols-2 gap-3 px-5 pb-5;
+}
+
+.stat-item {
+  @apply flex items-center gap-3 rounded-lg p-3;
+  background-color: #f4fbf6;
+  border: 1px solid #e0f2e9;
+
+  .stat-icon-wrap {
+    @apply flex items-center justify-center rounded-lg flex-shrink-0;
+    width: 36px;
+    height: 36px;
+    background-color: #d1fae5;
+    color: theme('colors.secondary.DEFAULT');
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .stat-info {
+    @apply flex flex-col;
+
+    .stat-value {
+      @apply text-body font-bold;
+      color: #0a0a0a;
+      line-height: 1.2;
+
+      &.stat-value--highlight {
+        color: #fe714b;
+      }
+    }
+
+    .stat-label {
+      @apply text-subtitle;
+      color: #9ca3af;
+      line-height: 1.2;
+    }
+  }
+}
+
+// ─── Card Footer (transporte) ─────────────────────────────────────────────────
+.card-footer {
+  @apply flex items-center gap-2 px-5 py-3 text-subtitle mt-auto;
+  border-top: 1px solid #f3f4f6;
+  background-color: #fafafa;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: theme('colors.secondary.DEFAULT');
+  }
+
+  .footer-transporter {
+    @apply flex-1 truncate font-medium;
+    color: #374151;
+  }
+
+  .footer-plate {
+    @apply flex-shrink-0 text-subtitle font-semibold px-2 py-0.5 rounded;
+    background-color: #e5e7eb;
+    color: #374151;
+    font-family: monospace;
+  }
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .batches-grid {
+    @apply grid-cols-1;
+  }
+}

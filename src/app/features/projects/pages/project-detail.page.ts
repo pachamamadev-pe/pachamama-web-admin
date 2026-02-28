@@ -62,6 +62,7 @@ import {
 } from '../models/project.model';
 import { BrigadeFormDialogComponent } from '../components/brigade-form.component';
 import { ConfigurationTabComponent } from '../components/configuration-tab.component';
+import { CollectionBatchesTabComponent } from '../../collection-batches/components/collection-batches-tab.component';
 
 interface ProjectStage {
   number: number;
@@ -99,6 +100,7 @@ interface ActivityValidationStatusChartItem {
     CollectionReviewTabComponent,
     ProjectMapComponent,
     ConfigurationTabComponent,
+    CollectionBatchesTabComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -406,6 +408,8 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         return this.canStartCollection();
       case 'serfor_evaluation':
         return this.canStartCollection();
+      case 'collection':
+        return true;
       // TODO: Agregar validaciones para otras transiciones de etapas cuando se definan
       default:
         return false;
@@ -446,6 +450,10 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         if (!this.areAllStageRequiredDocumentsApproved('serfor_evaluation'))
           blockers.push('• Subir y aprobar todos los documentos obligatorios de esta etapa');
         break;
+      case 'collection':
+        // El backend valida que existan solicitudes y actividades aprobadas
+        // No hay validaciones adicionales en el frontend
+        break;
       default:
         blockers.push('No se puede avanzar desde esta etapa');
     }
@@ -469,10 +477,9 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   // Computed para mostrar/ocultar el tab de generación de PMF
   showPmfGenerationTab = computed(() => {
     const stage = this.project()?.stage;
-    // Mostrar tab desde la etapa de PMF en adelante
-    const pmfStageIndex = this.stages.findIndex((s) => s.key === 'pmf_development');
-    const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
-    return currentStageIndex >= pmfStageIndex && pmfStageIndex !== -1;
+    // Mostrar tab solo en las etapas pmf_development y serfor_evaluation
+    // NO mostrar en collection ni etapas posteriores
+    return stage === 'pmf_development' || stage === 'serfor_evaluation';
   });
 
   // Computed para mostrar/ocultar el tab de revisión de solicitudes de recolección
@@ -523,60 +530,54 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     return index;
   });
 
-  // Computed para calcular el índice dinámico del tab "Documentos"
-  documentsTabIndex = computed(() => {
+  // Computed para mostrar/ocultar el tab de lotes de acopio
+  showAcopioBatchesTab = computed(() => {
+    const stage = this.project()?.stage;
+    // Mostrar tab desde la etapa ctp_entry en adelante
+    const ctpStageIndex = this.stages.findIndex((s) => s.key === 'ctp_entry');
+    const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
+    return currentStageIndex >= ctpStageIndex && ctpStageIndex !== -1;
+  });
+
+  // Computed para calcular el índice dinámico del tab "Lotes de Acopio"
+  acopioBatchesTabIndex = computed(() => {
     let index = 0;
-    // Tab 0: Resumen (siempre presente)
-    index++;
-    // Tab 1: Recolectores (siempre presente)
-    index++;
-    // Tab 2: Brigadas (condicional)
-    if (this.showBrigadesTab()) index++;
-    // Tab 3: Evaluación de inventario (condicional)
-    if (this.showInventoryEvaluationTab()) index++;
-    // Tab 4: Generar PMF (condicional)
-    if (this.showPmfGenerationTab()) index++;
-    // Tab 5: Revisión Solicitudes (condicional)
-    if (this.showCollectionTab()) index++;
-    // Tab 6: Documentos (siempre presente) - este es el índice que buscamos
+    index++; // Tab 0: Resumen
+    index++; // Tab 1: Recolectores
+    if (this.showBrigadesTab()) index++; // Tab: Brigadas
+    if (this.showInventoryEvaluationTab()) index++; // Tab: Inventario
+    if (this.showPmfGenerationTab()) index++; // Tab: PMF
+    if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
+    // Tab: Lotes de Acopio - este es el índice que buscamos
     return index;
   });
 
-  // Computed para calcular el índice dinámico del tab "Revisión Solicitudes"
-  collectionTabIndex = computed(() => {
+  // Computed para calcular el índice dinámico del tab "Documentos"
+  documentsTabIndex = computed(() => {
     let index = 0;
-    // Tab 0: Resumen (siempre presente)
-    index++;
-    // Tab 1: Recolectores (siempre presente)
-    index++;
-    // Tab 2: Brigadas (condicional)
-    if (this.showBrigadesTab()) index++;
-    // Tab 3: Evaluación de inventario (condicional)
-    if (this.showInventoryEvaluationTab()) index++;
-    // Tab 4: Generar PMF (condicional)
-    if (this.showPmfGenerationTab()) index++;
-    // Tab 5: Revisión Solicitudes (condicional) - este es el índice que buscamos
+    index++; // Tab 0: Resumen
+    index++; // Tab 1: Recolectores
+    if (this.showBrigadesTab()) index++; // Tab: Brigadas
+    if (this.showInventoryEvaluationTab()) index++; // Tab: Inventario
+    if (this.showPmfGenerationTab()) index++; // Tab: PMF
+    if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
+    if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
+    // Tab: Documentos - este es el índice que buscamos
     return index;
   });
 
   // Computed para calcular el índice dinámico del tab "Configuración"
   getConfigurationTabIndex = computed(() => {
     let index = 0;
-    // Tab 0: Resumen (siempre presente)
-    index++;
-    // Tab 1: Recolectores (siempre presente)
-    index++;
-    // Tab 2: Brigadas (condicional)
-    if (this.showBrigadesTab()) index++;
-    // Tab 3: Evaluación de inventario (condicional)
-    if (this.showInventoryEvaluationTab()) index++;
-    // Tab 4: Generar PMF (condicional)
-    if (this.showPmfGenerationTab()) index++;
-    // Tab 5: Revisión Solicitudes (condicional)
-    if (this.showCollectionTab()) index++;
-    // Tab 6: Documentos (siempre presente)
-    index++;
-    // Tab 7: Configuración (siempre presente) - este es el índice que buscamos
+    index++; // Tab 0: Resumen
+    index++; // Tab 1: Recolectores
+    if (this.showBrigadesTab()) index++; // Tab: Brigadas
+    if (this.showInventoryEvaluationTab()) index++; // Tab: Inventario
+    if (this.showPmfGenerationTab()) index++; // Tab: PMF
+    if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
+    if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
+    index++; // Tab: Documentos
+    // Tab: Configuración - este es el índice que buscamos
     return index;
   });
 
@@ -1253,6 +1254,23 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error advancing to Collection stage:', error);
           this.notification.error('Error al avanzar a la etapa de Recolección');
+        },
+      });
+    } else if (currentStage === 'collection' && next.key === 'ctp_entry') {
+      this.notification.info(`Avanzando a etapa: ${next.name}...`);
+
+      console.log('Calling startAcopio with:', { projectId });
+
+      this.projectsService.startAcopio(projectId).subscribe({
+        next: (updatedProject) => {
+          this.project.set(updatedProject);
+          this.notification.success(`Etapa "${next.name}" iniciada correctamente`);
+        },
+        error: (error) => {
+          console.error('Error advancing to Acopio/CTP Entry stage:', error);
+          const errorMessage =
+            error?.error?.message || 'Error al avanzar a la etapa de Acopio/Ingreso a CTP';
+          this.notification.error(errorMessage);
         },
       });
     } else {

@@ -1,0 +1,738 @@
+// ─── Container ────────────────────────────────────────────────────────────────
+.batch-detail-container {
+  @apply flex flex-col min-h-full;
+  background-color: #f9fafb;
+}
+
+// ─── Loading / Error ──────────────────────────────────────────────────────────
+.loading-overlay {
+  @apply flex flex-col items-center justify-center flex-1 py-24;
+}
+
+.error-state {
+  @apply flex flex-col items-center justify-center py-24 gap-4 text-neutral-subheading;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.4;
+  }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+.detail-header {
+  @apply sticky top-0 z-10 bg-primary-white px-4 md:px-8 py-4;
+  border-bottom: 1px solid theme('colors.neutral.border');
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.header-top {
+  @apply flex items-start gap-3 mb-4;
+}
+
+.back-btn {
+  @apply flex-shrink-0 mt-1;
+  color: #6b7280;
+
+  &:hover {
+    color: theme('colors.secondary.DEFAULT');
+  }
+}
+
+.header-info {
+  @apply flex-1 min-w-0;
+}
+
+.header-title-row {
+  @apply flex flex-wrap items-center gap-3 mb-2;
+}
+
+.batch-title {
+  @apply text-title font-bold text-accent-titles;
+  line-height: 1.2;
+}
+
+.header-meta {
+  @apply flex flex-wrap gap-x-4 gap-y-1;
+}
+
+.meta-item {
+  @apply flex items-center gap-1 text-subtitle;
+  color: #6b7280;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    color: theme('colors.secondary.DEFAULT');
+  }
+}
+
+.header-actions {
+  @apply hidden md:flex items-center flex-shrink-0 ml-4;
+}
+
+// ─── Status Badges ────────────────────────────────────────────────────────────
+.status-badge {
+  @apply inline-flex items-center text-subtitle font-semibold rounded-full px-3 py-1;
+
+  &.status-badge--draft {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+  &.status-badge--pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  &.status-badge--validated {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  &.status-badge--closed {
+    background: #e5e7eb;
+    color: #374151;
+  }
+}
+
+// ─── Document Progress Bar ────────────────────────────────────────────────────
+.doc-progress-bar {
+  @apply flex items-center gap-0 overflow-x-auto pb-1;
+}
+
+.progress-step {
+  @apply flex items-center gap-2 relative flex-shrink-0;
+  min-width: 0;
+
+  .step-indicator {
+    @apply flex items-center justify-center rounded-full flex-shrink-0;
+    width: 32px;
+    height: 32px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .step-info {
+    @apply flex flex-col min-w-0;
+
+    .step-number {
+      @apply text-subtitle font-bold;
+      color: #374151;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .step-label {
+      @apply text-subtitle font-semibold truncate;
+      color: #111827;
+      max-width: 120px;
+    }
+
+    .step-status {
+      @apply text-subtitle font-medium;
+      font-size: 11px;
+    }
+  }
+
+  .step-connector {
+    width: 32px;
+    height: 2px;
+    background-color: #e5e7eb;
+    @apply flex-shrink-0 mx-2;
+
+    &.step-connector--done {
+      background-color: theme('colors.secondary.DEFAULT');
+    }
+  }
+
+  // Status colors for indicator
+  &.progress-step--not_started .step-indicator {
+    background: #f3f4f6;
+    color: #9ca3af;
+  }
+
+  &.progress-step--in_progress .step-indicator {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  &.progress-step--generated .step-indicator {
+    background: #d1fae5;
+    color: theme('colors.secondary.DEFAULT');
+  }
+
+  &.progress-step--observed .step-indicator {
+    background: #fff7ed;
+    color: #ea580c;
+  }
+
+  &.progress-step--approved .step-indicator {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+}
+
+.progress-count {
+  @apply flex items-center gap-1 text-subtitle font-semibold ml-auto flex-shrink-0;
+  color: #374151;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: theme('colors.secondary.DEFAULT');
+  }
+}
+
+// ─── Document status class helpers ────────────────────────────────────────────
+.doc-status {
+  &--not-started {
+    color: #9ca3af;
+  }
+  &--in-progress {
+    color: #d97706;
+  }
+  &--generated {
+    color: theme('colors.secondary.DEFAULT');
+  }
+  &--observed {
+    color: #ea580c;
+  }
+  &--approved {
+    color: #16a34a;
+  }
+}
+
+// Tab icons inherit color from status class
+.tab-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: middle;
+
+  &.doc-status--not-started {
+    color: #9ca3af;
+  }
+  &.doc-status--in-progress {
+    color: #d97706;
+  }
+  &.doc-status--generated {
+    color: theme('colors.secondary.DEFAULT');
+  }
+  &.doc-status--observed {
+    color: #ea580c;
+  }
+  &.doc-status--approved {
+    color: #16a34a;
+  }
+}
+
+// ─── Read-only notice ─────────────────────────────────────────────────────────
+.readonly-notice {
+  @apply flex items-center gap-2 mx-4 md:mx-8 mt-4 px-4 py-3 rounded-lg text-subtitle;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+// ─── Documents Section ────────────────────────────────────────────────────────
+.documents-section {
+  @apply flex-1 px-4 md:px-8 py-4;
+
+  .documents-tabs {
+    background: transparent;
+
+    ::ng-deep .mat-mdc-tab-body-wrapper {
+      @apply mt-4;
+    }
+
+    ::ng-deep .mat-mdc-tab-header {
+      background: white;
+      border-radius: 8px;
+      border: 1px solid theme('colors.neutral.border');
+    }
+  }
+}
+
+.tab-label {
+  @apply flex items-center;
+}
+
+// ─── Split View ───────────────────────────────────────────────────────────────
+.split-view {
+  @apply flex flex-col lg:flex-row gap-4 mt-2;
+  min-height: 600px;
+}
+
+// ─── PDF Panel ────────────────────────────────────────────────────────────────
+.pdf-panel {
+  @apply flex flex-col rounded-xl overflow-hidden;
+  flex: 2;
+  background: white;
+  border: 1px solid theme('colors.neutral.border');
+  min-height: 400px;
+
+  // On mobile, show below form
+  @media (max-width: 1023px) {
+    order: 2;
+    min-height: 300px;
+  }
+}
+
+.pdf-iframe {
+  @apply w-full flex-1;
+  border: none;
+  min-height: 500px;
+}
+
+.pdf-placeholder {
+  @apply flex flex-col items-center justify-center flex-1 gap-3 p-8;
+  color: #9ca3af;
+
+  .placeholder-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    opacity: 0.3;
+  }
+
+  .placeholder-title {
+    @apply text-body font-semibold;
+    color: #6b7280;
+  }
+
+  .placeholder-subtitle {
+    @apply text-subtitle text-center max-w-xs;
+    color: #9ca3af;
+  }
+}
+
+.pdf-actions {
+  @apply flex justify-end p-3;
+  border-top: 1px solid theme('colors.neutral.border');
+  background-color: #fafafa;
+}
+
+// ─── Form Panel ───────────────────────────────────────────────────────────────
+.form-panel {
+  @apply flex flex-col gap-4;
+  flex: 2;
+  min-width: 0;
+  overflow-x: hidden;
+
+  @media (max-width: 1023px) {
+    order: 1;
+  }
+}
+
+// ─── Observation Notice ───────────────────────────────────────────────────────
+.observation-notice {
+  @apply flex items-start gap-3 p-4 rounded-lg;
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  p {
+    @apply text-subtitle mt-1 mb-0;
+  }
+}
+
+// ─── Auto Data Section ────────────────────────────────────────────────────────
+.auto-data-section {
+  @apply p-4 rounded-xl;
+  background-color: #f4fbf6;
+  border: 1px solid #e0f2e9;
+}
+
+.section-subtitle {
+  @apply flex items-center gap-2 text-body font-semibold mb-3;
+  color: #374151;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: theme('colors.secondary.DEFAULT');
+  }
+}
+
+// ─── Collectors Table ─────────────────────────────────────────────────────────
+.collectors-table {
+  @apply rounded-lg overflow-hidden;
+  border: 1px solid #d1fae5;
+  font-size: 13px;
+}
+
+.collectors-table-header,
+.collectors-table-row,
+.collectors-table-footer {
+  @apply grid gap-2 px-3 py-2;
+  grid-template-columns: 1fr 60px 80px 60px;
+}
+
+.collectors-table-header {
+  background-color: #d1fae5;
+  color: #065f46;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.collectors-table-row {
+  background-color: white;
+  border-top: 1px solid #e9f7ef;
+  color: #374151;
+
+  &:hover {
+    background-color: #f4fbf6;
+  }
+
+  .collector-name {
+    font-weight: 500;
+  }
+}
+
+.collectors-table-footer {
+  background-color: #ecfdf5;
+  border-top: 2px solid #6ee7b7;
+  font-weight: 700;
+  color: #065f46;
+}
+
+// ─── Auto Data Grid ───────────────────────────────────────────────────────────
+.auto-data-grid {
+  @apply grid grid-cols-2 sm:grid-cols-3 gap-3;
+}
+
+.auto-data-item {
+  @apply flex flex-col gap-0.5;
+
+  .auto-label {
+    @apply text-subtitle;
+    color: #9ca3af;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .auto-value {
+    @apply text-body font-medium;
+    color: #111827;
+  }
+}
+
+// ─── Doc Form ─────────────────────────────────────────────────────────────────
+.doc-form {
+  @apply flex flex-col gap-3 p-4 rounded-xl bg-primary-white;
+  border: 1px solid theme('colors.neutral.border');
+}
+
+.full-width {
+  width: 100%;
+}
+
+.half-width {
+  width: 50%;
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+}
+
+.form-row {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-3;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.form-row--3 {
+  @apply grid grid-cols-1 sm:grid-cols-3 gap-3;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.declarations-row {
+  @apply flex flex-wrap gap-6 py-3;
+}
+
+// ─── Form Actions ─────────────────────────────────────────────────────────────
+.form-actions {
+  @apply flex flex-wrap gap-3 justify-end pt-2 pb-4;
+
+  button {
+    @apply flex items-center gap-2;
+
+    mat-spinner {
+      @apply flex-shrink-0;
+    }
+  }
+}
+
+// ─── Doc 1 Form Panel modifier ───────────────────────────────────────────────
+.form-panel--doc1 {
+  // Allows independent scrolling on desktop when collectors list is long
+  @media (min-width: 1024px) {
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+// ─── Doc 1 Header Banner ─────────────────────────────────────────────────────
+.doc1-header-banner {
+  @apply flex items-center gap-3 p-4 rounded-xl;
+  background: linear-gradient(135deg, #218358 0%, #1a6645 100%);
+  color: white;
+
+  .doc1-banner-icon {
+    @apply flex items-center justify-center rounded-full flex-shrink-0;
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.2);
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .doc1-banner-text {
+    @apply flex flex-col;
+
+    .doc1-banner-label {
+      @apply text-subtitle font-medium;
+      opacity: 0.85;
+    }
+
+    .doc1-banner-product {
+      @apply text-body font-bold;
+      font-size: 16px;
+    }
+  }
+}
+
+// ─── Doc 1 Static Info Grid ──────────────────────────────────────────────────
+.doc1-static-info {
+  @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 p-4 rounded-xl;
+  background-color: #f4fbf6;
+  border: 1px solid #e0f2e9;
+
+  .static-info-item {
+    @apply flex flex-col gap-0.5;
+
+    .info-label {
+      @apply text-subtitle;
+      color: #9ca3af;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .info-value {
+      @apply text-body font-semibold;
+      color: #111827;
+    }
+  }
+}
+
+// ─── Doc 1 Form ───────────────────────────────────────────────────────────────
+.doc1-form {
+  @apply flex flex-col gap-4;
+}
+
+.doc1-header-fields {
+  @apply grid grid-cols-1 sm:grid-cols-3 gap-3;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+// ─── Collectors Section ───────────────────────────────────────────────────────
+.collectors-section {
+  @apply flex flex-col gap-3;
+}
+
+.collectors-count-badge {
+  @apply inline-flex items-center justify-center text-subtitle font-bold rounded-full ml-1;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background-color: theme('colors.secondary.DEFAULT');
+  color: white;
+  font-size: 11px;
+}
+
+.no-collectors {
+  @apply flex flex-col items-center justify-center gap-2 py-8;
+  color: #9ca3af;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    opacity: 0.4;
+  }
+
+  p {
+    @apply text-subtitle;
+  }
+}
+
+.collectors-list {
+  @apply flex flex-col gap-4;
+}
+
+// ─── Collector Entry Card (legacy - replaced by expansion panel) ──────────────
+.collector-entry-card {
+  @apply flex flex-col rounded-xl overflow-hidden;
+  border: 1px solid #e0f2e9;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+// ─── Collector Expansion Panel ────────────────────────────────────────────────
+.collector-expansion-panel {
+  border: 1px solid #e0f2e9 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  margin-bottom: 0 !important;
+
+  // Override Material's default expansion panel header
+  ::ng-deep .mat-expansion-panel-header {
+    background: linear-gradient(135deg, #f4fbf6 0%, #ecfdf5 100%) !important;
+    border-bottom: 1px solid #d1fae5;
+    height: auto !important;
+    min-height: 56px;
+    padding: 10px 16px;
+
+    &:hover {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+    }
+  }
+
+  ::ng-deep .mat-expansion-panel-header-title {
+    flex: 1;
+    min-width: 0;
+  }
+
+  ::ng-deep .mat-expansion-panel-header-description {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    margin-right: 8px;
+  }
+
+  ::ng-deep .mat-expansion-panel-body {
+    padding: 0;
+  }
+}
+
+.collector-entry-header {
+  @apply flex items-center justify-between px-4 py-3;
+  background: linear-gradient(135deg, #f4fbf6 0%, #ecfdf5 100%);
+  border-bottom: 1px solid #d1fae5;
+}
+
+.collector-identity {
+  @apply flex items-center gap-3;
+
+  .collector-avatar {
+    @apply flex items-center justify-center rounded-full flex-shrink-0;
+    width: 38px;
+    height: 38px;
+    background-color: #d1fae5;
+    color: theme('colors.secondary.DEFAULT');
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  .collector-names {
+    @apply flex flex-col;
+
+    .collector-full-name {
+      @apply text-body font-bold;
+      color: #111827;
+    }
+
+    .collector-brigade {
+      @apply text-subtitle;
+      color: #6b7280;
+    }
+  }
+}
+
+.collector-activities-badge {
+  @apply flex items-center gap-1 flex-shrink-0 px-3 py-1 rounded-full text-subtitle font-semibold;
+  background-color: #d1fae5;
+  color: #065f46;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// ─── Collector Fields Grid ────────────────────────────────────────────────────
+.collector-fields-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-3 p-4;
+  box-sizing: border-box;
+  width: 100%;
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .observations-field {
+    // Span full width
+    grid-column: span 2;
+
+    @media (max-width: 639px) {
+      grid-column: span 1;
+    }
+  }
+}
+
+// ─── Mobile Submit Bar ────────────────────────────────────────────────────────
+.mobile-submit-bar {
+  @apply flex md:hidden items-center justify-between gap-3 px-4 py-4 sticky bottom-0;
+  background-color: white;
+  border-top: 1px solid theme('colors.neutral.border');
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+
+  button {
+    @apply flex items-center gap-2 flex-shrink-0;
+  }
+}

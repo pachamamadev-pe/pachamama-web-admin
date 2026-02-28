@@ -193,7 +193,7 @@ export interface FormDetailViewDialogData {
                               </div>
                             }
 
-                            @if (field.appliesTo && field.appliesTo !== 'both') {
+                            @if (field.appliesTo) {
                               <div class="field-detail">
                                 <mat-icon class="detail-icon">visibility</mat-icon>
                                 <span>Aplica a: {{ APPLIES_TO_LABELS[field.appliesTo] }}</span>

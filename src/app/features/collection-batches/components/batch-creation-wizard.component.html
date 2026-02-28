@@ -1,0 +1,580 @@
+<div class="wizard-dialog">
+  <!-- ─── Header ─────────────────────────────────────────────────────────── -->
+  <div class="wizard-header">
+    <div class="wizard-header-title">
+      <h2 class="text-body font-bold text-accent-titles">Crear Lote de Acopio</h2>
+      <p class="text-subtitle text-neutral-subheading">
+        @if (currentStep() === 1) {
+          Paso 1 de 3 · Selecciona las solicitudes de recolecciˊon
+        } @else if (currentStep() === 2) {
+          Paso 2 de 3 · Confirma los datos del lote
+        } @else {
+          Paso 3 de 3 · Información del transporte
+        }
+      </p>
+    </div>
+    <button mat-icon-button (click)="close()" matTooltip="Cerrar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ─── Step Indicator ────────────────────────────────────────────────── -->
+  <div class="step-indicator">
+    <div
+      class="step"
+      [class.step--active]="currentStep() === 1"
+      [class.step--done]="currentStep() > 1"
+    >
+      <div class="step-circle">
+        @if (currentStep() > 1) {
+          <mat-icon>check</mat-icon>
+        } @else {
+          <span>1</span>
+        }
+      </div>
+      <span class="step-label">Solicitudes</span>
+    </div>
+    <div class="step-connector"></div>
+    <div
+      class="step"
+      [class.step--active]="currentStep() === 2"
+      [class.step--done]="currentStep() > 2"
+    >
+      <div class="step-circle">
+        @if (currentStep() > 2) {
+          <mat-icon>check</mat-icon>
+        } @else {
+          <span>2</span>
+        }
+      </div>
+      <span class="step-label">Datos del lote</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" [class.step--active]="currentStep() === 3">
+      <div class="step-circle">
+        <span>3</span>
+      </div>
+      <span class="step-label">Transporte</span>
+    </div>
+  </div>
+
+  <!-- ─── Content ───────────────────────────────────────────────────────── -->
+  <div class="wizard-content">
+    <!-- ═══════════════════════════════════════════════════════════ STEP 1 -->
+    @if (currentStep() === 1) {
+      @if (loadingRequests()) {
+        <div class="state-container">
+          <mat-spinner diameter="40" />
+          <p class="text-body text-neutral-subheading mt-3">Cargando solicitudes disponibles...</p>
+        </div>
+      } @else if (availableRequests().length === 0) {
+        <div class="state-container">
+          <mat-icon class="state-icon text-neutral-subheading">inbox</mat-icon>
+          <p class="text-body font-bold text-accent-titles mt-2">Sin solicitudes disponibles</p>
+          <p class="text-subtitle text-neutral-subheading text-center mt-1">
+            No hay solicitudes de recolección aprobadas con actividades disponibles para este
+            proyecto.
+          </p>
+        </div>
+      } @else {
+        <!-- Requests list -->
+        <mat-radio-group [value]="selectedRequestId()" class="requests-list">
+          @for (request of availableRequests(); track request.requestId) {
+            <div
+              class="request-item"
+              [class.request-item--selected]="isSelected(request.requestId)"
+              [class.request-item--disabled]="request.fullyIncludedInOtherBatch"
+              tabindex="0"
+              (click)="selectRequest(request)"
+              (keyup.enter)="selectRequest(request)"
+            >
+              <!-- Main row -->
+              <div class="request-main">
+                <mat-radio-button
+                  [value]="request.requestId"
+                  [disabled]="request.fullyIncludedInOtherBatch"
+                  class="request-checkbox"
+                  (click)="$event.stopPropagation()"
+                />
+
+                <div class="request-info">
+                  <div class="request-top-row">
+                    <span class="request-number text-body font-bold text-primary-black">
+                      {{ request.requestNumber }}
+                    </span>
+                    @if (request.fullyIncludedInOtherBatch) {
+                      <span class="badge badge--error">Ya incluida</span>
+                    } @else if (request.partiallyIncludedInOtherBatch) {
+                      <span class="badge badge--warning">Parcialmente incluida</span>
+                    } @else {
+                      <span class="badge badge--success">Disponible</span>
+                    }
+                  </div>
+
+                  <div class="request-meta">
+                    <span class="meta-item">
+                      <mat-icon>location_on</mat-icon>
+                      {{ request.areaName }}
+                    </span>
+                    <span class="meta-item">
+                      <mat-icon>people</mat-icon>
+                      {{ request.communityName }}
+                    </span>
+                    <span class="meta-item">
+                      <mat-icon>checklist</mat-icon>
+                      {{ request.availableActivitiesCount }} activ. disponibles
+                    </span>
+                    <span class="meta-item">
+                      <mat-icon>person</mat-icon>
+                      {{ request.collectorsCount }} recolectores
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Expand button -->
+                <button
+                  mat-icon-button
+                  class="expand-btn"
+                  [matTooltip]="isExpanded(request.requestId) ? 'Ocultar detalle' : 'Ver detalle'"
+                  (click)="toggleExpand($event, request.requestId)"
+                >
+                  <mat-icon>{{
+                    isExpanded(request.requestId) ? 'expand_less' : 'expand_more'
+                  }}</mat-icon>
+                </button>
+              </div>
+
+              <!-- Expanded detail -->
+              @if (isExpanded(request.requestId)) {
+                <div class="request-expanded">
+                  <div class="expanded-grid">
+                    <div class="expanded-stat">
+                      <span class="stat-label">Peso solicitado</span>
+                      <span class="stat-value"
+                        >{{ request.requestedWeighingKg | number: '1.0-0' }} kg</span
+                      >
+                    </div>
+                    <div class="expanded-stat">
+                      <span class="stat-label">Actividades aprobadas</span>
+                      <span class="stat-value">{{ request.approvedActivitiesCount }}</span>
+                    </div>
+                    <div class="expanded-stat">
+                      <span class="stat-label">Activ. disponibles</span>
+                      <span class="stat-value">{{ request.availableActivitiesCount }}</span>
+                    </div>
+                    <div class="expanded-stat">
+                      <span class="stat-label">Trozas</span>
+                      <span class="stat-value">{{ request.totalStumpsCount }}</span>
+                    </div>
+                    <div class="expanded-stat">
+                      <span class="stat-label">Recolectores</span>
+                      <span class="stat-value">{{ request.collectorsCount }}</span>
+                    </div>
+                    <div class="expanded-stat">
+                      <span class="stat-label">Período</span>
+                      <span class="stat-value">
+                        {{ formatPeriodDate(request.startDate) }}<br />
+                        al {{ formatPeriodDate(request.endDate) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </mat-radio-group>
+
+        <!-- Selection summary -->
+        @if (selectedRequestId() !== null) {
+          <div class="selection-summary">
+            <mat-icon>check_circle</mat-icon>
+            <span>
+              <strong>1</strong> solicitud ·
+              <strong>{{ totalSelectedActivities() }}</strong> actividades seleccionadas
+            </span>
+          </div>
+        }
+      }
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════ STEP 2 -->
+    @if (currentStep() === 2) {
+      <div class="step2-content">
+        <!-- Resumen -->
+        <div class="batch-summary">
+          <h3 class="text-body font-bold text-accent-titles mb-3">Resumen del Lote</h3>
+          <div class="summary-grid">
+            <div class="summary-stat">
+              <mat-icon>description</mat-icon>
+              <div>
+                <span class="stat-number">{{ selectedRequestId() !== null ? 1 : 0 }}</span>
+                <span class="stat-desc">solicitudes</span>
+              </div>
+            </div>
+            <div class="summary-stat">
+              <mat-icon>checklist</mat-icon>
+              <div>
+                <span class="stat-number">{{ totalSelectedActivities() }}</span>
+                <span class="stat-desc">actividades</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form [formGroup]="batchForm" class="batch-form">
+          <!-- Fecha -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Fecha del lote</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="batchDate" />
+            <mat-datepicker-toggle matIconSuffix [for]="picker" />
+            <mat-datepicker #picker />
+            <mat-error>La fecha es requerida</mat-error>
+          </mat-form-field>
+
+          <!-- Peso y Sacos en fila -->
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Peso total (kg)</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="totalWeightKg"
+                placeholder="0.00"
+                min="0.01"
+                step="0.01"
+              />
+              <span matTextSuffix>kg</span>
+              @if (batchForm.get('totalWeightKg')?.hasError('required')) {
+                <mat-error>El peso es requerido</mat-error>
+              } @else if (batchForm.get('totalWeightKg')?.hasError('min')) {
+                <mat-error>Debe ser mayor a 0</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Número de sacos</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="totalSacks"
+                placeholder="0"
+                min="1"
+                step="1"
+              />
+              @if (batchForm.get('totalSacks')?.hasError('required')) {
+                <mat-error>Los sacos son requeridos</mat-error>
+              } @else if (batchForm.get('totalSacks')?.hasError('min')) {
+                <mat-error>Mínimo 1 saco</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- Unidades (opcional) -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Unidades / racimos (opcional)</mat-label>
+            <input
+              matInput
+              type="number"
+              formControlName="totalUnits"
+              placeholder="0"
+              min="1"
+              step="1"
+            />
+            <mat-hint>Número total de unidades o racimos del lote</mat-hint>
+            @if (batchForm.get('totalUnits')?.hasError('min')) {
+              <mat-error>Debe ser mayor a 0</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Notas -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Notas (opcional)</mat-label>
+            <textarea
+              matInput
+              formControlName="notes"
+              rows="3"
+              placeholder="Información adicional sobre el lote..."
+            ></textarea>
+            <mat-hint align="end">{{ batchForm.get('notes')?.value?.length || 0 }}/1000</mat-hint>
+            @if (batchForm.get('notes')?.hasError('maxlength')) {
+              <mat-error>Máximo 1000 caracteres</mat-error>
+            }
+          </mat-form-field>
+        </form>
+
+        <!-- Info note -->
+        <div class="info-note">
+          <mat-icon>info_outline</mat-icon>
+          <span>
+            El lote se creará en estado <strong>Borrador</strong>. Podrás completar los documentos
+            requeridos antes de enviarlo a aprobación.
+          </span>
+        </div>
+      </div>
+    }
+
+    <!-- ═════════════════════════════════════════════════════════════ STEP 3 -->
+    @if (currentStep() === 3) {
+      <div class="step3-content">
+        <form [formGroup]="transportForm" class="transport-form">
+          <!-- Tipo de transporte -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipo de transporte</mat-label>
+            <mat-select
+              formControlName="transportType"
+              (selectionChange)="onTransportTypeChange($event.value)"
+            >
+              <mat-option value="terrestre">Terrestre</mat-option>
+              <mat-option value="fluvial">Fluvial</mat-option>
+            </mat-select>
+            <mat-error>El tipo de transporte es requerido</mat-error>
+          </mat-form-field>
+
+          <!-- Transportista -->
+          <div class="form-section-header">
+            <mat-icon>person_pin</mat-icon>
+            <span>Transportista</span>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre completo del transportista</mat-label>
+            <input matInput formControlName="transporterName" placeholder="Ej: Juan Perez Garcia" />
+            @if (transportForm.get('transporterName')?.hasError('required')) {
+              <mat-error>El nombre es requerido</mat-error>
+            } @else if (transportForm.get('transporterName')?.hasError('maxlength')) {
+              <mat-error>Maximo 200 caracteres</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" style="flex: 0 0 110px">
+              <mat-label>Tipo doc.</mat-label>
+              <mat-select formControlName="transporterDocumentType">
+                <mat-option value="DNI">DNI</mat-option>
+                <mat-option value="RUC">RUC</mat-option>
+                <mat-option value="CE">CE</mat-option>
+              </mat-select>
+              @if (transportForm.get('transporterDocumentType')?.hasError('required')) {
+                <mat-error>Requerido</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Numero de documento</mat-label>
+              <input
+                matInput
+                formControlName="transporterDocumentNumber"
+                placeholder="Ej: 12345678"
+              />
+              @if (transportForm.get('transporterDocumentNumber')?.hasError('required')) {
+                <mat-error>El numero es requerido</mat-error>
+              } @else if (transportForm.get('transporterDocumentNumber')?.hasError('maxlength')) {
+                <mat-error>Maximo 20 caracteres</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Licencia de conducir (opcional)</mat-label>
+              <input
+                matInput
+                formControlName="transporterLicense"
+                placeholder="Ej: A-II-b 12345678"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Telefono (opcional)</mat-label>
+              <input
+                matInput
+                formControlName="transporterPhone"
+                type="tel"
+                placeholder="+51 987654321"
+              />
+            </mat-form-field>
+          </div>
+
+          <!-- Vehiculo / Embarcacion -->
+          <div class="form-section-header">
+            <mat-icon>{{ isFluvialTransport() ? 'directions_boat' : 'local_shipping' }}</mat-icon>
+            <span>{{ isFluvialTransport() ? 'Embarcacion' : 'Vehiculo' }}</span>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Placa / matricula (opcional)</mat-label>
+              <input matInput formControlName="vehiclePlate" placeholder="Ej: ABC-123" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Tipo (opcional)</mat-label>
+              <input matInput formControlName="vehicleType" placeholder="Ej: Bote madera 13m" />
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Marca (opcional)</mat-label>
+              <input matInput formControlName="vehicleBrand" placeholder="Ej: Honda" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Modelo (opcional)</mat-label>
+              <input matInput formControlName="vehicleModel" placeholder="Ej: Megu 16 Hp" />
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Capacidad de carga (opcional)</mat-label>
+            <input
+              matInput
+              type="number"
+              formControlName="vehicleCapacityKg"
+              min="0.01"
+              step="0.01"
+              placeholder="500"
+            />
+            <span matTextSuffix>kg</span>
+            @if (transportForm.get('vehicleCapacityKg')?.hasError('min')) {
+              <mat-error>Debe ser mayor a 0</mat-error>
+            }
+          </mat-form-field>
+
+          @if (isFluvialTransport()) {
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Matricula fluvial (opcional)</mat-label>
+                <input matInput formControlName="boatRegistration" placeholder="Ej: MAR-2025-001" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Potencia del motor (opcional)</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="boatMotorHp"
+                  min="1"
+                  step="1"
+                  placeholder="16"
+                />
+                <span matTextSuffix>HP</span>
+                @if (transportForm.get('boatMotorHp')?.hasError('min')) {
+                  <mat-error>Debe ser mayor a 0</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          }
+
+          <!-- Ruta -->
+          <div class="form-section-header">
+            <mat-icon>route</mat-icon>
+            <span>Ruta</span>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Punto de origen</mat-label>
+            <input
+              matInput
+              formControlName="originLocation"
+              placeholder="Ej: Comunidad ACORENA - UDE"
+            />
+            @if (transportForm.get('originLocation')?.hasError('required')) {
+              <mat-error>El origen es requerido</mat-error>
+            } @else if (transportForm.get('originLocation')?.hasError('maxlength')) {
+              <mat-error>Maximo 200 caracteres</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Punto de destino</mat-label>
+            <input
+              matInput
+              formControlName="destinationLocation"
+              placeholder="Ej: Centro de Acopio Pacaya Samiria"
+            />
+            @if (transportForm.get('destinationLocation')?.hasError('required')) {
+              <mat-error>El destino es requerido</mat-error>
+            } @else if (transportForm.get('destinationLocation')?.hasError('maxlength')) {
+              <mat-error>Maximo 200 caracteres</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Duracion estimada del viaje (opcional)</mat-label>
+            <input
+              matInput
+              type="number"
+              formControlName="estimatedDurationHours"
+              min="0.1"
+              step="0.5"
+              placeholder="3.5"
+            />
+            <span matTextSuffix>horas</span>
+            @if (transportForm.get('estimatedDurationHours')?.hasError('min')) {
+              <mat-error>Debe ser mayor a 0</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Notas del transporte (opcional)</mat-label>
+            <textarea
+              matInput
+              formControlName="transportNotes"
+              rows="2"
+              placeholder="Condiciones del transporte, observaciones..."
+            ></textarea>
+            <mat-hint align="end"
+              >{{ transportForm.get('transportNotes')?.value?.length || 0 }}/1000</mat-hint
+            >
+            @if (transportForm.get('transportNotes')?.hasError('maxlength')) {
+              <mat-error>Maximo 1000 caracteres</mat-error>
+            }
+          </mat-form-field>
+        </form>
+      </div>
+    }
+  </div>
+  <div class="wizard-footer">
+    @if (currentStep() === 1) {
+      <button mat-stroked-button (click)="close()">Cancelar</button>
+      <button
+        mat-raised-button
+        class="btn-primary"
+        [disabled]="!canProceedStep2()"
+        (click)="goToStep2()"
+      >
+        Siguiente
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    } @else if (currentStep() === 2) {
+      <button mat-stroked-button (click)="goToStep1()">
+        <mat-icon>chevron_left</mat-icon>
+        Anterior
+      </button>
+      <button
+        mat-raised-button
+        class="btn-primary"
+        [disabled]="batchForm.invalid"
+        (click)="goToStep3()"
+      >
+        Siguiente
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    } @else {
+      <button mat-stroked-button (click)="goToStep2FromStep3()">
+        <mat-icon>chevron_left</mat-icon>
+        Anterior
+      </button>
+      <button
+        mat-raised-button
+        class="btn-primary"
+        [disabled]="transportForm.invalid || saving()"
+        (click)="createBatch()"
+      >
+        @if (saving()) {
+          <mat-spinner diameter="18" class="btn-spinner" />
+        } @else {
+          <mat-icon>add</mat-icon>
+        }
+        Crear Lote
+      </button>
+    }
+  </div>
+</div>
