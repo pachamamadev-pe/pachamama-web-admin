@@ -26,8 +26,12 @@ export class CollectorsService {
     projectCommunityId: string,
     page = 0,
     size = 20,
+    showArchived = false,
   ): Observable<PageDto<Collector>> {
-    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('showArchived', String(showArchived));
     return this.http.get<PageDto<Collector>>(
       `${this.apiUrl}/project-community/${projectCommunityId}/paged`,
       { params },

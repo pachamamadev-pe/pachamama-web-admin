@@ -57,7 +57,7 @@ import { AzureStorageService } from '../services/azure-storage.service';
       <!-- Right side: Search + Actions -->
       <div class="flex shrink-0 items-center gap-3">
         <!-- Search (hidden on mobile) -->
-        <mat-form-field
+        <!--         <mat-form-field
           appearance="outline"
           class="header-search-field hidden w-[280px] lg:block"
           subscriptSizing="dynamic"
@@ -70,12 +70,12 @@ import { AzureStorageService } from '../services/azure-storage.service';
             (input)="onSearch($event)"
             class="text-sm"
           />
-        </mat-form-field>
+        </mat-form-field> -->
 
         <!-- Action buttons -->
         <div class="flex items-center gap-2">
           <!-- Notifications Button -->
-          <button
+          <!--    <button
             mat-icon-button
             [matBadge]="notificationCount()"
             matBadgeColor="warn"
@@ -85,7 +85,19 @@ import { AzureStorageService } from '../services/azure-storage.service';
             (click)="action.emit('notifications')"
           >
             <mat-icon>notifications</mat-icon>
-          </button>
+          </button> -->
+
+          @if (sidebarService.companyName()) {
+            <div class="hidden max-w-[320px] lg:flex flex-col items-end">
+              <span class="text-[11px] leading-none text-neutral-subheading">Cliente</span>
+              <span
+                class="text-sm font-semibold text-accent-titles truncate max-w-[320px]"
+                [title]="sidebarService.companyName()"
+              >
+                {{ sidebarService.companyName() }}
+              </span>
+            </div>
+          }
 
           <!-- User Profile Button with Menu -->
           <button

@@ -274,7 +274,7 @@
                     (ngModelChange)="updateFieldTypeId($event)"
                     required
                   >
-                    @for (fieldType of fieldTypes(); track fieldType.id) {
+                    @for (fieldType of filteredFieldTypes(); track fieldType.id) {
                       <mat-option [value]="fieldType.id">
                         {{ fieldType.name }}
                       </mat-option>
@@ -291,10 +291,8 @@
                   <mat-select
                     [ngModel]="newField().appliesTo"
                     (ngModelChange)="updateAppliesTo($event)"
+                    [disabled]="appliesToFieldState().disabled"
                   >
-                    <mat-option value="both">
-                      {{ APPLIES_TO_LABELS['both'] }}
-                    </mat-option>
                     <mat-option value="tree">
                       {{ APPLIES_TO_LABELS['tree'] }}
                     </mat-option>
@@ -303,7 +301,13 @@
                     </mat-option>
                   </mat-select>
                   <mat-icon matPrefix>nature</mat-icon>
-                  <mat-hint>Especifica si aplica a árboles, trozas o ambos</mat-hint>
+                  @if (appliesToFieldState().disabled) {
+                    <mat-hint
+                      >Valor determinado automáticamente por las etapas seleccionadas</mat-hint
+                    >
+                  } @else {
+                    <mat-hint>Especifica si aplica a árboles o trozas</mat-hint>
+                  }
                 </mat-form-field>
 
                 <!-- Requerido -->
@@ -563,7 +567,7 @@
                           <div class="meta-item">
                             <mat-icon>nature</mat-icon>
                             <span class="text-subtitle text-neutral-subheading">
-                              {{ APPLIES_TO_LABELS[field.appliesTo || 'both'] }}
+                              {{ APPLIES_TO_LABELS[field.appliesTo || 'tree'] }}
                             </span>
                           </div>
                         </div>
@@ -652,7 +656,7 @@
                           <div class="meta-item">
                             <mat-icon>nature</mat-icon>
                             <span class="text-subtitle text-neutral-subheading">
-                              {{ APPLIES_TO_LABELS[field.appliesTo || 'both'] }}
+                              {{ APPLIES_TO_LABELS[field.appliesTo || 'tree'] }}
                             </span>
                           </div>
                         </div>

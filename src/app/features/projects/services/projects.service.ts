@@ -8,6 +8,9 @@ import {
   UpdateProjectRequest,
   ProjectStageUpdateDto,
   PageDto,
+  ProjectActivityTypeKpiResponse,
+  CollectorsGenderKpiResponse,
+  ActivityValidationStatusKpiResponse,
 } from '../models/project.model';
 
 /**
@@ -59,6 +62,34 @@ export class ProjectsService {
     }
 
     return this.http.get<PageDto<Project>>(`${this.apiUrl}/by-product/${productId}`, { params });
+  }
+
+  /**
+   * Obtiene la lista paginada de proyectos por productId y companyId
+   * GET /api/v1/admin/projects/by-product/{productId}/by-company/{companyId}
+   * @param productId - ID del producto
+   * @param companyId - ID de la compañía
+   * @param page - Número de página (default: 0)
+   * @param size - Tamaño de página (default: 20)
+   * @param q - Query de búsqueda (opcional)
+   */
+  getProjectsByProductAndCompany(
+    productId: string,
+    companyId: string,
+    page = 0,
+    size = 20,
+    q?: string,
+  ): Observable<PageDto<Project>> {
+    let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+
+    if (q) {
+      params = params.set('q', q);
+    }
+
+    return this.http.get<PageDto<Project>>(
+      `${this.apiUrl}/by-product/${productId}/by-company/${companyId}`,
+      { params },
+    );
   }
 
   /**
@@ -123,6 +154,16 @@ export class ProjectsService {
   }
 
   /**
+   * Inicia la etapa de acopio del proyecto (transición backend específica)
+   * PATCH /projects/{id}/start-acopio
+   * Transiciona el proyecto a 'ctp_entry' si existen solicitudes y actividades aprobadas
+   */
+  startAcopio(id: string): Observable<Project> {
+    // No body requerido; backend valida solicitudes y actividades aprobadas
+    return this.http.patch<Project>(`${this.apiUrl}/${id}/start-acopio`, {});
+  }
+
+  /**
    * Actualiza la etapa de un proyecto
    * PATCH /projects/{id}/stage
    * @param id - UUID del proyecto
@@ -148,5 +189,39 @@ export class ProjectsService {
    */
   deleteProject(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Obtiene KPIs sincronizados por tipo de actividad para un proyecto
+   * GET /api/v1/admin/kpis/sync/by-activity-type?projectId={projectId}
+   */
+  getActivityTypeKpis(projectId: string): Observable<ProjectActivityTypeKpiResponse> {
+    const params = new HttpParams().set('projectId', projectId);
+    return this.http.get<ProjectActivityTypeKpiResponse>(
+      `${environment.apiUrl}/api/v1/admin/kpis/sync/by-activity-type`,
+      { params },
+    );
+  }
+
+  /**
+   * Obtiene KPIs de participación por género de recolectores para un proyecto
+   * GET /api/v1/admin/kpis/sync/collectors/gender/by-project/{projectId}
+   */
+  getCollectorsGenderKpis(projectId: string): Observable<CollectorsGenderKpiResponse> {
+    return this.http.get<CollectorsGenderKpiResponse>(
+      `${environment.apiUrl}/api/v1/admin/kpis/sync/collectors/gender/by-project/${projectId}`,
+    );
+  }
+
+  /**
+   * Obtiene KPIs de estado de validación de actividades por tipo para un proyecto
+   * GET /api/v1/admin/kpis/sync/activities/validation-status/by-project/{projectId}
+   */
+  getActivityValidationStatusKpis(
+    projectId: string,
+  ): Observable<ActivityValidationStatusKpiResponse> {
+    return this.http.get<ActivityValidationStatusKpiResponse>(
+      `${environment.apiUrl}/api/v1/admin/kpis/sync/activities/validation-status/by-project/${projectId}`,
+    );
   }
 }

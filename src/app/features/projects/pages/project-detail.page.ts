@@ -53,16 +53,28 @@ import { BrigadesTabComponent } from '../components/brigades-tab.component';
 import { DocumentsTabComponent } from '../components/documents-tab.component';
 import { CollectionReviewTabComponent } from '../components/collection-review-tab.component';
 import { ProjectMapComponent } from '../components/project-map.component';
-import { getProjectStageLabel, getProjectStageClass } from '../models/project.model';
+import {
+  getProjectStageLabel,
+  getProjectStageClass,
+  ProjectActivityTypeKpi,
+  CollectorsGenderKpi,
+  ActivityValidationStatusKpi,
+} from '../models/project.model';
 import { BrigadeFormDialogComponent } from '../components/brigade-form.component';
 import { ConfigurationTabComponent } from '../components/configuration-tab.component';
 import { SidebarService } from '@core/services/sidebar.service';
 import { PERMISSIONS } from '@core/auth/permissions';
+import { CollectionBatchesTabComponent } from '../../collection-batches/components/collection-batches-tab.component';
 
 interface ProjectStage {
   number: number;
   name: string;
   key: string;
+}
+
+interface ActivityValidationStatusChartItem {
+  activityType: string;
+  status: ActivityValidationStatusKpi;
 }
 
 @Component({
@@ -90,6 +102,7 @@ interface ProjectStage {
     CollectionReviewTabComponent,
     ProjectMapComponent,
     ConfigurationTabComponent,
+    CollectionBatchesTabComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -123,6 +136,17 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   loading = signal(true);
   selectedTabIndex = signal(0);
   stagesSidebarCollapsed = signal(false);
+  activityTypeKpis = signal<ProjectActivityTypeKpi[]>([]);
+  loadingActivityTypeKpis = signal(false);
+  collectorsGenderKpis = signal<CollectorsGenderKpi>({
+    male: 0,
+    female: 0,
+    other: 0,
+    total: 0,
+  });
+  loadingCollectorsGenderKpis = signal(false);
+  activityValidationStatusKpis = signal<Record<string, ActivityValidationStatusKpi>>({});
+  loadingActivityValidationStatusKpis = signal(false);
 
   // Track which tabs have loaded their data (lazy loading)
   tabsLoaded = signal<Set<number>>(new Set([0])); // Tab 0 (Resumen) loads immediately
@@ -388,6 +412,8 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         return this.canStartCollection();
       case 'serfor_evaluation':
         return this.canStartCollection();
+      case 'collection':
+        return true;
       // TODO: Agregar validaciones para otras transiciones de etapas cuando se definan
       default:
         return false;
@@ -428,6 +454,10 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         if (!this.areAllStageRequiredDocumentsApproved('serfor_evaluation'))
           blockers.push('• Subir y aprobar todos los documentos obligatorios de esta etapa');
         break;
+      case 'collection':
+        // El backend valida que existan solicitudes y actividades aprobadas
+        // No hay validaciones adicionales en el frontend
+        break;
       default:
         blockers.push('No se puede avanzar desde esta etapa');
     }
@@ -451,10 +481,9 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   // Computed para mostrar/ocultar el tab de generación de PMF
   showPmfGenerationTab = computed(() => {
     const stage = this.project()?.stage;
-    // Mostrar tab desde la etapa de PMF en adelante
-    const pmfStageIndex = this.stages.findIndex((s) => s.key === 'pmf_development');
-    const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
-    return currentStageIndex >= pmfStageIndex && pmfStageIndex !== -1;
+    // Mostrar tab solo en las etapas pmf_development y serfor_evaluation
+    // NO mostrar en collection ni etapas posteriores
+    return stage === 'pmf_development' || stage === 'serfor_evaluation';
   });
 
   // Computed para mostrar/ocultar el tab de revisión de solicitudes de recolección
@@ -505,60 +534,54 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     return index;
   });
 
-  // Computed para calcular el índice dinámico del tab "Documentos"
-  documentsTabIndex = computed(() => {
+  // Computed para mostrar/ocultar el tab de lotes de acopio
+  showAcopioBatchesTab = computed(() => {
+    const stage = this.project()?.stage;
+    // Mostrar tab desde la etapa ctp_entry en adelante
+    const ctpStageIndex = this.stages.findIndex((s) => s.key === 'ctp_entry');
+    const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
+    return currentStageIndex >= ctpStageIndex && ctpStageIndex !== -1;
+  });
+
+  // Computed para calcular el índice dinámico del tab "Lotes de Acopio"
+  acopioBatchesTabIndex = computed(() => {
     let index = 0;
-    // Tab 0: Resumen (siempre presente)
-    index++;
-    // Tab 1: Recolectores (siempre presente)
-    index++;
-    // Tab 2: Brigadas (condicional)
-    if (this.showBrigadesTab()) index++;
-    // Tab 3: Evaluación de inventario (condicional)
-    if (this.showInventoryEvaluationTab()) index++;
-    // Tab 4: Generar PMF (condicional)
-    if (this.showPmfGenerationTab()) index++;
-    // Tab 5: Revisión Solicitudes (condicional)
-    if (this.showCollectionTab()) index++;
-    // Tab 6: Documentos (siempre presente) - este es el índice que buscamos
+    index++; // Tab 0: Resumen
+    index++; // Tab 1: Recolectores
+    if (this.showBrigadesTab()) index++; // Tab: Brigadas
+    if (this.showInventoryEvaluationTab()) index++; // Tab: Inventario
+    if (this.showPmfGenerationTab()) index++; // Tab: PMF
+    if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
+    // Tab: Lotes de Acopio - este es el índice que buscamos
     return index;
   });
 
-  // Computed para calcular el índice dinámico del tab "Revisión Solicitudes"
-  collectionTabIndex = computed(() => {
+  // Computed para calcular el índice dinámico del tab "Documentos"
+  documentsTabIndex = computed(() => {
     let index = 0;
-    // Tab 0: Resumen (siempre presente)
-    index++;
-    // Tab 1: Recolectores (siempre presente)
-    index++;
-    // Tab 2: Brigadas (condicional)
-    if (this.showBrigadesTab()) index++;
-    // Tab 3: Evaluación de inventario (condicional)
-    if (this.showInventoryEvaluationTab()) index++;
-    // Tab 4: Generar PMF (condicional)
-    if (this.showPmfGenerationTab()) index++;
-    // Tab 5: Revisión Solicitudes (condicional) - este es el índice que buscamos
+    index++; // Tab 0: Resumen
+    index++; // Tab 1: Recolectores
+    if (this.showBrigadesTab()) index++; // Tab: Brigadas
+    if (this.showInventoryEvaluationTab()) index++; // Tab: Inventario
+    if (this.showPmfGenerationTab()) index++; // Tab: PMF
+    if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
+    if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
+    // Tab: Documentos - este es el índice que buscamos
     return index;
   });
 
   // Computed para calcular el índice dinámico del tab "Configuración"
   getConfigurationTabIndex = computed(() => {
     let index = 0;
-    // Tab 0: Resumen (siempre presente)
-    index++;
-    // Tab 1: Recolectores (siempre presente)
-    index++;
-    // Tab 2: Brigadas (condicional)
-    if (this.showBrigadesTab()) index++;
-    // Tab 3: Evaluación de inventario (condicional)
-    if (this.showInventoryEvaluationTab()) index++;
-    // Tab 4: Generar PMF (condicional)
-    if (this.showPmfGenerationTab()) index++;
-    // Tab 5: Revisión Solicitudes (condicional)
-    if (this.showCollectionTab()) index++;
-    // Tab 6: Documentos (siempre presente)
-    index++;
-    // Tab 7: Configuración (siempre presente) - este es el índice que buscamos
+    index++; // Tab 0: Resumen
+    index++; // Tab 1: Recolectores
+    if (this.showBrigadesTab()) index++; // Tab: Brigadas
+    if (this.showInventoryEvaluationTab()) index++; // Tab: Inventario
+    if (this.showPmfGenerationTab()) index++; // Tab: PMF
+    if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
+    if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
+    index++; // Tab: Documentos
+    // Tab: Configuración - este es el índice que buscamos
     return index;
   });
 
@@ -596,6 +619,9 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     this.projectsService.getProjectById(id).subscribe({
       next: (project) => {
         this.project.set(project);
+        this.loadActivityTypeKpis(id);
+        this.loadCollectorsGenderKpis(id);
+        this.loadActivityValidationStatusKpis(id);
 
         //  comunidad relacionados
         forkJoin({
@@ -1234,6 +1260,23 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
           this.notification.error('Error al avanzar a la etapa de Recolección');
         },
       });
+    } else if (currentStage === 'collection' && next.key === 'ctp_entry') {
+      this.notification.info(`Avanzando a etapa: ${next.name}...`);
+
+      console.log('Calling startAcopio with:', { projectId });
+
+      this.projectsService.startAcopio(projectId).subscribe({
+        next: (updatedProject) => {
+          this.project.set(updatedProject);
+          this.notification.success(`Etapa "${next.name}" iniciada correctamente`);
+        },
+        error: (error) => {
+          console.error('Error advancing to Acopio/CTP Entry stage:', error);
+          const errorMessage =
+            error?.error?.message || 'Error al avanzar a la etapa de Acopio/Ingreso a CTP';
+          this.notification.error(errorMessage);
+        },
+      });
     } else {
       // Otras transiciones aún no implementadas en el backend
       this.notification.warning(
@@ -1257,6 +1300,163 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         this.projectActivitiesTotal.set(0);
       },
     });
+  }
+
+  /**
+   * Carga KPIs por tipo de actividad para el resumen del proyecto
+   */
+  loadActivityTypeKpis(projectId: string): void {
+    this.loadingActivityTypeKpis.set(true);
+    this.projectsService.getActivityTypeKpis(projectId).subscribe({
+      next: (response) => {
+        this.activityTypeKpis.set(response.data ?? []);
+        this.loadingActivityTypeKpis.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading activity type KPIs:', error);
+        this.activityTypeKpis.set([]);
+        this.loadingActivityTypeKpis.set(false);
+      },
+    });
+  }
+
+  /**
+   * Carga KPIs de participación por género para el resumen del proyecto
+   */
+  loadCollectorsGenderKpis(projectId: string): void {
+    this.loadingCollectorsGenderKpis.set(true);
+    this.projectsService.getCollectorsGenderKpis(projectId).subscribe({
+      next: (response) => {
+        this.collectorsGenderKpis.set(response.data);
+        this.loadingCollectorsGenderKpis.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading collectors gender KPIs:', error);
+        this.collectorsGenderKpis.set({ male: 0, female: 0, other: 0, total: 0 });
+        this.loadingCollectorsGenderKpis.set(false);
+      },
+    });
+  }
+
+  /**
+   * Carga KPIs de estado de validación por tipo de actividad
+   */
+  loadActivityValidationStatusKpis(projectId: string): void {
+    this.loadingActivityValidationStatusKpis.set(true);
+    this.projectsService.getActivityValidationStatusKpis(projectId).subscribe({
+      next: (response) => {
+        this.activityValidationStatusKpis.set(response.data ?? {});
+        this.loadingActivityValidationStatusKpis.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading activity validation status KPIs:', error);
+        this.activityValidationStatusKpis.set({});
+        this.loadingActivityValidationStatusKpis.set(false);
+      },
+    });
+  }
+
+  /**
+   * Obtiene una etiqueta legible para el tipo de actividad
+   */
+  getActivityTypeDisplayName(activityType: string): string {
+    const labels: Record<string, string> = {
+      inventory: 'Inventario',
+      harvest: 'Cosecha',
+      collection: 'Recolección',
+      ctp_entry: 'Acopio / Ingreso a CTP',
+      primary_transformation: 'Transformación primaria',
+      map_adjustment: 'Ajuste de mapas',
+    };
+
+    return labels[activityType] ?? activityType;
+  }
+
+  getActivityKpiBarWidth(value: number): number {
+    const maxValue = Math.max(...this.activityTypeKpis().map((kpi) => kpi.totalActivities), 0);
+    if (maxValue <= 0) {
+      return 0;
+    }
+
+    return (value / maxValue) * 100;
+  }
+
+  activityValidationStatusChartItems = computed<ActivityValidationStatusChartItem[]>(() => {
+    const data = this.activityValidationStatusKpis();
+    return Object.entries(data).map(([activityType, status]) => ({
+      activityType,
+      status,
+    }));
+  });
+
+  getValidationStatusWidth(
+    status: ActivityValidationStatusKpi,
+    validationStatus: 'pending' | 'approved' | 'rejected',
+  ): number {
+    const total = status.total || status.pending + status.approved + status.rejected;
+    if (total <= 0) {
+      return 0;
+    }
+
+    return (status[validationStatus] / total) * 100;
+  }
+
+  getActivityMetricBarWidth(
+    kpi: ProjectActivityTypeKpi,
+    metric: 'failed' | 'retries' | 'recovered',
+  ): number {
+    const metricValue =
+      metric === 'failed'
+        ? kpi.failedActivities
+        : metric === 'retries'
+          ? kpi.retries
+          : kpi.recovered;
+
+    const reference = Math.max(
+      kpi.totalActivities,
+      kpi.failedActivities,
+      kpi.retries,
+      kpi.recovered,
+      1,
+    );
+
+    return (metricValue / reference) * 100;
+  }
+
+  private getGenderTotal(): number {
+    const data = this.collectorsGenderKpis();
+    const calculatedTotal = data.male + data.female + data.other;
+    return data.total > 0 ? data.total : calculatedTotal;
+  }
+
+  getGenderPercentage(value: number): number {
+    const total = this.getGenderTotal();
+    if (total <= 0) {
+      return 0;
+    }
+
+    return (value / total) * 100;
+  }
+
+  getCollectorsGenderTotal(): number {
+    return this.getGenderTotal();
+  }
+
+  getGenderChartGradient(): string {
+    const male = this.getGenderPercentage(this.collectorsGenderKpis().male);
+    const female = this.getGenderPercentage(this.collectorsGenderKpis().female);
+    const other = this.getGenderPercentage(this.collectorsGenderKpis().other);
+
+    const maleEnd = male;
+    const femaleEnd = male + female;
+    const otherEnd = femaleEnd + other;
+
+    return `conic-gradient(
+      #3b82f6 0% ${maleEnd}%,
+      #ec4899 ${maleEnd}% ${femaleEnd}%,
+      #f59e0b ${femaleEnd}% ${otherEnd}%,
+      #e5e5e5 ${otherEnd}% 100%
+    )`;
   }
 
   /**

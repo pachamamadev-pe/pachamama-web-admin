@@ -84,6 +84,14 @@ export const appRoutes: Routes = [
           import('./features/areas/pages/areas-import.page').then((m) => m.AreasImportPage),
       },
       {
+        path: 'projects/:id/batches/:batchId',
+        title: 'Detalle del Lote de Acopio',
+        loadComponent: () =>
+          import('./features/collection-batches/pages/batch-detail.page').then(
+            (m) => m.BatchDetailPage,
+          ),
+      },
+      {
         path: 'projects/:id/enable-inventory',
         title: 'Habilitar inventario',
         loadComponent: () =>

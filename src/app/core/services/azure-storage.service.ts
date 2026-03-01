@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@environments/environment';
 import { Observable, of } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { map, shareReplay, switchMap } from 'rxjs/operators';
 
 /**
  * Respuesta del Azure Function SAS
@@ -129,6 +129,26 @@ export class AzureStorageService {
     });
 
     return observable;
+  }
+
+  /**
+   * Descarga el contenido de un archivo como Blob y devuelve un `blob:` URL local.
+   * Usar en viewers PDF para evitar el problema CORS de PDF.js (web worker).
+   * El llamador debe invocar `URL.revokeObjectURL(url)` cuando ya no lo necesite.
+   *
+   * @param path - Path relativo del archivo (igual que getFileUrl)
+   * @returns Observable<string> con un blob: URL (same-origin, sin CORS)
+   */
+  getFileAsBlob(path: string, ttlMinutes = 5): Observable<string> {
+    return this.getFileUrl(path, ttlMinutes).pipe(
+      switchMap((sasUrl) =>
+        this.http.get(sasUrl, {
+          responseType: 'blob',
+          headers: { 'X-Skip-Loading': 'true' },
+        }),
+      ),
+      map((blob) => URL.createObjectURL(blob)),
+    );
   }
 
   /**

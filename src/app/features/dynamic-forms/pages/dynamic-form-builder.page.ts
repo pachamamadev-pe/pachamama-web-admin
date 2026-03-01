@@ -173,7 +173,7 @@ export class DynamicFormBuilderPage implements OnInit {
     isRequired: false,
     protocolId: null,
     validationConfig: {},
-    appliesTo: 'both',
+    appliesTo: 'tree',
   });
 
   // Computed for selected field type
@@ -181,6 +181,53 @@ export class DynamicFormBuilderPage implements OnInit {
     const fieldTypeId = this.newField().fieldTypeId;
     if (!fieldTypeId) return null;
     return this.fieldTypes().find((ft) => ft.id === fieldTypeId) || null;
+  });
+
+  // Computed for selected protocol
+  selectedProtocol = computed(() => {
+    const protocolId = this.newField().protocolId;
+    if (!protocolId) return null;
+    return this.protocols().find((p) => p.id === protocolId) || null;
+  });
+
+  // Computed for filtered field types based on protocol data type
+  filteredFieldTypes = computed(() => {
+    const protocol = this.selectedProtocol();
+    const allFieldTypes = this.fieldTypes();
+
+    // Si no hay protocolo seleccionado, mostrar todos los tipos
+    if (!protocol) {
+      return allFieldTypes;
+    }
+
+    // Si el protocolo tiene dataType NUMERIC, filtrar solo tipos numéricos
+    if (protocol.attribute?.dataType === 'NUMERIC') {
+      return allFieldTypes.filter((ft) => ft.code === 'number' || ft.code === 'integer');
+    }
+
+    // Para otros dataTypes, mostrar todos los tipos
+    return allFieldTypes;
+  });
+
+  // Computed for appliesTo field state based on selected stages
+  appliesToFieldState = computed(() => {
+    const stages = this.selectedStages();
+
+    // Solo aplicar lógica de bloqueo cuando hay EXACTAMENTE 1 etapa seleccionada
+    if (stages.length === 1) {
+      // Si solo está seleccionado 'inventory', forzar 'tree' y deshabilitar
+      if (stages[0] === 'inventory') {
+        return { value: 'tree' as AppliesTo, disabled: true };
+      }
+
+      // Si solo está seleccionado 'collection', forzar 'tree_stump' y deshabilitar
+      if (stages[0] === 'collection') {
+        return { value: 'tree_stump' as AppliesTo, disabled: true };
+      }
+    }
+
+    // En todos los demás casos (múltiples etapas o etapas diferentes), permitir edición libre
+    return { value: null, disabled: false };
   });
 
   // Temp values for validation config
@@ -212,6 +259,41 @@ export class DynamicFormBuilderPage implements OnInit {
         }));
       } else if (isEditing) {
         console.log('✋ NO aplicar defaults - estamos editando un campo existente');
+      }
+    });
+
+    // Effect to reset fieldTypeId when protocol changes and current field type is not available
+    effect(() => {
+      const filteredTypes = this.filteredFieldTypes();
+      const currentFieldTypeId = this.newField().fieldTypeId;
+      const isEditing = this.editingFieldId();
+
+      // Solo resetear si NO estamos editando y el tipo actual no está en los filtrados
+      if (!isEditing && currentFieldTypeId) {
+        const isAvailable = filteredTypes.some((ft) => ft.id === currentFieldTypeId);
+        if (!isAvailable) {
+          console.log('🔄 Reseteando fieldTypeId - no disponible en protocolo seleccionado');
+          this.newField.update((field) => ({
+            ...field,
+            fieldTypeId: '',
+            validationConfig: {},
+          }));
+        }
+      }
+    });
+
+    // Effect to auto-update appliesTo based on selected stages
+    effect(() => {
+      const fieldState = this.appliesToFieldState();
+      const isEditing = this.editingFieldId();
+
+      // Solo auto-actualizar si NO estamos editando y hay un valor forzado
+      if (!isEditing && fieldState.value) {
+        console.log('🔄 Auto-actualizando appliesTo a:', fieldState.value);
+        this.newField.update((field) => ({
+          ...field,
+          appliesTo: fieldState.value!,
+        }));
       }
     });
   }
@@ -283,8 +365,16 @@ export class DynamicFormBuilderPage implements OnInit {
         return;
       }
 
+      const companyId = await this.authService.getUserCompanyId();
+      if (!companyId) {
+        this.notification.error('No se pudo obtener el ID de la empresa');
+        this.projects.set([]);
+        this.loadingProjects.set(false);
+        return;
+      }
+
       // Para el builder solo necesitamos poblar el combo; pedir un tamaño mayor.
-      this.projectsService.getProjectsByProduct(productId, 0, 200).subscribe({
+      this.projectsService.getProjectsByProductAndCompany(productId, companyId, 0, 200).subscribe({
         next: (response) => {
           this.projects.set(response.items);
           this.loadingProjects.set(false);
@@ -299,6 +389,7 @@ export class DynamicFormBuilderPage implements OnInit {
       });
     } catch (error) {
       console.error('Error getting companyId:', error);
+      this.notification.error('Error al obtener empresa');
       this.loadingProjects.set(false);
     }
   }
@@ -438,7 +529,9 @@ export class DynamicFormBuilderPage implements OnInit {
             isRequired: field.required,
             protocolId: field.id_protocol || null,
             validationConfig: field.validationOptions,
-            appliesTo: (field.applies_to || 'both') as AppliesTo,
+            appliesTo: (field.applies_to === 'both'
+              ? 'tree'
+              : field.applies_to || 'tree') as AppliesTo,
           }),
         );
         this.protocolLinkedSection.set({
@@ -464,7 +557,9 @@ export class DynamicFormBuilderPage implements OnInit {
             fieldTypeId: field.id_field_type,
             isRequired: field.required,
             validationConfig: field.validationOptions,
-            appliesTo: (field.applies_to || 'both') as AppliesTo,
+            appliesTo: (field.applies_to === 'both'
+              ? 'tree'
+              : field.applies_to || 'tree') as AppliesTo,
           }),
         );
         this.freeFormSection.set({
@@ -659,7 +754,7 @@ export class DynamicFormBuilderPage implements OnInit {
       isRequired: newFieldData.isRequired || false,
       protocolId: newFieldData.protocolId,
       validationConfig: validationConfig,
-      appliesTo: newFieldData.appliesTo || 'both',
+      appliesTo: newFieldData.appliesTo || 'tree',
     };
 
     console.log('📦 Campo final a guardar:', field);
@@ -706,7 +801,7 @@ export class DynamicFormBuilderPage implements OnInit {
       isRequired: false,
       protocolId: null,
       validationConfig: {},
-      appliesTo: 'both',
+      appliesTo: 'tree',
     });
     this.tempOption.set('');
     this.tempArrayValues.set({});
@@ -735,7 +830,7 @@ export class DynamicFormBuilderPage implements OnInit {
       isRequired: field.isRequired,
       protocolId: field.protocolId || null,
       validationConfig: validationCopy,
-      appliesTo: field.appliesTo || 'both',
+      appliesTo: field.appliesTo || 'tree',
     });
 
     // Scroll to form
@@ -757,7 +852,7 @@ export class DynamicFormBuilderPage implements OnInit {
       isRequired: false,
       protocolId: null,
       validationConfig: {},
-      appliesTo: 'both',
+      appliesTo: 'tree',
     });
     this.tempOption.set('');
     this.tempArrayValues.set({});
@@ -1039,7 +1134,7 @@ export class DynamicFormBuilderPage implements OnInit {
           attribute_code: protocol?.attribute?.code || '',
           required: field.isRequired,
           validationOptions: field.validationConfig || {},
-          applies_to: field.appliesTo || 'both',
+          applies_to: field.appliesTo || 'tree',
           display_order: index + 1,
         };
       });
@@ -1071,7 +1166,7 @@ export class DynamicFormBuilderPage implements OnInit {
           attribute_code: '',
           required: field.isRequired,
           validationOptions: field.validationConfig || {},
-          applies_to: field.appliesTo || 'both',
+          applies_to: field.appliesTo || 'tree',
           display_order: index + 1,
         };
       });

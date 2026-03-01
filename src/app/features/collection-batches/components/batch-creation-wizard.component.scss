@@ -1,0 +1,316 @@
+// ─── Dialog wrapper ──────────────────────────────────────────────────────────
+.wizard-dialog {
+  @apply flex flex-col;
+  height: 85vh;
+  max-height: 720px;
+  width: 100%;
+  max-width: 680px;
+  overflow: hidden;
+}
+
+// ─── Header ──────────────────────────────────────────────────────────────────
+.wizard-header {
+  @apply flex items-start justify-between px-6 pt-5 pb-4;
+  border-bottom: 1px solid theme('colors.neutral.border');
+  flex-shrink: 0;
+
+  .wizard-header-title {
+    h2 {
+      @apply text-body font-bold text-accent-titles;
+    }
+
+    p {
+      @apply text-subtitle text-neutral-subheading mt-0.5;
+    }
+  }
+}
+
+// ─── Step Indicator ──────────────────────────────────────────────────────────
+.step-indicator {
+  @apply flex items-center gap-3 px-6 py-4;
+  flex-shrink: 0;
+  background-color: #f9fafb;
+  border-bottom: 1px solid theme('colors.neutral.border');
+
+  .step {
+    @apply flex items-center gap-2;
+
+    .step-circle {
+      @apply flex items-center justify-center rounded-full text-sm font-bold transition-all;
+      width: 28px;
+      height: 28px;
+      background-color: #e5e7eb;
+      color: #6b7280;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    .step-label {
+      @apply text-subtitle text-neutral-subheading font-medium;
+    }
+
+    &.step--active {
+      .step-circle {
+        background-color: theme('colors.secondary.DEFAULT');
+        color: white;
+      }
+
+      .step-label {
+        @apply text-accent-titles font-bold;
+      }
+    }
+
+    &.step--done {
+      .step-circle {
+        background-color: #d1fae5;
+        color: #065f46;
+      }
+    }
+  }
+
+  .step-connector {
+    @apply flex-1;
+    height: 2px;
+    background-color: #e5e7eb;
+  }
+}
+
+// ─── Content (scrollable) ────────────────────────────────────────────────────
+.wizard-content {
+  @apply flex-1 overflow-y-auto px-6 py-4;
+
+  .state-container {
+    @apply flex flex-col items-center justify-center py-12;
+
+    .state-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+    }
+  }
+}
+
+// ─── Request list ─────────────────────────────────────────────────────────────
+.requests-list {
+  @apply flex flex-col gap-3;
+}
+
+.request-item {
+  @apply rounded-lg border transition-all;
+  border-color: theme('colors.neutral.border');
+
+  &.request-item--selected {
+    border-color: theme('colors.secondary.DEFAULT');
+    background-color: #f0faf5;
+  }
+
+  &.request-item--disabled {
+    @apply opacity-60;
+    background-color: #f9fafb;
+    cursor: not-allowed;
+  }
+
+  .request-main {
+    @apply flex items-start gap-3 p-4;
+
+    .request-checkbox {
+      @apply mt-0.5;
+      flex-shrink: 0;
+    }
+
+    .request-info {
+      @apply flex-1 min-w-0;
+
+      .request-top-row {
+        @apply flex items-center gap-2 flex-wrap mb-2;
+
+        .request-number {
+          @apply text-body font-bold text-primary-black;
+        }
+      }
+
+      .request-meta {
+        @apply flex flex-wrap gap-3;
+
+        .meta-item {
+          @apply flex items-center gap-1 text-subtitle text-neutral-subheading;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+    }
+
+    .expand-btn {
+      flex-shrink: 0;
+    }
+  }
+
+  .request-expanded {
+    @apply px-4 pb-4;
+    border-top: 1px solid theme('colors.neutral.border');
+
+    .expanded-grid {
+      @apply grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3;
+
+      .expanded-stat {
+        @apply flex flex-col;
+
+        .stat-label {
+          @apply text-subtitle text-neutral-subheading;
+        }
+
+        .stat-value {
+          @apply text-body font-bold text-accent-titles;
+        }
+      }
+    }
+  }
+}
+
+// ─── Badges ──────────────────────────────────────────────────────────────────
+.badge {
+  @apply text-subtitle font-medium px-2 py-0.5 rounded-full;
+
+  &.badge--success {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+
+  &.badge--warning {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+
+  &.badge--error {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+}
+
+// ─── Selection summary ───────────────────────────────────────────────────────
+.selection-summary {
+  @apply flex items-center gap-2 mt-4 p-3 rounded-lg text-subtitle;
+  background-color: #f0faf5;
+  color: theme('colors.secondary.DEFAULT');
+  border: 1px solid #a7f3d0;
+
+  mat-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+}
+
+// ─── Step 2 ──────────────────────────────────────────────────────────────────
+.step2-content {
+  @apply flex flex-col gap-5;
+}
+
+.batch-summary {
+  @apply p-4 rounded-lg;
+  background-color: #f9fafb;
+  border: 1px solid theme('colors.neutral.border');
+
+  .summary-grid {
+    @apply grid grid-cols-3 gap-4;
+
+    .summary-stat {
+      @apply flex items-center gap-3;
+
+      mat-icon {
+        @apply text-secondary;
+        font-size: 24px;
+      }
+
+      .stat-number {
+        @apply block text-body font-bold text-accent-titles;
+      }
+
+      .stat-desc {
+        @apply block text-subtitle text-neutral-subheading;
+      }
+    }
+  }
+}
+
+.batch-form {
+  @apply flex flex-col gap-1;
+
+  .full-width {
+    @apply w-full;
+  }
+
+  .form-row {
+    @apply flex gap-4;
+
+    @media (max-width: 480px) {
+      @apply flex-col gap-1;
+    }
+  }
+}
+
+.info-note {
+  @apply flex items-start gap-2 p-3 rounded-lg text-subtitle;
+  background-color: #eff6ff;
+  color: #1e40af;
+
+  mat-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
+// ─── Step 3 ──────────────────────────────────────────────────────────────────
+.step3-content {
+  @apply flex flex-col gap-4;
+}
+
+.transport-form {
+  @apply flex flex-col gap-1;
+
+  .full-width {
+    @apply w-full;
+  }
+
+  .form-row {
+    @apply flex gap-4;
+
+    @media (max-width: 480px) {
+      @apply flex-col gap-1;
+    }
+  }
+}
+
+.form-section-header {
+  @apply flex items-center gap-2 mt-3 mb-0;
+  color: theme('colors.secondary.DEFAULT');
+
+  span {
+    @apply text-subtitle font-bold uppercase tracking-wide;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// ─── Footer ──────────────────────────────────────────────────────────────────
+.wizard-footer {
+  @apply flex items-center justify-between gap-3 px-6 py-4;
+  border-top: 1px solid theme('colors.neutral.border');
+  flex-shrink: 0;
+
+  .btn-spinner {
+    @apply mr-1;
+  }
+}
