@@ -202,6 +202,42 @@ export interface CollectionBatch {
 }
 
 /**
+ * Resumen liviano de lote de acopio
+ * Response de GET /by-project/{projectId}/light
+ */
+export interface CollectionBatchLight {
+  id: string;
+  batchNumber: string;
+  status: BatchStatus;
+
+  companyId: string;
+  companyName: string;
+  projectId: string;
+  projectName: string;
+
+  communityId: string | null;
+  communityName: string | null;
+
+  collectionRequestId: string | null;
+  collectionRequestCode: string | null;
+  requestedWeighingKg: number | null;
+  requestStartDate: string | null;
+  requestEndDate: string | null;
+
+  areaId: string | null;
+  areaName: string | null;
+
+  productId: string | null;
+  productName: string | null;
+  productCode: string | null;
+
+  batchDate: string | null;
+  totalWeightKg: number;
+  totalSacks: number;
+  totalUnits: number;
+}
+
+/**
  * Estado de solicitud de recolección
  */
 export type CollectionRequestStatus =
@@ -297,8 +333,8 @@ export interface CreateBatchRequest {
   collectionRequestId: string;
   areaId?: string;
   batchDate: string;
-  totalWeightKg: number;
-  totalSacks: number;
+  totalWeightKg?: number;
+  totalSacks?: number;
   totalUnits?: number;
   notes?: string;
   transportInfo: TransportInfoRequest;

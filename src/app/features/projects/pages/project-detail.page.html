@@ -237,7 +237,7 @@
                       <mat-card-content>
                         <div class="income-chart">
                           <div class="chart-placeholder">
-                             Mock line chart 
+                             Mock line chart
                             <svg viewBox="0 0 400 150" class="line-chart">
                               <polyline
                                 points="0,100 50,80 100,60 150,90 200,70 250,50 300,65 350,55 400,60"
@@ -559,6 +559,17 @@
                   <app-collection-batches-tab
                     [projectId]="project()!.id"
                     [shouldLoad]="tabsLoaded().has(acopioBatchesTabIndex())"
+                  />
+                </div>
+              </mat-tab>
+            }
+
+            @if (showPrimaryTransformationTab()) {
+              <mat-tab label="Transformaciones">
+                <div class="tab-content">
+                  <app-primary-transformation-tab
+                    [projectId]="project()!.id"
+                    [shouldLoad]="tabsLoaded().has(primaryTransformationTabIndex())"
                   />
                 </div>
               </mat-tab>

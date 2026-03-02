@@ -1,0 +1,993 @@
+<div class="lot-detail-container">
+  <!-- ─── Loading ──────────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="48" />
+      <p class="text-body text-neutral-subheading mt-4">Cargando lote de producción...</p>
+    </div>
+  } @else if (lot()) {
+    <!-- ─── Sticky Header ─────────────────────────────────────────────────── -->
+    <header class="detail-header">
+      <div class="header-top">
+        <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Volver al proyecto">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <div class="header-info">
+          <div class="header-title-row">
+            <h1 class="lot-title">{{ lot()!.lotNumber }}</h1>
+            <span
+              class="stage-badge"
+              [style.background]="currentStageConfig().bgColor"
+              [style.color]="currentStageConfig().accentColor"
+            >
+              <mat-icon>{{ currentStageConfig().icon }}</mat-icon>
+              {{ STATUS_LABELS[lot()!.status] }}
+            </span>
+            <span class="transform-badge">
+              <mat-icon>transform</mat-icon>
+              {{ TRANSFORMATION_LABELS[lot()!.transformationStage] }}
+            </span>
+          </div>
+          <div class="header-meta">
+            <span class="meta-item">
+              <mat-icon>business</mat-icon>
+              {{ lot()!.companyName }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>eco</mat-icon>
+              {{ lot()!.productName }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>event</mat-icon>
+              {{ formatDate(lot()!.productionDate) }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>inventory_2</mat-icon>
+              {{ lot()!.quantity }} {{ lot()!.unit }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Stage Pipeline ─────────────────────────────────────────────── -->
+      <div class="pipeline-wrapper">
+        <div class="stage-pipeline">
+          @for (cfg of STAGE_CONFIGS; track cfg.status; let i = $index; let last = $last) {
+            <!-- Node -->
+            <div
+              [class]="'stage-node ' + getStageNodeClass(cfg.status)"
+              [class.stage-node--clickable]="isStageAccessible(cfg.status)"
+              [class.stage-node--optional]="cfg.isOptional"
+              role="button"
+              [tabindex]="isStageAccessible(cfg.status) ? 0 : -1"
+              (click)="navigateToStage(cfg.status)"
+              (keyup.enter)="navigateToStage(cfg.status)"
+              [matTooltip]="!isStageAccessible(cfg.status) ? 'Etapa no disponible aún' : ''"
+            >
+              <div class="node-ring">
+                <div class="node-circle" [style.--accent]="cfg.accentColor">
+                  @if (getStageNodeClass(cfg.status) === 'stage-node--done') {
+                    <mat-icon class="node-icon node-icon--done">check</mat-icon>
+                  } @else {
+                    <mat-icon class="node-icon">{{ cfg.icon }}</mat-icon>
+                  }
+                </div>
+              </div>
+              <div class="node-meta">
+                <span class="node-label">{{ cfg.label }}</span>
+                @if (cfg.isOptional) {
+                  <span class="optional-pill">Opcional</span>
+                }
+              </div>
+            </div>
+
+            <!-- Connector (not after last) -->
+            @if (!last) {
+              <div
+                [class]="
+                  'stage-connector' +
+                  (STAGE_CONFIGS[i + 1].isOptional || cfg.isOptional
+                    ? ' stage-connector--dashed'
+                    : '') +
+                  (isStageAccessible(STAGE_CONFIGS[i + 1].status) ? ' stage-connector--done' : '')
+                "
+              ></div>
+            }
+          }
+        </div>
+
+        <!-- Branching hint (only shown on acondicionado/current) -->
+        @if (viewingStage() === 'acondicionado' && isViewingCurrentStage()) {
+          <div class="branch-hint">
+            <mat-icon>call_split</mat-icon>
+            <span
+              >Puedes avanzar a <strong>Ablandamiento</strong> o ir directo a
+              <strong>Pulpeado</strong></span
+            >
+          </div>
+        }
+      </div>
+    </header>
+
+    <!-- ─── Main Content ──────────────────────────────────────────────────── -->
+    <div class="main-content">
+      <!-- Stage Context Banner (when viewing a past stage) -->
+      @if (viewingStageRelation() === 'done') {
+        <div class="viewing-past-notice">
+          <mat-icon>history</mat-icon>
+          <span>
+            Estás viendo la etapa <strong>{{ STATUS_LABELS[viewingStage()] }}</strong>
+            (completada). La etapa activa es
+            <strong>{{ STATUS_LABELS[lot()!.status] }}</strong
+            >.
+          </span>
+          <button mat-button (click)="viewingStage.set(lot()!.status)">
+            <mat-icon>arrow_forward</mat-icon>
+            Ir a la etapa activa
+          </button>
+        </div>
+      }
+
+      <!-- Split View -->
+      <div class="split-view">
+        <!-- ── Left: PDF Panel ─────────────────────────────────────────── -->
+        <div class="pdf-panel">
+          @if (loadingPdf()) {
+            <div class="pdf-loading">
+              <mat-spinner diameter="40" />
+              <p class="text-subtitle text-neutral-subheading mt-3">Cargando documento...</p>
+            </div>
+          } @else if (pdfUrl()) {
+            <ngx-extended-pdf-viewer
+              [src]="pdfUrl()!"
+              [height]="'calc(100vh - 320px)'"
+              [showHandToolButton]="true"
+              [showOpenFileButton]="false"
+              [showPrintButton]="true"
+              [showDownloadButton]="true"
+              [showSecondaryToolbarButton]="false"
+              [showRotateButton]="true"
+              [showPropertiesButton]="false"
+              [zoom]="'auto'"
+              [mobileFriendlyZoom]="'100%'"
+            />
+          } @else {
+            <div class="pdf-placeholder">
+              <div class="placeholder-art">
+                <mat-icon class="placeholder-icon">description</mat-icon>
+                <div class="placeholder-lines">
+                  <div class="line line--title"></div>
+                  <div class="line"></div>
+                  <div class="line"></div>
+                  <div class="line line--short"></div>
+                </div>
+              </div>
+              <p class="placeholder-title">Documento no disponible</p>
+              <p class="placeholder-subtitle">
+                {{
+                  currentStageConfig().documentCode
+                    ? 'Genera el ' +
+                      DOCUMENT_LABELS[currentStageConfig().documentCode!] +
+                      ' para visualizarlo aquí'
+                    : 'Esta etapa no requiere documento'
+                }}
+              </p>
+            </div>
+          }
+        </div>
+
+        <!-- ── Right: Stage Info Panel ────────────────────────────────── -->
+        <div class="info-panel">
+          <!-- Stage header card -->
+          <div
+            class="stage-header-card"
+            [style.border-left-color]="currentStageConfig().accentColor"
+          >
+            <div class="stage-icon-wrap" [style.background]="currentStageConfig().bgColor">
+              <mat-icon [style.color]="currentStageConfig().accentColor">
+                {{ currentStageConfig().icon }}
+              </mat-icon>
+            </div>
+            <div class="stage-header-text">
+              <div class="stage-header-title">
+                <h2>{{ currentStageConfig().label }}</h2>
+                @if (currentStageConfig().isOptional) {
+                  <span class="optional-badge">Etapa opcional</span>
+                }
+              </div>
+              <p class="stage-description">{{ currentStageConfig().description }}</p>
+            </div>
+          </div>
+
+          <!-- Document info card -->
+          @if (currentStageConfig().documentCode) {
+            <div class="document-card">
+              <div class="document-card-header">
+                <mat-icon class="doc-icon">description</mat-icon>
+                <div>
+                  <h3 class="doc-card-title">
+                    {{ DOCUMENT_LABELS[currentStageConfig().documentCode!] }}
+                  </h3>
+                  <p class="doc-card-subtitle">Documento requerido para esta etapa</p>
+                </div>
+              </div>
+
+              @if (currentDocument()?.blobName) {
+                <!-- Document exists -->
+                <div class="doc-status-row doc-status-row--ready">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Documento generado</span>
+                </div>
+                <div class="doc-meta-grid">
+                  @if (currentDocument()!.uploadedAt) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Subido el</span>
+                      <span class="doc-meta-value">{{
+                        formatDate(currentDocument()!.uploadedAt)
+                      }}</span>
+                    </div>
+                  }
+                  @if (currentDocument()!.fileName) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Archivo</span>
+                      <span class="doc-meta-value filename">{{ currentDocument()!.fileName }}</span>
+                    </div>
+                  }
+                  @if (currentDocument()!.fileSizeBytes) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Tamaño</span>
+                      <span class="doc-meta-value">{{
+                        formatFileSize(currentDocument()!.fileSizeBytes)
+                      }}</span>
+                    </div>
+                  }
+                  @if (currentDocument()!.version) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Versión</span>
+                      <span class="doc-meta-value">v{{ currentDocument()!.version }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <!-- Document pending -->
+                <div class="doc-status-row doc-status-row--pending">
+                  <mat-icon>radio_button_unchecked</mat-icon>
+                  <span>Pendiente de generación</span>
+                </div>
+                <!-- Generate document button -->
+                <button
+                  mat-raised-button
+                  class="generate-doc-btn"
+                  [disabled]="generatingDocument() || savingProcessingRecord()"
+                  (click)="
+                    processingRecordStageCode() ? saveProcessingRecord() : generateDocument()
+                  "
+                >
+                  @if (generatingDocument() || savingProcessingRecord()) {
+                    <ng-container>
+                      <mat-spinner diameter="16" />
+                      Generando...
+                    </ng-container>
+                  } @else {
+                    <ng-container>
+                      <mat-icon>auto_awesome</mat-icon>
+                      Generar Documento
+                    </ng-container>
+                  }
+                </button>
+                @if (isViewingCurrentStage()) {
+                  <p class="advance-blocked-msg">
+                    <mat-icon>lock</mat-icon>
+                    Debes generar el documento para avanzar a la siguiente etapa.
+                  </p>
+                }
+              }
+            </div>
+          }
+
+          <!-- ── Reception accordion (recepcion / acondicionado / ablandamiento / pulpeado) ── -->
+          @if (receptionDocumentCode()) {
+            <div class="reception-panel">
+              <!-- Panel header + summary totals -->
+              <div class="reception-panel-header">
+                <div class="reception-panel-title">
+                  <div class="reception-title-icon">
+                    <mat-icon>{{
+                      receptionDocumentCode() === 'FRUIT_RECEPTION_RECORD'
+                        ? 'local_shipping'
+                        : 'science'
+                    }}</mat-icon>
+                  </div>
+                  <div>
+                    @if (viewingStage() === 'recepcion') {
+                      <h3>Recepciones de Acopio</h3>
+                    } @else if (viewingStage() === 'acondicionado') {
+                      <h3>Acondicionamiento</h3>
+                    } @else if (viewingStage() === 'ablandamiento') {
+                      <h3>Ablandamiento</h3>
+                    } @else {
+                      <h3>Pulpeado</h3>
+                    }
+                    <p>{{ receptions().length }} lote(s) ingresado(s)</p>
+                  </div>
+                </div>
+                @if (receptions().length > 0 && !loadingReceptions()) {
+                  @if (receptionDocumentCode() === 'FRUIT_RECEPTION_RECORD') {
+                    <div class="reception-totals">
+                      <div class="total-pill total-pill--weight">
+                        <mat-icon>scale</mat-icon>
+                        <span>{{ receptionTotals().totalWeight | number: '1.0-1' }} kg</span>
+                      </div>
+                      <div class="total-pill total-pill--sacks">
+                        <mat-icon>inventory_2</mat-icon>
+                        <span>{{ receptionTotals().totalSacks }} sacos</span>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="reception-totals">
+                      <div class="total-pill total-pill--jabas">
+                        <mat-icon>grid_view</mat-icon>
+                        <span>{{ pulpTotals().totalJabasRipening }} jabas mad.</span>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+
+              @if (loadingReceptions()) {
+                <div class="reception-loading">
+                  <mat-spinner diameter="28" />
+                  <span>Cargando recepciones...</span>
+                </div>
+              } @else if (receptions().length === 0) {
+                <div class="reception-empty">
+                  <mat-icon>inbox</mat-icon>
+                  <p>Sin recepciones registradas</p>
+                </div>
+              } @else {
+                <div class="reception-list">
+                  @for (r of receptions(); track r.id; let idx = $index) {
+                    <div
+                      [class]="
+                        'reception-item' +
+                        (expandedReceptionId() === r.id ? ' reception-item--open' : '')
+                      "
+                    >
+                      <!-- ── Collapsed summary row (always visible) ──── -->
+                      <button class="reception-row" type="button" (click)="toggleReception(r.id)">
+                        <div class="reception-row-top">
+                          <div class="reception-seq">{{ idx + 1 }}</div>
+                          <div class="reception-identity">
+                            <span class="rcp-batch">{{ r.collectionBatchNumber }}</span>
+                            <span class="rcp-product">{{ r.productName }}</span>
+                          </div>
+                          <div class="reception-edit-hint">
+                            @if (expandedReceptionId() === r.id) {
+                              <mat-icon class="hint-icon hint-icon--open"
+                                >keyboard_arrow_up</mat-icon
+                              >
+                            } @else {
+                              <mat-icon class="hint-icon">edit</mat-icon>
+                              <span class="hint-label">Editar</span>
+                            }
+                          </div>
+                        </div>
+
+                        <!-- Bottom line: stage-aware chips -->
+                        <div class="reception-stats">
+                          <span class="rcp-date">
+                            <mat-icon>event</mat-icon>
+                            {{ formatDate(r.entryDate) }}
+                          </span>
+                          @if (receptionDocumentCode() === 'FRUIT_RECEPTION_RECORD') {
+                            <span
+                              [class]="
+                                'rcp-chip' + (r.weightKg ? ' rcp-chip--filled' : ' rcp-chip--empty')
+                              "
+                            >
+                              <mat-icon>scale</mat-icon>
+                              {{
+                                r.weightKg !== null ? (r.weightKg | number: '1.0-1') + ' kg' : '—'
+                              }}
+                            </span>
+                            <span
+                              [class]="
+                                'rcp-chip' +
+                                (r.sacksCount ? ' rcp-chip--filled' : ' rcp-chip--empty')
+                              "
+                            >
+                              <mat-icon>inventory_2</mat-icon>
+                              {{ r.sacksCount !== null ? r.sacksCount + ' sacos' : '—' }}
+                            </span>
+                          } @else {
+                            <span
+                              [class]="
+                                'rcp-chip' +
+                                (r.jabasRipeningCount ? ' rcp-chip--filled' : ' rcp-chip--empty')
+                              "
+                            >
+                              <mat-icon>grid_view</mat-icon>
+                              {{
+                                r.jabasRipeningCount !== null
+                                  ? r.jabasRipeningCount + ' jabas mad.'
+                                  : '—'
+                              }}
+                            </span>
+                            <span
+                              [class]="
+                                'rcp-chip' +
+                                (r.ripeningTub ? ' rcp-chip--filled' : ' rcp-chip--empty')
+                              "
+                            >
+                              <mat-icon>water</mat-icon>
+                              {{ r.ripeningTub || '— sin tina' }}
+                            </span>
+                          }
+                        </div>
+                      </button>
+
+                      <!-- ── Expanded edit form ─────────────────────── -->
+                      @if (expandedReceptionId() === r.id) {
+                        <div class="reception-form" [formGroup]="getReceptionForm(r.id)">
+                          @if (receptionDocumentCode() === 'FRUIT_RECEPTION_RECORD') {
+                            <!-- Recepción: peso + sacos + observaciones -->
+                            <div class="reception-form-row">
+                              <mat-form-field appearance="outline" class="rcp-field">
+                                <mat-label>Peso total</mat-label>
+                                <input
+                                  matInput
+                                  type="number"
+                                  formControlName="weightKg"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0.00"
+                                />
+                                <mat-icon matPrefix>scale</mat-icon>
+                                <span matSuffix class="field-suffix">kg</span>
+                              </mat-form-field>
+                              <mat-form-field appearance="outline" class="rcp-field">
+                                <mat-label>Cantidad sacos</mat-label>
+                                <input
+                                  matInput
+                                  type="number"
+                                  formControlName="sacksCount"
+                                  step="1"
+                                  min="0"
+                                  placeholder="0"
+                                />
+                                <mat-icon matPrefix>inventory_2</mat-icon>
+                                <span matSuffix class="field-suffix">uds</span>
+                              </mat-form-field>
+                            </div>
+                            <mat-form-field appearance="outline" class="rcp-field rcp-field--full">
+                              <mat-label>Observaciones</mat-label>
+                              <textarea
+                                matInput
+                                formControlName="observations"
+                                rows="2"
+                                placeholder="Condición del producto, incidencias de entrega, etc."
+                              ></textarea>
+                              <mat-icon matPrefix>notes</mat-icon>
+                            </mat-form-field>
+                          } @else {
+                            <!-- Pulp stages: jabas maduración + tina + inicio + observaciones -->
+                            <div class="reception-form-row">
+                              <mat-form-field appearance="outline" class="rcp-field">
+                                <mat-label>Jabas en maduración</mat-label>
+                                <input
+                                  matInput
+                                  type="number"
+                                  formControlName="jabasRipeningCount"
+                                  step="1"
+                                  min="0"
+                                  placeholder="0"
+                                />
+                                <mat-icon matPrefix>grid_view</mat-icon>
+                                <span matSuffix class="field-suffix">uds</span>
+                              </mat-form-field>
+                              <mat-form-field appearance="outline" class="rcp-field">
+                                <mat-label>Tina de maduración</mat-label>
+                                <input
+                                  matInput
+                                  type="text"
+                                  formControlName="ripeningTub"
+                                  placeholder="Ej. Tina-01"
+                                />
+                              </mat-form-field>
+                            </div>
+                            <mat-form-field appearance="outline" class="rcp-field rcp-field--full">
+                              <mat-label>Hora de inicio de maduración</mat-label>
+                              <input matInput type="time" formControlName="ripeningStartTime" />
+                              <mat-icon matPrefix>schedule</mat-icon>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="rcp-field rcp-field--full">
+                              <mat-label>Observaciones</mat-label>
+                              <textarea
+                                matInput
+                                formControlName="observations"
+                                rows="2"
+                                placeholder="Condiciones de maduración, temperatura, incidencias, etc."
+                              ></textarea>
+                              <mat-icon matPrefix>notes</mat-icon>
+                            </mat-form-field>
+                          }
+                          <div class="reception-form-actions">
+                            <button mat-button type="button" (click)="toggleReception(r.id)">
+                              Cancelar
+                            </button>
+                            <button
+                              mat-raised-button
+                              class="btn-save-reception"
+                              type="button"
+                              [disabled]="generatingDocument()"
+                              (click)="saveReception(r)"
+                            >
+                              @if (generatingDocument()) {
+                                <ng-container>
+                                  <mat-spinner diameter="16" />
+                                  Generando...
+                                </ng-container>
+                              } @else {
+                                <ng-container>
+                                  <mat-icon>auto_awesome</mat-icon>
+                                  @if (receptionDocumentCode() === 'FRUIT_RECEPTION_RECORD') {
+                                    Guardar y generar ficha
+                                  } @else {
+                                    Guardar y generar registro
+                                  }
+                                </ng-container>
+                              }
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- ── Processing Record Panel (envasado / almacenamiento) ──── -->
+          @if (processingRecordStageCode()) {
+            <div class="processing-panel">
+              <!-- Panel Header -->
+              <div
+                class="processing-panel-header"
+                [class.processing-panel-header--storage]="
+                  processingRecordStageCode() === 'STORAGE_CONTROL_RECORD'
+                "
+              >
+                <div class="processing-panel-title">
+                  <div
+                    class="processing-title-icon"
+                    [class.processing-title-icon--storage]="
+                      processingRecordStageCode() === 'STORAGE_CONTROL_RECORD'
+                    "
+                  >
+                    <mat-icon>{{
+                      processingRecordStageCode() === 'PACKAGING_RECORD' ? 'inventory' : 'warehouse'
+                    }}</mat-icon>
+                  </div>
+                  <div>
+                    <h3>
+                      {{
+                        processingRecordStageCode() === 'PACKAGING_RECORD'
+                          ? 'Registro de Envasado'
+                          : 'Registro de Almacenamiento'
+                      }}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              @if (loadingProcessingRecord()) {
+                <div class="processing-loading">
+                  <mat-spinner diameter="28" />
+                  <span>Cargando registro...</span>
+                </div>
+              } @else {
+                <!-- Product info row (read-only) -->
+                @if (processingRecord()) {
+                  <div class="processing-info-row">
+                    <div class="processing-info-chip">
+                      <mat-icon>eco</mat-icon>
+                      <span>{{ processingRecord()!.productName }}</span>
+                    </div>
+                    <div class="processing-info-chip">
+                      <mat-icon>tag</mat-icon>
+                      <span>{{ processingRecord()!.productionLotNumber }}</span>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="processing-info-row">
+                    <div class="processing-info-chip">
+                      <mat-icon>eco</mat-icon>
+                      <span>{{ lot()!.productName }}</span>
+                    </div>
+                    <div class="processing-info-chip">
+                      <mat-icon>tag</mat-icon>
+                      <span>{{ lot()!.lotNumber }}</span>
+                    </div>
+                  </div>
+                }
+
+                <!-- ENVASADO Form -->
+                @if (processingRecordStageCode() === 'PACKAGING_RECORD') {
+                  <form
+                    class="processing-form"
+                    [formGroup]="processingForm"
+                    (ngSubmit)="saveProcessingRecord()"
+                  >
+                    <!-- Row 1: Insumos (full width) -->
+                    <mat-form-field appearance="outline" class="proc-field proc-field--full">
+                      <mat-label>Insumos utilizados</mat-label>
+                      <textarea
+                        matInput
+                        formControlName="inputs"
+                        rows="2"
+                        placeholder="Lista de insumos y materiales utilizados en el envasado"
+                      ></textarea>
+                      <mat-icon matPrefix>category</mat-icon>
+                    </mat-form-field>
+
+                    <!-- Row 2: Fecha inicio + Hora inicio -->
+                    <div class="proc-form-row">
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Fecha de inicio</mat-label>
+                        <input matInput type="date" formControlName="startDate" />
+                        <mat-icon matPrefix>calendar_today</mat-icon>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Hora de inicio</mat-label>
+                        <input matInput type="time" formControlName="startTime" />
+                        <mat-icon matPrefix>schedule</mat-icon>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Row 3: Fecha+hora fin de producción -->
+                    <mat-form-field appearance="outline" class="proc-field proc-field--full">
+                      <mat-label>Fecha y hora final de producción</mat-label>
+                      <input
+                        matInput
+                        type="datetime-local"
+                        formControlName="productionEndDatetime"
+                      />
+                      <mat-icon matPrefix>event_available</mat-icon>
+                    </mat-form-field>
+
+                    <!-- Row 4: Brix + pH -->
+                    <div class="proc-form-row">
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Grados Brix</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          formControlName="brixDegrees"
+                          step="0.1"
+                          min="0"
+                          placeholder="0.0"
+                        />
+                        <mat-icon matPrefix>science</mat-icon>
+                        <span matSuffix class="proc-suffix">°Bx</span>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>pH</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          formControlName="ph"
+                          step="0.01"
+                          min="0"
+                          max="14"
+                          placeholder="0.00"
+                        />
+                        <mat-icon matPrefix>water_drop</mat-icon>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Row 5: Paquetes section label -->
+                    <div class="proc-section-label">
+                      <mat-icon>inventory_2</mat-icon>
+                      <span>Cantidad de paquetes por presentación</span>
+                    </div>
+
+                    <!-- Row 6: Paquetes 1kg + 5kg -->
+                    <div class="proc-form-row">
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Paquetes 1 kg</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          formControlName="packages1kgCount"
+                          step="1"
+                          min="0"
+                          placeholder="0"
+                        />
+                        <span matSuffix class="proc-suffix">uds</span>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Paquetes 5 kg</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          formControlName="packages5kgCount"
+                          step="1"
+                          min="0"
+                          placeholder="0"
+                        />
+                        <span matSuffix class="proc-suffix">uds</span>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Row 7: Paquetes 20kg + 50kg -->
+                    <div class="proc-form-row">
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Paquetes 20 kg</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          formControlName="packages20kgCount"
+                          step="1"
+                          min="0"
+                          placeholder="0"
+                        />
+                        <span matSuffix class="proc-suffix">uds</span>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Paquetes 50 kg</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          formControlName="packages50kgCount"
+                          step="1"
+                          min="0"
+                          placeholder="0"
+                        />
+                        <span matSuffix class="proc-suffix">uds</span>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Row 8: Cantidad total kg -->
+                    <mat-form-field appearance="outline" class="proc-field proc-field--full">
+                      <mat-label>Cantidad total (kg)</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        formControlName="quantityKg"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                      />
+                      <mat-icon matPrefix>scale</mat-icon>
+                      <span matSuffix class="proc-suffix">kg</span>
+                    </mat-form-field>
+
+                    <!-- Row 9: Observaciones -->
+                    <mat-form-field appearance="outline" class="proc-field proc-field--full">
+                      <mat-label>Observaciones</mat-label>
+                      <textarea
+                        matInput
+                        formControlName="observations"
+                        rows="2"
+                        placeholder="Incidencias, condiciones de procesamiento, etc."
+                      ></textarea>
+                      <mat-icon matPrefix>notes</mat-icon>
+                    </mat-form-field>
+
+                    <!-- Actions -->
+                    <div class="processing-form-actions">
+                      <button
+                        mat-raised-button
+                        class="btn-save-processing"
+                        type="submit"
+                        [disabled]="savingProcessingRecord()"
+                      >
+                        @if (savingProcessingRecord()) {
+                          <mat-spinner diameter="16" />
+                          Guardando...
+                        } @else {
+                          <ng-container>
+                            <mat-icon>save</mat-icon>
+                            Guardar y generar registro
+                          </ng-container>
+                        }
+                      </button>
+                    </div>
+                  </form>
+                }
+
+                <!-- ALMACENAMIENTO Form -->
+                @if (processingRecordStageCode() === 'STORAGE_CONTROL_RECORD') {
+                  <form
+                    class="processing-form"
+                    [formGroup]="processingForm"
+                    (ngSubmit)="saveProcessingRecord()"
+                  >
+                    <!-- Row 1: Fecha vencimiento + Formato almacenamiento -->
+                    <div class="proc-form-row">
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Fecha de vencimiento</mat-label>
+                        <input matInput type="date" formControlName="expirationDate" />
+                        <mat-icon matPrefix>event_busy</mat-icon>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Formato de almacenamiento</mat-label>
+                        <input
+                          matInput
+                          type="text"
+                          formControlName="storageFormat"
+                          placeholder="Ej. 1kg, 5kg, 20kg..."
+                        />
+                        <mat-icon matPrefix>inventory_2</mat-icon>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Row 2: Unidades section label -->
+                    <div class="proc-section-label">
+                      <mat-icon>moving</mat-icon>
+                      <span>Control de unidades</span>
+                    </div>
+
+                    <!-- Row 3: Unidades in/out (editable) -->
+                    <div class="proc-form-row">
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Unidades ingresadas</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          formControlName="unitsIn"
+                          step="1"
+                          min="0"
+                          placeholder="0"
+                        />
+                        <mat-icon matPrefix>add_circle</mat-icon>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="proc-field">
+                        <mat-label>Unidades salidas</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          formControlName="unitsOut"
+                          step="1"
+                          min="0"
+                          placeholder="0"
+                        />
+                        <mat-icon matPrefix>remove_circle</mat-icon>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Row 3b: Saldo (computed, read-only) -->
+                    <div class="units-balance-row">
+                      <div class="units-balance-card">
+                        <div class="units-balance-icon">
+                          <mat-icon>balance</mat-icon>
+                        </div>
+                        <div class="units-balance-info">
+                          <span class="units-balance-label">Saldo</span>
+                          <span
+                            class="units-balance-value"
+                            [class.units-balance-value--negative]="unitsBalanceDisplay() < 0"
+                            >{{ unitsBalanceDisplay() | number }}</span
+                          >
+                        </div>
+                        <span class="units-balance-hint">ingresadas − salidas</span>
+                      </div>
+                    </div>
+
+                    <!-- Row 4: Observaciones -->
+                    <mat-form-field appearance="outline" class="proc-field proc-field--full">
+                      <mat-label>Observaciones</mat-label>
+                      <textarea
+                        matInput
+                        formControlName="observations"
+                        rows="2"
+                        placeholder="Condiciones de almacenamiento, temperatura, ubicación, etc."
+                      ></textarea>
+                      <mat-icon matPrefix>notes</mat-icon>
+                    </mat-form-field>
+
+                    <!-- Actions -->
+                    <div class="processing-form-actions">
+                      <button
+                        mat-raised-button
+                        class="btn-save-processing"
+                        type="submit"
+                        [disabled]="savingProcessingRecord()"
+                      >
+                        @if (savingProcessingRecord()) {
+                          <mat-spinner diameter="16" />
+                          Guardando...
+                        } @else {
+                          <ng-container>
+                            <mat-icon>save</mat-icon>
+                            Guardar y generar registro
+                          </ng-container>
+                        }
+                      </button>
+                    </div>
+                  </form>
+                }
+              }
+            </div>
+          }
+
+          <!-- Notes (if any) -->
+          @if (lot()!.transformationNotes) {
+            <div class="notes-card">
+              <h3 class="card-section-title">
+                <mat-icon>notes</mat-icon>
+                Observaciones
+              </h3>
+              <p class="notes-text">{{ lot()!.transformationNotes }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Navigation Footer ─────────────────────────────────────────────── -->
+    <div class="nav-footer">
+      <!-- Back / Previous -->
+      <div class="nav-left">
+        @if (STAGE_INDEX[viewingStage()] > 0) {
+          <button mat-stroked-button class="nav-back-btn" (click)="goToPreviousStage()">
+            <mat-icon>chevron_left</mat-icon>
+            {{ STATUS_LABELS[STAGE_ORDER[STAGE_INDEX[viewingStage()] - 1]] }}
+          </button>
+        } @else {
+          <button mat-stroked-button class="nav-back-btn" (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+            Volver al proyecto
+          </button>
+        }
+      </div>
+
+      <!-- Forward options (only on current stage) -->
+      @if (isViewingCurrentStage() && nextOptions().length > 0) {
+        <div class="nav-right">
+          @for (opt of nextOptions(); track opt.status) {
+            <button
+              [class]="opt.isPrimary ? 'btn-primary' : 'nav-secondary-btn'"
+              mat-raised-button
+              [disabled]="!canAdvance() || advancingStage()"
+              [matTooltip]="
+                !canAdvance() ? 'Genera el documento de esta etapa para continuar' : opt.description
+              "
+              (click)="advanceToStage(opt.status)"
+            >
+              @if (advancingStage()) {
+                <ng-container>
+                  <mat-spinner diameter="16" />
+                  Avanzando...
+                </ng-container>
+              } @else {
+                <ng-container>
+                  {{ opt.label }}
+                  <mat-icon iconSuffix>chevron_right</mat-icon>
+                </ng-container>
+              }
+            </button>
+          }
+        </div>
+      }
+
+      @if (lot()!.status === 'almacenamiento' && isViewingCurrentStage()) {
+        <div class="nav-right">
+          <div class="final-stage-badge">
+            <mat-icon>verified</mat-icon>
+            Lote en almacenamiento
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- ─── Error / Not Found ───────────────────────────────────────────── -->
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p class="text-body text-neutral-subheading">No se pudo cargar el lote de producción.</p>
+      <button mat-stroked-button (click)="goBack()">Volver</button>
+    </div>
+  }
+</div>

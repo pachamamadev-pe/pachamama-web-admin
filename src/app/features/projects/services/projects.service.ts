@@ -164,6 +164,15 @@ export class ProjectsService {
   }
 
   /**
+   * Inicia la transformación primaria del proyecto (transición backend específica)
+   * PATCH /projects/{id}/start-primary-transformation
+   * Requiere al menos un lote de acopio en estado 'documents_generated' con los 3 documentos
+   */
+  startPrimaryTransformation(id: string): Observable<Project> {
+    return this.http.patch<Project>(`${this.apiUrl}/${id}/start-primary-transformation`, {});
+  }
+
+  /**
    * Actualiza la etapa de un proyecto
    * PATCH /projects/{id}/stage
    * @param id - UUID del proyecto

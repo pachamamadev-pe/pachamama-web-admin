@@ -232,10 +232,20 @@
             <mat-error>La fecha es requerida</mat-error>
           </mat-form-field>
 
+          <!-- Info note: campos referenciales -->
+          <div class="referential-note">
+            <mat-icon>info_outline</mat-icon>
+            <span>
+              <strong>Valores opcionales y referenciales.</strong> Serán calculados automáticamente
+              en base a la información ingresada en el formato de
+              <strong>Ficha de Registro de Manejo</strong>.
+            </span>
+          </div>
+
           <!-- Peso y Sacos en fila -->
           <div class="form-row">
             <mat-form-field appearance="outline" class="flex-1">
-              <mat-label>Peso total (kg)</mat-label>
+              <mat-label>Peso total (kg) (opcional)</mat-label>
               <input
                 matInput
                 type="number"
@@ -245,15 +255,13 @@
                 step="0.01"
               />
               <span matTextSuffix>kg</span>
-              @if (batchForm.get('totalWeightKg')?.hasError('required')) {
-                <mat-error>El peso es requerido</mat-error>
-              } @else if (batchForm.get('totalWeightKg')?.hasError('min')) {
+              @if (batchForm.get('totalWeightKg')?.hasError('min')) {
                 <mat-error>Debe ser mayor a 0</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="flex-1">
-              <mat-label>Número de sacos</mat-label>
+              <mat-label>Número de sacos (opcional)</mat-label>
               <input
                 matInput
                 type="number"
@@ -262,9 +270,7 @@
                 min="1"
                 step="1"
               />
-              @if (batchForm.get('totalSacks')?.hasError('required')) {
-                <mat-error>Los sacos son requeridos</mat-error>
-              } @else if (batchForm.get('totalSacks')?.hasError('min')) {
+              @if (batchForm.get('totalSacks')?.hasError('min')) {
                 <mat-error>Mínimo 1 saco</mat-error>
               }
             </mat-form-field>

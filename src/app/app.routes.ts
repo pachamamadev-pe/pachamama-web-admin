@@ -108,6 +108,14 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'projects/:id/production-lots/:lotId',
+        title: 'Detalle del Lote de Producción',
+        loadComponent: () =>
+          import('./features/projects/pages/production-lot-detail.page').then(
+            (m) => m.ProductionLotDetailPage,
+          ),
+      },
+      {
         path: 'projects/:id',
         title: 'Detalle del Proyecto',
         loadComponent: () =>
