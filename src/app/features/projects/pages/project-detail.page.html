@@ -477,7 +477,7 @@
               </div>
             </mat-tab>
 
-            @if (showBrigadesTab()) {
+            @if (showBrigadesTab() && sidebarService.hasPermission(PERMISSIONS.BRIGADE.ALL)) {
               <mat-tab label="Brigadas">
                 <div class="tab-content">
                   @if (!project()?.communityLink?.id) {

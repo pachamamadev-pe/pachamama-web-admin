@@ -23,6 +23,8 @@ interface SidebarResponse {
   emailVerified: boolean;
   isPasswordChanged: boolean;
   userId: string;
+  roleCode: string;
+  permissions: string[];
 }
 
 @Injectable({
@@ -41,6 +43,8 @@ export class SidebarService {
   userId = signal<string>('');
   tenantId = signal<string>('');
   avatarUrl = signal<string | null>(null);
+  roleCode = signal<string>('');
+  permissions = signal<string[]>([]);
 
   constructor() {
     this.loadFromLocalStorage();
@@ -68,10 +72,21 @@ export class SidebarService {
           emailVerified: response.emailVerified,
           isPasswordChanged: response.isPasswordChanged,
           userId: response.userId,
+          roleCode: response.roleCode ?? '',
+          permissions: response.permissions ?? [],
         })),
       )
       .subscribe({
-        next: ({ companyName, tenantId, menuItems, emailVerified, isPasswordChanged, userId }) => {
+        next: ({
+          companyName,
+          tenantId,
+          menuItems,
+          emailVerified,
+          isPasswordChanged,
+          userId,
+          roleCode,
+          permissions,
+        }) => {
           console.log('Fetched sidebar data:', {
             companyName,
             tenantId,
@@ -79,6 +94,8 @@ export class SidebarService {
             emailVerified,
             isPasswordChanged,
             userId,
+            roleCode,
+            permissions,
           });
           this.companyName.set(companyName);
           this.tenantId.set(tenantId);
@@ -86,6 +103,8 @@ export class SidebarService {
           this.emailVerified.set(emailVerified);
           this.isPasswordChanged.set(isPasswordChanged);
           this.userId.set(userId);
+          this.roleCode.set(roleCode);
+          this.permissions.set(permissions);
           this.saveToLocalStorage(
             companyName,
             tenantId,
@@ -93,6 +112,8 @@ export class SidebarService {
             emailVerified,
             isPasswordChanged,
             userId,
+            roleCode,
+            permissions,
           );
           if (callback) callback();
         },
@@ -120,6 +141,8 @@ export class SidebarService {
     this.isPasswordChanged.set(false);
     this.userId.set('');
     this.avatarUrl.set(null);
+    this.roleCode.set('');
+    this.permissions.set([]);
     localStorage.removeItem(this.localStorageKey);
   }
 
@@ -139,8 +162,19 @@ export class SidebarService {
     emailVerified: boolean,
     isPasswordChanged: boolean,
     userId: string,
+    roleCode: string,
+    permissions: string[],
   ): void {
-    const data = { companyName, tenantId, menuItems, emailVerified, isPasswordChanged, userId };
+    const data = {
+      companyName,
+      tenantId,
+      menuItems,
+      emailVerified,
+      isPasswordChanged,
+      userId,
+      roleCode,
+      permissions,
+    };
     localStorage.setItem(this.localStorageKey, JSON.stringify(data));
   }
 
@@ -158,6 +192,8 @@ export class SidebarService {
           emailVerified: boolean;
           isPasswordChanged: boolean;
           userId: string;
+          roleCode: string;
+          permissions: string[];
         };
         this.companyName.set(parsedData.companyName);
         this.tenantId.set(parsedData.tenantId);
@@ -165,6 +201,8 @@ export class SidebarService {
         this.emailVerified.set(parsedData.emailVerified);
         this.isPasswordChanged.set(parsedData.isPasswordChanged);
         this.userId.set(parsedData.userId || '');
+        this.roleCode.set(parsedData.roleCode || '');
+        this.permissions.set(parsedData.permissions ?? []);
       } catch (error) {
         console.error('Error parsing sidebar data from localStorage:', error);
       }
@@ -174,6 +212,25 @@ export class SidebarService {
   private truncateCompanyName(name: string, maxLength = 20): string {
     if (!name) return '';
     return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
+  }
+
+  /**
+   * Verifica si el usuario tiene un permiso requerido.
+   * - null/undefined/'' => true (sin restricción)
+   * - '*:*' en permissions => true (superusuario)
+   * - 'resource:*' en permissions => true para cualquier acción de ese recurso
+   * - permiso exacto en permissions => true
+   */
+  hasPermission(required: string | null | undefined): boolean {
+    if (!required) return true;
+    const perms = this.permissions();
+    if (perms.includes('*:*')) return true;
+    const parts = required.split(':');
+    if (parts.length === 2) {
+      const [resource] = parts;
+      if (perms.includes(`${resource}:*`)) return true;
+    }
+    return perms.includes(required);
   }
 
   /**

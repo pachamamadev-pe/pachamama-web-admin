@@ -62,6 +62,8 @@ import {
 } from '../models/project.model';
 import { BrigadeFormDialogComponent } from '../components/brigade-form.component';
 import { ConfigurationTabComponent } from '../components/configuration-tab.component';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
 import { CollectionBatchesTabComponent } from '../../collection-batches/components/collection-batches-tab.component';
 import { PrimaryTransformationTabComponent } from '../components/primary-transformation-tab.component';
 
@@ -123,6 +125,8 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   private azureStorage = inject(AzureStorageService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
+  readonly sidebarService = inject(SidebarService);
+  readonly PERMISSIONS = PERMISSIONS;
   private destroy$ = new Subject<void>();
 
   @ViewChild(BrigadesTabComponent) brigadesTabComponent?: BrigadesTabComponent;

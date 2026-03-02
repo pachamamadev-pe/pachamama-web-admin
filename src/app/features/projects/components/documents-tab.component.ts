@@ -14,6 +14,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ProjectDocumentsService } from '../services/project-documents.service';
 import { NotificationService } from '@core/services/notification.service';
 import { AzureStorageService } from '@core/services/azure-storage.service';
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { PERMISSIONS } from '@core/auth/permissions';
 import { DocumentRequirements, ProjectDocument } from '../models/project-document.model';
 import { DocumentsProgressCardComponent } from '../components/documents-progress-card.component';
 import { DocumentsTableComponent } from '../components/documents-table.component';
@@ -26,6 +28,7 @@ import { DocumentsTableComponent } from '../components/documents-table.component
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    PmHasPermissionDirective,
     DocumentsProgressCardComponent,
     DocumentsTableComponent,
   ],
@@ -48,6 +51,7 @@ import { DocumentsTableComponent } from '../components/documents-table.component
         <div class="documents-header">
           <h2 class="text-body font-bold text-accent-titles">Documentos del Proyecto</h2>
           <button
+            *appPmHasPermission="PERMISSIONS.PROJECT.REGISTER_DOCUMENTS"
             mat-raised-button
             class="btn-primary"
             (click)="onUploadDocument()"
@@ -133,6 +137,8 @@ export class DocumentsTabComponent {
   private projectDocumentsService = inject(ProjectDocumentsService);
   private notification = inject(NotificationService);
   private azureStorage = inject(AzureStorageService);
+
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Inputs
   projectId = input.required<string>();
