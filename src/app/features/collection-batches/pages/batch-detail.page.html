@@ -42,22 +42,21 @@
           </div>
         </div>
 
-        <!-- Submit button (desktop) -->
-        @if (!isReadOnly()) {
+        <!-- Finalize documents button (desktop) -->
+        @if (canFinalizeDocuments()) {
           <div class="header-actions">
             <button
               mat-raised-button
               class="btn-primary"
-              [disabled]="!canSubmit() || submitting()"
-              (click)="confirmSubmit()"
-              [matTooltip]="!canSubmit() ? 'Genera los 3 documentos para poder enviar' : ''"
+              [disabled]="submitting()"
+              (click)="confirmFinalizeDocuments()"
             >
               @if (submitting()) {
                 <mat-spinner diameter="18" />
               } @else {
-                <mat-icon>send</mat-icon>
+                <mat-icon>task_alt</mat-icon>
               }
-              <span>Enviar a Aprobación</span>
+              <span>Finalizar Documentos</span>
             </button>
           </div>
         }
@@ -101,8 +100,13 @@
       <div class="readonly-notice">
         <mat-icon>lock</mat-icon>
         <span>
-          Este lote está en estado <strong>{{ BATCH_STATUS_LABELS[batch()!.status] }}</strong>
-          y no puede ser modificado.
+          @if (batch()!.status === 'documents_generated') {
+            Los documentos de este lote han sido <strong>finalizados</strong> y no pueden ser
+            modificados.
+          } @else {
+            Este lote está en estado <strong>{{ BATCH_STATUS_LABELS[batch()!.status] }}</strong>
+            y no puede ser modificado.
+          }
         </span>
       </div>
     }
@@ -132,8 +136,8 @@
             </span>
           </ng-template>
 
-          <div class="split-view">
-            <!-- PDF Viewer -->
+          <div [class]="'split-view' + (isReadOnly() ? ' split-view--readonly' : '')">
+            <!-- PDF Panel -->
             <div class="pdf-panel">
               @if (selectedDocTab() === 0 && pdfUrls()['collectors-register']) {
                 <ngx-extended-pdf-viewer
@@ -161,251 +165,253 @@
             </div>
 
             <!-- Form Panel -->
-            <div class="form-panel form-panel--doc1">
-              <!-- Observed notice -->
-              @if (getDocumentState('collectors-register').status === 'observed') {
-                <div class="observation-notice">
-                  <mat-icon>warning</mat-icon>
-                  <div>
-                    <strong>Documento observado</strong>
-                    <p>{{ getDocumentState('collectors-register').observationNotes }}</p>
-                  </div>
-                </div>
-              }
-
-              <!-- ── Document header banner ─────────────────────────────── -->
-              <div class="doc1-header-banner">
-                <div class="doc1-banner-icon">
-                  <mat-icon>eco</mat-icon>
-                </div>
-                <div class="doc1-banner-text">
-                  <span class="doc1-banner-label">Ficha de Registro de Manejo</span>
-                  <span class="doc1-banner-product">
-                    {{ batch()!.productName ?? batch()!.projectName }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- ── Static info (non-editable) ───────────────────────────── -->
-              <div class="doc1-static-info">
-                <div class="static-info-item">
-                  <span class="info-label">Comunidad</span>
-                  <span class="info-value">{{ batch()!.communityName ?? '—' }}</span>
-                </div>
-                <div class="static-info-item">
-                  <span class="info-label">Producto</span>
-                  <span class="info-value">{{ batch()!.productName ?? '—' }}</span>
-                </div>
-                <div class="static-info-item">
-                  <span class="info-label">Solicitud</span>
-                  <span class="info-value">{{ batch()!.collectionRequestCode ?? '—' }}</span>
-                </div>
-                <div class="static-info-item">
-                  <span class="info-label">Empresa</span>
-                  <span class="info-value">{{ batch()!.companyName }}</span>
-                </div>
-                <div class="static-info-item">
-                  <span class="info-label">Proyecto</span>
-                  <span class="info-value">{{ batch()!.projectName }}</span>
-                </div>
-              </div>
-
-              <!-- ── User fields: contrato + fechas ───────────────────────── -->
-              <form [formGroup]="handlingRecordForm" class="doc1-form">
-                <div class="doc1-header-fields">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Contrato</mat-label>
-                    <input
-                      matInput
-                      formControlName="contract"
-                      placeholder="N° de contrato"
-                      [readonly]="isReadOnly()"
-                    />
-                    <mat-icon matPrefix>description</mat-icon>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Fecha inicio</mat-label>
-                    <input
-                      matInput
-                      [matDatepicker]="pickerStart"
-                      formControlName="startDate"
-                      [readonly]="isReadOnly()"
-                    />
-                    @if (!isReadOnly()) {
-                      <mat-datepicker-toggle matSuffix [for]="pickerStart" />
-                    }
-                    <mat-datepicker #pickerStart />
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Fecha fin</mat-label>
-                    <input
-                      matInput
-                      [matDatepicker]="pickerEnd"
-                      formControlName="endDate"
-                      [readonly]="isReadOnly()"
-                    />
-                    @if (!isReadOnly()) {
-                      <mat-datepicker-toggle matSuffix [for]="pickerEnd" />
-                    }
-                    <mat-datepicker #pickerEnd />
-                  </mat-form-field>
-                </div>
-
-                <mat-divider />
-
-                <!-- ── Collectors FormArray ─────────────────────────────── -->
-                <div class="collectors-section">
-                  <h3 class="section-subtitle">
-                    <mat-icon>group</mat-icon>
-                    Recolectores
-                    <span class="collectors-count-badge">{{ collectorsFromBatch().length }}</span>
-                  </h3>
-
-                  @if (collectorsArray.length === 0) {
-                    <div class="no-collectors">
-                      <mat-icon>person_off</mat-icon>
-                      <p>No hay recolectores registrados en este lote</p>
+            @if (!isReadOnly()) {
+              <div class="form-panel form-panel--doc1">
+                <!-- Observed notice -->
+                @if (getDocumentState('collectors-register').status === 'observed') {
+                  <div class="observation-notice">
+                    <mat-icon>warning</mat-icon>
+                    <div>
+                      <strong>Documento observado</strong>
+                      <p>{{ getDocumentState('collectors-register').observationNotes }}</p>
                     </div>
-                  } @else {
-                    <div formArrayName="collectors" class="collectors-list">
-                      <mat-accordion multi>
-                        @for (ctrl of collectorsArray.controls; track $index; let i = $index) {
-                          <div [formGroupName]="i">
-                            <mat-expansion-panel
-                              [expanded]="i === 0"
-                              class="collector-expansion-panel"
-                            >
-                              <mat-expansion-panel-header>
-                                <mat-panel-title>
-                                  <div class="collector-identity">
-                                    <div class="collector-avatar">
-                                      <mat-icon>person</mat-icon>
-                                    </div>
-                                    <div class="collector-names">
-                                      <span class="collector-full-name">{{
-                                        getCollectorGroup(i).get('collectorName')!.value
-                                      }}</span>
-                                      <span class="collector-brigade">{{
-                                        getCollectorGroup(i).get('brigadeName')!.value
-                                      }}</span>
-                                    </div>
-                                  </div>
-                                </mat-panel-title>
-                                <mat-panel-description>
-                                  <div class="collector-activities-badge">
-                                    <mat-icon>checklist</mat-icon>
-                                    <span
-                                      >{{
-                                        getCollectorGroup(i).get('activitiesCount')!.value
-                                      }}
-                                      actividades</span
-                                    >
-                                  </div>
-                                </mat-panel-description>
-                              </mat-expansion-panel-header>
-
-                              <!-- Editable fields grid -->
-                              <div class="collector-fields-grid">
-                                <mat-form-field appearance="outline">
-                                  <mat-label>N° racimos</mat-label>
-                                  <input
-                                    matInput
-                                    type="number"
-                                    formControlName="bunchesCount"
-                                    min="0"
-                                    [readonly]="isReadOnly()"
-                                  />
-                                  <mat-icon matSuffix>category</mat-icon>
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline">
-                                  <mat-label>Peso (kg)</mat-label>
-                                  <input
-                                    matInput
-                                    type="number"
-                                    formControlName="weightKg"
-                                    min="0"
-                                    [readonly]="isReadOnly()"
-                                  />
-                                  <span matSuffix class="mr-1">kg</span>
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline">
-                                  <mat-label>N° sacos</mat-label>
-                                  <input
-                                    matInput
-                                    type="number"
-                                    formControlName="sacksCount"
-                                    min="0"
-                                    [readonly]="isReadOnly()"
-                                  />
-                                  <mat-icon matSuffix>shopping_bag</mat-icon>
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline">
-                                  <mat-label>Especie</mat-label>
-                                  <input
-                                    matInput
-                                    formControlName="species"
-                                    placeholder="Ej: Mauritia flexuosa"
-                                    [readonly]="isReadOnly()"
-                                  />
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline">
-                                  <mat-label>Precio por saco</mat-label>
-                                  <input
-                                    matInput
-                                    type="number"
-                                    formControlName="pricePerSack"
-                                    min="0"
-                                    [readonly]="isReadOnly()"
-                                  />
-                                  <span matPrefix class="ml-1">S/.</span>
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline" class="observations-field">
-                                  <mat-label>Observaciones</mat-label>
-                                  <textarea
-                                    matInput
-                                    formControlName="observations"
-                                    rows="2"
-                                    [readonly]="isReadOnly()"
-                                  ></textarea>
-                                </mat-form-field>
-                              </div>
-                            </mat-expansion-panel>
-                          </div>
-                        }
-                      </mat-accordion>
-                    </div>
-                  }
-                </div>
-
-                @if (!isReadOnly()) {
-                  <div class="form-actions">
-                    <button
-                      mat-raised-button
-                      class="btn-primary"
-                      type="button"
-                      [disabled]="
-                        handlingRecordForm.invalid || savingDoc() === 'collectors-register'
-                      "
-                      (click)="saveCollectorsRegister()"
-                    >
-                      @if (savingDoc() === 'collectors-register') {
-                        <mat-spinner diameter="16" />
-                      } @else {
-                        <mat-icon>picture_as_pdf</mat-icon>
-                      }
-                      Guardar y Generar documento
-                    </button>
                   </div>
                 }
-              </form>
-            </div>
+
+                <!-- ── Document header banner ─────────────────────────────── -->
+                <div class="doc1-header-banner">
+                  <div class="doc1-banner-icon">
+                    <mat-icon>eco</mat-icon>
+                  </div>
+                  <div class="doc1-banner-text">
+                    <span class="doc1-banner-label">Ficha de Registro de Manejo</span>
+                    <span class="doc1-banner-product">
+                      {{ batch()!.productName ?? batch()!.projectName }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- ── Static info (non-editable) ───────────────────────────── -->
+                <div class="doc1-static-info">
+                  <div class="static-info-item">
+                    <span class="info-label">Comunidad</span>
+                    <span class="info-value">{{ batch()!.communityName ?? '—' }}</span>
+                  </div>
+                  <div class="static-info-item">
+                    <span class="info-label">Producto</span>
+                    <span class="info-value">{{ batch()!.productName ?? '—' }}</span>
+                  </div>
+                  <div class="static-info-item">
+                    <span class="info-label">Solicitud</span>
+                    <span class="info-value">{{ batch()!.collectionRequestCode ?? '—' }}</span>
+                  </div>
+                  <div class="static-info-item">
+                    <span class="info-label">Empresa</span>
+                    <span class="info-value">{{ batch()!.companyName }}</span>
+                  </div>
+                  <div class="static-info-item">
+                    <span class="info-label">Proyecto</span>
+                    <span class="info-value">{{ batch()!.projectName }}</span>
+                  </div>
+                </div>
+
+                <!-- ── User fields: contrato + fechas ───────────────────────── -->
+                <form [formGroup]="handlingRecordForm" class="doc1-form">
+                  <div class="doc1-header-fields">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Contrato</mat-label>
+                      <input
+                        matInput
+                        formControlName="contract"
+                        placeholder="N° de contrato"
+                        [readonly]="isReadOnly()"
+                      />
+                      <mat-icon matPrefix>description</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Fecha inicio</mat-label>
+                      <input
+                        matInput
+                        [matDatepicker]="pickerStart"
+                        formControlName="startDate"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (!isReadOnly()) {
+                        <mat-datepicker-toggle matSuffix [for]="pickerStart" />
+                      }
+                      <mat-datepicker #pickerStart />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Fecha fin</mat-label>
+                      <input
+                        matInput
+                        [matDatepicker]="pickerEnd"
+                        formControlName="endDate"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (!isReadOnly()) {
+                        <mat-datepicker-toggle matSuffix [for]="pickerEnd" />
+                      }
+                      <mat-datepicker #pickerEnd />
+                    </mat-form-field>
+                  </div>
+
+                  <mat-divider />
+
+                  <!-- ── Collectors FormArray ─────────────────────────────── -->
+                  <div class="collectors-section">
+                    <h3 class="section-subtitle">
+                      <mat-icon>group</mat-icon>
+                      Recolectores
+                      <span class="collectors-count-badge">{{ collectorsFromBatch().length }}</span>
+                    </h3>
+
+                    @if (collectorsArray.length === 0) {
+                      <div class="no-collectors">
+                        <mat-icon>person_off</mat-icon>
+                        <p>No hay recolectores registrados en este lote</p>
+                      </div>
+                    } @else {
+                      <div formArrayName="collectors" class="collectors-list">
+                        <mat-accordion multi>
+                          @for (ctrl of collectorsArray.controls; track $index; let i = $index) {
+                            <div [formGroupName]="i">
+                              <mat-expansion-panel
+                                [expanded]="i === 0"
+                                class="collector-expansion-panel"
+                              >
+                                <mat-expansion-panel-header>
+                                  <mat-panel-title>
+                                    <div class="collector-identity">
+                                      <div class="collector-avatar">
+                                        <mat-icon>person</mat-icon>
+                                      </div>
+                                      <div class="collector-names">
+                                        <span class="collector-full-name">{{
+                                          getCollectorGroup(i).get('collectorName')!.value
+                                        }}</span>
+                                        <span class="collector-brigade">{{
+                                          getCollectorGroup(i).get('brigadeName')!.value
+                                        }}</span>
+                                      </div>
+                                    </div>
+                                  </mat-panel-title>
+                                  <mat-panel-description>
+                                    <div class="collector-activities-badge">
+                                      <mat-icon>checklist</mat-icon>
+                                      <span
+                                        >{{
+                                          getCollectorGroup(i).get('activitiesCount')!.value
+                                        }}
+                                        actividades</span
+                                      >
+                                    </div>
+                                  </mat-panel-description>
+                                </mat-expansion-panel-header>
+
+                                <!-- Editable fields grid -->
+                                <div class="collector-fields-grid">
+                                  <mat-form-field appearance="outline">
+                                    <mat-label>N° racimos</mat-label>
+                                    <input
+                                      matInput
+                                      type="number"
+                                      formControlName="bunchesCount"
+                                      min="0"
+                                      [readonly]="isReadOnly()"
+                                    />
+                                    <mat-icon matSuffix>category</mat-icon>
+                                  </mat-form-field>
+
+                                  <mat-form-field appearance="outline">
+                                    <mat-label>Peso (kg)</mat-label>
+                                    <input
+                                      matInput
+                                      type="number"
+                                      formControlName="weightKg"
+                                      min="0"
+                                      [readonly]="isReadOnly()"
+                                    />
+                                    <span matSuffix class="mr-1">kg</span>
+                                  </mat-form-field>
+
+                                  <mat-form-field appearance="outline">
+                                    <mat-label>N° sacos</mat-label>
+                                    <input
+                                      matInput
+                                      type="number"
+                                      formControlName="sacksCount"
+                                      min="0"
+                                      [readonly]="isReadOnly()"
+                                    />
+                                    <mat-icon matSuffix>shopping_bag</mat-icon>
+                                  </mat-form-field>
+
+                                  <mat-form-field appearance="outline">
+                                    <mat-label>Especie</mat-label>
+                                    <input
+                                      matInput
+                                      formControlName="species"
+                                      placeholder="Ej: Mauritia flexuosa"
+                                      [readonly]="isReadOnly()"
+                                    />
+                                  </mat-form-field>
+
+                                  <mat-form-field appearance="outline">
+                                    <mat-label>Precio por saco</mat-label>
+                                    <input
+                                      matInput
+                                      type="number"
+                                      formControlName="pricePerSack"
+                                      min="0"
+                                      [readonly]="isReadOnly()"
+                                    />
+                                    <span matPrefix class="ml-1">S/.</span>
+                                  </mat-form-field>
+
+                                  <mat-form-field appearance="outline" class="observations-field">
+                                    <mat-label>Observaciones</mat-label>
+                                    <textarea
+                                      matInput
+                                      formControlName="observations"
+                                      rows="2"
+                                      [readonly]="isReadOnly()"
+                                    ></textarea>
+                                  </mat-form-field>
+                                </div>
+                              </mat-expansion-panel>
+                            </div>
+                          }
+                        </mat-accordion>
+                      </div>
+                    }
+                  </div>
+
+                  @if (!isReadOnly()) {
+                    <div class="form-actions">
+                      <button
+                        mat-raised-button
+                        class="btn-primary"
+                        type="button"
+                        [disabled]="
+                          handlingRecordForm.invalid || savingDoc() === 'collectors-register'
+                        "
+                        (click)="saveCollectorsRegister()"
+                      >
+                        @if (savingDoc() === 'collectors-register') {
+                          <mat-spinner diameter="16" />
+                        } @else {
+                          <mat-icon>picture_as_pdf</mat-icon>
+                        }
+                        Guardar y Generar documento
+                      </button>
+                    </div>
+                  }
+                </form>
+              </div>
+            }
           </div>
         </mat-tab>
 
@@ -426,8 +432,8 @@
             </span>
           </ng-template>
 
-          <div class="split-view">
-            <!-- PDF Viewer -->
+          <div [class]="'split-view' + (isReadOnly() ? ' split-view--readonly' : '')">
+            <!-- PDF Panel -->
             <div class="pdf-panel">
               @if (selectedDocTab() === 1 && pdfUrls()['transport-permit']) {
                 <ngx-extended-pdf-viewer
@@ -455,316 +461,338 @@
             </div>
 
             <!-- Form Panel -->
-            <div class="form-panel">
-              @if (getDocumentState('transport-permit').status === 'observed') {
-                <div class="observation-notice">
-                  <mat-icon>warning</mat-icon>
-                  <div>
-                    <strong>Documento observado</strong>
-                    <p>{{ getDocumentState('transport-permit').observationNotes }}</p>
-                  </div>
-                </div>
-              }
-
-              <form [formGroup]="originCertForm" class="doc-form">
-                <!-- ── 1. Datos del Destinatario ── -->
-                <h3 class="section-subtitle">
-                  <mat-icon>person_outline</mat-icon>
-                  1. Datos del Destinatario
-                </h3>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Nombre del destinatario *</mat-label>
-                    <input matInput formControlName="recipientName" [readonly]="isReadOnly()" />
-                    @if (
-                      originCertForm.get('recipientName')?.invalid &&
-                      originCertForm.get('recipientName')?.touched
-                    ) {
-                      <mat-error>Este campo es requerido</mat-error>
-                    }
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Cargo del destinatario *</mat-label>
-                    <input matInput formControlName="recipientPosition" [readonly]="isReadOnly()" />
-                    @if (
-                      originCertForm.get('recipientPosition')?.invalid &&
-                      originCertForm.get('recipientPosition')?.touched
-                    ) {
-                      <mat-error>Este campo es requerido</mat-error>
-                    }
-                  </mat-form-field>
-                </div>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Nombre del ANP *</mat-label>
-                    <input matInput formControlName="anpName" [readonly]="isReadOnly()" />
-                    @if (
-                      originCertForm.get('anpName')?.invalid &&
-                      originCertForm.get('anpName')?.touched
-                    ) {
-                      <mat-error>Este campo es requerido</mat-error>
-                    }
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Fecha de solicitud *</mat-label>
-                    <input
-                      matInput
-                      [matDatepicker]="pickerOriginReq"
-                      formControlName="requestDate"
-                      [readonly]="isReadOnly()"
-                    />
-                    @if (!isReadOnly()) {
-                      <mat-datepicker-toggle matSuffix [for]="pickerOriginReq" />
-                    }
-                    <mat-datepicker #pickerOriginReq />
-                    @if (
-                      originCertForm.get('requestDate')?.invalid &&
-                      originCertForm.get('requestDate')?.touched
-                    ) {
-                      <mat-error>La fecha es requerida</mat-error>
-                    }
-                  </mat-form-field>
-                </div>
-
-                <mat-divider />
-
-                <!-- ── 2. Datos del Solicitante ── -->
-                <h3 class="section-subtitle">
-                  <mat-icon>badge</mat-icon>
-                  2. Datos del Solicitante
-                </h3>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Nombre completo *</mat-label>
-                    <input matInput formControlName="applicantFullName" [readonly]="isReadOnly()" />
-                    @if (
-                      originCertForm.get('applicantFullName')?.invalid &&
-                      originCertForm.get('applicantFullName')?.touched
-                    ) {
-                      <mat-error>Este campo es requerido</mat-error>
-                    }
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>DNI *</mat-label>
-                    <input
-                      matInput
-                      formControlName="applicantDni"
-                      maxlength="8"
-                      [readonly]="isReadOnly()"
-                    />
-                    @if (
-                      originCertForm.get('applicantDni')?.invalid &&
-                      originCertForm.get('applicantDni')?.touched
-                    ) {
-                      @if (originCertForm.get('applicantDni')?.hasError('required')) {
-                        <mat-error>El DNI es requerido</mat-error>
-                      } @else {
-                        <mat-error>Debe tener exactamente 8 dígitos numéricos</mat-error>
-                      }
-                    }
-                  </mat-form-field>
-                </div>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Organización / Comunidad *</mat-label>
-                    <input matInput formControlName="organizationName" [readonly]="isReadOnly()" />
-                    @if (
-                      originCertForm.get('organizationName')?.invalid &&
-                      originCertForm.get('organizationName')?.touched
-                    ) {
-                      <mat-error>Este campo es requerido</mat-error>
-                    }
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Cargo en la organización *</mat-label>
-                    <input
-                      matInput
-                      formControlName="organizationPosition"
-                      placeholder="Ej: Presidente"
-                      [readonly]="isReadOnly()"
-                    />
-                    @if (
-                      originCertForm.get('organizationPosition')?.invalid &&
-                      originCertForm.get('organizationPosition')?.touched
-                    ) {
-                      <mat-error>Este campo es requerido</mat-error>
-                    }
-                  </mat-form-field>
-                </div>
-
-                <mat-divider />
-
-                <!-- ── 3. Datos del Derecho Otorgado ── -->
-                <h3 class="section-subtitle">
-                  <mat-icon>gavel</mat-icon>
-                  3. Datos del Derecho Otorgado
-                </h3>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Tipo de autorización *</mat-label>
-                    <mat-select formControlName="authorizationType">
-                      <mat-option value="contrato_aprovechamiento"
-                        >Contrato de aprovechamiento</mat-option
-                      >
-                      <mat-option value="acuerdo_actividad_menor"
-                        >Acuerdo de actividad menor</mat-option
-                      >
-                      <mat-option value="autorizacion_caza_deportiva"
-                        >Autorización de caza deportiva</mat-option
-                      >
-                      <mat-option value="otro">Otro</mat-option>
-                    </mat-select>
-                    @if (
-                      originCertForm.get('authorizationType')?.invalid &&
-                      originCertForm.get('authorizationType')?.touched
-                    ) {
-                      <mat-error>Este campo es requerido</mat-error>
-                    }
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Número de resolución / derecho</mat-label>
-                    <input matInput formControlName="resolutionNumber" [readonly]="isReadOnly()" />
-                  </mat-form-field>
-                </div>
-
-                <div class="form-row form-row--3">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Vigencia desde</mat-label>
-                    <input
-                      matInput
-                      [matDatepicker]="pickerVigStart"
-                      formControlName="validityStart"
-                      [readonly]="isReadOnly()"
-                    />
-                    @if (!isReadOnly()) {
-                      <mat-datepicker-toggle matSuffix [for]="pickerVigStart" />
-                    }
-                    <mat-datepicker #pickerVigStart />
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Vigencia hasta</mat-label>
-                    <input
-                      matInput
-                      [matDatepicker]="pickerVigEnd"
-                      formControlName="validityEnd"
-                      [readonly]="isReadOnly()"
-                    />
-                    @if (!isReadOnly()) {
-                      <mat-datepicker-toggle matSuffix [for]="pickerVigEnd" />
-                    }
-                    <mat-datepicker #pickerVigEnd />
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Periodo en años</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      formControlName="yearsPeriod"
-                      min="1"
-                      [readonly]="isReadOnly()"
-                    />
-                  </mat-form-field>
-                </div>
-
-                <mat-divider />
-
-                <!-- ── 4. Recurso Aprovechado ── -->
-                <h3 class="section-subtitle">
-                  <mat-icon>eco</mat-icon>
-                  4. Recurso Aprovechado
-                </h3>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Sector</mat-label>
-                    <input matInput formControlName="sector" [readonly]="isReadOnly()" />
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Ubicación interna</mat-label>
-                    <input matInput formControlName="internalLocation" [readonly]="isReadOnly()" />
-                  </mat-form-field>
-                </div>
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Nombre del recurso</mat-label>
-                  <input matInput formControlName="resourceName" [readonly]="isReadOnly()" />
-                </mat-form-field>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Cantidad aprovechada</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      formControlName="harvestedQuantity"
-                      min="0"
-                      [readonly]="isReadOnly()"
-                    />
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Unidad de medida</mat-label>
-                    <mat-select formControlName="unitOfMeasure">
-                      <mat-option value="kilos">Kilos</mat-option>
-                      <mat-option value="toneladas">Toneladas</mat-option>
-                      <mat-option value="unidades">Unidades</mat-option>
-                      <mat-option value="metros_cubicos">Metros cúbicos</mat-option>
-                      <mat-option value="litros">Litros</mat-option>
-                      <mat-option value="otros">Otros</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-
-                <mat-divider />
-
-                <!-- ── 5. Declaraciones ── -->
-                <h3 class="section-subtitle">
-                  <mat-icon>checklist</mat-icon>
-                  5. Declaraciones
-                </h3>
-
-                <div class="declarations-row">
-                  <mat-checkbox formControlName="paymentMade" [disabled]="isReadOnly()">
-                    Pago realizado
-                  </mat-checkbox>
-                  <mat-checkbox formControlName="recordSheetsAttached" [disabled]="isReadOnly()">
-                    Fichas adjuntas
-                  </mat-checkbox>
-                </div>
-
-                @if (!isReadOnly()) {
-                  <div class="form-actions">
-                    <button
-                      mat-raised-button
-                      class="btn-primary"
-                      type="button"
-                      [disabled]="originCertForm.invalid || savingDoc() === 'transport-permit'"
-                      (click)="saveOriginCertificate()"
-                    >
-                      @if (savingDoc() === 'transport-permit') {
-                        <mat-spinner diameter="16" />
-                      } @else {
-                        <mat-icon>picture_as_pdf</mat-icon>
-                      }
-                      Guardar y Generar documento
-                    </button>
+            @if (!isReadOnly()) {
+              <div class="form-panel">
+                @if (getDocumentState('transport-permit').status === 'observed') {
+                  <div class="observation-notice">
+                    <mat-icon>warning</mat-icon>
+                    <div>
+                      <strong>Documento observado</strong>
+                      <p>{{ getDocumentState('transport-permit').observationNotes }}</p>
+                    </div>
                   </div>
                 }
-              </form>
-            </div>
+
+                <form [formGroup]="originCertForm" class="doc-form">
+                  <!-- ── 1. Datos del Destinatario ── -->
+                  <h3 class="section-subtitle">
+                    <mat-icon>person_outline</mat-icon>
+                    1. Datos del Destinatario
+                  </h3>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Nombre del destinatario *</mat-label>
+                      <input matInput formControlName="recipientName" [readonly]="isReadOnly()" />
+                      @if (
+                        originCertForm.get('recipientName')?.invalid &&
+                        originCertForm.get('recipientName')?.touched
+                      ) {
+                        <mat-error>Este campo es requerido</mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Cargo del destinatario *</mat-label>
+                      <input
+                        matInput
+                        formControlName="recipientPosition"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (
+                        originCertForm.get('recipientPosition')?.invalid &&
+                        originCertForm.get('recipientPosition')?.touched
+                      ) {
+                        <mat-error>Este campo es requerido</mat-error>
+                      }
+                    </mat-form-field>
+                  </div>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Nombre del ANP *</mat-label>
+                      <input matInput formControlName="anpName" [readonly]="isReadOnly()" />
+                      @if (
+                        originCertForm.get('anpName')?.invalid &&
+                        originCertForm.get('anpName')?.touched
+                      ) {
+                        <mat-error>Este campo es requerido</mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Fecha de solicitud *</mat-label>
+                      <input
+                        matInput
+                        [matDatepicker]="pickerOriginReq"
+                        formControlName="requestDate"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (!isReadOnly()) {
+                        <mat-datepicker-toggle matSuffix [for]="pickerOriginReq" />
+                      }
+                      <mat-datepicker #pickerOriginReq />
+                      @if (
+                        originCertForm.get('requestDate')?.invalid &&
+                        originCertForm.get('requestDate')?.touched
+                      ) {
+                        <mat-error>La fecha es requerida</mat-error>
+                      }
+                    </mat-form-field>
+                  </div>
+
+                  <mat-divider />
+
+                  <!-- ── 2. Datos del Solicitante ── -->
+                  <h3 class="section-subtitle">
+                    <mat-icon>badge</mat-icon>
+                    2. Datos del Solicitante
+                  </h3>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Nombre completo *</mat-label>
+                      <input
+                        matInput
+                        formControlName="applicantFullName"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (
+                        originCertForm.get('applicantFullName')?.invalid &&
+                        originCertForm.get('applicantFullName')?.touched
+                      ) {
+                        <mat-error>Este campo es requerido</mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>DNI *</mat-label>
+                      <input
+                        matInput
+                        formControlName="applicantDni"
+                        maxlength="8"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (
+                        originCertForm.get('applicantDni')?.invalid &&
+                        originCertForm.get('applicantDni')?.touched
+                      ) {
+                        @if (originCertForm.get('applicantDni')?.hasError('required')) {
+                          <mat-error>El DNI es requerido</mat-error>
+                        } @else {
+                          <mat-error>Debe tener exactamente 8 dígitos numéricos</mat-error>
+                        }
+                      }
+                    </mat-form-field>
+                  </div>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Organización / Comunidad *</mat-label>
+                      <input
+                        matInput
+                        formControlName="organizationName"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (
+                        originCertForm.get('organizationName')?.invalid &&
+                        originCertForm.get('organizationName')?.touched
+                      ) {
+                        <mat-error>Este campo es requerido</mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Cargo en la organización *</mat-label>
+                      <input
+                        matInput
+                        formControlName="organizationPosition"
+                        placeholder="Ej: Presidente"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (
+                        originCertForm.get('organizationPosition')?.invalid &&
+                        originCertForm.get('organizationPosition')?.touched
+                      ) {
+                        <mat-error>Este campo es requerido</mat-error>
+                      }
+                    </mat-form-field>
+                  </div>
+
+                  <mat-divider />
+
+                  <!-- ── 3. Datos del Derecho Otorgado ── -->
+                  <h3 class="section-subtitle">
+                    <mat-icon>gavel</mat-icon>
+                    3. Datos del Derecho Otorgado
+                  </h3>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Tipo de autorización *</mat-label>
+                      <mat-select formControlName="authorizationType">
+                        <mat-option value="contrato_aprovechamiento"
+                          >Contrato de aprovechamiento</mat-option
+                        >
+                        <mat-option value="acuerdo_actividad_menor"
+                          >Acuerdo de actividad menor</mat-option
+                        >
+                        <mat-option value="autorizacion_caza_deportiva"
+                          >Autorización de caza deportiva</mat-option
+                        >
+                        <mat-option value="otro">Otro</mat-option>
+                      </mat-select>
+                      @if (
+                        originCertForm.get('authorizationType')?.invalid &&
+                        originCertForm.get('authorizationType')?.touched
+                      ) {
+                        <mat-error>Este campo es requerido</mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Número de resolución / derecho</mat-label>
+                      <input
+                        matInput
+                        formControlName="resolutionNumber"
+                        [readonly]="isReadOnly()"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <div class="form-row form-row--3">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Vigencia desde</mat-label>
+                      <input
+                        matInput
+                        [matDatepicker]="pickerVigStart"
+                        formControlName="validityStart"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (!isReadOnly()) {
+                        <mat-datepicker-toggle matSuffix [for]="pickerVigStart" />
+                      }
+                      <mat-datepicker #pickerVigStart />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Vigencia hasta</mat-label>
+                      <input
+                        matInput
+                        [matDatepicker]="pickerVigEnd"
+                        formControlName="validityEnd"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (!isReadOnly()) {
+                        <mat-datepicker-toggle matSuffix [for]="pickerVigEnd" />
+                      }
+                      <mat-datepicker #pickerVigEnd />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Periodo en años</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        formControlName="yearsPeriod"
+                        min="1"
+                        [readonly]="isReadOnly()"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <mat-divider />
+
+                  <!-- ── 4. Recurso Aprovechado ── -->
+                  <h3 class="section-subtitle">
+                    <mat-icon>eco</mat-icon>
+                    4. Recurso Aprovechado
+                  </h3>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Sector</mat-label>
+                      <input matInput formControlName="sector" [readonly]="isReadOnly()" />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Ubicación interna</mat-label>
+                      <input
+                        matInput
+                        formControlName="internalLocation"
+                        [readonly]="isReadOnly()"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Nombre del recurso</mat-label>
+                    <input matInput formControlName="resourceName" [readonly]="isReadOnly()" />
+                  </mat-form-field>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Cantidad aprovechada</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        formControlName="harvestedQuantity"
+                        min="0"
+                        [readonly]="isReadOnly()"
+                      />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Unidad de medida</mat-label>
+                      <mat-select formControlName="unitOfMeasure">
+                        <mat-option value="kilos">Kilos</mat-option>
+                        <mat-option value="toneladas">Toneladas</mat-option>
+                        <mat-option value="unidades">Unidades</mat-option>
+                        <mat-option value="metros_cubicos">Metros cúbicos</mat-option>
+                        <mat-option value="litros">Litros</mat-option>
+                        <mat-option value="otros">Otros</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <mat-divider />
+
+                  <!-- ── 5. Declaraciones ── -->
+                  <h3 class="section-subtitle">
+                    <mat-icon>checklist</mat-icon>
+                    5. Declaraciones
+                  </h3>
+
+                  <div class="declarations-row">
+                    <mat-checkbox formControlName="paymentMade" [disabled]="isReadOnly()">
+                      Pago realizado
+                    </mat-checkbox>
+                    <mat-checkbox formControlName="recordSheetsAttached" [disabled]="isReadOnly()">
+                      Fichas adjuntas
+                    </mat-checkbox>
+                  </div>
+
+                  @if (!isReadOnly()) {
+                    <div class="form-actions">
+                      <button
+                        mat-raised-button
+                        class="btn-primary"
+                        type="button"
+                        [disabled]="originCertForm.invalid || savingDoc() === 'transport-permit'"
+                        (click)="saveOriginCertificate()"
+                      >
+                        @if (savingDoc() === 'transport-permit') {
+                          <mat-spinner diameter="16" />
+                        } @else {
+                          <mat-icon>picture_as_pdf</mat-icon>
+                        }
+                        Guardar y Generar documento
+                      </button>
+                    </div>
+                  }
+                </form>
+              </div>
+            }
           </div>
         </mat-tab>
 
@@ -783,8 +811,8 @@
             </span>
           </ng-template>
 
-          <div class="split-view">
-            <!-- PDF Viewer -->
+          <div [class]="'split-view' + (isReadOnly() ? ' split-view--readonly' : '')">
+            <!-- PDF Panel -->
             <div class="pdf-panel">
               @if (selectedDocTab() === 2 && pdfUrls()['transport-info']) {
                 <ngx-extended-pdf-viewer
@@ -812,324 +840,330 @@
             </div>
 
             <!-- Form Panel -->
-            <div class="form-panel">
-              @if (getDocumentState('transport-info').status === 'observed') {
-                <div class="observation-notice">
-                  <mat-icon>warning</mat-icon>
-                  <div>
-                    <strong>Documento observado</strong>
-                    <p>{{ getDocumentState('transport-info').observationNotes }}</p>
+            @if (!isReadOnly()) {
+              <div class="form-panel">
+                @if (getDocumentState('transport-info').status === 'observed') {
+                  <div class="observation-notice">
+                    <mat-icon>warning</mat-icon>
+                    <div>
+                      <strong>Documento observado</strong>
+                      <p>{{ getDocumentState('transport-info').observationNotes }}</p>
+                    </div>
                   </div>
-                </div>
-              }
+                }
 
-              <form [formGroup]="transportForm" class="doc-form">
-                <h3 class="section-subtitle">
-                  <mat-icon>local_shipping</mat-icon>
-                  Datos del transportista
-                </h3>
+                <form [formGroup]="transportForm" class="doc-form">
+                  <h3 class="section-subtitle">
+                    <mat-icon>local_shipping</mat-icon>
+                    Datos del transportista
+                  </h3>
 
-                <!-- Transport type -->
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Tipo de transporte *</mat-label>
-                  <mat-select
-                    formControlName="transportType"
-                    (selectionChange)="onTransportTypeChange($event.value)"
-                  >
-                    <mat-option value="terrestre">Terrestre</mat-option>
-                    <mat-option value="fluvial">Fluvial</mat-option>
-                  </mat-select>
-                </mat-form-field>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Nombre del transportista *</mat-label>
-                    <input matInput formControlName="transporterName" [readonly]="isReadOnly()" />
-                    @if (
-                      transportForm.get('transporterName')?.invalid &&
-                      transportForm.get('transporterName')?.touched
-                    ) {
-                      <mat-error>Requerido</mat-error>
-                    }
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Tipo de documento *</mat-label>
-                    <mat-select formControlName="transporterDocumentType">
-                      <mat-option value="DNI">DNI</mat-option>
-                      <mat-option value="CE">Carnet de Extranjería</mat-option>
-                      <mat-option value="RUC">RUC</mat-option>
+                  <!-- Transport type -->
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Tipo de transporte *</mat-label>
+                    <mat-select
+                      formControlName="transportType"
+                      (selectionChange)="onTransportTypeChange($event.value)"
+                    >
+                      <mat-option value="terrestre">Terrestre</mat-option>
+                      <mat-option value="fluvial">Fluvial</mat-option>
                     </mat-select>
                   </mat-form-field>
-                </div>
 
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>N° de documento *</mat-label>
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Nombre del transportista *</mat-label>
+                      <input matInput formControlName="transporterName" [readonly]="isReadOnly()" />
+                      @if (
+                        transportForm.get('transporterName')?.invalid &&
+                        transportForm.get('transporterName')?.touched
+                      ) {
+                        <mat-error>Requerido</mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Tipo de documento *</mat-label>
+                      <mat-select formControlName="transporterDocumentType">
+                        <mat-option value="DNI">DNI</mat-option>
+                        <mat-option value="CE">Carnet de Extranjería</mat-option>
+                        <mat-option value="RUC">RUC</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>N° de documento *</mat-label>
+                      <input
+                        matInput
+                        formControlName="transporterDocumentNumber"
+                        [readonly]="isReadOnly()"
+                      />
+                      @if (
+                        transportForm.get('transporterDocumentNumber')?.invalid &&
+                        transportForm.get('transporterDocumentNumber')?.touched
+                      ) {
+                        <mat-error>Requerido</mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Licencia de conducir</mat-label>
+                      <input
+                        matInput
+                        formControlName="transporterLicense"
+                        [readonly]="isReadOnly()"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Teléfono</mat-label>
+                    <input matInput formControlName="transporterPhone" [readonly]="isReadOnly()" />
+                    <mat-icon matPrefix>phone</mat-icon>
+                  </mat-form-field>
+
+                  <mat-divider class="my-4" />
+                  <h3 class="section-subtitle">
+                    <mat-icon>directions_car</mat-icon>
+                    Datos del vehículo
+                  </h3>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Placa del vehículo</mat-label>
+                      <input
+                        matInput
+                        formControlName="vehiclePlate"
+                        [readonly]="isReadOnly()"
+                        style="text-transform: uppercase"
+                      />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Tipo de vehículo</mat-label>
+                      <input
+                        matInput
+                        formControlName="vehicleType"
+                        [readonly]="isReadOnly()"
+                        placeholder="Ej: Camión"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Marca</mat-label>
+                      <input matInput formControlName="vehicleBrand" [readonly]="isReadOnly()" />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Modelo</mat-label>
+                      <input matInput formControlName="vehicleModel" [readonly]="isReadOnly()" />
+                    </mat-form-field>
+                  </div>
+
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Capacidad (kg)</mat-label>
                     <input
                       matInput
-                      formControlName="transporterDocumentNumber"
+                      type="number"
+                      formControlName="vehicleCapacityKg"
                       [readonly]="isReadOnly()"
                     />
+                    <span matSuffix>kg</span>
+                  </mat-form-field>
+
+                  <!-- Fluvial fields -->
+                  @if (isFluvialTransport()) {
+                    <mat-divider class="my-4" />
+                    <h3 class="section-subtitle">
+                      <mat-icon>directions_boat</mat-icon>
+                      Datos de embarcación
+                    </h3>
+                    <div class="form-row">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Matrícula de embarcación</mat-label>
+                        <input
+                          matInput
+                          formControlName="boatRegistration"
+                          [readonly]="isReadOnly()"
+                        />
+                      </mat-form-field>
+                      <mat-form-field appearance="outline">
+                        <mat-label>Potencia motor (HP)</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          formControlName="boatMotorHp"
+                          [readonly]="isReadOnly()"
+                        />
+                        <span matSuffix>HP</span>
+                      </mat-form-field>
+                    </div>
+                  }
+
+                  <mat-divider class="my-4" />
+                  <h3 class="section-subtitle">
+                    <mat-icon>route</mat-icon>
+                    Ruta
+                  </h3>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Origen *</mat-label>
+                    <input
+                      matInput
+                      formControlName="originLocation"
+                      [readonly]="isReadOnly()"
+                      placeholder="Lugar de origen del traslado"
+                    />
+                    <mat-icon matPrefix>place</mat-icon>
                     @if (
-                      transportForm.get('transporterDocumentNumber')?.invalid &&
-                      transportForm.get('transporterDocumentNumber')?.touched
+                      transportForm.get('originLocation')?.invalid &&
+                      transportForm.get('originLocation')?.touched
                     ) {
                       <mat-error>Requerido</mat-error>
                     }
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>Licencia de conducir</mat-label>
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Destino *</mat-label>
                     <input
                       matInput
-                      formControlName="transporterLicense"
+                      formControlName="destinationLocation"
                       [readonly]="isReadOnly()"
+                      placeholder="Lugar de destino del traslado"
                     />
+                    <mat-icon matPrefix>flag</mat-icon>
+                    @if (
+                      transportForm.get('destinationLocation')?.invalid &&
+                      transportForm.get('destinationLocation')?.touched
+                    ) {
+                      <mat-error>Requerido</mat-error>
+                    }
                   </mat-form-field>
-                </div>
 
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Teléfono</mat-label>
-                  <input matInput formControlName="transporterPhone" [readonly]="isReadOnly()" />
-                  <mat-icon matPrefix>phone</mat-icon>
-                </mat-form-field>
-
-                <mat-divider class="my-4" />
-                <h3 class="section-subtitle">
-                  <mat-icon>directions_car</mat-icon>
-                  Datos del vehículo
-                </h3>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Placa del vehículo</mat-label>
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Duración estimada</mat-label>
                     <input
                       matInput
-                      formControlName="vehiclePlate"
+                      type="number"
+                      formControlName="estimatedDurationHours"
                       [readonly]="isReadOnly()"
-                      style="text-transform: uppercase"
                     />
+                    <span matSuffix>horas</span>
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>Tipo de vehículo</mat-label>
-                    <input
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Notas adicionales</mat-label>
+                    <textarea
                       matInput
-                      formControlName="vehicleType"
+                      formControlName="notes"
+                      rows="3"
                       [readonly]="isReadOnly()"
-                      placeholder="Ej: Camión"
-                    />
-                  </mat-form-field>
-                </div>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Marca</mat-label>
-                    <input matInput formControlName="vehicleBrand" [readonly]="isReadOnly()" />
+                    ></textarea>
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>Modelo</mat-label>
-                    <input matInput formControlName="vehicleModel" [readonly]="isReadOnly()" />
-                  </mat-form-field>
-                </div>
-
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Capacidad (kg)</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    formControlName="vehicleCapacityKg"
-                    [readonly]="isReadOnly()"
-                  />
-                  <span matSuffix>kg</span>
-                </mat-form-field>
-
-                <!-- Fluvial fields -->
-                @if (isFluvialTransport()) {
                   <mat-divider class="my-4" />
                   <h3 class="section-subtitle">
-                    <mat-icon>directions_boat</mat-icon>
-                    Datos de embarcación
+                    <mat-icon>warehouse</mat-icon>
+                    Centro de acopio
                   </h3>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Dirección del centro de acopio</mat-label>
+                    <input
+                      matInput
+                      formControlName="collectionCenterAddress"
+                      [readonly]="isReadOnly()"
+                    />
+                  </mat-form-field>
+
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Matrícula de embarcación</mat-label>
+                      <mat-label>Nombre del responsable</mat-label>
                       <input
                         matInput
-                        formControlName="boatRegistration"
+                        formControlName="collectionCenterManagerName"
                         [readonly]="isReadOnly()"
                       />
                     </mat-form-field>
+
                     <mat-form-field appearance="outline">
-                      <mat-label>Potencia motor (HP)</mat-label>
+                      <mat-label>DNI del responsable</mat-label>
                       <input
                         matInput
-                        type="number"
-                        formControlName="boatMotorHp"
+                        formControlName="collectionCenterManagerDni"
                         [readonly]="isReadOnly()"
                       />
-                      <span matSuffix>HP</span>
                     </mat-form-field>
                   </div>
-                }
 
-                <mat-divider class="my-4" />
-                <h3 class="section-subtitle">
-                  <mat-icon>route</mat-icon>
-                  Ruta
-                </h3>
+                  <mat-divider class="my-4" />
+                  <h3 class="section-subtitle">
+                    <mat-icon>storefront</mat-icon>
+                    Información del comprador
+                  </h3>
 
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Origen *</mat-label>
-                  <input
-                    matInput
-                    formControlName="originLocation"
-                    [readonly]="isReadOnly()"
-                    placeholder="Lugar de origen del traslado"
-                  />
-                  <mat-icon matPrefix>place</mat-icon>
-                  @if (
-                    transportForm.get('originLocation')?.invalid &&
-                    transportForm.get('originLocation')?.touched
-                  ) {
-                    <mat-error>Requerido</mat-error>
-                  }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Destino *</mat-label>
-                  <input
-                    matInput
-                    formControlName="destinationLocation"
-                    [readonly]="isReadOnly()"
-                    placeholder="Lugar de destino del traslado"
-                  />
-                  <mat-icon matPrefix>flag</mat-icon>
-                  @if (
-                    transportForm.get('destinationLocation')?.invalid &&
-                    transportForm.get('destinationLocation')?.touched
-                  ) {
-                    <mat-error>Requerido</mat-error>
-                  }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Duración estimada</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    formControlName="estimatedDurationHours"
-                    [readonly]="isReadOnly()"
-                  />
-                  <span matSuffix>horas</span>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Notas adicionales</mat-label>
-                  <textarea
-                    matInput
-                    formControlName="notes"
-                    rows="3"
-                    [readonly]="isReadOnly()"
-                  ></textarea>
-                </mat-form-field>
-
-                <mat-divider class="my-4" />
-                <h3 class="section-subtitle">
-                  <mat-icon>warehouse</mat-icon>
-                  Centro de acopio
-                </h3>
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Dirección del centro de acopio</mat-label>
-                  <input
-                    matInput
-                    formControlName="collectionCenterAddress"
-                    [readonly]="isReadOnly()"
-                  />
-                </mat-form-field>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Nombre del responsable</mat-label>
-                    <input
-                      matInput
-                      formControlName="collectionCenterManagerName"
-                      [readonly]="isReadOnly()"
-                    />
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Nombre / Razón social</mat-label>
+                    <input matInput formControlName="buyerName" [readonly]="isReadOnly()" />
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>DNI del responsable</mat-label>
-                    <input
-                      matInput
-                      formControlName="collectionCenterManagerDni"
-                      [readonly]="isReadOnly()"
-                    />
-                  </mat-form-field>
-                </div>
+                  <div class="form-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Tipo de documento</mat-label>
+                      <input
+                        matInput
+                        formControlName="buyerDocumentType"
+                        [readonly]="isReadOnly()"
+                      />
+                    </mat-form-field>
 
-                <mat-divider class="my-4" />
-                <h3 class="section-subtitle">
-                  <mat-icon>storefront</mat-icon>
-                  Información del comprador
-                </h3>
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Nombre / Razón social</mat-label>
-                  <input matInput formControlName="buyerName" [readonly]="isReadOnly()" />
-                </mat-form-field>
-
-                <div class="form-row">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Tipo de documento</mat-label>
-                    <input matInput formControlName="buyerDocumentType" [readonly]="isReadOnly()" />
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>N° de documento</mat-label>
-                    <input
-                      matInput
-                      formControlName="buyerDocumentNumber"
-                      [readonly]="isReadOnly()"
-                    />
-                  </mat-form-field>
-                </div>
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Domicilio legal</mat-label>
-                  <input matInput formControlName="buyerLegalAddress" [readonly]="isReadOnly()" />
-                </mat-form-field>
-
-                @if (!isReadOnly()) {
-                  <div class="form-actions">
-                    <button
-                      mat-raised-button
-                      class="btn-primary"
-                      type="button"
-                      [disabled]="transportForm.invalid || savingDoc() === 'transport-info'"
-                      (click)="saveTransportWaybill()"
-                    >
-                      @if (savingDoc() === 'transport-info') {
-                        <mat-spinner diameter="16" />
-                      } @else {
-                        <mat-icon>picture_as_pdf</mat-icon>
-                      }
-                      Guardar y Generar documento
-                    </button>
+                    <mat-form-field appearance="outline">
+                      <mat-label>N° de documento</mat-label>
+                      <input
+                        matInput
+                        formControlName="buyerDocumentNumber"
+                        [readonly]="isReadOnly()"
+                      />
+                    </mat-form-field>
                   </div>
-                }
-              </form>
-            </div>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Domicilio legal</mat-label>
+                    <input matInput formControlName="buyerLegalAddress" [readonly]="isReadOnly()" />
+                  </mat-form-field>
+
+                  @if (!isReadOnly()) {
+                    <div class="form-actions">
+                      <button
+                        mat-raised-button
+                        class="btn-primary"
+                        type="button"
+                        [disabled]="transportForm.invalid || savingDoc() === 'transport-info'"
+                        (click)="saveTransportWaybill()"
+                      >
+                        @if (savingDoc() === 'transport-info') {
+                          <mat-spinner diameter="16" />
+                        } @else {
+                          <mat-icon>picture_as_pdf</mat-icon>
+                        }
+                        Guardar y Generar documento
+                      </button>
+                    </div>
+                  }
+                </form>
+              </div>
+            }
           </div>
         </mat-tab>
       </mat-tab-group>
     </div>
 
     <!-- ─── Mobile Submit Button ──────────────────────────────────────────── -->
-    @if (!isReadOnly()) {
+    @if (canFinalizeDocuments()) {
       <div class="mobile-submit-bar">
         <div class="submit-bar-info">
           <span class="text-subtitle text-neutral-subheading">
@@ -1139,15 +1173,15 @@
         <button
           mat-raised-button
           class="btn-primary"
-          [disabled]="!canSubmit() || submitting()"
-          (click)="confirmSubmit()"
+          [disabled]="submitting()"
+          (click)="confirmFinalizeDocuments()"
         >
           @if (submitting()) {
             <mat-spinner diameter="16" />
           } @else {
-            <mat-icon>send</mat-icon>
+            <mat-icon>task_alt</mat-icon>
           }
-          Enviar a Aprobación
+          Finalizar Documentos
         </button>
       </div>
     }

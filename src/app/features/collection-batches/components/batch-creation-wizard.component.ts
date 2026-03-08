@@ -73,8 +73,8 @@ export class BatchCreationWizardComponent implements OnInit {
   saving = signal(false);
   batchForm: FormGroup = this.fb.group({
     batchDate: [new Date(), Validators.required],
-    totalWeightKg: [null, [Validators.required, Validators.min(0.01)]],
-    totalSacks: [null, [Validators.required, Validators.min(1)]],
+    totalWeightKg: [null, [Validators.min(0.01)]],
+    totalSacks: [null, [Validators.min(1)]],
     totalUnits: [null, [Validators.min(1)]],
     notes: ['', Validators.maxLength(1000)],
   });
@@ -253,8 +253,8 @@ export class BatchCreationWizardComponent implements OnInit {
       projectId: this.data.projectId,
       collectionRequestId: this.selectedRequestId()!,
       batchDate: dateStr,
-      totalWeightKg: totalWeightKg as number,
-      totalSacks: totalSacks as number,
+      totalWeightKg: totalWeightKg ? (totalWeightKg as number) : undefined,
+      totalSacks: totalSacks ? (totalSacks as number) : undefined,
       totalUnits: totalUnits ? (totalUnits as number) : undefined,
       notes: notes || undefined,
       transportInfo,

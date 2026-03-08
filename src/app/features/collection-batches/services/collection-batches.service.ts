@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '@environments/environment';
 import {
   CollectionBatch,
+  CollectionBatchLight,
   AvailableRequest,
   CreateBatchRequest,
   UpdateBatchRequest,
@@ -52,6 +53,26 @@ export class CollectionBatchesService {
     return this.http.get<PageDto<CollectionBatch>>(`${this.apiUrl}/by-project/${projectId}`, {
       params,
     });
+  }
+
+  /**
+   * Obtiene lotes de acopio livianos de un proyecto (paginado),
+   * excluyendo los ya usados en lotes de producción.
+   * GET /by-project/{projectId}/light
+   */
+  getBatchesByProjectLight(
+    projectId: string,
+    page = 0,
+    size = 20,
+  ): Observable<PageDto<CollectionBatchLight>> {
+    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+
+    return this.http.get<PageDto<CollectionBatchLight>>(
+      `${this.apiUrl}/by-project/${projectId}/light`,
+      {
+        params,
+      },
+    );
   }
 
   /**
@@ -161,5 +182,13 @@ export class CollectionBatchesService {
    */
   submitBatch(batchId: string): Observable<CollectionBatch> {
     return this.http.post<CollectionBatch>(`${this.apiUrl}/${batchId}/submit`, {});
+  }
+
+  /**
+   * Marca el lote como documentos generados
+   * PATCH /{id}/documents-generated
+   */
+  markDocumentsGenerated(batchId: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${batchId}/documents-generated`, {});
   }
 }

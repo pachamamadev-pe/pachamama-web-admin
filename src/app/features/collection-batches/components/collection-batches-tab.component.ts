@@ -107,6 +107,7 @@ export class CollectionBatchesTabComponent {
       pending: 'status-pending',
       validated: 'status-validated',
       closed: 'status-closed',
+      documents_generated: 'status-documents-generated',
     };
     return classMap[status] || 'status-draft';
   }

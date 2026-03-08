@@ -66,6 +66,7 @@ import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.dir
 import { SidebarService } from '@core/services/sidebar.service';
 import { PERMISSIONS } from '@core/auth/permissions';
 import { CollectionBatchesTabComponent } from '../../collection-batches/components/collection-batches-tab.component';
+import { PrimaryTransformationTabComponent } from '../components/primary-transformation-tab.component';
 
 interface ProjectStage {
   number: number;
@@ -104,6 +105,7 @@ interface ActivityValidationStatusChartItem {
     ProjectMapComponent,
     ConfigurationTabComponent,
     CollectionBatchesTabComponent,
+    PrimaryTransformationTabComponent,
     PmHasPermissionDirective,
   ],
   templateUrl: './project-detail.page.html',
@@ -273,7 +275,6 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
 
     { number: 6, name: 'Acopio / Ingreso a CTP', key: 'ctp_entry' },
     { number: 7, name: 'Transformación Primaria', key: 'primary_transformation' },
-    { number: 8, name: 'Proceso de Ajuste de Mapas a Estándares IPG/IGN', key: 'map_adjustment' },
   ];
 
   // Computed para verificar si una etapa está activa
@@ -416,6 +417,9 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         return this.canStartCollection();
       case 'collection':
         return true;
+      case 'ctp_entry':
+        // El backend valida que existan lotes con los 3 documentos generados
+        return true;
       // TODO: Agregar validaciones para otras transiciones de etapas cuando se definan
       default:
         return false;
@@ -458,6 +462,10 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         break;
       case 'collection':
         // El backend valida que existan solicitudes y actividades aprobadas
+        // No hay validaciones adicionales en el frontend
+        break;
+      case 'ctp_entry':
+        // El backend valida que existan lotes con los 3 documentos generados
         // No hay validaciones adicionales en el frontend
         break;
       default:
@@ -558,6 +566,33 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     return index;
   });
 
+  // Computed para mostrar/ocultar el tab de transformación primaria
+  showPrimaryTransformationTab = computed(() => {
+    const stage = this.project()?.stage;
+    // Mostrar tab desde la etapa transformation_primary en adelante
+    const transformationPrimaryStageIndex = this.stages.findIndex(
+      (s) => s.key === 'primary_transformation',
+    );
+    const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
+    return (
+      currentStageIndex >= transformationPrimaryStageIndex && transformationPrimaryStageIndex !== -1
+    );
+  });
+
+  // Computed para calcular el índice dinámico del tab "Transformaciones"
+  primaryTransformationTabIndex = computed(() => {
+    let index = 0;
+    index++; // Tab 0: Resumen
+    index++; // Tab 1: Recolectores
+    if (this.showBrigadesTab()) index++; // Tab: Brigadas
+    if (this.showInventoryEvaluationTab()) index++; // Tab: Inventario
+    if (this.showPmfGenerationTab()) index++; // Tab: PMF
+    if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
+    if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
+    // Tab: Transformaciones - este es el índice que buscamos
+    return index;
+  });
+
   // Computed para calcular el índice dinámico del tab "Documentos"
   documentsTabIndex = computed(() => {
     let index = 0;
@@ -568,6 +603,7 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     if (this.showPmfGenerationTab()) index++; // Tab: PMF
     if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
     if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
+    if (this.showPrimaryTransformationTab()) index++; // Tab: Transformaciones
     // Tab: Documentos - este es el índice que buscamos
     return index;
   });
@@ -582,6 +618,7 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     if (this.showPmfGenerationTab()) index++; // Tab: PMF
     if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
     if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
+    if (this.showPrimaryTransformationTab()) index++; // Tab: Transformaciones
     index++; // Tab: Documentos
     // Tab: Configuración - este es el índice que buscamos
     return index;
@@ -1277,6 +1314,23 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
           const errorMessage =
             error?.error?.message || 'Error al avanzar a la etapa de Acopio/Ingreso a CTP';
           this.notification.error(errorMessage);
+        },
+      });
+    } else if (currentStage === 'ctp_entry' && next.key === 'primary_transformation') {
+      this.notification.info(`Avanzando a etapa: ${next.name}...`);
+
+      this.projectsService.startPrimaryTransformation(projectId).subscribe({
+        next: (updatedProject) => {
+          this.project.set(updatedProject);
+          this.notification.success(`Etapa "${next.name}" iniciada correctamente`);
+        },
+        error: (error) => {
+          console.error('Error advancing to Primary Transformation stage:', error);
+          // El backend retorna el mensaje de error específico; no mostrar mensaje genérico
+          const errorMessage = error?.error?.message;
+          if (errorMessage) {
+            this.notification.error(errorMessage);
+          }
         },
       });
     } else {

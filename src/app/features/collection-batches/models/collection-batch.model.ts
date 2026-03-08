@@ -5,7 +5,7 @@
 /**
  * Estado del lote de acopio
  */
-export type BatchStatus = 'draft' | 'pending' | 'validated' | 'closed';
+export type BatchStatus = 'draft' | 'pending' | 'validated' | 'closed' | 'documents_generated';
 
 /**
  * Tipo de transporte
@@ -202,6 +202,42 @@ export interface CollectionBatch {
 }
 
 /**
+ * Resumen liviano de lote de acopio
+ * Response de GET /by-project/{projectId}/light
+ */
+export interface CollectionBatchLight {
+  id: string;
+  batchNumber: string;
+  status: BatchStatus;
+
+  companyId: string;
+  companyName: string;
+  projectId: string;
+  projectName: string;
+
+  communityId: string | null;
+  communityName: string | null;
+
+  collectionRequestId: string | null;
+  collectionRequestCode: string | null;
+  requestedWeighingKg: number | null;
+  requestStartDate: string | null;
+  requestEndDate: string | null;
+
+  areaId: string | null;
+  areaName: string | null;
+
+  productId: string | null;
+  productName: string | null;
+  productCode: string | null;
+
+  batchDate: string | null;
+  totalWeightKg: number;
+  totalSacks: number;
+  totalUnits: number;
+}
+
+/**
  * Estado de solicitud de recolección
  */
 export type CollectionRequestStatus =
@@ -297,8 +333,8 @@ export interface CreateBatchRequest {
   collectionRequestId: string;
   areaId?: string;
   batchDate: string;
-  totalWeightKg: number;
-  totalSacks: number;
+  totalWeightKg?: number;
+  totalSacks?: number;
   totalUnits?: number;
   notes?: string;
   transportInfo: TransportInfoRequest;
@@ -485,6 +521,7 @@ export const BATCH_STATUS_LABELS: Record<BatchStatus, string> = {
   pending: 'Pendiente',
   validated: 'Validado',
   closed: 'Cerrado',
+  documents_generated: 'Docs. Generados',
 };
 
 /**
@@ -495,4 +532,5 @@ export const BATCH_STATUS_CLASSES: Record<BatchStatus, string> = {
   pending: 'status-pending',
   validated: 'status-validated',
   closed: 'status-closed',
+  documents_generated: 'status-documents-generated',
 };
