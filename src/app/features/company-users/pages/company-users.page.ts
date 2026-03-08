@@ -35,6 +35,10 @@ import {
 } from '../models/company-user.model';
 import { getRoleBadgeColor } from '../models/role.model';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+//import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 /**
  * Página de gestión de usuarios de empresa
  */
@@ -54,6 +58,7 @@ import { getRoleBadgeColor } from '../models/role.model';
     MatFormFieldModule,
     MatInputModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './company-users.page.html',
   styleUrl: './company-users.page.scss',
@@ -61,9 +66,12 @@ import { getRoleBadgeColor } from '../models/role.model';
 })
 export class CompanyUsersPage implements OnInit {
   private companyUsersService = inject(CompanyUsersService);
-  private sidebarService = inject(SidebarService);
+  //private sidebarService = inject(SidebarService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Company ID from authenticated user
   private companyId = computed(() => this.sidebarService.tenantId());

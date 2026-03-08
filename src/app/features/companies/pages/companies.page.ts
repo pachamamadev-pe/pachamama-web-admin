@@ -43,6 +43,10 @@ import {
   CompanyDocumentsDialogData,
 } from '../components/company-documents-dialog.component';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 @Component({
   selector: 'app-companies-page',
   imports: [
@@ -61,6 +65,7 @@ import {
     MatFormFieldModule,
     MatInputModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './companies.page.html',
   styleUrl: './companies.page.scss',
@@ -71,6 +76,9 @@ export class CompaniesPage implements OnInit {
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private router = inject(Router);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Search and filtering
   searchTerm = signal('');

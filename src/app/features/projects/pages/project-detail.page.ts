@@ -62,6 +62,7 @@ import {
 } from '../models/project.model';
 import { BrigadeFormDialogComponent } from '../components/brigade-form.component';
 import { ConfigurationTabComponent } from '../components/configuration-tab.component';
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
 import { SidebarService } from '@core/services/sidebar.service';
 import { PERMISSIONS } from '@core/auth/permissions';
 import { CollectionBatchesTabComponent } from '../../collection-batches/components/collection-batches-tab.component';
@@ -103,6 +104,7 @@ interface ActivityValidationStatusChartItem {
     ProjectMapComponent,
     ConfigurationTabComponent,
     CollectionBatchesTabComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',

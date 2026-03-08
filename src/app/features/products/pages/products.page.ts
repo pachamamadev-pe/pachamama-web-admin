@@ -22,6 +22,9 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
 import { NotificationService } from '@core/services/notification.service';
 import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ReportsService } from '../../projects/services/reports.service';
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
 
 /**
  * Página principal de gestión de productos
@@ -42,6 +45,7 @@ import { ReportsService } from '../../projects/services/reports.service';
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatDividerModule,
+    PmHasPermissionDirective,
   ],
   templateUrl: './products.page.html',
   styleUrl: './products.page.scss',
@@ -53,6 +57,9 @@ export class ProductsPage implements OnInit {
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private router = inject(Router);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // State
   products = signal<Product[]>([]);

@@ -9,7 +9,12 @@
         </p>
       </div>
       <div class="header-actions">
-        <button mat-raised-button class="btn-primary" (click)="createForm()">
+        <button
+          *appPmHasPermission="PERMISSIONS.FORM.CREATE"
+          mat-raised-button
+          class="btn-primary"
+          (click)="createForm()"
+        >
           <mat-icon>add</mat-icon>
           <span class="hidden sm:inline">Crear Formulario</span>
           <span class="sm:hidden">Crear</span>
@@ -137,7 +142,11 @@
     }
 
     <!-- Empty State -->
-    @else if (filteredForms().length === 0 && !searchTerm()) {
+    @else if (
+      filteredForms().length === 0 &&
+      !searchTerm() &&
+      sidebarService.hasPermission(PERMISSIONS.FORM.CREATE)
+    ) {
       <app-empty-state
         icon="dynamic_form"
         [useMaterialIcon]="true"
@@ -163,7 +172,7 @@
     }
 
     <!-- Tabla -->
-    @else {
+    @else if (sidebarService.hasPermission(PERMISSIONS.FORM.READ)) {
       <div class="forms-table-container">
         <table mat-table [dataSource]="filteredForms()" class="forms-table">
           <!-- Nombre -->
@@ -308,6 +317,12 @@
           showFirstLastButtons
           class="mt-4"
         />
+      </div>
+    } @else {
+      <!-- Unauthorized state -->
+      <div class="empty-state">
+        <mat-icon>lock</mat-icon>
+        <h3>No tienes permisos para visualizar formularios dinámicos</h3>
       </div>
     }
   </div>

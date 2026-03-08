@@ -54,6 +54,10 @@ import {
 import { Product } from '@features/products/models/product.model';
 import { Project } from '@features/projects/models/project.model';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 /**
  * Página principal de gestión de formularios dinámicos
  */
@@ -79,6 +83,7 @@ import { Project } from '@features/projects/models/project.model';
     MatDialogModule,
     MatNativeDateModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './dynamic-forms.page.html',
   styleUrl: './dynamic-forms.page.scss',
@@ -92,6 +97,9 @@ export class DynamicFormsPage implements OnInit {
   private notification = inject(NotificationService);
   private dialog = inject(MatDialog);
   private router = inject(Router);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Estado
   loading = signal(true);

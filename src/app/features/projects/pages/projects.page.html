@@ -10,7 +10,12 @@
       </div>
 
       <div class="header-actions">
-        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+        <button
+          *appPmHasPermission="PERMISSIONS.PROJECT.CREATE"
+          mat-raised-button
+          class="btn-primary"
+          (click)="openCreateDialog()"
+        >
           <mat-icon>add</mat-icon>
           <span class="hidden sm:inline">Añadir proyecto</span>
           <span class="sm:hidden">Añadir</span>
@@ -132,7 +137,12 @@
         <mat-spinner diameter="48" />
         <p class="text-body text-neutral-subheading mt-4">Cargando proyectos...</p>
       </div>
-    } @else if (projects().length === 0 && !searchTerm() && !hasActiveFilters()) {
+    } @else if (
+      projects().length === 0 &&
+      !searchTerm() &&
+      !hasActiveFilters() &&
+      sidebarService.hasPermission(PERMISSIONS.PROJECT.CREATE)
+    ) {
       <!-- Empty state -->
       <app-empty-state
         icon="folder"
@@ -154,7 +164,7 @@
         </p>
         <button mat-stroked-button class="mt-4" (click)="clearAllFilters()">Limpiar filtros</button>
       </div>
-    } @else {
+    } @else if (sidebarService.hasPermission(PERMISSIONS.PROJECT.READ)) {
       <!-- Projects Table (Desktop only) -->
       <div class="projects-table">
         <div class="products-table hidden md:block">
@@ -242,17 +252,30 @@
                     </button>
 
                     <mat-menu #tableMenu="matMenu">
-                      <button mat-menu-item (click)="viewProjectDetail(project)">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.PROJECT.READ"
+                        mat-menu-item
+                        (click)="viewProjectDetail(project)"
+                      >
                         <mat-icon>visibility</mat-icon>
                         <span>Ver detalle</span>
                       </button>
 
-                      <button mat-menu-item (click)="openEditDialog(project)">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.PROJECT.UPDATE"
+                        mat-menu-item
+                        (click)="openEditDialog(project)"
+                      >
                         <mat-icon>edit</mat-icon>
                         <span>Editar</span>
                       </button>
 
-                      <button mat-menu-item (click)="deleteProject(project)" class="text-red-600">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.PROJECT.DELETE"
+                        mat-menu-item
+                        (click)="deleteProject(project)"
+                        class="text-red-600"
+                      >
                         <mat-icon class="text-red-600">delete</mat-icon>
                         <span>Eliminar</span>
                       </button>
@@ -370,6 +393,12 @@
             </div>
           </div>
         }
+      </div>
+    } @else {
+      <!-- Unauthorized state -->
+      <div class="empty-state">
+        <mat-icon>lock</mat-icon>
+        <h3>No tienes permisos para visualizar proyectos</h3>
       </div>
     }
   </div>
