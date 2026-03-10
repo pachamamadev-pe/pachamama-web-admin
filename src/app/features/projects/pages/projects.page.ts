@@ -36,6 +36,10 @@ import { Community } from '../../communities/models/community.model';
 import { ProjectFormComponent } from '../components/project-form.component';
 import { formatDate } from '@shared/utils/date-helpers';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+//import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 @Component({
   selector: 'app-projects-page',
   imports: [
@@ -54,6 +58,7 @@ import { formatDate } from '@shared/utils/date-helpers';
     MatSelectModule,
     MatChipsModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './projects.page.html',
   styleUrl: './projects.page.scss',
@@ -64,10 +69,13 @@ export class ProjectsPage implements OnInit {
   private productsService = inject(ProductsService);
   private communitiesService = inject(CommunitiesService);
   private communityProjectLinkService = inject(CommunityProjectLinkService);
-  private sidebarService = inject(SidebarService);
+  //private sidebarService = inject(SidebarService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private router = inject(Router);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Search and filtering
   searchTerm = signal('');

@@ -10,7 +10,12 @@
       </div>
 
       <div class="header-actions">
-        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+        <button
+          *appPmHasPermission="PERMISSIONS.USER.CREATE"
+          mat-raised-button
+          class="btn-primary"
+          (click)="openCreateDialog()"
+        >
           <mat-icon>person_add</mat-icon>
           <span class="hidden sm:inline">Añadir Usuario</span>
           <span class="sm:hidden">Añadir</span>
@@ -46,7 +51,9 @@
         <mat-spinner diameter="48" />
         <p class="text-body text-neutral-subheading mt-4">Cargando usuarios...</p>
       </div>
-    } @else if (users().length === 0 && !searchTerm()) {
+    } @else if (
+      users().length === 0 && !searchTerm() && sidebarService.hasPermission(PERMISSIONS.USER.CREATE)
+    ) {
       <!-- Empty state -->
       <app-empty-state
         icon="people"
@@ -66,7 +73,7 @@
         <p class="text-subtitle text-neutral-subheading">Intenta con otros términos de búsqueda</p>
         <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
       </div>
-    } @else {
+    } @else if (sidebarService.hasPermission(PERMISSIONS.USER.READ)) {
       <!-- Users Table (Desktop only) -->
       <div class="company-users-table">
         <table class="table-auto w-full">
@@ -228,6 +235,12 @@
           (page)="onPageChange($event)"
           showFirstLastButtons
         />
+      </div>
+    } @else {
+      <!-- Unauthorized state -->
+      <div class="empty-state">
+        <mat-icon>lock</mat-icon>
+        <h3>No tienes permisos para visualizar usuarios</h3>
       </div>
     }
   </div>

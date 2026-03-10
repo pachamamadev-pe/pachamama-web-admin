@@ -8,7 +8,12 @@
       </div>
 
       <div class="header-actions">
-        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+        <button
+          *appPmHasPermission="PERMISSIONS.PRODUCT.CREATE"
+          mat-raised-button
+          class="btn-primary"
+          (click)="openCreateDialog()"
+        >
           <mat-icon>add</mat-icon>
           <span class="hidden sm:inline">Añadir producto</span>
           <span class="sm:hidden">Añadir</span>
@@ -138,7 +143,7 @@
           </button>
         }
       </div>
-    } @else {
+    } @else if (sidebarService.hasPermission(PERMISSIONS.PRODUCT.READ)) {
       <!-- Products grid (mobile-first design from Figma) -->
       @if (viewMode() === 'grid') {
         <div class="products-grid">
@@ -429,6 +434,12 @@
       <!-- Results info -->
       <div class="results-info text-subtitle text-neutral-subheading mt-4">
         Mostrando {{ filteredProducts().length }} de {{ totalElements() }} productos
+      </div>
+    } @else {
+      <!-- Unauthorized state -->
+      <div class="empty-state">
+        <mat-icon>lock</mat-icon>
+        <h3>No tienes permisos para visualizar productos</h3>
       </div>
     }
   </div>

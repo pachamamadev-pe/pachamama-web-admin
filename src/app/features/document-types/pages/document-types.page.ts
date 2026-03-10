@@ -32,6 +32,7 @@ import {
   DocumentTypeCreateModeDialogComponent,
   CreateModeResult,
 } from '../components/document-type-create-mode-dialog.component';
+import { getProjectWorkflowStageLabel } from '../../projects/models/project-stages.constants';
 
 @Component({
   selector: 'app-document-types-page',
@@ -420,7 +421,14 @@ export class DocumentTypesPage implements OnInit {
     if (!stages || stages.length === 0) {
       return '-';
     }
-    return stages.join(', ');
+    return stages.map((stage) => this.getProjectStageLabel(stage)).join(', ');
+  }
+
+  /**
+   * Obtener label visible de la etapa usando su key
+   */
+  getProjectStageLabel(stageKey: string): string {
+    return getProjectWorkflowStageLabel(stageKey);
   }
 
   /**

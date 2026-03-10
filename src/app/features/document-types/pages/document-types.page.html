@@ -162,7 +162,9 @@
                     ) {
                       <div class="flex flex-wrap gap-1">
                         @for (stage of docType.requiredForProjectStages; track stage) {
-                          <span class="stage-chip text-subtitle">{{ stage }}</span>
+                          <span class="stage-chip text-subtitle">{{
+                            getProjectStageLabel(stage)
+                          }}</span>
                         }
                       </div>
                     } @else {
@@ -300,7 +302,9 @@
                   <span class="detail-label">Etapas:</span>
                   <div class="flex flex-wrap gap-1">
                     @for (stage of docType.requiredForProjectStages; track stage) {
-                      <span class="stage-chip text-subtitle">{{ stage }}</span>
+                      <span class="stage-chip text-subtitle">{{
+                        getProjectStageLabel(stage)
+                      }}</span>
                     }
                   </div>
                 </div>

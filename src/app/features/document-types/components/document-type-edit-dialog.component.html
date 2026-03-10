@@ -58,27 +58,41 @@
             ></textarea>
           </mat-form-field>
 
-          <!-- Categoría -->
-          <mat-form-field appearance="outline">
+          <!-- Categoría (full width con autocomplete) -->
+          <mat-form-field appearance="outline" class="full-width">
             <mat-label>Categoría</mat-label>
-            <input matInput formControlName="category" placeholder="certification" />
+            <input
+              matInput
+              formControlName="category"
+              placeholder="certification"
+              [matAutocomplete]="categoryAuto"
+            />
+            <mat-autocomplete #categoryAuto="matAutocomplete">
+              @for (suggestion of filteredCategorySuggestions(); track suggestion) {
+                <mat-option [value]="suggestion">{{ suggestion }}</mat-option>
+              }
+            </mat-autocomplete>
           </mat-form-field>
 
-          <!-- Icono -->
-          <mat-form-field appearance="outline">
-            <mat-label>Icono (Material Icon)</mat-label>
-            <input matInput formControlName="icon" placeholder="assignment" />
-            <mat-icon matPrefix>{{ form.get('icon')?.value || 'description' }}</mat-icon>
-          </mat-form-field>
-
-          <!-- Display Order -->
-          <mat-form-field appearance="outline">
-            <mat-label>Orden de visualización</mat-label>
-            <input matInput type="number" formControlName="displayOrder" min="0" />
-            @if (form.get('displayOrder')?.invalid && form.get('displayOrder')?.touched) {
-              <mat-error>{{ getErrorMessage('displayOrder') }}</mat-error>
-            }
-          </mat-form-field>
+          <!-- Icono representativo (full width) -->
+          <div class="icon-selector full-width">
+            <span class="icon-selector-label">Icono representativo</span>
+            <div class="icon-grid">
+              @for (option of iconOptions; track option.value) {
+                <button
+                  type="button"
+                  class="icon-option"
+                  [class.selected]="form.get('icon')?.value === option.value"
+                  (click)="selectIcon(option.value)"
+                  [attr.aria-pressed]="form.get('icon')?.value === option.value"
+                  [attr.aria-label]="option.label"
+                >
+                  <mat-icon>{{ option.value }}</mat-icon>
+                  <span class="icon-option-label">{{ option.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
         </div>
       </div>
 
@@ -94,7 +108,7 @@
             <mat-label>Etapas del proyecto (visible en)</mat-label>
             <mat-select formControlName="requiredForProjectStages" multiple>
               @for (stage of projectStageOptions; track stage) {
-                <mat-option [value]="stage">{{ stage }}</mat-option>
+                <mat-option [value]="stage">{{ getProjectStageLabel(stage) }}</mat-option>
               }
             </mat-select>
             <mat-hint>Seleccione las etapas donde este documento debe estar visible</mat-hint>
@@ -171,48 +185,28 @@
           </mat-form-field>
 
           <!-- Tipos MIME permitidos (full width) -->
-          <div class="chips-field full-width">
-            <span class="chips-label">Tipos MIME permitidos *</span>
-
-            <div class="chips-input-container">
-              <mat-form-field appearance="outline" class="chips-input">
-                <mat-label>Agregar tipo MIME</mat-label>
-                <input
-                  matInput
-                  [formControl]="allowedMimeTypesInput"
-                  placeholder="application/pdf"
-                  (keyup.enter)="addAllowedMimeType()"
-                />
-                <button
-                  mat-icon-button
-                  matSuffix
-                  type="button"
-                  (click)="addAllowedMimeType()"
-                  [disabled]="!allowedMimeTypesInput.value"
-                >
-                  <mat-icon>add</mat-icon>
-                </button>
-              </mat-form-field>
-            </div>
-
-            <div class="chips-container">
-              @for (mimeType of form.get('allowedMimeTypes')?.value || []; track mimeType) {
-                <mat-chip class="mime-chip" (removed)="removeAllowedMimeType(mimeType)">
-                  {{ mimeType }}
-                  <button matChipRemove type="button">
-                    <mat-icon>cancel</mat-icon>
-                  </button>
-                </mat-chip>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipos MIME permitidos *</mat-label>
+            <mat-select formControlName="allowedMimeTypes" multiple>
+              @for (group of mimeTypeGroups; track group.label) {
+                <mat-optgroup [label]="group.label">
+                  @for (option of group.options; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-optgroup>
               }
-            </div>
-
+            </mat-select>
+            <mat-hint
+              >Selecciona los tipos de archivo que los usuarios podrán subir para este tipo de
+              documento.</mat-hint
+            >
             @if (
               (form.get('allowedMimeTypes')?.value || []).length === 0 &&
               form.get('allowedMimeTypes')?.touched
             ) {
-              <p class="field-error">Debe especificar al menos un tipo MIME</p>
+              <mat-error>Debe especificar al menos un tipo MIME</mat-error>
             }
-          </div>
+          </mat-form-field>
         </div>
       </div>
 
@@ -240,44 +234,22 @@
 
             @if (form.get('requiresValidationAttachment')?.value) {
               <!-- Tipos MIME para adjuntos de validación (full width) -->
-              <div class="chips-field full-width">
-                <span class="chips-label">Tipos MIME para adjuntos de validación</span>
-
-                <div class="chips-input-container">
-                  <mat-form-field appearance="outline" class="chips-input">
-                    <mat-label>Agregar tipo MIME</mat-label>
-                    <input
-                      matInput
-                      [formControl]="validationMimeTypesInput"
-                      placeholder="application/pdf"
-                      (keyup.enter)="addValidationMimeType()"
-                    />
-                    <button
-                      mat-icon-button
-                      matSuffix
-                      type="button"
-                      (click)="addValidationMimeType()"
-                      [disabled]="!validationMimeTypesInput.value"
-                    >
-                      <mat-icon>add</mat-icon>
-                    </button>
-                  </mat-form-field>
-                </div>
-
-                <div class="chips-container">
-                  @for (
-                    mimeType of form.get('validationAttachmentMimeTypes')?.value || [];
-                    track mimeType
-                  ) {
-                    <mat-chip class="mime-chip" (removed)="removeValidationMimeType(mimeType)">
-                      {{ mimeType }}
-                      <button matChipRemove type="button">
-                        <mat-icon>cancel</mat-icon>
-                      </button>
-                    </mat-chip>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Tipos MIME para adjuntos de validación</mat-label>
+                <mat-select formControlName="validationAttachmentMimeTypes" multiple>
+                  @for (group of mimeTypeGroups; track group.label) {
+                    <mat-optgroup [label]="group.label">
+                      @for (option of group.options; track option.value) {
+                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                      }
+                    </mat-optgroup>
                   }
-                </div>
-              </div>
+                </mat-select>
+                <mat-hint
+                  >Opcional. Tipos de archivo permitidos para documentos adicionales usados durante
+                  la validación.</mat-hint
+                >
+              </mat-form-field>
 
               <!-- Tamaño máximo para adjuntos de validación -->
               <mat-form-field appearance="outline">

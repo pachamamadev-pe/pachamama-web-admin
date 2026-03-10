@@ -28,6 +28,10 @@ import {
 import { catchError, interval, of, Subject, switchMap, takeUntil, takeWhile } from 'rxjs';
 import * as L from 'leaflet';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+//import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 @Component({
   selector: 'app-project-map',
   imports: [
@@ -38,6 +42,7 @@ import * as L from 'leaflet';
     MatProgressBarModule,
     MatCardModule,
     MatTooltipModule,
+    PmHasPermissionDirective,
   ],
   templateUrl: './project-map.component.html',
   styleUrl: './project-map.component.scss',
@@ -47,6 +52,9 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
   private areasService = inject(AreasService);
   private notification = inject(NotificationService);
   private destroy$ = new Subject<void>();
+
+  //readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   private resizeObserver: ResizeObserver | null = null;
   private pendingInitTimer: number | null = null;

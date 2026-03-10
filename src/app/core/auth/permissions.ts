@@ -14,43 +14,60 @@ export const PERMISSIONS = {
     ALL: '*:*',
   },
 
-  COMPANY: {
-    ALL: 'company:*',
+  COLLECTOR: {
+    ALL: 'collector:*',
+  },
+
+  BRIGADE: {
+    ALL: 'brigade:*',
   },
 
   COMMUNITY: {
     ALL: 'community:*',
+    CREATE: 'community:create',
   },
 
   PRODUCT: {
     ALL: 'product:*',
+    READ: 'product:read',
+    CREATE: 'product:create',
+  },
+
+  FORM: {
+    ALL: 'form:*',
+    READ: 'form:read',
+    CREATE: 'form:create',
+  },
+
+  COMPANY: {
+    ALL: 'company:*',
+    READ: 'company:read',
+    CREATE: 'company:create',
   },
 
   USER: {
     ALL: 'user:*',
+    READ: 'user:read',
+    CREATE: 'user:create',
   },
 
   PROFILE: {
     ALL: 'profile:*',
   },
 
-  FORM: {
-    ALL: 'form:*',
-  },
-
   PROJECT: {
     ALL: 'project:*',
 
-    READ: 'project:read' /*RLC REVISANDO*/,
+    READ: 'project:read',
     CREATE: 'project:create',
     UPDATE: 'project:update',
+    DELETE: 'project:delete',
 
-    APPROVE_PMF: 'project:approve_pmf',
     UPLOAD_MAP: 'project:upload_map',
-    ACTIVATE_INVENTORY: 'project:activate_inventory',
+    NEXT_STAGE: 'project:next_stage', //revisando RLC
+    APPROVE_PMF: 'project:approve_pmf',
     APPROVE_INVENTORY: 'project:approve_inventory',
     UPLOAD_UMF_MAP: 'project:upload_umf_map',
-    ACTIVATE_PMF_GENERATION: 'project:activate_pmf_generation',
     INSERT_CALCULATED_COLUMNS: 'project:insert_calculated_columns',
 
     VIEW_DOCUMENTS: 'project:view_documents',
@@ -60,7 +77,6 @@ export const PERMISSIONS = {
     SEND_PDF: 'project:send_pdf',
     UPLOAD_PMF_APPROVAL_DOCS: 'project:upload_pmf_approval_docs',
 
-    ACTIVATE_COLLECTION: 'project:activate_collection',
     CREATE_COLLECTION_ORDERS: 'project:create_collection_orders',
     GENERATE_PAYMENT_ORDERS: 'project:generate_payment_orders',
 
@@ -72,14 +88,6 @@ export const PERMISSIONS = {
     APPROVE_LOT_RECEPTION: 'project:approve_lot_reception',
     REGISTER_LOT_DELIVERY: 'project:register_lot_delivery',
     APPROVE_FINISHED_LOT_RECEPTION: 'project:approve_finished_lot_reception',
-  },
-
-  COLLECTOR: {
-    ALL: 'collector:*',
-  },
-
-  BRIGADE: {
-    ALL: 'brigade:*',
   },
 
   ACTIVITY: {

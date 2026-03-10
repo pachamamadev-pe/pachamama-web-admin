@@ -1,12 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-  FormControl,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,13 +9,20 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { DocumentType } from '@shared/models/document-type.model';
 import { DocumentTypesService } from '@core/services/document-types.service';
 import { NotificationService } from '@core/services/notification.service';
+import {
+  getProjectWorkflowStageLabel,
+  PROJECT_WORKFLOW_STAGE_KEYS,
+} from '../../projects/models/project-stages.constants';
+import { MIME_TYPE_GROUPS, MimeTypeGroup } from '../models/mime-types.constants';
+import {
+  DOCUMENT_TYPE_ICON_OPTIONS,
+  DocumentTypeIconOption,
+} from '../models/document-type-icons.constants';
 
 /**
  * Diálogo para editar o crear un tipo de documento.
@@ -41,7 +42,6 @@ import { NotificationService } from '@core/services/notification.service';
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
-    MatChipsModule,
     MatAutocompleteModule,
     MatProgressSpinnerModule,
   ],
@@ -62,28 +62,27 @@ export class DocumentTypeEditDialogComponent implements OnInit {
   // Modo: creación (sin id) o edición (con id)
   isCreateMode = this.data.id === undefined;
 
-  // Para chips de MIME types
-  readonly separatorKeysCodes = [ENTER, COMMA] as const;
-
-  // Opciones para etapas de proyecto (alineado con backend enum)
-  projectStageOptions = [
-    'planning',
-    'inventory',
-    'collection',
-    'harvest',
-    'pmf_development',
-    'serfor_evaluation',
-    'ctp_entry',
-    'primary_transformation',
-    'map_adjustment',
-  ];
+  // Opciones para etapas de proyecto (fuente única de verdad)
+  projectStageOptions = PROJECT_WORKFLOW_STAGE_KEYS;
 
   // Opciones para tipos de licencia (alineado con backend enum)
   licenseTypeOptions = ['trial', 'basic', 'premium', 'enterprise'];
 
-  // Para chips de MIME types permitidos
-  allowedMimeTypesInput = new FormControl('');
-  validationMimeTypesInput = new FormControl('');
+  // Catálogo de tipos MIME agrupado por categoría
+  mimeTypeGroups: MimeTypeGroup[] = MIME_TYPE_GROUPS;
+
+  // Catálogo de iconos con etiquetas amigables
+  iconOptions: DocumentTypeIconOption[] = DOCUMENT_TYPE_ICON_OPTIONS;
+
+  // Sugerencias de categoría
+  private readonly categorySuggestions = [
+    'fiscal',
+    'legal',
+    'operational',
+    'identity',
+    'certification',
+  ];
+  filteredCategorySuggestions = signal<string[]>(this.categorySuggestions);
 
   ngOnInit(): void {
     this.initForm();
@@ -98,7 +97,7 @@ export class DocumentTypeEditDialogComponent implements OnInit {
       // General
       name: [this.data.name || '', [Validators.required, Validators.maxLength(100)]],
       description: [this.data.description || '', Validators.maxLength(1000)],
-      displayOrder: [this.data.displayOrder ?? 0, [Validators.required, Validators.min(0)]],
+      displayOrder: [this.data.displayOrder ?? 50],
       category: [this.data.category || ''],
       icon: [this.data.icon || ''],
 
@@ -147,6 +146,16 @@ export class DocumentTypeEditDialogComponent implements OnInit {
    * Configurar suscripciones para manejar dependencias entre campos
    */
   private setupFormSubscriptions(): void {
+    // Filtrado de sugerencias de categoría
+    this.form.get('category')?.valueChanges.subscribe((value: string | null) => {
+      const term = (value ?? '').toLowerCase();
+      this.filteredCategorySuggestions.set(
+        term
+          ? this.categorySuggestions.filter((s) => s.toLowerCase().includes(term))
+          : this.categorySuggestions,
+      );
+    });
+
     // Dependencia: hasExpiration
     this.form.get('hasExpiration')?.valueChanges.subscribe((hasExpiration) => {
       const expirationWarningDaysControl = this.form.get('expirationWarningDays');
@@ -203,49 +212,14 @@ export class DocumentTypeEditDialogComponent implements OnInit {
   }
 
   /**
-   * Agregar MIME type a allowedMimeTypes
+   * Obtener label visible de la etapa usando su key
    */
-  addAllowedMimeType(): void {
-    const input = this.allowedMimeTypesInput.value?.trim();
-    if (!input) return;
-
-    const currentMimeTypes = this.form.get('allowedMimeTypes')?.value || [];
-    if (!currentMimeTypes.includes(input)) {
-      this.form.get('allowedMimeTypes')?.setValue([...currentMimeTypes, input]);
-    }
-    this.allowedMimeTypesInput.setValue('');
+  getProjectStageLabel(stageKey: string): string {
+    return getProjectWorkflowStageLabel(stageKey);
   }
 
-  /**
-   * Remover MIME type de allowedMimeTypes
-   */
-  removeAllowedMimeType(mimeType: string): void {
-    const currentMimeTypes = this.form.get('allowedMimeTypes')?.value || [];
-    const updatedMimeTypes = currentMimeTypes.filter((m: string) => m !== mimeType);
-    this.form.get('allowedMimeTypes')?.setValue(updatedMimeTypes);
-  }
-
-  /**
-   * Agregar MIME type a validationAttachmentMimeTypes
-   */
-  addValidationMimeType(): void {
-    const input = this.validationMimeTypesInput.value?.trim();
-    if (!input) return;
-
-    const currentMimeTypes = this.form.get('validationAttachmentMimeTypes')?.value || [];
-    if (!currentMimeTypes.includes(input)) {
-      this.form.get('validationAttachmentMimeTypes')?.setValue([...currentMimeTypes, input]);
-    }
-    this.validationMimeTypesInput.setValue('');
-  }
-
-  /**
-   * Remover MIME type de validationAttachmentMimeTypes
-   */
-  removeValidationMimeType(mimeType: string): void {
-    const currentMimeTypes = this.form.get('validationAttachmentMimeTypes')?.value || [];
-    const updatedMimeTypes = currentMimeTypes.filter((m: string) => m !== mimeType);
-    this.form.get('validationAttachmentMimeTypes')?.setValue(updatedMimeTypes);
+  selectIcon(value: string): void {
+    this.form.get('icon')?.setValue(value);
   }
 
   /**
@@ -322,7 +296,7 @@ export class DocumentTypeEditDialogComponent implements OnInit {
       allowedMimeTypes: formValue.allowedMimeTypes,
       hasExpiration: formValue.hasExpiration,
       expirationWarningDays: formValue.hasExpiration ? formValue.expirationWarningDays : undefined,
-      displayOrder: formValue.displayOrder,
+      displayOrder: this.isCreateMode ? 50 : this.data.displayOrder,
       category: formValue.category || undefined,
       icon: formValue.icon || undefined,
       status: this.data.status, // Mantener status actual (o el que viene de prepareTemplateData)

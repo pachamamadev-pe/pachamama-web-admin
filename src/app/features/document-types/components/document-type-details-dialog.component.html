@@ -39,11 +39,6 @@
           </div>
         }
 
-        <div class="detail-item">
-          <span class="detail-label">Orden de visualización</span>
-          <span class="detail-value">{{ data.displayOrder }}</span>
-        </div>
-
         @if (data.category) {
           <div class="detail-item">
             <span class="detail-label">Categoría</span>
@@ -59,7 +54,7 @@
             <span class="detail-label">Icono</span>
             <span class="detail-value">
               <mat-icon class="preview-icon">{{ data.icon }}</mat-icon>
-              {{ data.icon }}
+              {{ getDocumentTypeIconLabel(data.icon) }}
             </span>
           </div>
         }
@@ -85,7 +80,7 @@
           @if (data.requiredForProjectStages && data.requiredForProjectStages.length > 0) {
             <div class="chips-container">
               @for (stage of data.requiredForProjectStages; track stage) {
-                <mat-chip class="stage-chip">{{ stage }}</mat-chip>
+                <mat-chip class="stage-chip">{{ getProjectStageLabel(stage) }}</mat-chip>
               }
             </div>
           } @else {
@@ -152,7 +147,7 @@
           @if (data.allowedMimeTypes && data.allowedMimeTypes.length > 0) {
             <div class="chips-container">
               @for (mime of data.allowedMimeTypes; track mime) {
-                <mat-chip class="mime-chip">{{ mime }}</mat-chip>
+                <mat-chip class="mime-chip">{{ getMimeTypeLabel(mime) }}</mat-chip>
               }
             </div>
           } @else {
@@ -194,7 +189,7 @@
               ) {
                 <div class="chips-container">
                   @for (mime of data.validationAttachmentMimeTypes; track mime) {
-                    <mat-chip class="mime-chip">{{ mime }}</mat-chip>
+                    <mat-chip class="mime-chip">{{ getMimeTypeLabel(mime) }}</mat-chip>
                   }
                 </div>
               } @else {

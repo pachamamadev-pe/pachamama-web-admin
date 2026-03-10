@@ -56,6 +56,7 @@
           <!-- Botón: Avanzar a Siguiente Etapa -->
           <div class="stage-action-button">
             <button
+              *appPmHasPermission="PERMISSIONS.PROJECT.NEXT_STAGE"
               mat-raised-button
               class="btn-primary btn-lg"
               [disabled]="!canAdvanceToNextStage()"
@@ -409,73 +410,78 @@
               </div>
             </mat-tab>
 
-            <mat-tab label="Recolectores">
-              <div class="tab-content">
-                @if (!project()?.communityLink?.id) {
-                  <!-- No community link error -->
-                  <div class="empty-state">
-                    <div class="empty-icon">
-                      <mat-icon>error_outline</mat-icon>
-                    </div>
-                    <h3 class="text-body font-bold text-accent-titles">
-                      Error: No se encontró communityLink
-                    </h3>
-                  </div>
-                } @else if (collectorsTotal() === 0 && !tabsLoaded().has(1)) {
-                  <!-- Empty State - No collectors yet and tab not loaded -->
-                  <div class="empty-state">
-                    <div class="empty-icon">
-                      <mat-icon>group_add</mat-icon>
-                    </div>
-                    <h3 class="text-body font-bold text-accent-titles">
-                      No hay recolectores registrados
-                    </h3>
-                    <p class="text-subtitle text-neutral-subheading">
-                      Para iniciar el proceso de onboarding, genera un código QR o código de
-                      invitación
-                    </p>
-                    <button
-                      mat-raised-button
-                      class="btn-primary mt-4"
-                      (click)="generateOnboardingInvitation()"
-                    >
-                      <mat-icon>qr_code_2</mat-icon>
-                      <span>Generar QR / Código de Onboarding</span>
-                    </button>
-                    <p class="text-subtitle text-neutral-subheading mt-3" style="max-width: 400px">
-                      Los recolectores podrán escanear el QR o ingresar el código en la app móvil
-                      para registrarse
-                    </p>
-                  </div>
-                } @else {
-                  <!-- Collectors Tab Component -->
-                  <div class="collectors-tab-wrapper">
-                    <div class="table-header-actions">
-                      <div class="header-info">
-                        <h3 class="text-body font-bold text-accent-titles">
-                          Recolectores Registrados
-                        </h3>
-                        <p class="text-subtitle text-neutral-subheading">
-                          Puedes generar un nuevo código QR para invitar más recolectores
-                        </p>
+            @if (sidebarService.hasPermission(PERMISSIONS.COLLECTOR.ALL)) {
+              <mat-tab label="Recolectores">
+                <div class="tab-content">
+                  @if (!project()?.communityLink?.id) {
+                    <!-- No community link error -->
+                    <div class="empty-state">
+                      <div class="empty-icon">
+                        <mat-icon>error_outline</mat-icon>
                       </div>
+                      <h3 class="text-body font-bold text-accent-titles">
+                        Error: No se encontró communityLink
+                      </h3>
+                    </div>
+                  } @else if (collectorsTotal() === 0 && !tabsLoaded().has(1)) {
+                    <!-- Empty State - No collectors yet and tab not loaded -->
+                    <div class="empty-state">
+                      <div class="empty-icon">
+                        <mat-icon>group_add</mat-icon>
+                      </div>
+                      <h3 class="text-body font-bold text-accent-titles">
+                        No hay recolectores registrados
+                      </h3>
+                      <p class="text-subtitle text-neutral-subheading">
+                        Para iniciar el proceso de onboarding, genera un código QR o código de
+                        invitación
+                      </p>
                       <button
                         mat-raised-button
-                        class="btn-secondary"
+                        class="btn-primary mt-4"
                         (click)="generateOnboardingInvitation()"
-                        matTooltip="Genera un código QR para que más recolectores puedan registrarse"
                       >
                         <mat-icon>qr_code_2</mat-icon>
-                        <span class="hidden sm:inline">Generar QR / Código</span>
-                        <span class="sm:hidden">QR</span>
+                        <span>Generar QR / Código de Onboarding</span>
                       </button>
+                      <p
+                        class="text-subtitle text-neutral-subheading mt-3"
+                        style="max-width: 400px"
+                      >
+                        Los recolectores podrán escanear el QR o ingresar el código en la app móvil
+                        para registrarse
+                      </p>
                     </div>
+                  } @else {
+                    <!-- Collectors Tab Component -->
+                    <div class="collectors-tab-wrapper">
+                      <div class="table-header-actions">
+                        <div class="header-info">
+                          <h3 class="text-body font-bold text-accent-titles">
+                            Recolectores Registrados
+                          </h3>
+                          <p class="text-subtitle text-neutral-subheading">
+                            Puedes generar un nuevo código QR para invitar más recolectores
+                          </p>
+                        </div>
+                        <button
+                          mat-raised-button
+                          class="btn-secondary"
+                          (click)="generateOnboardingInvitation()"
+                          matTooltip="Genera un código QR para que más recolectores puedan registrarse"
+                        >
+                          <mat-icon>qr_code_2</mat-icon>
+                          <span class="hidden sm:inline">Generar QR / Código</span>
+                          <span class="sm:hidden">QR</span>
+                        </button>
+                      </div>
 
-                    <app-collectors-tab [projectCommunityId]="project()!.communityLink!.id" />
-                  </div>
-                }
-              </div>
-            </mat-tab>
+                      <app-collectors-tab [projectCommunityId]="project()!.communityLink!.id" />
+                    </div>
+                  }
+                </div>
+              </mat-tab>
+            }
 
             @if (showBrigadesTab() && sidebarService.hasPermission(PERMISSIONS.BRIGADE.ALL)) {
               <mat-tab label="Brigadas">

@@ -30,6 +30,9 @@ import type {
   UpdateCommunityRequest,
 } from '../models/community.model';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 /**
  * Página de gestión de comunidades nativas y campesinas
  */
@@ -49,6 +52,7 @@ import type {
     MatFormFieldModule,
     MatInputModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './communities.page.html',
   styleUrl: './communities.page.scss',
@@ -59,6 +63,8 @@ export class CommunitiesPage implements OnInit {
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private router = inject(Router);
+
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Search and filtering
   searchTerm = signal('');

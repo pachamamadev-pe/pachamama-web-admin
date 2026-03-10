@@ -10,7 +10,12 @@
       </div>
 
       <div class="header-actions">
-        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+        <button
+          *appPmHasPermission="PERMISSIONS.COMMUNITY.CREATE"
+          mat-raised-button
+          class="btn-primary"
+          (click)="openCreateDialog()"
+        >
           <mat-icon>add</mat-icon>
           <span class="hidden sm:inline">Añadir comunidad</span>
           <span class="sm:hidden">Añadir</span>
