@@ -1,12 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-  FormControl,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,10 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { DocumentType } from '@shared/models/document-type.model';
 import { DocumentTypesService } from '@core/services/document-types.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -26,6 +17,7 @@ import {
   getProjectWorkflowStageLabel,
   PROJECT_WORKFLOW_STAGE_KEYS,
 } from '../../projects/models/project-stages.constants';
+import { MIME_TYPE_OPTIONS, MimeTypeOption } from '../models/mime-types.constants';
 
 /**
  * Diálogo para editar o crear un tipo de documento.
@@ -45,8 +37,6 @@ import {
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
-    MatChipsModule,
-    MatAutocompleteModule,
     MatProgressSpinnerModule,
   ],
   templateUrl: './document-type-edit-dialog.component.html',
@@ -66,18 +56,14 @@ export class DocumentTypeEditDialogComponent implements OnInit {
   // Modo: creación (sin id) o edición (con id)
   isCreateMode = this.data.id === undefined;
 
-  // Para chips de MIME types
-  readonly separatorKeysCodes = [ENTER, COMMA] as const;
-
-  // Opciones para etapas de proyecto (fuente �nica de verdad)
+  // Opciones para etapas de proyecto (fuente única de verdad)
   projectStageOptions = PROJECT_WORKFLOW_STAGE_KEYS;
 
   // Opciones para tipos de licencia (alineado con backend enum)
   licenseTypeOptions = ['trial', 'basic', 'premium', 'enterprise'];
 
-  // Para chips de MIME types permitidos
-  allowedMimeTypesInput = new FormControl('');
-  validationMimeTypesInput = new FormControl('');
+  // Catálogo de tipos MIME con etiquetas amigables
+  mimeTypeOptions: MimeTypeOption[] = MIME_TYPE_OPTIONS;
 
   ngOnInit(): void {
     this.initForm();
@@ -201,52 +187,6 @@ export class DocumentTypeEditDialogComponent implements OnInit {
    */
   getProjectStageLabel(stageKey: string): string {
     return getProjectWorkflowStageLabel(stageKey);
-  }
-
-  /**
-   * Agregar MIME type a allowedMimeTypes
-   */
-  addAllowedMimeType(): void {
-    const input = this.allowedMimeTypesInput.value?.trim();
-    if (!input) return;
-
-    const currentMimeTypes = this.form.get('allowedMimeTypes')?.value || [];
-    if (!currentMimeTypes.includes(input)) {
-      this.form.get('allowedMimeTypes')?.setValue([...currentMimeTypes, input]);
-    }
-    this.allowedMimeTypesInput.setValue('');
-  }
-
-  /**
-   * Remover MIME type de allowedMimeTypes
-   */
-  removeAllowedMimeType(mimeType: string): void {
-    const currentMimeTypes = this.form.get('allowedMimeTypes')?.value || [];
-    const updatedMimeTypes = currentMimeTypes.filter((m: string) => m !== mimeType);
-    this.form.get('allowedMimeTypes')?.setValue(updatedMimeTypes);
-  }
-
-  /**
-   * Agregar MIME type a validationAttachmentMimeTypes
-   */
-  addValidationMimeType(): void {
-    const input = this.validationMimeTypesInput.value?.trim();
-    if (!input) return;
-
-    const currentMimeTypes = this.form.get('validationAttachmentMimeTypes')?.value || [];
-    if (!currentMimeTypes.includes(input)) {
-      this.form.get('validationAttachmentMimeTypes')?.setValue([...currentMimeTypes, input]);
-    }
-    this.validationMimeTypesInput.setValue('');
-  }
-
-  /**
-   * Remover MIME type de validationAttachmentMimeTypes
-   */
-  removeValidationMimeType(mimeType: string): void {
-    const currentMimeTypes = this.form.get('validationAttachmentMimeTypes')?.value || [];
-    const updatedMimeTypes = currentMimeTypes.filter((m: string) => m !== mimeType);
-    this.form.get('validationAttachmentMimeTypes')?.setValue(updatedMimeTypes);
   }
 
   /**

@@ -162,48 +162,21 @@
           </mat-form-field>
 
           <!-- Tipos MIME permitidos (full width) -->
-          <div class="chips-field full-width">
-            <span class="chips-label">Tipos MIME permitidos *</span>
-
-            <div class="chips-input-container">
-              <mat-form-field appearance="outline" class="chips-input">
-                <mat-label>Agregar tipo MIME</mat-label>
-                <input
-                  matInput
-                  [formControl]="allowedMimeTypesInput"
-                  placeholder="application/pdf"
-                  (keyup.enter)="addAllowedMimeType()"
-                />
-                <button
-                  mat-icon-button
-                  matSuffix
-                  type="button"
-                  (click)="addAllowedMimeType()"
-                  [disabled]="!allowedMimeTypesInput.value"
-                >
-                  <mat-icon>add</mat-icon>
-                </button>
-              </mat-form-field>
-            </div>
-
-            <div class="chips-container">
-              @for (mimeType of form.get('allowedMimeTypes')?.value || []; track mimeType) {
-                <mat-chip class="mime-chip" (removed)="removeAllowedMimeType(mimeType)">
-                  {{ mimeType }}
-                  <button matChipRemove type="button">
-                    <mat-icon>cancel</mat-icon>
-                  </button>
-                </mat-chip>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipos MIME permitidos *</mat-label>
+            <mat-select formControlName="allowedMimeTypes" multiple>
+              @for (option of mimeTypeOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
               }
-            </div>
-
+            </mat-select>
+            <mat-hint>Seleccione los formatos de archivo permitidos</mat-hint>
             @if (
               (form.get('allowedMimeTypes')?.value || []).length === 0 &&
               form.get('allowedMimeTypes')?.touched
             ) {
-              <p class="field-error">Debe especificar al menos un tipo MIME</p>
+              <mat-error>Debe especificar al menos un tipo MIME</mat-error>
             }
-          </div>
+          </mat-form-field>
         </div>
       </div>
 
@@ -231,44 +204,17 @@
 
             @if (form.get('requiresValidationAttachment')?.value) {
               <!-- Tipos MIME para adjuntos de validación (full width) -->
-              <div class="chips-field full-width">
-                <span class="chips-label">Tipos MIME para adjuntos de validación</span>
-
-                <div class="chips-input-container">
-                  <mat-form-field appearance="outline" class="chips-input">
-                    <mat-label>Agregar tipo MIME</mat-label>
-                    <input
-                      matInput
-                      [formControl]="validationMimeTypesInput"
-                      placeholder="application/pdf"
-                      (keyup.enter)="addValidationMimeType()"
-                    />
-                    <button
-                      mat-icon-button
-                      matSuffix
-                      type="button"
-                      (click)="addValidationMimeType()"
-                      [disabled]="!validationMimeTypesInput.value"
-                    >
-                      <mat-icon>add</mat-icon>
-                    </button>
-                  </mat-form-field>
-                </div>
-
-                <div class="chips-container">
-                  @for (
-                    mimeType of form.get('validationAttachmentMimeTypes')?.value || [];
-                    track mimeType
-                  ) {
-                    <mat-chip class="mime-chip" (removed)="removeValidationMimeType(mimeType)">
-                      {{ mimeType }}
-                      <button matChipRemove type="button">
-                        <mat-icon>cancel</mat-icon>
-                      </button>
-                    </mat-chip>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Tipos MIME para adjuntos de validación</mat-label>
+                <mat-select formControlName="validationAttachmentMimeTypes" multiple>
+                  @for (option of mimeTypeOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
-                </div>
-              </div>
+                </mat-select>
+                <mat-hint
+                  >Seleccione los formatos permitidos para los adjuntos de validación</mat-hint
+                >
+              </mat-form-field>
 
               <!-- Tamaño máximo para adjuntos de validación -->
               <mat-form-field appearance="outline">

@@ -7,6 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { DocumentType, DocumentTypeStatus } from '@shared/models/document-type.model';
 import { getProjectWorkflowStageLabel } from '../../projects/models/project-stages.constants';
+import { getMimeTypeLabel } from '../models/mime-types.constants';
 
 /**
  * Diálogo para mostrar detalles de un tipo de documento en modo solo lectura.
@@ -74,6 +75,10 @@ export class DocumentTypeDetailsDialogComponent {
    */
   getProjectStageLabel(stageKey: string): string {
     return getProjectWorkflowStageLabel(stageKey);
+  }
+
+  getMimeTypeLabel(value: string): string {
+    return getMimeTypeLabel(value);
   }
 
   /**
