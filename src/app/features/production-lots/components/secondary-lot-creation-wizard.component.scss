@@ -1,0 +1,511 @@
+// ─── Dialog wrapper ───────────────────────────────────────────────────────────
+.secondary-wizard {
+  @apply flex flex-col;
+  width: 100%;
+  max-width: 820px;
+  height: 88vh;
+  max-height: 860px;
+  overflow: hidden;
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+.wizard-header {
+  @apply flex items-start justify-between px-6 pt-5 pb-4;
+  border-bottom: 1px solid theme('colors.neutral.border');
+  flex-shrink: 0;
+
+  .wizard-header-title {
+    @apply flex items-start gap-3;
+  }
+
+  .wizard-title-icon {
+    @apply flex items-center justify-center rounded-xl flex-shrink-0;
+    width: 42px;
+    height: 42px;
+    background-color: #fff4f0;
+    color: #fe714b;
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  h2 {
+    @apply text-body font-bold text-accent-titles;
+  }
+
+  p {
+    @apply text-subtitle text-neutral-subheading mt-0.5;
+  }
+}
+
+// ─── Step Indicator ───────────────────────────────────────────────────────────
+.step-indicator {
+  @apply flex items-center gap-2 px-6 py-3;
+  flex-shrink: 0;
+  background-color: #f9fafb;
+  border-bottom: 1px solid theme('colors.neutral.border');
+
+  .step {
+    @apply flex items-center gap-2;
+
+    .step-circle {
+      @apply flex items-center justify-center rounded-full font-bold transition-all;
+      font-size: 0.8rem;
+      width: 28px;
+      height: 28px;
+      background-color: #e5e7eb;
+      color: #6b7280;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    .step-label {
+      @apply text-subtitle text-neutral-subheading font-medium;
+    }
+
+    &.step--active {
+      .step-circle {
+        background-color: #fe714b;
+        color: white;
+      }
+
+      .step-label {
+        @apply text-accent-titles font-bold;
+      }
+    }
+
+    &.step--done {
+      .step-circle {
+        background-color: #fff4f0;
+        color: #fe714b;
+      }
+    }
+  }
+
+  .step-connector {
+    @apply flex-1;
+    height: 2px;
+    background-color: #e5e7eb;
+    transition: background-color 0.3s ease;
+
+    &.step-connector--done {
+      background-color: #fdd9ce;
+    }
+  }
+}
+
+// ─── Scrollable content ───────────────────────────────────────────────────────
+.wizard-content {
+  @apply flex-1 overflow-y-auto;
+  padding: 1.25rem 1.5rem;
+  min-height: 0;
+
+  @media (max-width: 480px) {
+    padding: 1rem;
+  }
+}
+
+// ─── Selection banner ─────────────────────────────────────────────────────────
+.selection-banner {
+  @apply flex items-center gap-2 rounded-lg px-4 py-2.5 mb-3;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #16a34a;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// ─── Search bar ───────────────────────────────────────────────────────────────
+.search-row {
+  @apply mb-3;
+
+  .search-field {
+    width: 100%;
+  }
+}
+
+// ─── Loading / Empty states ───────────────────────────────────────────────────
+.loading-state {
+  @apply flex flex-col items-center gap-3 py-10 text-neutral-subheading text-subtitle;
+}
+
+.empty-state {
+  @apply flex flex-col items-center gap-2 py-10;
+
+  mat-icon {
+    font-size: 42px;
+    width: 42px;
+    height: 42px;
+    opacity: 0.3;
+    color: #737373;
+  }
+
+  p {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+  }
+
+  span {
+    font-size: 0.75rem;
+    color: #737373;
+    text-align: center;
+    max-width: 280px;
+    line-height: 1.45;
+  }
+}
+
+// ─── Lot list (Step 1) ────────────────────────────────────────────────────────
+.lot-list {
+  @apply flex flex-col gap-2 mb-2;
+}
+
+.lot-item {
+  @apply flex items-center gap-3 w-full rounded-xl border text-left transition-all;
+  padding: 0.7rem 1rem;
+  background: white;
+  border-color: theme('colors.neutral.border');
+  cursor: pointer;
+
+  &:hover {
+    border-color: #fdd9ce;
+    background: #fffbfa;
+  }
+
+  &.lot-item--selected {
+    border-color: #fe714b;
+    background: #fff8f6;
+  }
+}
+
+.lot-check {
+  flex-shrink: 0;
+
+  .check-circle {
+    @apply flex items-center justify-center rounded-full border-2 transition-all;
+    width: 22px;
+    height: 22px;
+    border-color: #d1d5db;
+    background: white;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+
+    &.check-circle--active {
+      background: #fe714b;
+      border-color: #fe714b;
+      color: white;
+    }
+  }
+}
+
+.lot-info {
+  @apply flex flex-col gap-0.5 flex-1 min-w-0;
+
+  .lot-number {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0a0a0a;
+    @apply truncate;
+  }
+
+  .lot-meta {
+    font-size: 0.72rem;
+    color: #737373;
+    @apply truncate;
+  }
+}
+
+.lot-chips {
+  @apply flex flex-wrap gap-1.5 flex-shrink-0;
+
+  @media (max-width: 540px) {
+    display: none;
+  }
+}
+
+.status-chip {
+  @apply inline-flex items-center rounded-md px-2 py-0.5;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.qty-chip {
+  @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #eff6ff;
+  color: #1d4ed8;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+// ─── Totals card (Step 2) ─────────────────────────────────────────────────────
+.totals-card {
+  @apply rounded-xl mb-4;
+  border: 1.5px solid #d1fae5;
+  background: #f0fdf4;
+  padding: 0.875rem 1rem;
+}
+
+.totals-header {
+  @apply flex items-center gap-2 mb-3;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #16a34a;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.totals-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.total-item {
+  @apply flex flex-col gap-0.5;
+
+  .total-label {
+    font-size: 0.68rem;
+    color: #737373;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .total-value {
+    font-size: 1rem;
+    color: #0a0a0a;
+    font-weight: 700;
+  }
+}
+
+// ─── Contribution accordion (Step 2) ─────────────────────────────────────────
+.contributions-list {
+  @apply flex flex-col gap-2 mb-4;
+}
+
+.contrib-item {
+  @apply rounded-xl border overflow-hidden transition-all;
+  border-color: theme('colors.neutral.border');
+
+  &.contrib-item--open {
+    border-color: #fdd9ce;
+    background: #fffbfa;
+  }
+}
+
+.contrib-row {
+  @apply flex items-center gap-3 w-full text-left transition-colors;
+  padding: 0.65rem 0.875rem;
+  cursor: pointer;
+
+  &:hover {
+    background: #fafafa;
+  }
+}
+
+.contrib-seq {
+  @apply flex items-center justify-center rounded-full flex-shrink-0 font-bold;
+  width: 26px;
+  height: 26px;
+  background: #f3f4f6;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.contrib-info {
+  @apply flex flex-col gap-0 flex-1 min-w-0;
+
+  .contrib-lot-number {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0a0a0a;
+    @apply truncate;
+  }
+
+  .contrib-company {
+    font-size: 0.72rem;
+    color: #737373;
+    @apply truncate;
+  }
+}
+
+.contrib-values {
+  @apply flex flex-wrap gap-1.5 flex-shrink-0;
+
+  @media (max-width: 540px) {
+    display: none;
+  }
+}
+
+.contrib-chip {
+  @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #eff6ff;
+  color: #1d4ed8;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.contrib-toggle-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+.contrib-form {
+  padding: 0 0.875rem 0.875rem;
+  border-top: 1px solid #fdd9ce;
+  background: #fffbfa;
+}
+
+.contrib-form-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding-top: 0.875rem;
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  @media (max-width: 540px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ─── Section divider ─────────────────────────────────────────────────────────
+.section-divider {
+  @apply flex items-center gap-3 my-4;
+
+  span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #737373;
+    white-space: nowrap;
+  }
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: #e5e7eb;
+  }
+}
+
+// ─── Form grid ────────────────────────────────────────────────────────────────
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .full {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 540px) {
+    grid-template-columns: 1fr;
+
+    .full {
+      grid-column: auto;
+    }
+  }
+}
+
+// ─── Transport banner (Step 3) ────────────────────────────────────────────────
+.transport-banner {
+  @apply flex items-start gap-3 rounded-xl mb-5;
+  border: 1.5px solid #d1fae5;
+  background: #f4fbf6;
+  padding: 0.875rem 1rem;
+}
+
+.transport-banner-icon {
+  @apply flex items-center justify-center rounded-lg flex-shrink-0;
+  width: 38px;
+  height: 38px;
+  background: #d1fae5;
+  color: #218358;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.transport-banner-text {
+  @apply flex flex-col gap-0.5;
+
+  strong {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0a0a0a;
+  }
+
+  span {
+    font-size: 0.75rem;
+    color: #737373;
+    line-height: 1.45;
+  }
+}
+
+// ─── Footer actions ───────────────────────────────────────────────────────────
+.wizard-actions {
+  @apply flex items-center justify-between gap-2 px-6 py-4;
+  border-top: 1px solid theme('colors.neutral.border');
+  flex-shrink: 0;
+}
+
+.actions-right {
+  @apply flex items-center gap-2;
+}

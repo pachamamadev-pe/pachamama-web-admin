@@ -852,308 +852,361 @@
                   </div>
                 }
 
-                <form [formGroup]="transportForm" class="doc-form">
-                  <h3 class="section-subtitle">
-                    <mat-icon>local_shipping</mat-icon>
-                    Datos del transportista
-                  </h3>
+                <form [formGroup]="transportForm" class="doc-form doc-form--stepper">
+                  <mat-stepper [linear]="false" class="transport-stepper">
+                    <!-- ── Paso 1: Transportista ── -->
+                    <mat-step label="Transportista">
+                      <div class="step-content">
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Tipo de transporte *</mat-label>
+                          <mat-select
+                            formControlName="transportType"
+                            (selectionChange)="onTransportTypeChange($event.value)"
+                          >
+                            <mat-option value="terrestre">
+                              <mat-icon>directions_car</mat-icon>
+                              Terrestre
+                            </mat-option>
+                            <mat-option value="fluvial">
+                              <mat-icon>directions_boat</mat-icon>
+                              Fluvial
+                            </mat-option>
+                          </mat-select>
+                          <mat-icon matPrefix>swap_horiz</mat-icon>
+                        </mat-form-field>
 
-                  <!-- Transport type -->
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Tipo de transporte *</mat-label>
-                    <mat-select
-                      formControlName="transportType"
-                      (selectionChange)="onTransportTypeChange($event.value)"
-                    >
-                      <mat-option value="terrestre">Terrestre</mat-option>
-                      <mat-option value="fluvial">Fluvial</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Nombre del transportista *</mat-label>
+                          <input
+                            matInput
+                            formControlName="transporterName"
+                            [readonly]="isReadOnly()"
+                          />
+                          <mat-icon matPrefix>person</mat-icon>
+                          @if (
+                            transportForm.get('transporterName')?.invalid &&
+                            transportForm.get('transporterName')?.touched
+                          ) {
+                            <mat-error>Requerido</mat-error>
+                          }
+                        </mat-form-field>
 
-                  <div class="form-row">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Nombre del transportista *</mat-label>
-                      <input matInput formControlName="transporterName" [readonly]="isReadOnly()" />
-                      @if (
-                        transportForm.get('transporterName')?.invalid &&
-                        transportForm.get('transporterName')?.touched
-                      ) {
-                        <mat-error>Requerido</mat-error>
-                      }
-                    </mat-form-field>
+                        <div class="form-row">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Tipo de documento *</mat-label>
+                            <mat-select formControlName="transporterDocumentType">
+                              <mat-option value="DNI">DNI</mat-option>
+                              <mat-option value="CE">Carnet de Extranjería</mat-option>
+                              <mat-option value="RUC">RUC</mat-option>
+                            </mat-select>
+                            <mat-icon matPrefix>badge</mat-icon>
+                          </mat-form-field>
+                          <mat-form-field appearance="outline">
+                            <mat-label>N° de documento *</mat-label>
+                            <input
+                              matInput
+                              formControlName="transporterDocumentNumber"
+                              [readonly]="isReadOnly()"
+                            />
+                            <mat-icon matPrefix>tag</mat-icon>
+                            @if (
+                              transportForm.get('transporterDocumentNumber')?.invalid &&
+                              transportForm.get('transporterDocumentNumber')?.touched
+                            ) {
+                              <mat-error>Requerido</mat-error>
+                            }
+                          </mat-form-field>
+                        </div>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Tipo de documento *</mat-label>
-                      <mat-select formControlName="transporterDocumentType">
-                        <mat-option value="DNI">DNI</mat-option>
-                        <mat-option value="CE">Carnet de Extranjería</mat-option>
-                        <mat-option value="RUC">RUC</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
+                        <div class="form-row">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Licencia de conducir</mat-label>
+                            <input
+                              matInput
+                              formControlName="transporterLicense"
+                              [readonly]="isReadOnly()"
+                            />
+                            <mat-icon matPrefix>card_membership</mat-icon>
+                          </mat-form-field>
+                          <mat-form-field appearance="outline">
+                            <mat-label>Teléfono</mat-label>
+                            <input
+                              matInput
+                              formControlName="transporterPhone"
+                              [readonly]="isReadOnly()"
+                            />
+                            <mat-icon matPrefix>phone</mat-icon>
+                          </mat-form-field>
+                        </div>
+                      </div>
+                      <div class="stepper-actions">
+                        <button mat-flat-button color="primary" type="button" matStepperNext>
+                          Siguiente
+                          <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+                        </button>
+                      </div>
+                    </mat-step>
 
-                  <div class="form-row">
-                    <mat-form-field appearance="outline">
-                      <mat-label>N° de documento *</mat-label>
-                      <input
-                        matInput
-                        formControlName="transporterDocumentNumber"
-                        [readonly]="isReadOnly()"
-                      />
-                      @if (
-                        transportForm.get('transporterDocumentNumber')?.invalid &&
-                        transportForm.get('transporterDocumentNumber')?.touched
-                      ) {
-                        <mat-error>Requerido</mat-error>
-                      }
-                    </mat-form-field>
+                    <!-- ── Paso 2: Ruta y Vehículo ── -->
+                    <mat-step label="Ruta">
+                      <div class="step-content">
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Origen *</mat-label>
+                          <input
+                            matInput
+                            formControlName="originLocation"
+                            [readonly]="isReadOnly()"
+                            placeholder="Lugar de origen del traslado"
+                          />
+                          <mat-icon matPrefix>trip_origin</mat-icon>
+                          @if (
+                            transportForm.get('originLocation')?.invalid &&
+                            transportForm.get('originLocation')?.touched
+                          ) {
+                            <mat-error>Requerido</mat-error>
+                          }
+                        </mat-form-field>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Licencia de conducir</mat-label>
-                      <input
-                        matInput
-                        formControlName="transporterLicense"
-                        [readonly]="isReadOnly()"
-                      />
-                    </mat-form-field>
-                  </div>
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Destino *</mat-label>
+                          <input
+                            matInput
+                            formControlName="destinationLocation"
+                            [readonly]="isReadOnly()"
+                            placeholder="Lugar de destino del traslado"
+                          />
+                          <mat-icon matPrefix>place</mat-icon>
+                          @if (
+                            transportForm.get('destinationLocation')?.invalid &&
+                            transportForm.get('destinationLocation')?.touched
+                          ) {
+                            <mat-error>Requerido</mat-error>
+                          }
+                        </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Teléfono</mat-label>
-                    <input matInput formControlName="transporterPhone" [readonly]="isReadOnly()" />
-                    <mat-icon matPrefix>phone</mat-icon>
-                  </mat-form-field>
+                        <mat-form-field appearance="outline" class="half-width">
+                          <mat-label>Duración estimada</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="estimatedDurationHours"
+                            [readonly]="isReadOnly()"
+                          />
+                          <mat-icon matPrefix>schedule</mat-icon>
+                          <span matSuffix>horas</span>
+                        </mat-form-field>
 
-                  <mat-divider class="my-4" />
-                  <h3 class="section-subtitle">
-                    <mat-icon>directions_car</mat-icon>
-                    Datos del vehículo
-                  </h3>
-
-                  <div class="form-row">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Placa del vehículo</mat-label>
-                      <input
-                        matInput
-                        formControlName="vehiclePlate"
-                        [readonly]="isReadOnly()"
-                        style="text-transform: uppercase"
-                      />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>Tipo de vehículo</mat-label>
-                      <input
-                        matInput
-                        formControlName="vehicleType"
-                        [readonly]="isReadOnly()"
-                        placeholder="Ej: Camión"
-                      />
-                    </mat-form-field>
-                  </div>
-
-                  <div class="form-row">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Marca</mat-label>
-                      <input matInput formControlName="vehicleBrand" [readonly]="isReadOnly()" />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>Modelo</mat-label>
-                      <input matInput formControlName="vehicleModel" [readonly]="isReadOnly()" />
-                    </mat-form-field>
-                  </div>
-
-                  <mat-form-field appearance="outline" class="half-width">
-                    <mat-label>Capacidad (kg)</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      formControlName="vehicleCapacityKg"
-                      [readonly]="isReadOnly()"
-                    />
-                    <span matSuffix>kg</span>
-                  </mat-form-field>
-
-                  <!-- Fluvial fields -->
-                  @if (isFluvialTransport()) {
-                    <mat-divider class="my-4" />
-                    <h3 class="section-subtitle">
-                      <mat-icon>directions_boat</mat-icon>
-                      Datos de embarcación
-                    </h3>
-                    <div class="form-row">
-                      <mat-form-field appearance="outline">
-                        <mat-label>Matrícula de embarcación</mat-label>
-                        <input
-                          matInput
-                          formControlName="boatRegistration"
-                          [readonly]="isReadOnly()"
-                        />
-                      </mat-form-field>
-                      <mat-form-field appearance="outline">
-                        <mat-label>Potencia motor (HP)</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          formControlName="boatMotorHp"
-                          [readonly]="isReadOnly()"
-                        />
-                        <span matSuffix>HP</span>
-                      </mat-form-field>
-                    </div>
-                  }
-
-                  <mat-divider class="my-4" />
-                  <h3 class="section-subtitle">
-                    <mat-icon>route</mat-icon>
-                    Ruta
-                  </h3>
-
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Origen *</mat-label>
-                    <input
-                      matInput
-                      formControlName="originLocation"
-                      [readonly]="isReadOnly()"
-                      placeholder="Lugar de origen del traslado"
-                    />
-                    <mat-icon matPrefix>place</mat-icon>
-                    @if (
-                      transportForm.get('originLocation')?.invalid &&
-                      transportForm.get('originLocation')?.touched
-                    ) {
-                      <mat-error>Requerido</mat-error>
-                    }
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Destino *</mat-label>
-                    <input
-                      matInput
-                      formControlName="destinationLocation"
-                      [readonly]="isReadOnly()"
-                      placeholder="Lugar de destino del traslado"
-                    />
-                    <mat-icon matPrefix>flag</mat-icon>
-                    @if (
-                      transportForm.get('destinationLocation')?.invalid &&
-                      transportForm.get('destinationLocation')?.touched
-                    ) {
-                      <mat-error>Requerido</mat-error>
-                    }
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="half-width">
-                    <mat-label>Duración estimada</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      formControlName="estimatedDurationHours"
-                      [readonly]="isReadOnly()"
-                    />
-                    <span matSuffix>horas</span>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Notas adicionales</mat-label>
-                    <textarea
-                      matInput
-                      formControlName="notes"
-                      rows="3"
-                      [readonly]="isReadOnly()"
-                    ></textarea>
-                  </mat-form-field>
-
-                  <mat-divider class="my-4" />
-                  <h3 class="section-subtitle">
-                    <mat-icon>warehouse</mat-icon>
-                    Centro de acopio
-                  </h3>
-
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Dirección del centro de acopio</mat-label>
-                    <input
-                      matInput
-                      formControlName="collectionCenterAddress"
-                      [readonly]="isReadOnly()"
-                    />
-                  </mat-form-field>
-
-                  <div class="form-row">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Nombre del responsable</mat-label>
-                      <input
-                        matInput
-                        formControlName="collectionCenterManagerName"
-                        [readonly]="isReadOnly()"
-                      />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>DNI del responsable</mat-label>
-                      <input
-                        matInput
-                        formControlName="collectionCenterManagerDni"
-                        [readonly]="isReadOnly()"
-                      />
-                    </mat-form-field>
-                  </div>
-
-                  <mat-divider class="my-4" />
-                  <h3 class="section-subtitle">
-                    <mat-icon>storefront</mat-icon>
-                    Información del comprador
-                  </h3>
-
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Nombre / Razón social</mat-label>
-                    <input matInput formControlName="buyerName" [readonly]="isReadOnly()" />
-                  </mat-form-field>
-
-                  <div class="form-row">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Tipo de documento</mat-label>
-                      <input
-                        matInput
-                        formControlName="buyerDocumentType"
-                        [readonly]="isReadOnly()"
-                      />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>N° de documento</mat-label>
-                      <input
-                        matInput
-                        formControlName="buyerDocumentNumber"
-                        [readonly]="isReadOnly()"
-                      />
-                    </mat-form-field>
-                  </div>
-
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Domicilio legal</mat-label>
-                    <input matInput formControlName="buyerLegalAddress" [readonly]="isReadOnly()" />
-                  </mat-form-field>
-
-                  @if (!isReadOnly()) {
-                    <div class="form-actions">
-                      <button
-                        mat-raised-button
-                        class="btn-primary"
-                        type="button"
-                        [disabled]="transportForm.invalid || savingDoc() === 'transport-info'"
-                        (click)="saveTransportWaybill()"
-                      >
-                        @if (savingDoc() === 'transport-info') {
-                          <mat-spinner diameter="16" />
-                        } @else {
-                          <mat-icon>picture_as_pdf</mat-icon>
+                        @if (!isFluvialTransport()) {
+                          <div class="step-section-label">
+                            <mat-icon>directions_car</mat-icon>
+                            <span>Datos del vehículo</span>
+                          </div>
+                          <div class="form-row">
+                            <mat-form-field appearance="outline">
+                              <mat-label>Placa del vehículo</mat-label>
+                              <input
+                                matInput
+                                formControlName="vehiclePlate"
+                                [readonly]="isReadOnly()"
+                                style="text-transform: uppercase"
+                              />
+                              <mat-icon matPrefix>pin</mat-icon>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                              <mat-label>Tipo de vehículo</mat-label>
+                              <input
+                                matInput
+                                formControlName="vehicleType"
+                                [readonly]="isReadOnly()"
+                                placeholder="Ej: Camión"
+                              />
+                              <mat-icon matPrefix>local_shipping</mat-icon>
+                            </mat-form-field>
+                          </div>
+                          <div class="form-row">
+                            <mat-form-field appearance="outline">
+                              <mat-label>Marca</mat-label>
+                              <input
+                                matInput
+                                formControlName="vehicleBrand"
+                                [readonly]="isReadOnly()"
+                              />
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                              <mat-label>Modelo</mat-label>
+                              <input
+                                matInput
+                                formControlName="vehicleModel"
+                                [readonly]="isReadOnly()"
+                              />
+                            </mat-form-field>
+                          </div>
+                          <mat-form-field appearance="outline" class="half-width">
+                            <mat-label>Capacidad (kg)</mat-label>
+                            <input
+                              matInput
+                              type="number"
+                              formControlName="vehicleCapacityKg"
+                              [readonly]="isReadOnly()"
+                            />
+                            <mat-icon matPrefix>scale</mat-icon>
+                            <span matSuffix>kg</span>
+                          </mat-form-field>
                         }
-                        Guardar y Generar documento
-                      </button>
-                    </div>
-                  }
+
+                        @if (isFluvialTransport()) {
+                          <div class="step-section-label">
+                            <mat-icon>directions_boat</mat-icon>
+                            <span>Datos de la embarcación</span>
+                          </div>
+                          <div class="form-row">
+                            <mat-form-field appearance="outline">
+                              <mat-label>Matrícula de embarcación</mat-label>
+                              <input
+                                matInput
+                                formControlName="boatRegistration"
+                                [readonly]="isReadOnly()"
+                              />
+                              <mat-icon matPrefix>anchor</mat-icon>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                              <mat-label>Potencia motor (HP)</mat-label>
+                              <input
+                                matInput
+                                type="number"
+                                formControlName="boatMotorHp"
+                                [readonly]="isReadOnly()"
+                              />
+                              <mat-icon matPrefix>speed</mat-icon>
+                              <span matSuffix>HP</span>
+                            </mat-form-field>
+                          </div>
+                        }
+
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Notas adicionales</mat-label>
+                          <textarea
+                            matInput
+                            formControlName="notes"
+                            rows="2"
+                            [readonly]="isReadOnly()"
+                          ></textarea>
+                          <mat-icon matPrefix>notes</mat-icon>
+                        </mat-form-field>
+                      </div>
+                      <div class="stepper-actions">
+                        <button mat-button type="button" matStepperPrevious>
+                          <mat-icon>arrow_back</mat-icon>
+                          Anterior
+                        </button>
+                        <button mat-flat-button color="primary" type="button" matStepperNext>
+                          Siguiente
+                          <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+                        </button>
+                      </div>
+                    </mat-step>
+
+                    <!-- ── Paso 3: Adicional ── -->
+                    <mat-step label="Adicional">
+                      <div class="step-content">
+                        <div class="step-section-label">
+                          <mat-icon>warehouse</mat-icon>
+                          <span>Centro de acopio <span class="optional-tag">Opcional</span></span>
+                        </div>
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Dirección del centro de acopio</mat-label>
+                          <input
+                            matInput
+                            formControlName="collectionCenterAddress"
+                            [readonly]="isReadOnly()"
+                          />
+                          <mat-icon matPrefix>location_on</mat-icon>
+                        </mat-form-field>
+                        <div class="form-row">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Nombre del responsable</mat-label>
+                            <input
+                              matInput
+                              formControlName="collectionCenterManagerName"
+                              [readonly]="isReadOnly()"
+                            />
+                            <mat-icon matPrefix>manage_accounts</mat-icon>
+                          </mat-form-field>
+                          <mat-form-field appearance="outline">
+                            <mat-label>DNI del responsable</mat-label>
+                            <input
+                              matInput
+                              formControlName="collectionCenterManagerDni"
+                              [readonly]="isReadOnly()"
+                            />
+                            <mat-icon matPrefix>badge</mat-icon>
+                          </mat-form-field>
+                        </div>
+
+                        <div class="step-section-label">
+                          <mat-icon>storefront</mat-icon>
+                          <span>Comprador <span class="optional-tag">Opcional</span></span>
+                        </div>
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Nombre / Razón social</mat-label>
+                          <input matInput formControlName="buyerName" [readonly]="isReadOnly()" />
+                          <mat-icon matPrefix>person_search</mat-icon>
+                        </mat-form-field>
+                        <div class="form-row">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Tipo de documento</mat-label>
+                            <input
+                              matInput
+                              formControlName="buyerDocumentType"
+                              [readonly]="isReadOnly()"
+                            />
+                            <mat-icon matPrefix>badge</mat-icon>
+                          </mat-form-field>
+                          <mat-form-field appearance="outline">
+                            <mat-label>N° de documento</mat-label>
+                            <input
+                              matInput
+                              formControlName="buyerDocumentNumber"
+                              [readonly]="isReadOnly()"
+                            />
+                            <mat-icon matPrefix>tag</mat-icon>
+                          </mat-form-field>
+                        </div>
+                        <mat-form-field appearance="outline" class="full-width">
+                          <mat-label>Domicilio legal</mat-label>
+                          <input
+                            matInput
+                            formControlName="buyerLegalAddress"
+                            [readonly]="isReadOnly()"
+                          />
+                          <mat-icon matPrefix>home_work</mat-icon>
+                        </mat-form-field>
+                      </div>
+
+                      <div class="stepper-actions">
+                        <button mat-button type="button" matStepperPrevious>
+                          <mat-icon>arrow_back</mat-icon>
+                          Anterior
+                        </button>
+                        @if (!isReadOnly()) {
+                          <button
+                            mat-raised-button
+                            class="btn-primary"
+                            type="button"
+                            [disabled]="transportForm.invalid || savingDoc() === 'transport-info'"
+                            (click)="saveTransportWaybill()"
+                          >
+                            @if (savingDoc() === 'transport-info') {
+                              <mat-spinner diameter="16" />
+                            } @else {
+                              <mat-icon>picture_as_pdf</mat-icon>
+                            }
+                            Guardar y Generar documento
+                          </button>
+                        }
+                      </div>
+                    </mat-step>
+                  </mat-stepper>
                 </form>
               </div>
             }

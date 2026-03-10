@@ -22,6 +22,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatStepperModule } from '@angular/material/stepper';
 import { MatDialog } from '@angular/material/dialog';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
@@ -74,6 +75,7 @@ interface DocumentTabState {
     MatDividerModule,
     MatCheckboxModule,
     MatExpansionModule,
+    MatStepperModule,
     NgxExtendedPdfViewerModule,
   ],
   providers: [provideNativeDateAdapter()],

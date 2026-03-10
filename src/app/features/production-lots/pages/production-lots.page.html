@@ -1,0 +1,424 @@
+<div class="page-container">
+  <!-- ══════════════════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════════════════ -->
+  <header class="page-header">
+    <!-- Title + Create Button -->
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="text-title font-bold text-accent-titles">Lotes de Transformación</h1>
+        <p class="text-subtitle text-neutral-subheading">
+          Gestiona todos los lotes de transformación primaria y secundaria de la empresa
+        </p>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          <span class="hidden sm:inline">Nuevo lote</span>
+          <span class="sm:hidden">Nuevo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stage Filter Tabs -->
+    <div class="stage-filters">
+      <button
+        class="stage-tab"
+        [class.stage-tab--active]="activeStageFilter() === 'all'"
+        (click)="setStageFilter('all')"
+      >
+        <mat-icon class="stage-tab-icon">layers</mat-icon>
+        <span>Todos</span>
+        <span class="stage-tab-count">{{ lots().length }}</span>
+      </button>
+
+      <button
+        class="stage-tab stage-tab--primary"
+        [class.stage-tab--active]="activeStageFilter() === 'primaria'"
+        (click)="setStageFilter('primaria')"
+      >
+        <mat-icon class="stage-tab-icon">factory</mat-icon>
+        <span>Primaria</span>
+        <span class="stage-tab-count">{{ primaryCount() }}</span>
+      </button>
+
+      <button
+        class="stage-tab stage-tab--secondary"
+        [class.stage-tab--active]="activeStageFilter() === 'secundaria'"
+        (click)="setStageFilter('secundaria')"
+      >
+        <mat-icon class="stage-tab-icon">transform</mat-icon>
+        <span>Secundaria</span>
+        <span class="stage-tab-count">{{ secondaryCount() }}</span>
+      </button>
+    </div>
+
+    <!-- Advanced Filters Row -->
+    <div class="filters-row">
+      <!-- Search -->
+      <mat-form-field class="filter-field filter-field--search" appearance="outline">
+        <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+        <input
+          matInput
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar por Nº de lote..."
+          class="text-body"
+        />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button aria-label="Limpiar" (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <!-- Producto -->
+      <mat-form-field class="filter-field filter-field--select" appearance="outline">
+        <mat-label>Producto</mat-label>
+        <mat-select
+          [ngModel]="selectedProductId()"
+          (ngModelChange)="onProductChange($event)"
+          [disabled]="loadingProducts()"
+        >
+          <mat-option [value]="null">— Todos los productos —</mat-option>
+          @for (product of products(); track product.id) {
+            <mat-option [value]="product.id">{{ product.name }}</mat-option>
+          }
+        </mat-select>
+        @if (loadingProducts()) {
+          <mat-spinner matSuffix diameter="18" />
+        }
+      </mat-form-field>
+
+      <!-- Proyecto -->
+      <mat-form-field class="filter-field filter-field--select" appearance="outline">
+        <mat-label>Proyecto</mat-label>
+        <mat-select
+          [ngModel]="selectedProjectId()"
+          (ngModelChange)="onProjectChange($event)"
+          [disabled]="loadingProjects()"
+        >
+          <mat-option [value]="null">— Todos los proyectos —</mat-option>
+          @for (project of projects(); track project.id) {
+            <mat-option [value]="project.id">{{ project.name }}</mat-option>
+          }
+        </mat-select>
+        @if (loadingProjects()) {
+          <mat-spinner matSuffix diameter="18" />
+        }
+      </mat-form-field>
+
+      <!-- Clear all filters button (only when any filter is active) -->
+      @if (searchTerm() || selectedProductId() || selectedProjectId()) {
+        <button
+          mat-stroked-button
+          class="clear-filters-btn"
+          (click)="clearFilters()"
+          matTooltip="Limpiar todos los filtros"
+        >
+          <mat-icon>filter_list_off</mat-icon>
+          <span class="hidden sm:inline">Limpiar filtros</span>
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       CONTENT
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="page-content">
+    @if (loading()) {
+      <!-- ── Loading ──────────────────────────────────────────────── -->
+      <div class="loading-container">
+        <mat-spinner diameter="48" />
+        <p class="text-body text-neutral-subheading mt-4">Cargando lotes de transformación...</p>
+      </div>
+    } @else if (
+      lots().length === 0 && !searchTerm() && !selectedProductId() && !selectedProjectId()
+    ) {
+      <!-- ── Vacío: empresa sin lotes ─────────────────────────────── -->
+      <app-empty-state
+        icon="inventory_2"
+        [useMaterialIcon]="true"
+        title="No hay lotes de transformación"
+        description="Crea el primer lote de transformación primaria o secundaria para comenzar"
+        actionLabel="Crear primer lote"
+        (action)="openCreateDialog()"
+      />
+    } @else if (filteredLots().length === 0 && searchTerm()) {
+      <!-- ── Sin resultados de búsqueda ───────────────────────────── -->
+      <div class="empty-state">
+        <div class="empty-icon"><mat-icon>search_off</mat-icon></div>
+        <h3 class="text-body font-bold text-accent-titles">No se encontraron lotes</h3>
+        <p class="text-subtitle text-neutral-subheading">
+          Intenta con otro número de lote o cambia los filtros
+        </p>
+        <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
+      </div>
+    } @else {
+      <!-- ════════════════════════════════════════════════════════
+           GRID DE CARDS POR SECCIONES
+      ════════════════════════════════════════════════════════ -->
+      <div class="lots-content">
+        <!-- ═══════════════════════════════════════════════════════
+             SECCIÓN 1 — TRANSFORMACIÓN PRIMARIA
+        ═══════════════════════════════════════════════════════ -->
+        @if (activeStageFilter() !== 'secundaria') {
+          <div class="stage-section">
+            <div class="stage-header stage-header--primary">
+              <div class="stage-header-title">
+                <div class="stage-icon stage-icon--primary">
+                  <mat-icon>factory</mat-icon>
+                </div>
+                <div>
+                  <h3>Transformación Primaria</h3>
+                  <p>{{ primaryLots().length }} lote{{ primaryLots().length !== 1 ? 's' : '' }}</p>
+                </div>
+              </div>
+              <button
+                mat-raised-button
+                class="btn-primary btn-section-create"
+                (click)="openCreatePrimaryDirect()"
+              >
+                <mat-icon>add</mat-icon>
+                <span class="hidden sm:inline">Nuevo lote primario</span>
+                <span class="sm:hidden">Nuevo</span>
+              </button>
+            </div>
+
+            @if (primaryLots().length === 0) {
+              <div class="section-empty">
+                <mat-icon>factory</mat-icon>
+                <span
+                  >No hay lotes primarios{{
+                    searchTerm() || selectedProductId() || selectedProjectId()
+                      ? ' con los filtros aplicados'
+                      : ' registrados aún'
+                  }}</span
+                >
+              </div>
+            } @else {
+              <div class="lots-grid">
+                @for (lot of primaryLots(); track lot.id) {
+                  <!-- ─── Card Primaria ─────────────────────────── -->
+                  <div class="lot-card lot-card--primary">
+                    <!-- Header: número + estado + menú -->
+                    <div class="lot-card-header">
+                      <div class="lot-card-header-left">
+                        <span class="lot-number">{{ lot.lotNumber }}</span>
+                        <span class="status-badge status-badge--{{ lot.status }}">
+                          {{ STATUS_LABELS[lot.status] }}
+                        </span>
+                      </div>
+                      <button
+                        mat-icon-button
+                        class="lot-menu-btn"
+                        [matMenuTriggerFor]="primaryMenu"
+                        aria-label="Acciones del lote"
+                      >
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                      <mat-menu #primaryMenu="matMenu" xPosition="before">
+                        <button mat-menu-item (click)="viewLotDetail(lot)">
+                          <mat-icon>visibility</mat-icon>
+                          <span>Ver detalle</span>
+                        </button>
+                        <button mat-menu-item disabled>
+                          <mat-icon>qr_code_2</mat-icon>
+                          <span>Generar QR trazabilidad</span>
+                        </button>
+                      </mat-menu>
+                    </div>
+
+                    <!-- Empresa derivada -->
+                    <div class="lot-product-row">
+                      <mat-icon>business</mat-icon>
+                      <span class="lot-product-name">{{ lot.derivedCompanyName ?? '—' }}</span>
+                    </div>
+
+                    <!-- Estadísticas: peso + nº de acopios -->
+                    <div class="lot-stats">
+                      <div class="lot-stat-item lot-stat-item--primary">
+                        <div class="lot-stat-icon lot-stat-icon--primary">
+                          <mat-icon>scale</mat-icon>
+                        </div>
+                        <div class="lot-stat-info">
+                          <span class="lot-stat-value">
+                            {{ lot.quantity !== null ? (lot.quantity | number: '1.0-2') : '—' }}
+                          </span>
+                          <span class="lot-stat-label">{{ lot.unit ?? 'kg' }}</span>
+                        </div>
+                      </div>
+                      <div class="lot-stat-item lot-stat-item--primary">
+                        <div class="lot-stat-icon lot-stat-icon--primary">
+                          <mat-icon>inventory_2</mat-icon>
+                        </div>
+                        <div class="lot-stat-info">
+                          <span class="lot-stat-value">{{ lot.sourceBatchesCount ?? 0 }}</span>
+                          <span class="lot-stat-label">Acopios origen</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Footer: fecha + creador -->
+                    <div class="lot-card-footer">
+                      <mat-icon>event</mat-icon>
+                      <span>{{ lot.productionDate | date: 'dd MMM yyyy' }}</span>
+                      <span class="lot-footer-sep">&bull;</span>
+                      <mat-icon>person</mat-icon>
+                      <span>{{ lot.createdByName ?? '—' }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════
+             SECCIÓN 2 — TRANSFORMACIÓN SECUNDARIA
+        ═══════════════════════════════════════════════════════ -->
+        @if (activeStageFilter() !== 'primaria') {
+          <div class="stage-section">
+            <div class="stage-header stage-header--secondary">
+              <div class="stage-header-title">
+                <div class="stage-icon stage-icon--secondary">
+                  <mat-icon>precision_manufacturing</mat-icon>
+                </div>
+                <div>
+                  <h3>Transformación Secundaria</h3>
+                  <p>
+                    {{ secondaryLots().length }} lote{{ secondaryLots().length !== 1 ? 's' : '' }}
+                  </p>
+                </div>
+              </div>
+              <button
+                mat-stroked-button
+                class="btn-section-create btn-section-create--secondary"
+                (click)="openCreateSecondaryDirect()"
+              >
+                <mat-icon>add</mat-icon>
+                <span class="hidden sm:inline">Nuevo lote secundario</span>
+                <span class="sm:hidden">Nuevo</span>
+              </button>
+            </div>
+
+            @if (secondaryLots().length === 0) {
+              <div class="section-empty">
+                <mat-icon>precision_manufacturing</mat-icon>
+                <span>{{
+                  searchTerm() || selectedProductId() || selectedProjectId()
+                    ? 'No hay lotes secundarios con los filtros aplicados'
+                    : 'Ningún lote primario ha generado una transformación secundaria aún'
+                }}</span>
+              </div>
+            } @else {
+              <div class="lots-grid">
+                @for (lot of secondaryLots(); track lot.id) {
+                  <!-- ─── Card Secundaria ───────────────────────── -->
+                  <div class="lot-card lot-card--secondary">
+                    <!-- Header: número + estado + menú -->
+                    <div class="lot-card-header">
+                      <div class="lot-card-header-left">
+                        <span class="lot-number">{{ lot.lotNumber }}</span>
+                        <span class="status-badge status-badge--{{ lot.status }}">
+                          {{ STATUS_LABELS[lot.status] }}
+                        </span>
+                      </div>
+                      <button
+                        mat-icon-button
+                        class="lot-menu-btn"
+                        [matMenuTriggerFor]="secondaryMenu"
+                        aria-label="Acciones del lote"
+                      >
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                      <mat-menu #secondaryMenu="matMenu" xPosition="before">
+                        <button mat-menu-item (click)="viewLotDetail(lot)">
+                          <mat-icon>visibility</mat-icon>
+                          <span>Ver detalle</span>
+                        </button>
+                        <button mat-menu-item disabled>
+                          <mat-icon>qr_code_2</mat-icon>
+                          <span>Generar QR trazabilidad</span>
+                        </button>
+                      </mat-menu>
+                    </div>
+
+                    <!-- Empresa derivada -->
+                    <div class="lot-product-row">
+                      <mat-icon>business</mat-icon>
+                      <span class="lot-product-name">{{ lot.derivedCompanyName ?? '—' }}</span>
+                    </div>
+
+                    <!-- Estadísticas: peso + sacos/jabas / lotes origen -->
+                    <div class="lot-stats">
+                      <div class="lot-stat-item lot-stat-item--secondary">
+                        <div class="lot-stat-icon lot-stat-icon--secondary">
+                          <mat-icon>scale</mat-icon>
+                        </div>
+                        <div class="lot-stat-info">
+                          <span class="lot-stat-value">
+                            {{ lot.quantity !== null ? (lot.quantity | number: '1.0-2') : '—' }}
+                          </span>
+                          <span class="lot-stat-label">{{ lot.unit ?? 'kg' }}</span>
+                        </div>
+                      </div>
+
+                      @if ((lot.totalSacksCount ?? 0) > 0 || (lot.totalJabasCount ?? 0) > 0) {
+                        <div class="lot-stat-item lot-stat-item--secondary">
+                          <div class="lot-stat-icon lot-stat-icon--secondary">
+                            <mat-icon>shopping_bag</mat-icon>
+                          </div>
+                          <div class="lot-stat-info">
+                            @if ((lot.totalSacksCount ?? 0) > 0) {
+                              <span class="lot-stat-value">{{ lot.totalSacksCount }}</span>
+                              <span class="lot-stat-label">Sacos</span>
+                            } @else {
+                              <span class="lot-stat-value">{{ lot.totalJabasCount }}</span>
+                              <span class="lot-stat-label">Jabas</span>
+                            }
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="lot-stat-item lot-stat-item--secondary">
+                          <div class="lot-stat-icon lot-stat-icon--secondary">
+                            <mat-icon>link</mat-icon>
+                          </div>
+                          <div class="lot-stat-info">
+                            <span class="lot-stat-value">{{ lot.sourceLotsCount ?? 0 }}</span>
+                            <span class="lot-stat-label">Lotes origen</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Footer: fecha + creador -->
+                    <div class="lot-card-footer">
+                      <mat-icon>event</mat-icon>
+                      <span>{{ lot.productionDate | date: 'dd MMM yyyy' }}</span>
+                      <span class="lot-footer-sep">&bull;</span>
+                      <mat-icon>person</mat-icon>
+                      <span>{{ lot.createdByName ?? '—' }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Paginador global -->
+        <mat-paginator
+          [length]="totalElements()"
+          [pageSize]="pageSize()"
+          [pageIndex]="currentPage()"
+          [pageSizeOptions]="[10, 20, 50, 100]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+          class="lots-paginator"
+        />
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,809 @@
+<div class="secondary-detail-container">
+  <!-- ─── Loading ──────────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="48" />
+      <p class="text-body text-neutral-subheading mt-4">Cargando lote secundario...</p>
+    </div>
+  } @else if (lot()) {
+    <!-- ─── Header ───────────────────────────────────────────────────────── -->
+    <header class="detail-header">
+      <div class="header-top">
+        <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Volver al proyecto">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <div class="header-info">
+          <div class="header-title-row">
+            <h1 class="lot-title">{{ lot()!.lotNumber }}</h1>
+            <!-- Reception stage badge (orange) -->
+            <span class="stage-badge stage-badge--secondary">
+              <mat-icon>input</mat-icon>
+              Recepción
+            </span>
+            <!-- Transformation badge -->
+            <span class="transform-badge">
+              <mat-icon>swap_horiz</mat-icon>
+              Transformación Secundaria
+            </span>
+          </div>
+
+          <!-- Meta row -->
+          <div class="header-meta">
+            <span class="meta-item">
+              <mat-icon>business</mat-icon>
+              {{ lot()!.derivedCompanyName ?? '—' }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>eco</mat-icon>
+              {{ lot()!.sourceLots?.[0]?.sourcePrimaryLotNumber ?? '—' }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>event</mat-icon>
+              {{ formatDate(lot()!.productionDate) }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>inventory_2</mat-icon>
+              {{ lot()!.quantity }} {{ lot()!.unit }}
+            </span>
+            @if (lot()!.totalSacksCount) {
+              <span class="meta-item">
+                <mat-icon>inbox</mat-icon>
+                {{ lot()!.totalSacksCount }} sacos
+              </span>
+            }
+            @if (lot()!.totalJabasCount) {
+              <span class="meta-item">
+                <mat-icon>grid_view</mat-icon>
+                {{ lot()!.totalJabasCount }} jabas
+              </span>
+            }
+          </div>
+
+          <!-- Parent lot chip -->
+          @if (parentLotLabel()) {
+            <div class="parent-lot-row">
+              <span class="parent-lot-label">Derivado de:</span>
+              <button
+                class="parent-lot-chip"
+                type="button"
+                (click)="goToParentLot()"
+                matTooltip="Ver lote primario origen"
+              >
+                <mat-icon>account_tree</mat-icon>
+                <span>{{ parentLotLabel() }}</span>
+                <mat-icon class="chip-arrow">open_in_new</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- ─── Main Content ──────────────────────────────────────────────────── -->
+    <div class="main-content">
+      <!-- Panel Switcher Tabs -->
+      <div class="panel-tabs">
+        <button
+          type="button"
+          [class]="'panel-tab' + (activePanel() === 'reception' ? ' panel-tab--active' : '')"
+          (click)="switchPanel('reception')"
+        >
+          <mat-icon>local_shipping</mat-icon>
+          <span>Recepción</span>
+          @if (receptionDocument()?.blobName) {
+            <mat-icon class="tab-check">check_circle</mat-icon>
+          }
+        </button>
+        <button
+          type="button"
+          [class]="'panel-tab' + (activePanel() === 'transport' ? ' panel-tab--active' : '')"
+          (click)="switchPanel('transport')"
+        >
+          <mat-icon>local_taxi</mat-icon>
+          <span>Transporte</span>
+          @if (transportDocument()?.blobName) {
+            <mat-icon class="tab-check">check_circle</mat-icon>
+          }
+        </button>
+      </div>
+
+      <!-- Split View -->
+      <div class="split-view">
+        <!-- ── Left: PDF Panel ─────────────────────────────────────────── -->
+        <div class="pdf-panel">
+          @if (loadingPdf()) {
+            <div class="pdf-loading">
+              <mat-spinner diameter="40" />
+              <p class="text-subtitle text-neutral-subheading mt-3">Cargando documento...</p>
+            </div>
+          } @else if (pdfUrl()) {
+            <ngx-extended-pdf-viewer
+              [src]="pdfUrl()!"
+              [height]="'calc(100vh - 280px)'"
+              [showHandToolButton]="true"
+              [showOpenFileButton]="false"
+              [showPrintButton]="true"
+              [showDownloadButton]="true"
+              [showSecondaryToolbarButton]="false"
+              [showRotateButton]="true"
+              [showPropertiesButton]="false"
+              [zoom]="'auto'"
+              [mobileFriendlyZoom]="'100%'"
+            />
+          } @else {
+            <div class="pdf-placeholder">
+              <div class="placeholder-art">
+                <mat-icon class="placeholder-icon">description</mat-icon>
+                <div class="placeholder-lines">
+                  <div class="line line--title"></div>
+                  <div class="line"></div>
+                  <div class="line"></div>
+                  <div class="line line--short"></div>
+                </div>
+              </div>
+              <p class="placeholder-title">Documento no disponible</p>
+              <p class="placeholder-subtitle">
+                @if (activePanel() === 'reception') {
+                  Genera la ficha de recepción para visualizarla aquí
+                } @else {
+                  Guarda la guía de transporte para visualizarla aquí
+                }
+              </p>
+            </div>
+          }
+        </div>
+
+        <!-- ── Right: Info Panels ─────────────────────────────────────── -->
+        <div class="info-panel">
+          <!-- ── RECEPTION PANEL ──────────────────────────────────────── -->
+          @if (activePanel() === 'reception') {
+            <!-- Reception document card -->
+            <div class="document-card">
+              <div class="document-card-header">
+                <mat-icon class="doc-icon doc-icon--secondary">local_shipping</mat-icon>
+                <div>
+                  <h3 class="doc-card-title">Ficha de Recepción de Frutos</h3>
+                  <p class="doc-card-subtitle">Documento de la etapa de recepción</p>
+                </div>
+              </div>
+
+              @if (receptionDocument()?.blobName) {
+                <div class="doc-status-row doc-status-row--ready">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Documento generado</span>
+                </div>
+                <div class="doc-meta-grid">
+                  @if (receptionDocument()!.uploadedAt) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Generado el</span>
+                      <span class="doc-meta-value">{{
+                        formatDate(receptionDocument()!.uploadedAt)
+                      }}</span>
+                    </div>
+                  }
+                  @if (receptionDocument()!.fileName) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Archivo</span>
+                      <span class="doc-meta-value filename">{{
+                        receptionDocument()!.fileName
+                      }}</span>
+                    </div>
+                  }
+                  @if (receptionDocument()!.fileSizeBytes) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Tamaño</span>
+                      <span class="doc-meta-value">{{
+                        formatFileSize(receptionDocument()!.fileSizeBytes)
+                      }}</span>
+                    </div>
+                  }
+                  @if (receptionDocument()!.version) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Versión</span>
+                      <span class="doc-meta-value">v{{ receptionDocument()!.version }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="doc-status-row doc-status-row--pending">
+                  <mat-icon>radio_button_unchecked</mat-icon>
+                  <span>Pendiente de generación</span>
+                </div>
+              }
+            </div>
+
+            <!-- Reception accordion -->
+            <div class="reception-panel">
+              <div class="reception-panel-header">
+                <div class="reception-panel-title">
+                  <div class="reception-title-icon">
+                    <mat-icon>local_shipping</mat-icon>
+                  </div>
+                  <div>
+                    <h3>Recepciones de Acopio</h3>
+                    <p>{{ receptions().length }} lote(s) ingresado(s)</p>
+                  </div>
+                </div>
+
+                @if (receptions().length > 0 && !loadingReceptions()) {
+                  <div class="reception-totals">
+                    <div class="total-pill total-pill--weight">
+                      <mat-icon>scale</mat-icon>
+                      <span>{{ receptionTotals().totalWeight | number: '1.0-1' }} kg</span>
+                    </div>
+                    <div class="total-pill total-pill--sacks">
+                      <mat-icon>inventory_2</mat-icon>
+                      <span>{{ receptionTotals().totalSacks }} sacos</span>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (loadingReceptions()) {
+                <div class="reception-loading">
+                  <mat-spinner diameter="28" />
+                  <span>Cargando recepciones...</span>
+                </div>
+              } @else if (receptions().length === 0) {
+                <div class="reception-empty">
+                  <mat-icon>inbox</mat-icon>
+                  <p>Sin recepciones registradas</p>
+                </div>
+              } @else {
+                <div class="reception-list">
+                  @for (r of receptions(); track r.id; let idx = $index) {
+                    <div
+                      [class]="
+                        'reception-item' +
+                        (expandedReceptionId() === r.id ? ' reception-item--open' : '')
+                      "
+                    >
+                      <!-- Collapsed summary row -->
+                      <button class="reception-row" type="button" (click)="toggleReception(r.id)">
+                        <div class="reception-row-top">
+                          <div class="reception-seq">{{ idx + 1 }}</div>
+                          <div class="reception-identity">
+                            <span class="rcp-batch">{{ r.collectionBatchNumber }}</span>
+                            <span class="rcp-product">{{ r.productName }}</span>
+                          </div>
+                          <div class="reception-edit-hint">
+                            @if (expandedReceptionId() === r.id) {
+                              <mat-icon class="hint-icon hint-icon--open"
+                                >keyboard_arrow_up</mat-icon
+                              >
+                            } @else {
+                              <mat-icon class="hint-icon">edit</mat-icon>
+                              <span class="hint-label">Editar</span>
+                            }
+                          </div>
+                        </div>
+                        <div class="reception-stats">
+                          <span class="rcp-date">
+                            <mat-icon>event</mat-icon>
+                            {{ formatDate(r.entryDate) }}
+                          </span>
+                          <span
+                            [class]="
+                              'rcp-chip' + (r.weightKg ? ' rcp-chip--filled' : ' rcp-chip--empty')
+                            "
+                          >
+                            <mat-icon>scale</mat-icon>
+                            {{ r.weightKg !== null ? (r.weightKg | number: '1.0-1') + ' kg' : '—' }}
+                          </span>
+                          <span
+                            [class]="
+                              'rcp-chip' + (r.sacksCount ? ' rcp-chip--filled' : ' rcp-chip--empty')
+                            "
+                          >
+                            <mat-icon>inventory_2</mat-icon>
+                            {{ r.sacksCount !== null ? r.sacksCount + ' sacos' : '—' }}
+                          </span>
+                        </div>
+                      </button>
+
+                      <!-- Expanded edit form -->
+                      @if (expandedReceptionId() === r.id) {
+                        <div class="reception-form" [formGroup]="getReceptionForm(r.id)">
+                          <div class="reception-form-row">
+                            <mat-form-field appearance="outline" class="rcp-field">
+                              <mat-label>Peso total</mat-label>
+                              <input
+                                matInput
+                                type="number"
+                                formControlName="weightKg"
+                                step="0.01"
+                                min="0"
+                                placeholder="0.00"
+                              />
+                              <mat-icon matPrefix>scale</mat-icon>
+                              <span matSuffix class="field-suffix">kg</span>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="rcp-field">
+                              <mat-label>Cantidad sacos</mat-label>
+                              <input
+                                matInput
+                                type="number"
+                                formControlName="sacksCount"
+                                step="1"
+                                min="0"
+                                placeholder="0"
+                              />
+                              <mat-icon matPrefix>inventory_2</mat-icon>
+                              <span matSuffix class="field-suffix">uds</span>
+                            </mat-form-field>
+                          </div>
+                          <mat-form-field appearance="outline" class="rcp-field rcp-field--full">
+                            <mat-label>Observaciones</mat-label>
+                            <textarea
+                              matInput
+                              formControlName="observations"
+                              rows="2"
+                              placeholder="Condición del producto, incidencias de entrega, etc."
+                            ></textarea>
+                            <mat-icon matPrefix>notes</mat-icon>
+                          </mat-form-field>
+                          <div class="reception-form-actions">
+                            <button mat-button type="button" (click)="toggleReception(r.id)">
+                              Cancelar
+                            </button>
+                            <button
+                              mat-raised-button
+                              class="btn-save-reception"
+                              type="button"
+                              [disabled]="generatingDocument()"
+                              (click)="saveReception(r)"
+                            >
+                              @if (generatingDocument()) {
+                                <mat-spinner diameter="16" />
+                                Generando...
+                              } @else {
+                                <ng-container>
+                                  <mat-icon>auto_awesome</mat-icon>
+                                  Guardar y generar ficha
+                                </ng-container>
+                              }
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- ── TRANSPORT PANEL ──────────────────────────────────────── -->
+          @if (activePanel() === 'transport') {
+            <!-- Transport document card -->
+            <div class="document-card">
+              <div class="document-card-header">
+                <mat-icon class="doc-icon doc-icon--transport">local_taxi</mat-icon>
+                <div>
+                  <h3 class="doc-card-title">Guía de Transporte</h3>
+                  <p class="doc-card-subtitle">Información del transportista y ruta</p>
+                </div>
+              </div>
+
+              @if (transportDocument()?.blobName) {
+                <div class="doc-status-row doc-status-row--ready">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Documento generado</span>
+                </div>
+                <div class="doc-meta-grid">
+                  @if (transportDocument()!.uploadedAt) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Generado el</span>
+                      <span class="doc-meta-value">{{
+                        formatDate(transportDocument()!.uploadedAt)
+                      }}</span>
+                    </div>
+                  }
+                  @if (transportDocument()!.fileName) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Archivo</span>
+                      <span class="doc-meta-value filename">{{
+                        transportDocument()!.fileName
+                      }}</span>
+                    </div>
+                  }
+                  @if (transportDocument()!.version) {
+                    <div class="doc-meta-item">
+                      <span class="doc-meta-label">Versión</span>
+                      <span class="doc-meta-value">v{{ transportDocument()!.version }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="doc-status-row doc-status-row--pending">
+                  <mat-icon>radio_button_unchecked</mat-icon>
+                  <span>Pendiente de generación</span>
+                </div>
+              }
+            </div>
+
+            <!-- Transport form -->
+            <div class="transport-panel">
+              <div class="transport-panel-header">
+                <div class="transport-panel-title">
+                  <div class="transport-title-icon">
+                    <mat-icon>local_shipping</mat-icon>
+                  </div>
+                  <div>
+                    <h3>Datos del Transportista</h3>
+                    <p>Complete la información para generar la guía de transporte</p>
+                  </div>
+                </div>
+              </div>
+
+              <form
+                class="transport-form"
+                [formGroup]="transportForm"
+                (ngSubmit)="saveTransportWaybill()"
+              >
+                <!-- ── Tipo de transporte ── -->
+                <div class="transport-section-label">
+                  <mat-icon>swap_horiz</mat-icon>
+                  <span>Tipo de transporte</span>
+                </div>
+                <mat-form-field appearance="outline" class="transport-field transport-field--full">
+                  <mat-label>Tipo de transporte</mat-label>
+                  <mat-select
+                    formControlName="transportType"
+                    (valueChange)="onTransportTypeChange($event)"
+                  >
+                    <mat-option value="terrestre">
+                      <mat-icon>directions_car</mat-icon>
+                      Terrestre
+                    </mat-option>
+                    <mat-option value="fluvial">
+                      <mat-icon>directions_boat</mat-icon>
+                      Fluvial
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>local_shipping</mat-icon>
+                </mat-form-field>
+
+                <!-- ── Datos del transportista (required) ── -->
+                <div class="transport-section-label">
+                  <mat-icon>person</mat-icon>
+                  <span>Datos del transportista</span>
+                </div>
+
+                <mat-form-field appearance="outline" class="transport-field transport-field--full">
+                  <mat-label>Nombre completo del transportista</mat-label>
+                  <input
+                    matInput
+                    formControlName="transporterName"
+                    placeholder="Nombre y apellidos"
+                  />
+                  <mat-icon matPrefix>person</mat-icon>
+                  @if (
+                    transportForm.get('transporterName')?.invalid &&
+                    transportForm.get('transporterName')?.touched
+                  ) {
+                    <mat-error>El nombre del transportista es requerido</mat-error>
+                  }
+                </mat-form-field>
+
+                <div class="transport-form-row">
+                  <mat-form-field appearance="outline" class="transport-field">
+                    <mat-label>Tipo de documento</mat-label>
+                    <mat-select formControlName="transporterDocumentType">
+                      <mat-option value="DNI">DNI</mat-option>
+                      <mat-option value="CE">Carnet de Extranjería</mat-option>
+                      <mat-option value="PASAPORTE">Pasaporte</mat-option>
+                      <mat-option value="RUC">RUC</mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>badge</mat-icon>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="transport-field">
+                    <mat-label>Número de documento</mat-label>
+                    <input
+                      matInput
+                      formControlName="transporterDocumentNumber"
+                      placeholder="Ej. 12345678"
+                    />
+                    <mat-icon matPrefix>tag</mat-icon>
+                    @if (
+                      transportForm.get('transporterDocumentNumber')?.invalid &&
+                      transportForm.get('transporterDocumentNumber')?.touched
+                    ) {
+                      <mat-error>El número de documento es requerido</mat-error>
+                    }
+                  </mat-form-field>
+                </div>
+
+                <div class="transport-form-row">
+                  <mat-form-field appearance="outline" class="transport-field">
+                    <mat-label>Licencia de conducir</mat-label>
+                    <input
+                      matInput
+                      formControlName="transporterLicense"
+                      placeholder="Ej. Q12345678"
+                    />
+                    <mat-icon matPrefix>card_membership</mat-icon>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="transport-field">
+                    <mat-label>Teléfono</mat-label>
+                    <input
+                      matInput
+                      formControlName="transporterPhone"
+                      placeholder="Ej. 999888777"
+                    />
+                    <mat-icon matPrefix>phone</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <!-- ── Ruta (required) ── -->
+                <div class="transport-section-label">
+                  <mat-icon>route</mat-icon>
+                  <span>Ruta</span>
+                </div>
+
+                <mat-form-field appearance="outline" class="transport-field transport-field--full">
+                  <mat-label>Origen</mat-label>
+                  <input matInput formControlName="originLocation" placeholder="Lugar de origen" />
+                  <mat-icon matPrefix>trip_origin</mat-icon>
+                  @if (
+                    transportForm.get('originLocation')?.invalid &&
+                    transportForm.get('originLocation')?.touched
+                  ) {
+                    <mat-error>El origen es requerido</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="transport-field transport-field--full">
+                  <mat-label>Destino</mat-label>
+                  <input
+                    matInput
+                    formControlName="destinationLocation"
+                    placeholder="Lugar de destino"
+                  />
+                  <mat-icon matPrefix>place</mat-icon>
+                  @if (
+                    transportForm.get('destinationLocation')?.invalid &&
+                    transportForm.get('destinationLocation')?.touched
+                  ) {
+                    <mat-error>El destino es requerido</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="transport-field transport-field--full">
+                  <mat-label>Duración estimada (horas)</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    formControlName="estimatedDurationHours"
+                    step="0.5"
+                    min="0"
+                    placeholder="0.0"
+                  />
+                  <mat-icon matPrefix>schedule</mat-icon>
+                  <span matSuffix class="field-suffix">h</span>
+                </mat-form-field>
+
+                <!-- ── Vehículo (terrestre) ── -->
+                @if (!isFluvialTransport()) {
+                  <div class="transport-section-label">
+                    <mat-icon>directions_car</mat-icon>
+                    <span>Datos del vehículo</span>
+                  </div>
+                  <div class="transport-form-row">
+                    <mat-form-field appearance="outline" class="transport-field">
+                      <mat-label>Placa</mat-label>
+                      <input matInput formControlName="vehiclePlate" placeholder="Ej. ABC-123" />
+                      <mat-icon matPrefix>pin</mat-icon>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="transport-field">
+                      <mat-label>Tipo de vehículo</mat-label>
+                      <input
+                        matInput
+                        formControlName="vehicleType"
+                        placeholder="Ej. Camión, Furgón"
+                      />
+                      <mat-icon matPrefix>local_shipping</mat-icon>
+                    </mat-form-field>
+                  </div>
+                  <div class="transport-form-row">
+                    <mat-form-field appearance="outline" class="transport-field">
+                      <mat-label>Marca</mat-label>
+                      <input matInput formControlName="vehicleBrand" placeholder="Ej. Toyota" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="transport-field">
+                      <mat-label>Modelo</mat-label>
+                      <input matInput formControlName="vehicleModel" placeholder="Ej. Hilux" />
+                    </mat-form-field>
+                  </div>
+                  <mat-form-field
+                    appearance="outline"
+                    class="transport-field transport-field--full"
+                  >
+                    <mat-label>Capacidad del vehículo (kg)</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      formControlName="vehicleCapacityKg"
+                      step="1"
+                      min="0"
+                      placeholder="0"
+                    />
+                    <mat-icon matPrefix>scale</mat-icon>
+                    <span matSuffix class="field-suffix">kg</span>
+                  </mat-form-field>
+                }
+
+                <!-- ── Embarcación (fluvial) ── -->
+                @if (isFluvialTransport()) {
+                  <div class="transport-section-label">
+                    <mat-icon>directions_boat</mat-icon>
+                    <span>Datos de la embarcación</span>
+                  </div>
+                  <div class="transport-form-row">
+                    <mat-form-field appearance="outline" class="transport-field">
+                      <mat-label>Matrícula de embarcación</mat-label>
+                      <input
+                        matInput
+                        formControlName="boatRegistration"
+                        placeholder="Ej. EW-12345"
+                      />
+                      <mat-icon matPrefix>anchor</mat-icon>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="transport-field">
+                      <mat-label>Potencia del motor (HP)</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        formControlName="boatMotorHp"
+                        step="1"
+                        min="1"
+                        placeholder="0"
+                      />
+                      <mat-icon matPrefix>speed</mat-icon>
+                      <span matSuffix class="field-suffix">HP</span>
+                    </mat-form-field>
+                  </div>
+                }
+
+                <!-- ── Centro de acopio ── -->
+                <div class="transport-section-label transport-section-label--optional">
+                  <mat-icon>store</mat-icon>
+                  <span>Centro de acopio <span class="optional-tag">Opcional</span></span>
+                </div>
+                <mat-form-field appearance="outline" class="transport-field transport-field--full">
+                  <mat-label>Dirección del centro de acopio</mat-label>
+                  <input
+                    matInput
+                    formControlName="collectionCenterAddress"
+                    placeholder="Dirección"
+                  />
+                  <mat-icon matPrefix>location_on</mat-icon>
+                </mat-form-field>
+                <div class="transport-form-row">
+                  <mat-form-field appearance="outline" class="transport-field">
+                    <mat-label>Nombre del responsable</mat-label>
+                    <input
+                      matInput
+                      formControlName="collectionCenterManagerName"
+                      placeholder="Nombre completo"
+                    />
+                    <mat-icon matPrefix>manage_accounts</mat-icon>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="transport-field">
+                    <mat-label>DNI del responsable</mat-label>
+                    <input
+                      matInput
+                      formControlName="collectionCenterManagerDni"
+                      placeholder="12345678"
+                    />
+                    <mat-icon matPrefix>badge</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <!-- ── Comprador ── -->
+                <div class="transport-section-label transport-section-label--optional">
+                  <mat-icon>shopping_bag</mat-icon>
+                  <span>Comprador <span class="optional-tag">Opcional</span></span>
+                </div>
+                <mat-form-field appearance="outline" class="transport-field transport-field--full">
+                  <mat-label>Nombre del comprador</mat-label>
+                  <input matInput formControlName="buyerName" placeholder="Nombre o razón social" />
+                  <mat-icon matPrefix>person_search</mat-icon>
+                </mat-form-field>
+                <div class="transport-form-row">
+                  <mat-form-field appearance="outline" class="transport-field">
+                    <mat-label>Tipo de documento</mat-label>
+                    <input matInput formControlName="buyerDocumentType" placeholder="DNI / RUC" />
+                    <mat-icon matPrefix>badge</mat-icon>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="transport-field">
+                    <mat-label>Número de documento</mat-label>
+                    <input matInput formControlName="buyerDocumentNumber" placeholder="Número" />
+                    <mat-icon matPrefix>tag</mat-icon>
+                  </mat-form-field>
+                </div>
+                <mat-form-field appearance="outline" class="transport-field transport-field--full">
+                  <mat-label>Domicilio legal del comprador</mat-label>
+                  <input
+                    matInput
+                    formControlName="buyerLegalAddress"
+                    placeholder="Dirección legal"
+                  />
+                  <mat-icon matPrefix>home_work</mat-icon>
+                </mat-form-field>
+
+                <!-- ── Observaciones ── -->
+                <mat-form-field appearance="outline" class="transport-field transport-field--full">
+                  <mat-label>Observaciones</mat-label>
+                  <textarea
+                    matInput
+                    formControlName="notes"
+                    rows="2"
+                    placeholder="Condiciones del transporte, rutas alternativas, etc."
+                  ></textarea>
+                  <mat-icon matPrefix>notes</mat-icon>
+                </mat-form-field>
+
+                <!-- ── Action ── -->
+                <div class="transport-form-actions">
+                  <button
+                    mat-raised-button
+                    class="btn-save-transport"
+                    type="submit"
+                    [disabled]="savingTransport()"
+                  >
+                    @if (savingTransport()) {
+                      <mat-spinner diameter="16" />
+                      Guardando...
+                    } @else {
+                      <ng-container>
+                        <mat-icon>auto_awesome</mat-icon>
+                        Guardar y generar guía
+                      </ng-container>
+                    }
+                  </button>
+                </div>
+              </form>
+            </div>
+          }
+
+          <!-- Notes (if any) -->
+          @if (lot()!.transformationNotes) {
+            <div class="notes-card">
+              <h3 class="card-section-title">
+                <mat-icon>notes</mat-icon>
+                Observaciones del lote
+              </h3>
+              <p class="notes-text">{{ lot()!.transformationNotes }}</p>
+            </div>
+          }
+        </div>
+        <!-- end info-panel -->
+      </div>
+      <!-- end split-view -->
+    </div>
+    <!-- end main-content -->
+
+    <!-- ─── Footer ───────────────────────────────────────────────────────── -->
+    <div class="detail-footer">
+      <button mat-stroked-button class="nav-back-btn" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Volver al proyecto
+      </button>
+      @if (parentLotLabel()) {
+        <button mat-stroked-button class="nav-parent-btn" (click)="goToParentLot()">
+          <mat-icon>account_tree</mat-icon>
+          Ver lote primario
+        </button>
+      }
+    </div>
+  } @else {
+    <!-- ─── Error / Not Found ──────────────────────────────────────────── -->
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p class="text-body text-neutral-subheading">No se pudo cargar el lote secundario.</p>
+      <button mat-stroked-button (click)="goBack()">Volver</button>
+    </div>
+  }
+</div>

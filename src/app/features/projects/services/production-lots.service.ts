@@ -4,9 +4,11 @@ import { Observable } from 'rxjs';
 import { environment } from '@environments/environment';
 import {
   ProductionLot,
+  ProductionLotDetail,
   ProductionLotStatus,
   ProductionLotDocumentCode,
   CreateProductionLotRequest,
+  CreateSecondaryProductionLotRequest,
   ProductionLotBatchReception,
   UpdateBatchReceptionRequest,
   GenerateFruitReceptionRecordRequest,
@@ -14,7 +16,16 @@ import {
   ProductionLotProcessingRecord,
   SavePackagingRecordRequest,
   SaveStorageRecordRequest,
+  SaveSecondaryTransportRequest,
+  SecondaryReceptionRecordRequest,
 } from '../models/production-lot.model';
+import {
+  ProductionLotRecord,
+  ProductionLotSearchParams,
+  CreatePrimaryProductionLotRequest,
+  PrimaryLotAvailable,
+  CreateSecondaryLotMultiRequest,
+} from '../../production-lots/models/production-lot-search.model';
 
 /**
  * Response paginado genérico
@@ -52,8 +63,8 @@ export class ProductionLotsService {
    * Obtiene el detalle de un lote de producción por ID
    * GET /{id}
    */
-  getLotById(id: string): Observable<ProductionLot> {
-    return this.http.get<ProductionLot>(`${this.apiUrl}/${id}`);
+  getLotById(id: string): Observable<ProductionLotDetail> {
+    return this.http.get<ProductionLotDetail>(`${this.apiUrl}/${id}`);
   }
 
   /**
@@ -62,6 +73,51 @@ export class ProductionLotsService {
    */
   createLot(request: CreateProductionLotRequest): Observable<ProductionLot> {
     return this.http.post<ProductionLot>(this.apiUrl, request);
+  }
+
+  /**
+   * Crea un lote de transformación PRIMARIA a nivel empresa (nuevo flujo multi-proyecto)
+   * POST /
+   * Usa el nuevo modelo CreatePrimaryProductionLotRequest con sourceBatches + receptions
+   */
+  createPrimaryLot(request: CreatePrimaryProductionLotRequest): Observable<ProductionLotRecord> {
+    return this.http.post<ProductionLotRecord>(this.apiUrl, request);
+  }
+
+  /**
+   * Crea un nuevo lote de producción secundaria a partir de un lote primario finalizado
+   * POST /secondary
+   */
+  createSecondaryLot(request: CreateSecondaryProductionLotRequest): Observable<ProductionLot> {
+    return this.http.post<ProductionLot>(`${this.apiUrl}/secondary`, request);
+  }
+
+  /**
+   * Lista los lotes primarios disponibles para transformación secundaria (paginado)
+   * GET /available-for-secondary?companyId=...&page=...&size=...
+   */
+  getAvailablePrimaryLots(
+    companyId: string,
+    page = 0,
+    size = 10,
+  ): Observable<PageDto<PrimaryLotAvailable>> {
+    const params = new HttpParams()
+      .set('companyId', companyId)
+      .set('page', page.toString())
+      .set('size', size.toString());
+    return this.http.get<PageDto<PrimaryLotAvailable>>(`${this.apiUrl}/available-for-secondary`, {
+      params,
+    });
+  }
+
+  /**
+   * Crea un lote de transformación secundaria multi-fuente (nuevo endpoint)
+   * POST /secondary
+   */
+  createSecondaryLotMulti(
+    request: CreateSecondaryLotMultiRequest,
+  ): Observable<ProductionLotDetail> {
+    return this.http.post<ProductionLotDetail>(`${this.apiUrl}/secondary`, request);
   }
 
   /**
@@ -156,5 +212,48 @@ export class ProductionLotsService {
    */
   saveStorageRecord(lotId: string, request: SaveStorageRecordRequest): Observable<ProductionLot> {
     return this.http.post<ProductionLot>(`${this.apiUrl}/${lotId}/storage-control-record`, request);
+  }
+
+  /**
+   * Guarda la información de transporte y genera la guía de transporte (PDF)
+   * POST /{id}/transport-waybill
+   */
+  saveTransportWaybill(
+    lotId: string,
+    request: SaveSecondaryTransportRequest,
+  ): Observable<ProductionLot> {
+    return this.http.post<ProductionLot>(`${this.apiUrl}/${lotId}/transport-waybill`, request);
+  }
+
+  /**
+   * Genera la ficha de recepción para transformación secundaria
+   * POST /{id}/secondary-fruit-reception-record
+   */
+  generateSecondaryFruitReceptionRecord(
+    lotId: string,
+    requests: SecondaryReceptionRecordRequest[],
+  ): Observable<ProductionLot> {
+    return this.http.post<ProductionLot>(
+      `${this.apiUrl}/${lotId}/secondary-fruit-reception-record`,
+      requests,
+    );
+  }
+
+  /**
+   * Busca lotes de transformación a nivel empresa con filtros opcionales.
+   * GET /search?companyId=...&projectId=...&productId=...&q=...&page=...&size=...
+   */
+  search(params: ProductionLotSearchParams): Observable<PageDto<ProductionLotRecord>> {
+    let httpParams = new HttpParams().set('companyId', params.companyId);
+
+    if (params.projectId) httpParams = httpParams.set('projectId', params.projectId);
+    if (params.productId) httpParams = httpParams.set('productId', params.productId);
+    if (params.page !== undefined) httpParams = httpParams.set('page', params.page.toString());
+    if (params.size !== undefined) httpParams = httpParams.set('size', params.size.toString());
+    if (params.q?.trim()) httpParams = httpParams.set('q', params.q.trim());
+
+    return this.http.get<PageDto<ProductionLotRecord>>(`${this.apiUrl}/search`, {
+      params: httpParams,
+    });
   }
 }

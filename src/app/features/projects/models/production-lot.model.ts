@@ -2,6 +2,8 @@
  * Modelos para gestión de lotes de producción (Transformación Primaria)
  */
 
+import { TransportInfoRequest } from '../../collection-batches/models/collection-batch.model';
+
 /**
  * Etapa de transformación
  */
@@ -37,7 +39,8 @@ export type ProductionLotDocumentCode =
   | 'FRUIT_RECEPTION_RECORD'
   | 'PULP_PROCESSING_RECORD'
   | 'PACKAGING_RECORD'
-  | 'STORAGE_CONTROL_RECORD';
+  | 'STORAGE_CONTROL_RECORD'
+  | 'TRANSPORT_WAYBILL';
 
 /**
  * Labels para códigos de documentos
@@ -47,6 +50,7 @@ export const PRODUCTION_LOT_DOCUMENT_LABELS: Record<ProductionLotDocumentCode, s
   PULP_PROCESSING_RECORD: 'Registro de Procesamiento de Pulpa',
   PACKAGING_RECORD: 'Registro de Envasado',
   STORAGE_CONTROL_RECORD: 'Registro de Control de Almacén',
+  TRANSPORT_WAYBILL: 'Guía de Transporte',
 };
 
 /**
@@ -84,7 +88,49 @@ export const TRANSFORMATION_STAGE_LABELS: Record<TransformationStage, string> = 
 };
 
 /**
- * Respuesta de lote de producción (ProductionLotResponse del backend)
+ * Lote de acopio fuente de un lote de transformación primario
+ * (ProductionLotSourceBatchResponse del backend)
+ */
+export interface ProductionLotSourceBatch {
+  id: string;
+  productionLotId: string;
+  collectionBatchId: string;
+  collectionBatchNumber: string;
+  projectId: string;
+  projectName: string;
+  companyId: string;
+  companyName: string;
+  productId: string;
+  productName: string;
+  sourceOrder: number;
+  contributedWeightKg: number | null;
+  contributedSacksCount: number | null;
+  contributedJabasCount: number | null;
+  createdAt: string;
+}
+
+/**
+ * Lote de transformación primario fuente de un lote secundario
+ * (ProductionLotSourceLotResponse del backend)
+ */
+export interface ProductionLotSourceLot {
+  id: string;
+  productionLotId: string;
+  sourcePrimaryLotId: string;
+  sourcePrimaryLotNumber: string;
+  sourcePrimaryLotStatus: string;
+  sourceOrder: number;
+  contributedWeightKg: number | null;
+  contributedSacksCount: number | null;
+  contributedJabasCount: number | null;
+  observations: string | null;
+  createdAt: string;
+}
+
+/**
+ * Respuesta de lote de producción — LISTADO a nivel proyecto
+ * (endpoint GET /by-project/{projectId})
+ * Mantiene campos planos como productName, companyName, projectId, etc.
  */
 export interface ProductionLot {
   id: string;
@@ -113,6 +159,49 @@ export interface ProductionLot {
   createdBy: string;
   createdByName: string;
   documents: ProductionLotDocument[];
+  transportInfo?: TransportInfoRequest | null;
+  totalSacksCount?: number | null;
+  totalJabasCount?: number | null;
+  parentLotId?: string | null;
+  parentLotNumber?: string | null;
+}
+
+/**
+ * Respuesta de lote de producción — DETALLE a nivel empresa
+ * (endpoint GET /{id} → ProductionLotResponse del backend)
+ * No tiene campos planos de proyecto/producto/empresa.
+ * Esa información se deriva de sourceBatches (primaria) o sourceLots (secundaria).
+ */
+export interface ProductionLotDetail {
+  id: string;
+  lotNumber: string;
+  productionDate: string; // LocalDate → "YYYY-MM-DD"
+  transformationStage: TransformationStage;
+  status: ProductionLotStatus;
+  quantity: number | null;
+  unit: string | null;
+  totalSacksCount: number | null;
+  totalJabasCount: number | null;
+  transformationNotes: string | null;
+  traceabilityChain: string | null;
+  lotHash: string | null;
+  qrCode: string | null;
+  publicUrl: string | null;
+  metadata: Record<string, unknown> | null;
+  transportInfo: TransportInfoRequest | null;
+  /** Nombre de empresa derivado de los lotes fuente */
+  derivedCompanyName: string | null;
+  /** Solo disponible para lotes primarios */
+  sourceBatches: ProductionLotSourceBatch[] | null;
+  /** Solo disponible para lotes secundarios */
+  sourceLots: ProductionLotSourceLot[] | null;
+  sourceBatchesCount: number | null;
+  sourceLotsCount: number | null;
+  documents: ProductionLotDocument[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  createdByName: string | null;
 }
 
 /**
@@ -132,6 +221,42 @@ export interface CreateProductionLotRequest {
   projectId: string;
   sourceCollectionBatchIds: string[];
   receptions: BatchReceptionRequest[];
+}
+
+/**
+ * Request para crear un lote de transformación secundaria
+ * POST /secondary
+ */
+export interface CreateSecondaryProductionLotRequest {
+  parentLotId: string;
+  quantity: number;
+  totalSacksCount?: number | null;
+  totalJabasCount?: number | null;
+  transformationNotes?: string | null;
+  transportInfo: TransportInfoRequest;
+}
+
+export type TransportType = TransportInfoRequest['transportType'];
+
+/**
+ * Request para guardar la guía de transporte de un lote secundario
+ * POST /{id}/transport-waybill
+ */
+export interface SaveSecondaryTransportRequest {
+  transportInfo: TransportInfoRequest;
+}
+
+/**
+ * Request para generar la ficha de recepción de transformación secundaria
+ * POST /{id}/secondary-fruit-reception-record
+ */
+export interface SecondaryReceptionRecordRequest {
+  productionLotId?: string | null;
+  sourcePrimaryLotId: string;
+  quantity: number;
+  totalSacksCount?: number | null;
+  totalJabasCount?: number | null;
+  transformationNotes?: string | null;
 }
 
 /**

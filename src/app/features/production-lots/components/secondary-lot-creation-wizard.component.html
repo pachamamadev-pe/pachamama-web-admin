@@ -1,0 +1,469 @@
+<div class="secondary-wizard">
+  <!-- ── Header ─────────────────────────────────────────────────────────────── -->
+  <div class="wizard-header">
+    <div class="wizard-header-title">
+      <div class="wizard-title-icon">
+        <mat-icon>precision_manufacturing</mat-icon>
+      </div>
+      <div>
+        <h2>Crear Transformación Secundaria</h2>
+        <p>
+          @if (currentStep() === 1) {
+            Paso 1 de 3 · Seleccionar lotes primarios
+          } @else if (currentStep() === 2) {
+            Paso 2 de 3 · Contribuciones por lote
+          } @else {
+            Paso 3 de 3 · Información de transporte
+          }
+        </p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="close()" [disabled]="saving()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ── Step Indicator ────────────────────────────────────────────────────── -->
+  <div class="step-indicator">
+    <div
+      class="step"
+      [class.step--active]="currentStep() === 1"
+      [class.step--done]="currentStep() > 1"
+    >
+      <div class="step-circle">
+        @if (currentStep() > 1) {
+          <mat-icon>check</mat-icon>
+        } @else {
+          <span>1</span>
+        }
+      </div>
+      <span class="step-label">Lotes fuente</span>
+    </div>
+    <div class="step-connector" [class.step-connector--done]="currentStep() > 1"></div>
+    <div
+      class="step"
+      [class.step--active]="currentStep() === 2"
+      [class.step--done]="currentStep() > 2"
+    >
+      <div class="step-circle">
+        @if (currentStep() > 2) {
+          <mat-icon>check</mat-icon>
+        } @else {
+          <span>2</span>
+        }
+      </div>
+      <span class="step-label">Contribuciones</span>
+    </div>
+    <div class="step-connector" [class.step-connector--done]="currentStep() > 2"></div>
+    <div class="step" [class.step--active]="currentStep() === 3">
+      <div class="step-circle"><span>3</span></div>
+      <span class="step-label">Transporte</span>
+    </div>
+  </div>
+
+  <!-- ── Content ───────────────────────────────────────────────────────────── -->
+  <div class="wizard-content">
+    <!-- ═══════════════════════════════════════════════════════ STEP 1 ════════ -->
+    @if (currentStep() === 1) {
+      @if (selectedLotIds().size > 0) {
+        <div class="selection-banner">
+          <mat-icon>check_circle</mat-icon>
+          <span
+            >{{ selectedLotIds().size }} lote{{
+              selectedLotIds().size !== 1 ? 's' : ''
+            }}
+            seleccionado{{ selectedLotIds().size !== 1 ? 's' : '' }}</span
+          >
+        </div>
+      }
+
+      <!-- Search bar -->
+      <div class="search-row">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Buscar lote</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input
+            matInput
+            [value]="searchTerm()"
+            (input)="onSearchChange($any($event.target).value)"
+            placeholder="Número de lote, empresa..."
+          />
+          @if (searchTerm()) {
+            <button matSuffix mat-icon-button (click)="clearSearch()">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
+      </div>
+
+      @if (loadingLots()) {
+        <div class="loading-state">
+          <mat-spinner diameter="36" />
+          <span>Cargando lotes disponibles...</span>
+        </div>
+      } @else if (filteredAvailableLots().length === 0 && availableLots().length === 0) {
+        <div class="empty-state">
+          <mat-icon>inbox</mat-icon>
+          <p>No hay lotes primarios disponibles</p>
+          <span>Los lotes deben estar en estado "envasado" o "almacenamiento"</span>
+        </div>
+      } @else if (filteredAvailableLots().length === 0) {
+        <div class="empty-state">
+          <mat-icon>search_off</mat-icon>
+          <p>Sin resultados para "{{ searchTerm() }}"</p>
+          <button mat-stroked-button (click)="clearSearch()">Limpiar búsqueda</button>
+        </div>
+      } @else {
+        <div class="lot-list">
+          @for (lot of filteredAvailableLots(); track lot.id) {
+            <button
+              type="button"
+              class="lot-item"
+              [class.lot-item--selected]="isSelected(lot.id)"
+              (click)="toggleLot(lot)"
+            >
+              <!-- Check circle -->
+              <div class="lot-check">
+                <div class="check-circle" [class.check-circle--active]="isSelected(lot.id)">
+                  @if (isSelected(lot.id)) {
+                    <mat-icon>check</mat-icon>
+                  }
+                </div>
+              </div>
+
+              <!-- Lot info -->
+              <div class="lot-info">
+                <span class="lot-number">{{ lot.lotNumber }}</span>
+                <span class="lot-meta">
+                  {{ lot.derivedCompanyName ?? '—' }} · {{ formatDate(lot.productionDate) }}
+                </span>
+              </div>
+
+              <!-- Chips -->
+              <div class="lot-chips">
+                <span class="status-chip">{{ STATUS_LABELS[lot.status] }}</span>
+                @if (lot.quantity != null) {
+                  <span class="qty-chip">
+                    <mat-icon>scale</mat-icon>
+                    {{ lot.quantity | number: '1.0-2' }} {{ lot.unit ?? 'kg' }}
+                  </span>
+                }
+                @if (lot.totalSacksCount) {
+                  <span class="qty-chip">
+                    <mat-icon>inventory_2</mat-icon>
+                    {{ lot.totalSacksCount }} sacos
+                  </span>
+                }
+              </div>
+            </button>
+          }
+        </div>
+
+        <mat-paginator
+          [length]="totalLots()"
+          [pageSize]="pageSize()"
+          [pageIndex]="currentPage()"
+          [pageSizeOptions]="[5, 10, 20]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+        />
+      }
+    }
+
+    <!-- ═══════════════════════════════════════════════════════ STEP 2 ════════ -->
+    @if (currentStep() === 2) {
+      <!-- Totals summary card -->
+      <div class="totals-card">
+        <div class="totals-header">
+          <mat-icon>summarize</mat-icon>
+          <span>Totales calculados de contribuciones</span>
+        </div>
+        <div class="totals-grid">
+          <div class="total-item">
+            <span class="total-label">Peso total</span>
+            <span class="total-value">{{ contributionTotals().weight | number: '1.0-2' }} kg</span>
+          </div>
+          <div class="total-item">
+            <span class="total-label">Sacos totales</span>
+            <span class="total-value">{{ contributionTotals().sacks }}</span>
+          </div>
+          <div class="total-item">
+            <span class="total-label">Jabas totales</span>
+            <span class="total-value">{{ contributionTotals().jabas }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-lot contribution cards (accordion) -->
+      <div class="contributions-list">
+        @for (lot of allSelectedLots(); track lot.id; let idx = $index) {
+          <div class="contrib-item" [class.contrib-item--open]="expandedLotId() === lot.id">
+            <!-- Collapsed row (click to expand) -->
+            <button type="button" class="contrib-row" (click)="toggleLotExpansion(lot.id)">
+              <div class="contrib-seq">{{ idx + 1 }}</div>
+              <div class="contrib-info">
+                <span class="contrib-lot-number">{{ lot.lotNumber }}</span>
+                <span class="contrib-company">{{ lot.derivedCompanyName ?? '—' }}</span>
+              </div>
+              <div class="contrib-values">
+                @if (getLotForm(lot.id).get('contributedWeightKg')?.value != null) {
+                  <span class="contrib-chip">
+                    <mat-icon>scale</mat-icon>
+                    {{ getLotForm(lot.id).get('contributedWeightKg')?.value | number: '1.0-2' }} kg
+                  </span>
+                }
+                @if (getLotForm(lot.id).get('contributedSacksCount')?.value) {
+                  <span class="contrib-chip">
+                    <mat-icon>inventory_2</mat-icon>
+                    {{ getLotForm(lot.id).get('contributedSacksCount')?.value }} sacos
+                  </span>
+                }
+              </div>
+              <mat-icon class="contrib-toggle-icon">
+                {{ expandedLotId() === lot.id ? 'keyboard_arrow_up' : 'edit' }}
+              </mat-icon>
+            </button>
+
+            <!-- Expanded contribution form -->
+            @if (expandedLotId() === lot.id) {
+              <div class="contrib-form" [formGroup]="getLotForm(lot.id)">
+                <div class="contrib-form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Peso aportado (kg)</mat-label>
+                    <mat-icon matPrefix>scale</mat-icon>
+                    <input
+                      matInput
+                      type="number"
+                      formControlName="contributedWeightKg"
+                      min="0"
+                      step="0.01"
+                    />
+                    <span matSuffix>kg</span>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Sacos aportados</mat-label>
+                    <mat-icon matPrefix>inventory_2</mat-icon>
+                    <input
+                      matInput
+                      type="number"
+                      formControlName="contributedSacksCount"
+                      min="0"
+                      step="1"
+                    />
+                    <span matSuffix>uds</span>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Jabas aportadas</mat-label>
+                    <mat-icon matPrefix>grid_view</mat-icon>
+                    <input
+                      matInput
+                      type="number"
+                      formControlName="contributedJabasCount"
+                      min="0"
+                      step="1"
+                    />
+                    <span matSuffix>uds</span>
+                  </mat-form-field>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Optional lot-level fields -->
+      <div class="section-divider"><span>Datos del lote secundario (opcional)</span></div>
+
+      <form [formGroup]="summaryForm" class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Cantidad total (kg)</mat-label>
+          <mat-icon matPrefix>scale</mat-icon>
+          <input
+            matInput
+            type="number"
+            formControlName="quantity"
+            min="0.01"
+            step="0.01"
+            placeholder="Calculado automáticamente"
+          />
+          <mat-hint>Si no se indica, se usa la suma de contribuciones</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Total sacos</mat-label>
+          <mat-icon matPrefix>inventory_2</mat-icon>
+          <input
+            matInput
+            type="number"
+            formControlName="totalSacksCount"
+            min="1"
+            step="1"
+            placeholder="Opcional"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Total jabas</mat-label>
+          <mat-icon matPrefix>grid_view</mat-icon>
+          <input
+            matInput
+            type="number"
+            formControlName="totalJabasCount"
+            min="1"
+            step="1"
+            placeholder="Opcional"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Notas de transformación</mat-label>
+          <mat-icon matPrefix>notes</mat-icon>
+          <textarea
+            matInput
+            rows="2"
+            formControlName="transformationNotes"
+            placeholder="Detalles del proceso, observaciones..."
+          ></textarea>
+          <mat-hint align="end"
+            >{{ summaryForm.get('transformationNotes')?.value?.length ?? 0 }}/1000</mat-hint
+          >
+        </mat-form-field>
+      </form>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════ STEP 3 ════════ -->
+    @if (currentStep() === 3) {
+      <div class="transport-banner">
+        <div class="transport-banner-icon">
+          <mat-icon>local_shipping</mat-icon>
+        </div>
+        <div class="transport-banner-text">
+          <strong>Información de transporte requerida</strong>
+          <span
+            >Registra los datos del transportista para completar la trazabilidad del lote
+            secundario.</span
+          >
+        </div>
+      </div>
+
+      <form [formGroup]="transportForm" class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de transporte</mat-label>
+          <mat-select
+            formControlName="transportType"
+            (selectionChange)="onTransportTypeChange($event.value)"
+          >
+            @for (t of transportTypes; track t.value) {
+              <mat-option [value]="t.value">{{ t.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre del transportista</mat-label>
+          <input matInput formControlName="transporterName" />
+          @if (
+            transportForm.get('transporterName')?.invalid &&
+            transportForm.get('transporterName')?.touched
+          ) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de documento</mat-label>
+          <mat-select formControlName="transporterDocumentType">
+            @for (doc of documentTypes; track doc) {
+              <mat-option [value]="doc">{{ doc }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Número de documento</mat-label>
+          <input matInput formControlName="transporterDocumentNumber" />
+          @if (
+            transportForm.get('transporterDocumentNumber')?.invalid &&
+            transportForm.get('transporterDocumentNumber')?.touched
+          ) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Punto de origen</mat-label>
+          <mat-icon matPrefix>place</mat-icon>
+          <input matInput formControlName="originLocation" />
+          @if (
+            transportForm.get('originLocation')?.invalid &&
+            transportForm.get('originLocation')?.touched
+          ) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Punto de destino</mat-label>
+          <mat-icon matPrefix>flag</mat-icon>
+          <input matInput formControlName="destinationLocation" />
+          @if (
+            transportForm.get('destinationLocation')?.invalid &&
+            transportForm.get('destinationLocation')?.touched
+          ) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+        </mat-form-field>
+      </form>
+    }
+  </div>
+
+  <!-- ── Footer actions ────────────────────────────────────────────────────── -->
+  <div class="wizard-actions">
+    <button mat-stroked-button (click)="close()" [disabled]="saving()">Cancelar</button>
+
+    <div class="actions-right">
+      @if (currentStep() > 1) {
+        <button
+          mat-stroked-button
+          (click)="currentStep() === 2 ? goBackToStep1() : goBackToStep2()"
+          [disabled]="saving()"
+        >
+          <mat-icon>chevron_left</mat-icon>
+          <span>Volver</span>
+        </button>
+      }
+
+      @if (currentStep() === 1) {
+        <button
+          mat-raised-button
+          class="btn-primary"
+          (click)="goToStep2()"
+          [disabled]="selectedLotIds().size === 0"
+        >
+          <span
+            >Continuar ({{ selectedLotIds().size }} seleccionado{{
+              selectedLotIds().size !== 1 ? 's' : ''
+            }})</span
+          >
+          <mat-icon iconSuffix>chevron_right</mat-icon>
+        </button>
+      } @else if (currentStep() === 2) {
+        <button mat-raised-button class="btn-primary" (click)="goToStep3()">
+          <span>Continuar</span>
+          <mat-icon iconSuffix>chevron_right</mat-icon>
+        </button>
+      } @else {
+        <button
+          mat-raised-button
+          class="btn-primary"
+          (click)="createSecondaryLot()"
+          [disabled]="saving()"
+        >
+          @if (saving()) {
+            <mat-spinner diameter="16" />
+          } @else {
+            <mat-icon>check_circle</mat-icon>
+          }
+          <span>{{ saving() ? 'Creando lote…' : 'Crear lote secundario' }}</span>
+        </button>
+      }
+    </div>
+  </div>
+</div>

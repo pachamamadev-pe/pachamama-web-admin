@@ -1,0 +1,281 @@
+<div class="secondary-wizard">
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="wizard-header">
+    <div class="wizard-header-title">
+      <div class="wizard-title-icon">
+        <mat-icon>precision_manufacturing</mat-icon>
+      </div>
+      <div>
+        <h2>Crear Transformación Secundaria</h2>
+        <p>
+          @if (currentStep() === 1) {
+            Paso 1 de 2 · Datos del nuevo lote
+          } @else {
+            Paso 2 de 2 · Información de transporte
+          }
+        </p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="close()" [disabled]="saving()" aria-label="Cerrar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ── Stepper ─────────────────────────────────────────────────────────── -->
+  <div class="step-indicator">
+    <div
+      class="step"
+      [class.step--active]="currentStep() === 1"
+      [class.step--done]="currentStep() > 1"
+    >
+      <div class="step-circle">
+        @if (currentStep() > 1) {
+          <mat-icon>check</mat-icon>
+        } @else {
+          <span>1</span>
+        }
+      </div>
+      <span class="step-label">Lote secundario</span>
+    </div>
+    <div class="step-connector" [class.step-connector--done]="currentStep() > 1"></div>
+    <div class="step" [class.step--active]="currentStep() === 2">
+      <div class="step-circle"><span>2</span></div>
+      <span class="step-label">Transporte</span>
+    </div>
+  </div>
+
+  <!-- ── Content ─────────────────────────────────────────────────────────── -->
+  <div class="wizard-content">
+    @if (currentStep() === 1) {
+      <!-- Lote de origen -->
+      <div class="parent-lot-card">
+        <div class="parent-lot-header">
+          <mat-icon>hub</mat-icon>
+          <span>Lote de origen · Transformación primaria</span>
+        </div>
+        <div class="parent-lot-grid">
+          <div class="data-item">
+            <span class="data-label">Número de lote</span>
+            <span class="data-value">{{ data.parentLot.lotNumber }}</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Producto</span>
+            <span class="data-value">{{ data.parentLot.productName }}</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Empresa</span>
+            <span class="data-value">{{ data.parentLot.companyName }}</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Fecha de producción</span>
+            <span class="data-value">{{ formatDate(data.parentLot.productionDate) }}</span>
+          </div>
+          <div class="data-item data-item--highlight">
+            <span class="data-label">Cantidad disponible</span>
+            <span class="data-value"
+              >{{ data.parentLot.quantity | number: '1.0-2' }} {{ data.parentLot.unit }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Separador de sección -->
+      <div class="section-divider">
+        <span>Datos del lote secundario</span>
+      </div>
+
+      <!-- Formulario paso 1 -->
+      <form [formGroup]="primaryForm" class="form-grid">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Cantidad producida</mat-label>
+          <input
+            matInput
+            type="number"
+            formControlName="quantity"
+            min="0.01"
+            step="0.01"
+            placeholder="0.00"
+          />
+          <span matTextSuffix>{{ data.parentLot.unit || 'kg' }}</span>
+          <mat-hint>Cantidad resultante de la transformación secundaria</mat-hint>
+          @if (
+            primaryForm.get('quantity')?.hasError('required') &&
+            primaryForm.get('quantity')?.touched
+          ) {
+            <mat-error>La cantidad es obligatoria</mat-error>
+          }
+          @if (
+            primaryForm.get('quantity')?.hasError('min') && primaryForm.get('quantity')?.touched
+          ) {
+            <mat-error>Debe ser mayor a 0</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Total de sacos</mat-label>
+          <input
+            matInput
+            type="number"
+            formControlName="totalSacksCount"
+            min="1"
+            step="1"
+            placeholder="Opcional"
+          />
+          <mat-hint>Número de sacos</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Total de jabas</mat-label>
+          <input
+            matInput
+            type="number"
+            formControlName="totalJabasCount"
+            min="1"
+            step="1"
+            placeholder="Opcional"
+          />
+          <mat-hint>Número de jabas</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Notas de transformación</mat-label>
+          <textarea
+            matInput
+            rows="3"
+            formControlName="transformationNotes"
+            placeholder="Detalles del proceso, observaciones o incidencias…"
+          ></textarea>
+          <mat-hint align="end"
+            >{{ primaryForm.get('transformationNotes')?.value?.length || 0 }}/1000</mat-hint
+          >
+        </mat-form-field>
+      </form>
+    }
+
+    @if (currentStep() === 2) {
+      <!-- Banner informativo transporte -->
+      <div class="transport-banner">
+        <div class="transport-banner-icon">
+          <mat-icon>local_shipping</mat-icon>
+        </div>
+        <div class="transport-banner-text">
+          <strong>Información de transporte requerida</strong>
+          <span
+            >Registra los datos del transportista para completar la trazabilidad del lote
+            secundario.</span
+          >
+        </div>
+      </div>
+
+      <!-- Formulario paso 2 -->
+      <form [formGroup]="transportForm" class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de transporte</mat-label>
+          <mat-select formControlName="transportType">
+            @for (t of transportTypes; track t.value) {
+              <mat-option [value]="t.value">{{ t.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre del transportista</mat-label>
+          <input matInput formControlName="transporterName" placeholder="Nombres y apellidos" />
+          @if (
+            transportForm.get('transporterName')?.hasError('required') &&
+            transportForm.get('transporterName')?.touched
+          ) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de documento</mat-label>
+          <mat-select formControlName="transporterDocumentType">
+            @for (doc of documentTypes; track doc) {
+              <mat-option [value]="doc">{{ doc }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Número de documento</mat-label>
+          <input matInput formControlName="transporterDocumentNumber" placeholder="Ej. 45678901" />
+          @if (
+            transportForm.get('transporterDocumentNumber')?.hasError('required') &&
+            transportForm.get('transporterDocumentNumber')?.touched
+          ) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Punto de origen</mat-label>
+          <mat-icon matPrefix>place</mat-icon>
+          <input
+            matInput
+            formControlName="originLocation"
+            placeholder="Comunidad o lugar de salida"
+          />
+          @if (
+            transportForm.get('originLocation')?.hasError('required') &&
+            transportForm.get('originLocation')?.touched
+          ) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Punto de destino</mat-label>
+          <mat-icon matPrefix>flag</mat-icon>
+          <input
+            matInput
+            formControlName="destinationLocation"
+            placeholder="Ciudad o lugar de llegada"
+          />
+          @if (
+            transportForm.get('destinationLocation')?.hasError('required') &&
+            transportForm.get('destinationLocation')?.touched
+          ) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+        </mat-form-field>
+      </form>
+    }
+  </div>
+
+  <!-- ── Footer de acciones ──────────────────────────────────────────────── -->
+  <div class="wizard-actions">
+    <button mat-stroked-button (click)="close()" [disabled]="saving()">Cancelar</button>
+
+    <div class="actions-right">
+      @if (currentStep() === 2) {
+        <button mat-stroked-button (click)="goBackToStep1()" [disabled]="saving()">
+          <mat-icon>chevron_left</mat-icon>
+          <span>Volver</span>
+        </button>
+      }
+
+      @if (currentStep() === 1) {
+        <button mat-raised-button class="btn-primary" (click)="goToStep2()">
+          <span>Continuar</span>
+          <mat-icon iconSuffix>chevron_right</mat-icon>
+        </button>
+      } @else {
+        <button
+          mat-raised-button
+          class="btn-primary"
+          (click)="createSecondaryLot()"
+          [disabled]="saving()"
+        >
+          @if (saving()) {
+            <mat-spinner diameter="16" />
+          } @else {
+            <mat-icon>check_circle</mat-icon>
+          }
+          <span>{{ saving() ? 'Creando lote…' : 'Crear lote secundario' }}</span>
+        </button>
+      }
+    </div>
+  </div>
+</div>

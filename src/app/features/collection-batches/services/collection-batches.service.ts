@@ -76,6 +76,24 @@ export class CollectionBatchesService {
   }
 
   /**
+   * Obtiene lotes de acopio livianos de TODA LA EMPRESA (paginado),
+   * excluyendo los ya usados en lotes de producción.
+   * Útil para crear un lote de transformación primaria con batches de distintos proyectos.
+   * GET /by-company/{companyId}/light
+   */
+  getByCompanyLight(
+    companyId: string,
+    page = 0,
+    size = 20,
+  ): Observable<PageDto<CollectionBatchLight>> {
+    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    return this.http.get<PageDto<CollectionBatchLight>>(
+      `${this.apiUrl}/by-company/${companyId}/light`,
+      { params },
+    );
+  }
+
+  /**
    * Obtiene las solicitudes de recolección disponibles para crear un lote
    * GET /available-requests?projectId={projectId}
    * @param projectId - ID del proyecto

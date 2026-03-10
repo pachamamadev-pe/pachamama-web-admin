@@ -19,7 +19,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { AzureStorageService } from '@core/services/azure-storage.service';
-import { ProductionLotsService } from '../services/production-lots.service';
+import { ProductionLotsService } from '../../projects/services/production-lots.service';
 import { NotificationService } from '@core/services/notification.service';
 import {
   ProductionLotDetail,
@@ -35,7 +35,7 @@ import {
   PRODUCTION_LOT_STATUS_LABELS,
   PRODUCTION_LOT_DOCUMENT_LABELS,
   TRANSFORMATION_STAGE_LABELS,
-} from '../models/production-lot.model';
+} from '../../projects/models/production-lot.model';
 
 // ─── Stage configuration ────────────────────────────────────────────────────
 
@@ -263,7 +263,11 @@ export class ProductionLotDetailPage implements OnInit {
     () => STAGE_CONFIGS.find((s) => s.status === this.viewingStage()) ?? STAGE_CONFIGS[0],
   );
 
-  /** Document associated with the stage the user is viewing. */
+  /**
+   * Document associated with the stage the user is viewing.
+   * PULP_PROCESSING_RECORD is shared across acondicionado/ablandamiento/pulpeado —
+   * we pick the first matching document.
+   */
   currentDocument = computed<ProductionLotDocument | null>(() => {
     const lot = this.lot();
     if (!lot?.documents) return null;
@@ -272,7 +276,7 @@ export class ProductionLotDetailPage implements OnInit {
     return lot.documents.find((d) => d.codeDocument === code) ?? null;
   });
 
-  /** Nombre(s) de producto derivados de sourceBatches */
+  /** Nombre(s) de producto derivados de sourceBatches (lotes primarios) */
   lotProductLabel = computed<string>(() => {
     const lot = this.lot();
     if (!lot) return '—';
@@ -389,7 +393,7 @@ export class ProductionLotDetailPage implements OnInit {
   }
 
   ngOnInit(): void {
-    const lotId = this.route.snapshot.paramMap.get('lotId');
+    const lotId = this.route.snapshot.paramMap.get('id');
     if (lotId) this.loadLot(lotId);
   }
 
@@ -412,7 +416,7 @@ export class ProductionLotDetailPage implements OnInit {
   }
 
   private reloadLot(): void {
-    const id = this.route.snapshot.paramMap.get('lotId');
+    const id = this.route.snapshot.paramMap.get('id');
     if (!id) return;
     this.loadLot(id);
   }
@@ -755,8 +759,7 @@ export class ProductionLotDetailPage implements OnInit {
   }
 
   goBack(): void {
-    const projectId = this.route.snapshot.paramMap.get('id');
-    this.router.navigate(projectId ? ['/projects', projectId] : ['/projects']);
+    this.router.navigate(['/production-lots']);
   }
 
   /**
@@ -862,6 +865,19 @@ export class ProductionLotDetailPage implements OnInit {
       return new Date(dateStr).toLocaleDateString('es-PE', {
         day: '2-digit',
         month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  formatDateShort(dateStr: string | null | undefined): string {
+    if (!dateStr) return '—';
+    try {
+      return new Date(dateStr).toLocaleDateString('es-PE', {
+        day: '2-digit',
+        month: 'short',
         year: 'numeric',
       });
     } catch {

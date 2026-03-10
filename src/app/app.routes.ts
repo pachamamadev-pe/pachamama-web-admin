@@ -116,10 +116,43 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'projects/:id/secondary-lots/:lotId',
+        title: 'Detalle del Lote Secundario',
+        loadComponent: () =>
+          import('./features/projects/pages/secondary-lot-detail.page').then(
+            (m) => m.SecondaryLotDetailPage,
+          ),
+      },
+      {
         path: 'projects/:id',
         title: 'Detalle del Proyecto',
         loadComponent: () =>
           import('./features/projects/pages/project-detail.page').then((m) => m.ProjectDetailPage),
+      },
+      // ─── Lotes de Transformación (nivel empresa) ─────────────────
+      {
+        path: 'production-lots',
+        title: 'Lotes de Transformación',
+        loadComponent: () =>
+          import('./features/production-lots/pages/production-lots.page').then(
+            (m) => m.ProductionLotsPage,
+          ),
+      },
+      {
+        path: 'production-lots/:id',
+        title: 'Detalle del Lote de Transformación',
+        loadComponent: () =>
+          import('./features/production-lots/pages/production-lot-detail.page').then(
+            (m) => m.ProductionLotDetailPage,
+          ),
+      },
+      {
+        path: 'production-lots/secondary/:id',
+        title: 'Detalle del Lote Secundario',
+        loadComponent: () =>
+          import('./features/production-lots/pages/secondary-lot-detail.page').then(
+            (m) => m.SecondaryLotDetailCompanyPage,
+          ),
       },
       {
         path: 'collection-requests',

@@ -505,6 +505,117 @@
   }
 }
 
+// ─── Transport Stepper ───────────────────────────────────────────────────────
+.doc-form--stepper {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.transport-stepper {
+  background: transparent !important;
+  box-shadow: none !important;
+
+  ::ng-deep {
+    .mat-horizontal-stepper-header-container {
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      padding: 0 4px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .mat-step-header {
+      border-radius: 6px;
+      height: 44px;
+      padding: 0 10px;
+
+      &:hover {
+        background-color: #f0fdf4 !important;
+      }
+
+      .mat-step-label {
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        color: #6b7280;
+
+        &.mat-step-label-selected {
+          color: #111827;
+        }
+      }
+
+      .mat-step-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+
+        &-selected,
+        &-state-done,
+        &-state-edit {
+          background-color: theme('colors.secondary.DEFAULT');
+        }
+
+        &:not(.mat-step-icon-selected):not(.mat-step-icon-state-done) {
+          background-color: #d1d5db;
+        }
+      }
+    }
+
+    .mat-horizontal-content-container {
+      padding: 0 !important;
+      overflow: visible;
+    }
+
+    .mat-stepper-horizontal-line {
+      border-top-color: #e5e7eb;
+      margin: 0 -4px;
+    }
+  }
+}
+
+.step-content {
+  @apply flex flex-col;
+  gap: 10px;
+  padding-top: 8px;
+  padding-bottom: 4px;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.step-section-label {
+  @apply flex items-center gap-1.5 font-semibold;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin-top: 4px;
+  margin-bottom: -4px;
+
+  mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
+}
+
+.optional-tag {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  color: #d1d5db;
+  margin-left: 4px;
+}
+
+.stepper-actions {
+  @apply flex items-center justify-end gap-2;
+  padding: 10px 0 2px;
+  border-top: 1px solid #f3f4f6;
+  margin-top: 10px;
+}
+
 // ─── Doc 1 Form Panel modifier ───────────────────────────────────────────────
 .form-panel--doc1 {
   // Allows independent scrolling on desktop when collectors list is long

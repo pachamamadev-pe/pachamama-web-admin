@@ -1,0 +1,601 @@
+<div class="lot-wizard">
+  <!-- ══════════════════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="wizard-header">
+    <div class="wizard-header-title">
+      <div class="wizard-title-icon">
+        <mat-icon>factory</mat-icon>
+      </div>
+      <div>
+        <h2>Nuevo Lote de Transformación Primaria</h2>
+        <p>
+          @if (currentStep() === 1) {
+            Paso 1 de 3 · Selecciona los lotes de acopio a incluir
+          } @else if (currentStep() === 2) {
+            Paso 2 de 3 · Ajusta los datos de recepción en planta
+          } @else {
+            Paso 3 de 3 · Confirma y crea el lote de producción
+          }
+        </p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="close()" matTooltip="Cerrar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP INDICATOR
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="step-indicator">
+    <div
+      class="step"
+      [class.step--active]="currentStep() === 1"
+      [class.step--done]="currentStep() > 1"
+    >
+      <div class="step-circle">
+        @if (currentStep() > 1) {
+          <mat-icon>check</mat-icon>
+        } @else {
+          <span>1</span>
+        }
+      </div>
+      <span class="step-label">Lotes</span>
+    </div>
+    <div class="step-connector" [class.step-connector--done]="currentStep() > 1"></div>
+    <div
+      class="step"
+      [class.step--active]="currentStep() === 2"
+      [class.step--done]="currentStep() > 2"
+    >
+      <div class="step-circle">
+        @if (currentStep() > 2) {
+          <mat-icon>check</mat-icon>
+        } @else {
+          <span>2</span>
+        }
+      </div>
+      <span class="step-label">Recepción</span>
+    </div>
+    <div class="step-connector" [class.step-connector--done]="currentStep() > 2"></div>
+    <div class="step" [class.step--active]="currentStep() === 3">
+      <div class="step-circle"><span>3</span></div>
+      <span class="step-label">Confirmar</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       CONTENT
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="wizard-content">
+    <!-- ══════════════════════════════════════ PASO 1: Seleccionar lotes -->
+    @if (currentStep() === 1) {
+      @if (loadingBatches()) {
+        <div class="state-container">
+          <mat-spinner diameter="44" />
+          <p class="mt-3">Cargando lotes de acopio disponibles...</p>
+        </div>
+      } @else if (allBatches().length === 0) {
+        <div class="state-container">
+          <div class="state-icon-bg"><mat-icon>inventory_2</mat-icon></div>
+          <p class="font-bold mt-3">Sin lotes disponibles</p>
+          <p class="text-center mt-1">
+            No hay lotes de acopio validados disponibles para iniciar la transformación.<br />
+            Todos los lotes existentes ya están asociados a un lote de producción.
+          </p>
+        </div>
+      } @else {
+        <!-- Buscador -->
+        <div class="step1-search">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              [ngModel]="searchTerm()"
+              (ngModelChange)="onSearchChange($event)"
+              placeholder="Buscar por número, producto, proyecto, comunidad..."
+            />
+            @if (searchTerm()) {
+              <button matSuffix mat-icon-button aria-label="Limpiar" (click)="clearSearch()">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+        </div>
+
+        @if (filteredBatches().length === 0) {
+          <div class="state-container">
+            <mat-icon class="state-icon-plain">search_off</mat-icon>
+            <p class="font-bold mt-2">Sin resultados</p>
+            <p class="mt-1">Intenta con otros términos de búsqueda</p>
+            <button mat-stroked-button class="mt-3" (click)="clearSearch()">Limpiar</button>
+          </div>
+        } @else {
+          <div class="batch-list">
+            @for (batch of filteredBatches(); track batch.id) {
+              <div
+                class="batch-item"
+                [class.batch-item--selected]="isSelected(batch.id)"
+                (click)="toggleBatch(batch)"
+                (keyup.enter)="toggleBatch(batch)"
+                tabindex="0"
+                role="checkbox"
+                [attr.aria-checked]="isSelected(batch.id)"
+                [attr.aria-label]="'Seleccionar lote ' + batch.batchNumber"
+              >
+                <!-- Checkbox -->
+                <div class="batch-check" aria-hidden="true">
+                  <div class="check-box" [class.check-box--checked]="isSelected(batch.id)">
+                    @if (isSelected(batch.id)) {
+                      <mat-icon>check</mat-icon>
+                    }
+                  </div>
+                </div>
+
+                <!-- Contenido del lote -->
+                <div class="batch-body">
+                  <!-- Número + estado + proyecto -->
+                  <div class="batch-top">
+                    <span class="batch-number">{{ batch.batchNumber }}</span>
+                    <span class="batch-badge {{ getStatusClass(batch.status) }}">
+                      {{ BATCH_STATUS_LABELS[batch.status] }}
+                    </span>
+                    <span class="project-pill">
+                      <mat-icon>folder_open</mat-icon>
+                      {{ batch.projectName }}
+                    </span>
+                  </div>
+
+                  <!-- Producto -->
+                  <div class="batch-product-row">
+                    <mat-icon>eco</mat-icon>
+                    <span class="batch-product-name">{{ batch.productName ?? '—' }}</span>
+                    @if (batch.productCode) {
+                      <span class="batch-product-code">{{ batch.productCode }}</span>
+                    }
+                  </div>
+
+                  <!-- Métricas clave -->
+                  <div class="batch-stats-row">
+                    <div class="batch-stat-chip">
+                      <mat-icon>scale</mat-icon>
+                      <span>{{ batch.totalWeightKg | number: '1.0-1' }} kg</span>
+                    </div>
+                    <div class="batch-stat-chip">
+                      <mat-icon>category</mat-icon>
+                      <span>{{ batch.totalSacks }} sacos</span>
+                    </div>
+                    @if (batch.totalUnits) {
+                      <div class="batch-stat-chip">
+                        <mat-icon>tag</mat-icon>
+                        <span>{{ batch.totalUnits }} unid.</span>
+                      </div>
+                    }
+                    <div class="batch-stat-chip batch-stat-chip--muted">
+                      <mat-icon>event</mat-icon>
+                      <span>{{ formatDate(batch.batchDate) }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Comunidad / Área -->
+                  @if (batch.communityName || batch.areaName) {
+                    <div class="batch-meta-row">
+                      @if (batch.communityName) {
+                        <span class="meta-pill">
+                          <mat-icon>people</mat-icon>
+                          {{ batch.communityName }}
+                        </span>
+                      }
+                      @if (batch.areaName) {
+                        <span class="meta-pill">
+                          <mat-icon>park</mat-icon>
+                          {{ batch.areaName }}
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Paginador -->
+          <mat-paginator
+            [length]="totalBatches()"
+            [pageSize]="pageSize()"
+            [pageIndex]="currentPage()"
+            [pageSizeOptions]="[10, 20, 50]"
+            (page)="onPageChange($event)"
+            showFirstLastButtons
+            class="batches-paginator"
+          />
+        }
+      }
+
+      <!-- Barra de selección -->
+      @if (selectedBatchIds().size > 0) {
+        <div class="selection-summary">
+          <mat-icon>check_circle</mat-icon>
+          <div class="selection-summary-info">
+            <strong
+              >{{ selectedBatchIds().size }} lote{{
+                selectedBatchIds().size > 1 ? 's' : ''
+              }}
+              seleccionado{{ selectedBatchIds().size > 1 ? 's' : '' }}</strong
+            >
+            <span class="selection-summary-totals">
+              · {{ totalSelectedWeight() | number: '1.0-1' }} kg · {{ totalSelectedSacks() }} sacos
+            </span>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- ══════════════════════════════════════ PASO 2: Datos de recepción -->
+    @if (currentStep() === 2) {
+      <div class="step2-content">
+        <!-- Totales en tiempo real (sticky bar) -->
+        <div class="reception-totals-bar">
+          <div class="reception-total-item">
+            <div class="reception-total-icon reception-total-icon--green">
+              <mat-icon>scale</mat-icon>
+            </div>
+            <div>
+              <span class="reception-total-value">{{
+                receptionTotals().weight | number: '1.0-1'
+              }}</span>
+              <span class="reception-total-label">kg recepcionados</span>
+            </div>
+          </div>
+          <div class="reception-total-divider"></div>
+          <div class="reception-total-item">
+            <div class="reception-total-icon reception-total-icon--amber">
+              <mat-icon>category</mat-icon>
+            </div>
+            <div>
+              <span class="reception-total-value">{{ receptionTotals().sacks }}</span>
+              <span class="reception-total-label">sacos</span>
+            </div>
+          </div>
+          <div class="reception-total-divider"></div>
+          <div class="reception-total-item">
+            <div class="reception-total-icon reception-total-icon--blue">
+              <mat-icon>shopping_bag</mat-icon>
+            </div>
+            <div>
+              <span class="reception-total-value">{{ receptionTotals().jabas }}</span>
+              <span class="reception-total-label">jabas</span>
+            </div>
+          </div>
+          <div class="reception-totals-actions">
+            <button mat-icon-button matTooltip="Expandir todos" (click)="expandAll()">
+              <mat-icon>unfold_more</mat-icon>
+            </button>
+            <button mat-icon-button matTooltip="Colapsar todos" (click)="collapseAll()">
+              <mat-icon>unfold_less</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Info banner -->
+        <div class="info-banner">
+          <mat-icon>info_outline</mat-icon>
+          <span>
+            Los valores están pre-cargados del acopio. Ajusta lo que realmente ingresó a planta. Los
+            campos son <strong>opcionales</strong> — si los omites, los valores totales serán
+            calculados automáticamente.
+          </span>
+        </div>
+
+        <!-- Tarjetas de recepción (accordion) -->
+        <form [formGroup]="receptionForm">
+          <ng-container formArrayName="entries">
+            @for (ctrl of entries.controls; track $index; let i = $index) {
+              <div [formGroupName]="i" class="accordion-card">
+                <!-- Header del accordion (clickable) -->
+                <button
+                  type="button"
+                  class="accordion-header"
+                  [class.accordion-header--expanded]="isExpanded(getBatchByIndex(i)?.id ?? '')"
+                  (click)="toggleExpanded(getBatchByIndex(i)?.id ?? '')"
+                  [attr.aria-expanded]="isExpanded(getBatchByIndex(i)?.id ?? '')"
+                >
+                  <!-- Icono expand -->
+                  <mat-icon class="accordion-chevron">
+                    {{ isExpanded(getBatchByIndex(i)?.id ?? '') ? 'expand_less' : 'expand_more' }}
+                  </mat-icon>
+
+                  <!-- Info del lote -->
+                  <div class="accordion-header-content">
+                    <div class="accordion-header-left">
+                      <div class="accordion-batch-icon">
+                        <mat-icon>inventory_2</mat-icon>
+                      </div>
+                      <div class="accordion-batch-info">
+                        <span class="accordion-batch-number">{{
+                          getBatchByIndex(i)?.batchNumber
+                        }}</span>
+                        <div class="accordion-batch-meta">
+                          <mat-icon>eco</mat-icon>
+                          <span>{{ getBatchByIndex(i)?.productName ?? '—' }}</span>
+                          <span class="accordion-sep">·</span>
+                          <mat-icon>folder_open</mat-icon>
+                          <span>{{ getBatchByIndex(i)?.projectName ?? '—' }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Referencia + valores actuales del form -->
+                    <div class="accordion-header-right">
+                      <div class="accordion-ref-chip">
+                        <mat-icon>scale</mat-icon>
+                        <span>
+                          {{ getEntry(i).get('weightKg')?.value | number: '1.0-1' }}
+                          <span class="accordion-ref-original">
+                            / {{ getBatchByIndex(i)?.totalWeightKg | number: '1.0-1' }} kg ref.
+                          </span>
+                        </span>
+                      </div>
+                      <div class="accordion-ref-chip">
+                        <mat-icon>category</mat-icon>
+                        <span>
+                          {{ getEntry(i).get('sacksCount')?.value ?? 0 }}
+                          <span class="accordion-ref-original">
+                            / {{ getBatchByIndex(i)?.totalSacks ?? 0 }} sacos ref.
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
+                <!-- Panel expandido: campos del formulario -->
+                @if (isExpanded(getBatchByIndex(i)?.id ?? '')) {
+                  <div class="accordion-panel">
+                    <div class="accordion-panel-inner">
+                      <div class="reception-fields-grid">
+                        <!-- Peso recepcionado -->
+                        <mat-form-field appearance="outline">
+                          <mat-label>Peso recibido (kg)</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="weightKg"
+                            placeholder="0.00"
+                            min="0.01"
+                            step="0.01"
+                          />
+                          <span matTextSuffix>kg</span>
+
+                          @if (getEntry(i).get('weightKg')?.hasError('min')) {
+                            <mat-error>Debe ser mayor a 0</mat-error>
+                          }
+                        </mat-form-field>
+
+                        <!-- Sacos recepcionados -->
+                        <mat-form-field appearance="outline">
+                          <mat-label>Sacos recibidos</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="sacksCount"
+                            placeholder="0"
+                            min="0"
+                            step="1"
+                          />
+                          @if (getEntry(i).get('sacksCount')?.hasError('min')) {
+                            <mat-error>No puede ser negativo</mat-error>
+                          }
+                        </mat-form-field>
+
+                        <!-- Jabas -->
+                        <mat-form-field appearance="outline">
+                          <mat-label>Jabas recibidas</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="jabasCount"
+                            placeholder="0"
+                            min="0"
+                            step="1"
+                          />
+                          @if (getEntry(i).get('jabasCount')?.hasError('min')) {
+                            <mat-error>No puede ser negativo</mat-error>
+                          }
+                        </mat-form-field>
+                      </div>
+
+                      <!-- Observaciones -->
+                      <mat-form-field appearance="outline" class="observations-field">
+                        <mat-label>Observaciones (opcional)</mat-label>
+                        <textarea
+                          matInput
+                          formControlName="observations"
+                          rows="2"
+                          placeholder="Estado de la fruta, condiciones de entrega, novedades..."
+                        ></textarea>
+                        <mat-hint align="end">
+                          {{ getEntry(i).get('observations')?.value?.length ?? 0 }}/500
+                        </mat-hint>
+                        @if (getEntry(i).get('observations')?.hasError('maxlength')) {
+                          <mat-error>Máximo 500 caracteres</mat-error>
+                        }
+                      </mat-form-field>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </ng-container>
+        </form>
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════ PASO 3: Confirmar -->
+    @if (currentStep() === 3) {
+      <div class="step3-content">
+        <!-- Resumen de totales -->
+        <div class="review-card">
+          <h3 class="review-card-title">Resumen del nuevo lote</h3>
+          <div class="review-stats-grid">
+            <div class="review-stat-item">
+              <div class="review-stat-icon review-stat-icon--green">
+                <mat-icon>inventory_2</mat-icon>
+              </div>
+              <div>
+                <span class="review-stat-val">{{ selectedBatches().length }}</span>
+                <span class="review-stat-lbl"
+                  >lote{{ selectedBatches().length > 1 ? 's' : '' }} de acopio</span
+                >
+              </div>
+            </div>
+            <div class="review-stat-item">
+              <div class="review-stat-icon review-stat-icon--blue"><mat-icon>scale</mat-icon></div>
+              <div>
+                <span class="review-stat-val">{{ getTotalWeight() | number: '1.0-1' }}</span>
+                <span class="review-stat-lbl">kg recepcionados</span>
+              </div>
+            </div>
+            <div class="review-stat-item">
+              <div class="review-stat-icon review-stat-icon--amber">
+                <mat-icon>category</mat-icon>
+              </div>
+              <div>
+                <span class="review-stat-val">{{ getTotalSacks() }}</span>
+                <span class="review-stat-lbl">sacos totales</span>
+              </div>
+            </div>
+            @if (getTotalJabas() > 0) {
+              <div class="review-stat-item">
+                <div class="review-stat-icon review-stat-icon--purple">
+                  <mat-icon>shopping_bag</mat-icon>
+                </div>
+                <div>
+                  <span class="review-stat-val">{{ getTotalJabas() }}</span>
+                  <span class="review-stat-lbl">jabas totales</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Detalle por lote -->
+        <div class="review-batches-section">
+          <h4 class="review-batches-title">Lotes incluidos</h4>
+
+          @for (batch of selectedBatches(); track batch.id; let i = $index) {
+            <div class="review-batch-row">
+              <div class="review-batch-left">
+                <div class="review-batch-icon"><mat-icon>inventory_2</mat-icon></div>
+                <div class="review-batch-info">
+                  <span class="review-batch-number">{{ batch.batchNumber }}</span>
+                  <div class="review-batch-sub">
+                    <mat-icon>eco</mat-icon>
+                    <span>{{ batch.productName ?? '—' }}</span>
+                    <span class="review-sep">·</span>
+                    <mat-icon>folder_open</mat-icon>
+                    <span>{{ batch.projectName }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="review-batch-right">
+                @if (getEntry(i).get('weightKg')?.value) {
+                  <span class="review-detail-chip">
+                    <mat-icon>scale</mat-icon>
+                    {{ getEntry(i).get('weightKg')?.value | number: '1.0-1' }} kg
+                  </span>
+                }
+                @if (getEntry(i).get('sacksCount')?.value) {
+                  <span class="review-detail-chip">
+                    <mat-icon>category</mat-icon>
+                    {{ getEntry(i).get('sacksCount')?.value }} sacos
+                  </span>
+                }
+                @if (getEntry(i).get('jabasCount')?.value) {
+                  <span class="review-detail-chip">
+                    <mat-icon>shopping_bag</mat-icon>
+                    {{ getEntry(i).get('jabasCount')?.value }} jabas
+                  </span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Notas del proceso (opcional) -->
+        <mat-form-field appearance="outline" class="notes-field">
+          <mat-label>Notas del proceso (opcional)</mat-label>
+          <textarea
+            matInput
+            [formControl]="notesControl"
+            rows="3"
+            placeholder="Observaciones generales del proceso de transformación..."
+          ></textarea>
+          <mat-hint align="end">{{ notesControl.value?.length ?? 0 }}/1000</mat-hint>
+          @if (notesControl.hasError('maxlength')) {
+            <mat-error>Máximo 1000 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Nota informativa -->
+        <div class="review-info-note">
+          <mat-icon>info_outline</mat-icon>
+          <span>
+            El lote se creará en estado <strong>Recepción</strong> e iniciará la etapa de
+            <strong>Transformación Primaria</strong>. Se generará automáticamente su numero de lote.
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="wizard-footer">
+    @if (currentStep() === 1) {
+      <button mat-stroked-button (click)="close()">Cancelar</button>
+      <button
+        mat-raised-button
+        class="btn-primary"
+        [disabled]="!canProceedStep2()"
+        (click)="goToStep2()"
+      >
+        Siguiente
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    }
+
+    @if (currentStep() === 2) {
+      <button mat-stroked-button (click)="goToStep1()">
+        <mat-icon>chevron_left</mat-icon>
+        Anterior
+      </button>
+      <button
+        mat-raised-button
+        class="btn-primary"
+        [disabled]="!canProceedStep3()"
+        (click)="goToStep3()"
+      >
+        Siguiente
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    }
+
+    @if (currentStep() === 3) {
+      <button mat-stroked-button (click)="goToStep2FromStep3()">
+        <mat-icon>chevron_left</mat-icon>
+        Anterior
+      </button>
+      <button mat-raised-button class="btn-primary" [disabled]="saving()" (click)="createLot()">
+        @if (saving()) {
+          <mat-spinner diameter="18" class="btn-spinner" />
+        } @else {
+          <mat-icon>add</mat-icon>
+        }
+        Crear Lote Primario
+      </button>
+    }
+  </div>
+</div>

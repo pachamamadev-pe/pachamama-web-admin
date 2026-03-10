@@ -9,7 +9,7 @@
     <!-- ─── Sticky Header ─────────────────────────────────────────────────── -->
     <header class="detail-header">
       <div class="header-top">
-        <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Volver al proyecto">
+        <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Volver a lotes">
           <mat-icon>arrow_back</mat-icon>
         </button>
 
@@ -378,7 +378,7 @@
                         <div class="reception-stats">
                           <span class="rcp-date">
                             <mat-icon>event</mat-icon>
-                            {{ formatDate(r.entryDate) }}
+                            {{ formatDateShort(r.entryDate) }}
                           </span>
                           @if (receptionDocumentCode() === 'FRUIT_RECEPTION_RECORD') {
                             <span
@@ -961,7 +961,7 @@
         } @else {
           <button mat-stroked-button class="nav-back-btn" (click)="goBack()">
             <mat-icon>arrow_back</mat-icon>
-            Volver al proyecto
+            Volver atrás
           </button>
         }
       </div>
