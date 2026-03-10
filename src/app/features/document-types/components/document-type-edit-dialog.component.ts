@@ -98,7 +98,7 @@ export class DocumentTypeEditDialogComponent implements OnInit {
       // General
       name: [this.data.name || '', [Validators.required, Validators.maxLength(100)]],
       description: [this.data.description || '', Validators.maxLength(1000)],
-      displayOrder: [this.data.displayOrder ?? 0, [Validators.required, Validators.min(0)]],
+      displayOrder: [this.data.displayOrder ?? 50],
       category: [this.data.category || ''],
       icon: [this.data.icon || ''],
 
@@ -322,7 +322,7 @@ export class DocumentTypeEditDialogComponent implements OnInit {
       allowedMimeTypes: formValue.allowedMimeTypes,
       hasExpiration: formValue.hasExpiration,
       expirationWarningDays: formValue.hasExpiration ? formValue.expirationWarningDays : undefined,
-      displayOrder: formValue.displayOrder,
+      displayOrder: this.isCreateMode ? 50 : this.data.displayOrder,
       category: formValue.category || undefined,
       icon: formValue.icon || undefined,
       status: this.data.status, // Mantener status actual (o el que viene de prepareTemplateData)
