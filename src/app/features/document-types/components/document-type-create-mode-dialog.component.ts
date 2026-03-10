@@ -8,6 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { DocumentTypesService } from '@core/services/document-types.service';
 import { NotificationService } from '@core/services/notification.service';
 import { DocumentType } from '@shared/models/document-type.model';
+import { getProjectWorkflowStageLabel } from '../../projects/models/project-stages.constants';
 
 export interface CreateModeResult {
   mode: 'blank' | 'template';
@@ -141,7 +142,7 @@ export interface CreateModeResult {
                         <span class="stages-label">Etapas:</span>
                         <div class="stages-chips">
                           @for (stage of template.requiredForProjectStages; track stage) {
-                            <span class="stage-chip">{{ stage }}</span>
+                            <span class="stage-chip">{{ getProjectStageLabel(stage) }}</span>
                           }
                         </div>
                       </div>
@@ -490,5 +491,12 @@ export class DocumentTypeCreateModeDialogComponent {
     if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
+  }
+
+  /**
+   * Obtener label visible de la etapa usando su key
+   */
+  getProjectStageLabel(stageKey: string): string {
+    return getProjectWorkflowStageLabel(stageKey);
   }
 }

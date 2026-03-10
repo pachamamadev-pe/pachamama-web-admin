@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { DocumentType, DocumentTypeStatus } from '@shared/models/document-type.model';
+import { getProjectWorkflowStageLabel } from '../../projects/models/project-stages.constants';
 
 /**
  * Diálogo para mostrar detalles de un tipo de documento en modo solo lectura.
@@ -66,6 +67,13 @@ export class DocumentTypeDetailsDialogComponent {
    */
   isGlobal(): boolean {
     return this.data.companyId === null;
+  }
+
+  /**
+   * Obtener label visible de la etapa usando su key
+   */
+  getProjectStageLabel(stageKey: string): string {
+    return getProjectWorkflowStageLabel(stageKey);
   }
 
   /**

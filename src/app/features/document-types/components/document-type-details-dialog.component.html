@@ -80,7 +80,7 @@
           @if (data.requiredForProjectStages && data.requiredForProjectStages.length > 0) {
             <div class="chips-container">
               @for (stage of data.requiredForProjectStages; track stage) {
-                <mat-chip class="stage-chip">{{ stage }}</mat-chip>
+                <mat-chip class="stage-chip">{{ getProjectStageLabel(stage) }}</mat-chip>
               }
             </div>
           } @else {

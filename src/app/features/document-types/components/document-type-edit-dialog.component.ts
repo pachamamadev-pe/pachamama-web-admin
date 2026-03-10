@@ -22,6 +22,10 @@ import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { DocumentType } from '@shared/models/document-type.model';
 import { DocumentTypesService } from '@core/services/document-types.service';
 import { NotificationService } from '@core/services/notification.service';
+import {
+  getProjectWorkflowStageLabel,
+  PROJECT_WORKFLOW_STAGE_KEYS,
+} from '../../projects/models/project-stages.constants';
 
 /**
  * Diálogo para editar o crear un tipo de documento.
@@ -65,18 +69,8 @@ export class DocumentTypeEditDialogComponent implements OnInit {
   // Para chips de MIME types
   readonly separatorKeysCodes = [ENTER, COMMA] as const;
 
-  // Opciones para etapas de proyecto (alineado con backend enum)
-  projectStageOptions = [
-    'planning',
-    'inventory',
-    'collection',
-    'harvest',
-    'pmf_development',
-    'serfor_evaluation',
-    'ctp_entry',
-    'primary_transformation',
-    'map_adjustment',
-  ];
+  // Opciones para etapas de proyecto (fuente �nica de verdad)
+  projectStageOptions = PROJECT_WORKFLOW_STAGE_KEYS;
 
   // Opciones para tipos de licencia (alineado con backend enum)
   licenseTypeOptions = ['trial', 'basic', 'premium', 'enterprise'];
@@ -200,6 +194,13 @@ export class DocumentTypeEditDialogComponent implements OnInit {
    */
   isGlobal(): boolean {
     return this.data.companyId === null;
+  }
+
+  /**
+   * Obtener label visible de la etapa usando su key
+   */
+  getProjectStageLabel(stageKey: string): string {
+    return getProjectWorkflowStageLabel(stageKey);
   }
 
   /**

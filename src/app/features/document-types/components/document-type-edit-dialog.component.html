@@ -85,7 +85,7 @@
             <mat-label>Etapas del proyecto (visible en)</mat-label>
             <mat-select formControlName="requiredForProjectStages" multiple>
               @for (stage of projectStageOptions; track stage) {
-                <mat-option [value]="stage">{{ stage }}</mat-option>
+                <mat-option [value]="stage">{{ getProjectStageLabel(stage) }}</mat-option>
               }
             </mat-select>
             <mat-hint>Seleccione las etapas donde este documento debe estar visible</mat-hint>

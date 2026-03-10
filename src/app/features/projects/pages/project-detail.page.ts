@@ -67,12 +67,7 @@ import { SidebarService } from '@core/services/sidebar.service';
 import { PERMISSIONS } from '@core/auth/permissions';
 import { CollectionBatchesTabComponent } from '../../collection-batches/components/collection-batches-tab.component';
 import { PrimaryTransformationTabComponent } from '../components/primary-transformation-tab.component';
-
-interface ProjectStage {
-  number: number;
-  name: string;
-  key: string;
-}
+import { PROJECT_WORKFLOW_STAGES, ProjectWorkflowStage } from '../models/project-stages.constants';
 
 interface ActivityValidationStatusChartItem {
   activityType: string;
@@ -266,16 +261,7 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   }
 
   // Etapas del proyecto
-  stages: ProjectStage[] = [
-    { number: 1, name: 'Relacionamiento Comunitario', key: 'planning' },
-    { number: 2, name: 'Inventario', key: 'inventory' },
-    { number: 3, name: 'Elaboración de PMF', key: 'pmf_development' },
-    { number: 4, name: 'Evaluación y Aprobación (SERFOR)', key: 'serfor_evaluation' },
-    { number: 5, name: 'Recolección', key: 'collection' },
-
-    { number: 6, name: 'Acopio / Ingreso a CTP', key: 'ctp_entry' },
-    { number: 7, name: 'Transformación Primaria', key: 'primary_transformation' },
-  ];
+  readonly stages: ProjectWorkflowStage[] = PROJECT_WORKFLOW_STAGES;
 
   // Computed para verificar si una etapa está activa
   isStageActive = computed(() => {
@@ -790,7 +776,7 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     return `${formatDate(startDate)} - ${formatDate(endDate)}`;
   }
 
-  currentStage(): ProjectStage | null {
+  currentStage(): ProjectWorkflowStage | null {
     const stageKey = this.project()?.stage;
     return this.stages.find((stage) => stage.key === stageKey) || null;
   }
