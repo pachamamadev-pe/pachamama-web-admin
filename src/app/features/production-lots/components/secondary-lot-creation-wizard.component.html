@@ -142,7 +142,7 @@
               <!-- Chips -->
               <div class="lot-chips">
                 <span class="status-chip">{{ STATUS_LABELS[lot.status] }}</span>
-                @if (lot.quantity != null) {
+                @if (lot.quantity !== null) {
                   <span class="qty-chip">
                     <mat-icon>scale</mat-icon>
                     {{ lot.quantity | number: '1.0-2' }} {{ lot.unit ?? 'kg' }}
@@ -206,7 +206,7 @@
                 <span class="contrib-company">{{ lot.derivedCompanyName ?? '—' }}</span>
               </div>
               <div class="contrib-values">
-                @if (getLotForm(lot.id).get('contributedWeightKg')?.value != null) {
+                @if (getLotForm(lot.id).get('contributedWeightKg')?.value !== null) {
                   <span class="contrib-chip">
                     <mat-icon>scale</mat-icon>
                     {{ getLotForm(lot.id).get('contributedWeightKg')?.value | number: '1.0-2' }} kg
