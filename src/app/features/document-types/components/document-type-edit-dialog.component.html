@@ -188,11 +188,18 @@
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Tipos MIME permitidos *</mat-label>
             <mat-select formControlName="allowedMimeTypes" multiple>
-              @for (option of mimeTypeOptions; track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              @for (group of mimeTypeGroups; track group.label) {
+                <mat-optgroup [label]="group.label">
+                  @for (option of group.options; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-optgroup>
               }
             </mat-select>
-            <mat-hint>Seleccione los formatos de archivo permitidos</mat-hint>
+            <mat-hint
+              >Selecciona los tipos de archivo que los usuarios podrán subir para este tipo de
+              documento.</mat-hint
+            >
             @if (
               (form.get('allowedMimeTypes')?.value || []).length === 0 &&
               form.get('allowedMimeTypes')?.touched
@@ -230,12 +237,17 @@
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Tipos MIME para adjuntos de validación</mat-label>
                 <mat-select formControlName="validationAttachmentMimeTypes" multiple>
-                  @for (option of mimeTypeOptions; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  @for (group of mimeTypeGroups; track group.label) {
+                    <mat-optgroup [label]="group.label">
+                      @for (option of group.options; track option.value) {
+                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                      }
+                    </mat-optgroup>
                   }
                 </mat-select>
                 <mat-hint
-                  >Seleccione los formatos permitidos para los adjuntos de validación</mat-hint
+                  >Opcional. Tipos de archivo permitidos para documentos adicionales usados durante
+                  la validación.</mat-hint
                 >
               </mat-form-field>
 

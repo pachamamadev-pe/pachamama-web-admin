@@ -18,7 +18,7 @@ import {
   getProjectWorkflowStageLabel,
   PROJECT_WORKFLOW_STAGE_KEYS,
 } from '../../projects/models/project-stages.constants';
-import { MIME_TYPE_OPTIONS, MimeTypeOption } from '../models/mime-types.constants';
+import { MIME_TYPE_GROUPS, MimeTypeGroup } from '../models/mime-types.constants';
 import {
   DOCUMENT_TYPE_ICON_OPTIONS,
   DocumentTypeIconOption,
@@ -68,8 +68,8 @@ export class DocumentTypeEditDialogComponent implements OnInit {
   // Opciones para tipos de licencia (alineado con backend enum)
   licenseTypeOptions = ['trial', 'basic', 'premium', 'enterprise'];
 
-  // Catálogo de tipos MIME con etiquetas amigables
-  mimeTypeOptions: MimeTypeOption[] = MIME_TYPE_OPTIONS;
+  // Catálogo de tipos MIME agrupado por categoría
+  mimeTypeGroups: MimeTypeGroup[] = MIME_TYPE_GROUPS;
 
   // Catálogo de iconos con etiquetas amigables
   iconOptions: DocumentTypeIconOption[] = DOCUMENT_TYPE_ICON_OPTIONS;
