@@ -121,6 +121,10 @@ mat-divider {
       grid-column: 1 / -1;
     }
   }
+
+  > .full-width {
+    grid-column: 1 / -1;
+  }
 }
 
 // Toggle fields
@@ -299,6 +303,91 @@ mat-chip {
 
   ::ng-deep circle {
     stroke: #ffffff;
+  }
+}
+
+/* ============================================
+   ICON SELECTOR
+   ============================================ */
+
+.icon-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.icon-selector-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.5rem;
+}
+
+.icon-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+  min-height: 76px;
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #737373;
+    transition: color 0.15s ease;
+  }
+
+  .icon-option-label {
+    font-size: 11px;
+    color: #737373;
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+    transition: color 0.15s ease;
+  }
+
+  &:hover:not(.selected) {
+    border-color: #218358;
+    background-color: #f4fbf6;
+
+    mat-icon {
+      color: #218358;
+    }
+
+    .icon-option-label {
+      color: #218358;
+    }
+  }
+
+  &.selected {
+    border-color: #218358;
+    background-color: #f4fbf6;
+
+    mat-icon {
+      color: #218358;
+    }
+
+    .icon-option-label {
+      color: #218358;
+      font-weight: 600;
+    }
   }
 }
 

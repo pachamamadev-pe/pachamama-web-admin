@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DocumentType } from '@shared/models/document-type.model';
 import { DocumentTypesService } from '@core/services/document-types.service';
@@ -18,6 +19,10 @@ import {
   PROJECT_WORKFLOW_STAGE_KEYS,
 } from '../../projects/models/project-stages.constants';
 import { MIME_TYPE_OPTIONS, MimeTypeOption } from '../models/mime-types.constants';
+import {
+  DOCUMENT_TYPE_ICON_OPTIONS,
+  DocumentTypeIconOption,
+} from '../models/document-type-icons.constants';
 
 /**
  * Diálogo para editar o crear un tipo de documento.
@@ -37,6 +42,7 @@ import { MIME_TYPE_OPTIONS, MimeTypeOption } from '../models/mime-types.constant
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
+    MatAutocompleteModule,
     MatProgressSpinnerModule,
   ],
   templateUrl: './document-type-edit-dialog.component.html',
@@ -64,6 +70,19 @@ export class DocumentTypeEditDialogComponent implements OnInit {
 
   // Catálogo de tipos MIME con etiquetas amigables
   mimeTypeOptions: MimeTypeOption[] = MIME_TYPE_OPTIONS;
+
+  // Catálogo de iconos con etiquetas amigables
+  iconOptions: DocumentTypeIconOption[] = DOCUMENT_TYPE_ICON_OPTIONS;
+
+  // Sugerencias de categoría
+  private readonly categorySuggestions = [
+    'fiscal',
+    'legal',
+    'operational',
+    'identity',
+    'certification',
+  ];
+  filteredCategorySuggestions = signal<string[]>(this.categorySuggestions);
 
   ngOnInit(): void {
     this.initForm();
@@ -127,6 +146,16 @@ export class DocumentTypeEditDialogComponent implements OnInit {
    * Configurar suscripciones para manejar dependencias entre campos
    */
   private setupFormSubscriptions(): void {
+    // Filtrado de sugerencias de categoría
+    this.form.get('category')?.valueChanges.subscribe((value: string | null) => {
+      const term = (value ?? '').toLowerCase();
+      this.filteredCategorySuggestions.set(
+        term
+          ? this.categorySuggestions.filter((s) => s.toLowerCase().includes(term))
+          : this.categorySuggestions,
+      );
+    });
+
     // Dependencia: hasExpiration
     this.form.get('hasExpiration')?.valueChanges.subscribe((hasExpiration) => {
       const expirationWarningDaysControl = this.form.get('expirationWarningDays');
@@ -187,6 +216,10 @@ export class DocumentTypeEditDialogComponent implements OnInit {
    */
   getProjectStageLabel(stageKey: string): string {
     return getProjectWorkflowStageLabel(stageKey);
+  }
+
+  selectIcon(value: string): void {
+    this.form.get('icon')?.setValue(value);
   }
 
   /**

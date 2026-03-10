@@ -58,18 +58,41 @@
             ></textarea>
           </mat-form-field>
 
-          <!-- Categoría -->
-          <mat-form-field appearance="outline">
+          <!-- Categoría (full width con autocomplete) -->
+          <mat-form-field appearance="outline" class="full-width">
             <mat-label>Categoría</mat-label>
-            <input matInput formControlName="category" placeholder="certification" />
+            <input
+              matInput
+              formControlName="category"
+              placeholder="certification"
+              [matAutocomplete]="categoryAuto"
+            />
+            <mat-autocomplete #categoryAuto="matAutocomplete">
+              @for (suggestion of filteredCategorySuggestions(); track suggestion) {
+                <mat-option [value]="suggestion">{{ suggestion }}</mat-option>
+              }
+            </mat-autocomplete>
           </mat-form-field>
 
-          <!-- Icono -->
-          <mat-form-field appearance="outline">
-            <mat-label>Icono (Material Icon)</mat-label>
-            <input matInput formControlName="icon" placeholder="assignment" />
-            <mat-icon matPrefix>{{ form.get('icon')?.value || 'description' }}</mat-icon>
-          </mat-form-field>
+          <!-- Icono representativo (full width) -->
+          <div class="icon-selector full-width">
+            <span class="icon-selector-label">Icono representativo</span>
+            <div class="icon-grid">
+              @for (option of iconOptions; track option.value) {
+                <button
+                  type="button"
+                  class="icon-option"
+                  [class.selected]="form.get('icon')?.value === option.value"
+                  (click)="selectIcon(option.value)"
+                  [attr.aria-pressed]="form.get('icon')?.value === option.value"
+                  [attr.aria-label]="option.label"
+                >
+                  <mat-icon>{{ option.value }}</mat-icon>
+                  <span class="icon-option-label">{{ option.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
         </div>
       </div>
 
