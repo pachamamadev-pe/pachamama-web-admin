@@ -223,7 +223,7 @@
                           <mat-icon>visibility</mat-icon>
                           <span>Ver detalle</span>
                         </button>
-                        <button mat-menu-item disabled>
+                        <button mat-menu-item (click)="generateTraceabilityQr(lot)">
                           <mat-icon>qr_code_2</mat-icon>
                           <span>Generar QR trazabilidad</span>
                         </button>
@@ -338,7 +338,7 @@
                           <mat-icon>visibility</mat-icon>
                           <span>Ver detalle</span>
                         </button>
-                        <button mat-menu-item disabled>
+                        <button mat-menu-item (click)="generateTraceabilityQr(lot)">
                           <mat-icon>qr_code_2</mat-icon>
                           <span>Generar QR trazabilidad</span>
                         </button>

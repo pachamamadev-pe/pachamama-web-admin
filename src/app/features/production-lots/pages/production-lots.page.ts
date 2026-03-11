@@ -41,6 +41,7 @@ import {
   TRANSFORMATION_STAGE_LABELS,
 } from '../../projects/models/production-lot.model';
 import { LotTypeChooserDialogComponent } from '../components/lot-type-chooser-dialog.component';
+import { TraceabilityQrDialogComponent } from '../components/traceability-qr-dialog.component';
 import {
   PrimaryLotCreationWizardComponent,
   PrimaryLotWizardResult,
@@ -297,6 +298,19 @@ export class ProductionLotsPage implements OnInit {
     this.selectedProjectId.set(projectId);
     this.currentPage.set(0);
     this.loadLots();
+  }
+
+  generateTraceabilityQr(lot: ProductionLotRecord): void {
+    this.dialog.open(TraceabilityQrDialogComponent, {
+      width: '100%',
+      maxWidth: '520px',
+      data: {
+        lotNumber: lot.lotNumber,
+        lotId: lot.id,
+        transformationStage: lot.transformationStage,
+        companyName: lot.derivedCompanyName ?? undefined,
+      },
+    });
   }
 
   clearFilters(): void {

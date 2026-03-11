@@ -7,6 +7,7 @@ export const environment = {
   azureSasUrl: 'https://pachamama-sas-func.azurewebsites.net/api/sas',
   azureStorageBaseUrl: 'https://sapachamama001.blob.core.windows.net/admin-uploads',
   googleMapsApiKey: 'AIzaSyDi6pTKr4zh4JKZpCjgfITiZg6paiGL-1Q',
+  landingBaseUrl: 'https://pachamama-web-landing-v1.vercel.app',
   firebase: {
     apiKey: 'AIzaSyDxZshF6sa_oB8SmE3OygU6Zi9EnQ30RWg',
     authDomain: 'pachamama-mvp.firebaseapp.com',
