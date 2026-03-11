@@ -10,6 +10,42 @@
     </mat-card-title>
     @if (hasMap()) {
       <div class="map-actions">
+        @if (hasCollectionStage() || hasInventoryStage()) {
+          <button
+            mat-icon-button
+            class="map-action-btn"
+            [matMenuTriggerFor]="stageFilterMenu"
+            matTooltip="Filtrar por etapa"
+          >
+            <mat-icon>filter_list</mat-icon>
+          </button>
+          <mat-menu #stageFilterMenu="matMenu">
+            <button
+              mat-menu-item
+              (click)="setStageFilter('all')"
+              [class.active-filter]="stageFilter() === 'all'"
+            >
+              <mat-icon>layers</mat-icon>
+              <span>Mostrar todo</span>
+            </button>
+            <button
+              mat-menu-item
+              (click)="setStageFilter('collection')"
+              [class.active-filter]="stageFilter() === 'collection'"
+            >
+              <img src="/herramientas-de-cosecha.png" class="filter-menu-icon" alt="Recolección" />
+              <span>Solo Recolección</span>
+            </button>
+            <button
+              mat-menu-item
+              (click)="setStageFilter('inventory')"
+              [class.active-filter]="stageFilter() === 'inventory'"
+            >
+              <img src="/arbol.png" class="filter-menu-icon" alt="Inventario" />
+              <span>Solo Inventario</span>
+            </button>
+          </mat-menu>
+        }
         <button
           mat-icon-button
           class="map-action-btn"
@@ -138,6 +174,24 @@
           <mat-icon class="hint-icon">info</mat-icon>
           <span class="hint-text">Usa los botones +/- o doble clic para hacer zoom</span>
         </div>
+
+        <!-- Leyenda de etapas -->
+        @if (hasCollectionStage() || hasInventoryStage()) {
+          <div class="stage-legend">
+            @if (hasCollectionStage()) {
+              <div class="legend-item">
+                <img src="/herramientas-de-cosecha.png" alt="Recolección" class="legend-icon" />
+                <span class="legend-label">Recolección</span>
+              </div>
+            }
+            @if (hasInventoryStage()) {
+              <div class="legend-item">
+                <img src="/arbol.png" alt="Inventario" class="legend-icon" />
+                <span class="legend-label">Inventario</span>
+              </div>
+            }
+          </div>
+        }
 
         <div #mapContainer class="leaflet-map-container"></div>
       </div>
