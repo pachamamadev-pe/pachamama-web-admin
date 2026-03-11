@@ -99,7 +99,7 @@ export class ProjectsService {
    * @param q - Query de búsqueda (opcional)
    * @param productId - ID del producto (opcional)
    * @param communityId - ID de la comunidad (opcional)
-   * @param status - Estado del proyecto: active, inactive, archived (opcional)
+   * @param statuses - Lista de estados del proyecto: active, inactive, archived (opcional)
    */
   getProjectsAdvanced(
     page = 0,
@@ -107,14 +107,18 @@ export class ProjectsService {
     q?: string,
     productId?: string,
     communityId?: string,
-    status?: string,
+    statuses?: string[],
   ): Observable<PageDto<Project>> {
     let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
 
     if (q) params = params.set('q', q);
     if (productId) params = params.set('productId', productId);
     if (communityId) params = params.set('communityId', communityId);
-    if (status) params = params.set('status', status);
+    if (statuses && statuses.length > 0) {
+      for (const s of statuses) {
+        params = params.append('statuses', s);
+      }
+    }
 
     return this.http.get<PageDto<Project>>(`${this.apiUrl}/advanced`, { params });
   }

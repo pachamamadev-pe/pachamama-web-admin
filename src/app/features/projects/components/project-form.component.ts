@@ -5,6 +5,7 @@ import {
   inject,
   OnInit,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -21,7 +22,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
@@ -49,6 +50,7 @@ import { SidebarService } from '@core/services/sidebar.service';
 import { NotificationService } from '@core/services/notification.service';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { formatDateISO, parseDateValue } from '@shared/utils/date-helpers';
+import { ProjectMapComponent } from './project-map.component';
 
 /** Stages cargadas para pre-requisitos del modo collection */
 const COLLECTION_PREREQUISITE_STAGES = [
@@ -89,6 +91,7 @@ interface DialogData {
     MatRadioModule,
     MatTooltipModule,
     MatDividerModule,
+    ProjectMapComponent,
   ],
   providers: [provideNativeDateAdapter()],
   template: `
@@ -221,11 +224,11 @@ interface DialogData {
                         </div>
                         <div class="stage-option-text">
                           <span class="font-semibold text-accent-titles"
-                            >Recolección (con documentos previos)</span
+                            >Recolección (con documentos previos y mapa del proyecto)</span
                           >
                           <span class="text-subtitle text-neutral-subheading">
-                            El proyecto requiere la carga de documentos de las etapas anteriores
-                            antes de activarse.
+                            El proyecto requiere la carga de documentos de las etapas anteriores y
+                            del mapa del proyecto antes de activarse.
                           </span>
                         </div>
                       </div>
@@ -245,7 +248,7 @@ interface DialogData {
                     mat-raised-button
                     class="btn-primary"
                     type="button"
-                    (click)="finalizeCreate()"
+                    (click)="finalizePlanningCreate()"
                     [disabled]="stageForm.invalid || loading()"
                   >
                     @if (loading()) {
@@ -271,7 +274,11 @@ interface DialogData {
           </mat-step>
 
           <!-- STEP 3: Documentos previos (solo si collection) ─── -->
-          <mat-step label="Documentos previos" [optional]="true">
+          <mat-step>
+            <ng-template matStepLabel>
+              Documentos previos
+              <span class="step-sublabel">(Recolección)</span>
+            </ng-template>
             <div class="dialog-content docs-step-content">
               @if (loadingRequirements()) {
                 <div class="loading-container">
@@ -390,13 +397,71 @@ interface DialogData {
                 mat-raised-button
                 class="btn-primary"
                 type="button"
-                (click)="finalizeCreate()"
-                [disabled]="!isReadyToFinish() || loading() || loadingRequirements()"
+                (click)="goToMapStep()"
+                [disabled]="
+                  !isReadyToFinish() ||
+                  creatingCollectionProject() ||
+                  loading() ||
+                  loadingRequirements()
+                "
+              >
+                @if (creatingCollectionProject()) {
+                  <mat-spinner diameter="20" />
+                } @else {
+                  Siguiente
+                }
+              </button>
+            </div>
+          </mat-step>
+
+          <!-- STEP 4: Mapa del proyecto (solo collection) ─── -->
+          <mat-step>
+            <ng-template matStepLabel>
+              Mapa del proyecto
+              <span class="step-sublabel">(Recolección)</span>
+            </ng-template>
+            <div class="dialog-content map-step-content">
+              @if (creatingCollectionProject()) {
+                <div class="loading-container">
+                  <mat-spinner diameter="40" />
+                  <p class="text-body text-neutral-subheading mt-4">Preparando el proyecto...</p>
+                </div>
+              } @else if (createdProjectId()) {
+                <p class="text-subtitle text-neutral-subheading mb-4">
+                  Carga el mapa del proyecto para delimitar las áreas de recolección. Esta acción es
+                  obligatoria para activar el proyecto.
+                </p>
+                <app-project-map
+                  [projectId]="createdProjectId()!"
+                  [projectName]="$any(projectForm)?.get('name')?.value || 'Proyecto'"
+                  [canEditMap]="true"
+                  (mapReady)="onMapReady($event)"
+                  (mapUploadInProgress)="onMapUploadInProgress($event)"
+                />
+              }
+            </div>
+
+            <div class="dialog-actions">
+              <button
+                mat-stroked-button
+                type="button"
+                matStepperPrevious
+                [disabled]="loading() || mapUploadActive()"
+              >
+                <mat-icon>arrow_back</mat-icon>
+                Anterior
+              </button>
+              <button
+                mat-raised-button
+                class="btn-primary"
+                type="button"
+                (click)="completeCollectionCreate()"
+                [disabled]="!mapIsReady() || loading() || mapUploadActive()"
               >
                 @if (loading()) {
                   <mat-spinner diameter="20" />
                 } @else {
-                  Finalizar y crear
+                  Finalizar y activar
                 }
               </button>
             </div>
@@ -590,6 +655,16 @@ interface DialogData {
       align-items: center;
       justify-content: center;
       padding: 48px 24px;
+    }
+
+    /* ── Step sub-label ──────────────────────── */
+    .step-sublabel {
+      display: block;
+      font-size: 10px;
+      color: #737373;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-top: 1px;
     }
 
     /* ── Stepper overrides ───────────────────── */
@@ -816,6 +891,11 @@ interface DialogData {
       padding: 32px;
       gap: 8px;
     }
+
+    .map-step-content {
+      min-height: 480px;
+      overflow: visible;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -833,6 +913,8 @@ export class ProjectFormComponent implements OnInit {
 
   readonly data = inject<DialogData>(MAT_DIALOG_DATA);
 
+  @ViewChild('stepper') private stepperRef?: MatStepper;
+
   projectForm: FormGroup | null = null;
   stageForm: FormGroup | null = null;
 
@@ -848,6 +930,13 @@ export class ProjectFormComponent implements OnInit {
   selectedStartStage = signal<'planning' | 'collection'>('planning');
   templateRequirements = signal<TemplateRequirementsResponse | null>(null);
   filesByDocTypeId = signal<Map<string, File>>(new Map());
+
+  // Wizard collection state
+  createdProjectId = signal<string | null>(null);
+  collectionProjectPrepared = signal(false);
+  creatingCollectionProject = signal(false);
+  mapIsReady = signal(false);
+  mapUploadActive = signal(false);
 
   // ── Computed ─────────────────────────────────────────────────────────
 
@@ -1107,12 +1196,8 @@ export class ProjectFormComponent implements OnInit {
 
   // ── Mode: Create (wizard – ejecuta endpoints de forma autónoma) ────────
 
-  /**
-   * Secuencia completa de creación:
-   * A) Crear proyecto → B) Vincular comunidad →
-   * C) Subir documentos + activar (si collection) → D) Cerrar modal con { success, projectId }
-   */
-  finalizeCreate(): void {
+  /** Flujo planning: crea proyecto activo y vincula comunidad. */
+  finalizePlanningCreate(): void {
     if (this.loading() || !this.projectForm) return;
 
     const companyId = this.sidebarService.tenantId();
@@ -1124,7 +1209,7 @@ export class ProjectFormComponent implements OnInit {
     this.loading.set(true);
 
     const formValue = this.projectForm!.value;
-    const startStage = this.selectedStartStage();
+    const communityId: string = formValue.communityId;
 
     const createData: CreateProjectRequest = {
       name: formValue.name,
@@ -1136,58 +1221,18 @@ export class ProjectFormComponent implements OnInit {
       startDate: this.toIsoDate(formValue.startDate),
       endDate: this.toIsoDate(formValue.endDate),
       code: '',
-      initialStage: startStage === 'collection' ? 'collection' : 'planning',
-      initialStatus: startStage === 'collection' ? 'inactive' : 'active',
+      initialStage: 'planning',
+      initialStatus: 'active',
     };
 
-    const communityId: string = formValue.communityId;
-
-    // ── A) Crear proyecto ────────────────────────────────────────────
     this.projectsService
       .createProject(createData)
       .pipe(
-        // ── B) Vincular comunidad ──────────────────────────────────
         concatMap((project) =>
           this.communityProjectLinkService
             .createLink({ communityId, projectId: project.id })
             .pipe(map(() => project)),
         ),
-
-        // ── C) Subir documentos y activar (solo si collection) ─────
-        concatMap((project) => {
-          if (startStage !== 'collection') {
-            return of(project);
-          }
-
-          const requirements = this.templateRequirements();
-          if (!requirements || requirements.documentTypes.length === 0) {
-            return this.projectsService.activateProject(project.id).pipe(map(() => project));
-          }
-
-          // Subir todos los archivos adjuntados (obligatorios + opcionales que el usuario cargó)
-          const uploadsToPerform = requirements.documentTypes
-            .filter((dt) => this.filesByDocTypeId().has(this.docTypeKey(dt)))
-            .map((dt) => {
-              const file = this.filesByDocTypeId().get(this.docTypeKey(dt))!;
-              const projectStage: ProjectStage =
-                (dt.requiredForStages?.[0] as ProjectStage) ?? ProjectStage.PLANNING;
-              const request: UploadDocumentRequest = {
-                documentTypeId: dt.documentTypeId,
-                projectStage,
-              };
-              return this.projectDocumentsService.uploadDocument(project.id, request, file);
-            });
-
-          if (uploadsToPerform.length === 0) {
-            return this.projectsService.activateProject(project.id).pipe(map(() => project));
-          }
-
-          // Subir en paralelo; si todos OK → activar proyecto
-          return forkJoin(uploadsToPerform).pipe(
-            concatMap(() => this.projectsService.activateProject(project.id)),
-            map(() => project),
-          );
-        }),
       )
       .subscribe({
         next: (project) => {
@@ -1201,15 +1246,151 @@ export class ProjectFormComponent implements OnInit {
           this.notification.error(
             'Ocurrió un error al crear el proyecto. Revisa los datos e inténtalo de nuevo.',
           );
-          // No cerramos el modal — el usuario puede reintentar manteniendo datos y archivos
         },
       });
+  }
+
+  /**
+   * Flujo collection (paso 3 → paso 4):
+   * Crea el proyecto en estado inactive, vincula la comunidad y avanza al paso 4.
+   * Si el proyecto ya fue creado, simplemente avanza el stepper.
+   */
+  goToMapStep(): void {
+    if (this.collectionProjectPrepared()) {
+      this.stepperRef?.next();
+      return;
+    }
+
+    if (this.creatingCollectionProject() || this.loading() || !this.projectForm) return;
+
+    const companyId = this.sidebarService.tenantId();
+    if (!companyId) {
+      this.notification.error('No se pudo obtener el ID de la empresa. Recarga la página.');
+      return;
+    }
+
+    this.creatingCollectionProject.set(true);
+
+    const formValue = this.projectForm!.value;
+    const communityId: string = formValue.communityId;
+
+    const createData: CreateProjectRequest = {
+      name: formValue.name,
+      productId: formValue.productId,
+      companyId,
+      description: formValue.description || undefined,
+      approvedQuota: formValue.approvedQuota,
+      maxCollectors: formValue.maxCollectors,
+      startDate: this.toIsoDate(formValue.startDate),
+      endDate: this.toIsoDate(formValue.endDate),
+      code: '',
+      initialStage: 'collection',
+      initialStatus: 'inactive',
+    };
+
+    this.projectsService
+      .createProject(createData)
+      .pipe(
+        concatMap((project) =>
+          this.communityProjectLinkService
+            .createLink({ communityId, projectId: project.id })
+            .pipe(map(() => project)),
+        ),
+      )
+      .subscribe({
+        next: (project) => {
+          this.createdProjectId.set(project.id);
+          this.collectionProjectPrepared.set(true);
+          this.creatingCollectionProject.set(false);
+          this.stepperRef?.next();
+        },
+        error: (error) => {
+          console.error('Error al preparar el proyecto de recolección:', error);
+          this.creatingCollectionProject.set(false);
+          this.notification.error('Error al crear el proyecto. Por favor intenta nuevamente.');
+        },
+      });
+  }
+
+  /**
+   * Flujo collection (paso 4 – finalizar):
+   * Sube los documentos del paso 3 y activa el proyecto ya creado.
+   */
+  completeCollectionCreate(): void {
+    if (this.loading() || !this.createdProjectId()) return;
+
+    const projectId = this.createdProjectId()!;
+    const requirements = this.templateRequirements();
+
+    this.loading.set(true);
+
+    const uploadsToPerform =
+      requirements?.documentTypes
+        .filter((dt) => this.filesByDocTypeId().has(this.docTypeKey(dt)))
+        .map((dt) => {
+          const file = this.filesByDocTypeId().get(this.docTypeKey(dt))!;
+          const projectStage: ProjectStage =
+            (dt.requiredForStages?.[0] as ProjectStage) ?? ProjectStage.PLANNING;
+          const request: UploadDocumentRequest = {
+            documentTypeId: dt.documentTypeId,
+            projectStage,
+          };
+          return this.projectDocumentsService.uploadDocument(projectId, request, file);
+        }) ?? [];
+
+    const uploadObservable = uploadsToPerform.length > 0 ? forkJoin(uploadsToPerform) : of([]);
+
+    uploadObservable
+      .pipe(concatMap(() => this.projectsService.activateProject(projectId)))
+      .subscribe({
+        next: () => {
+          this.loading.set(false);
+          this.notification.success('Proyecto creado y activado correctamente');
+          this.dialogRef.close({ success: true, projectId });
+        },
+        error: (error) => {
+          console.error('Error al completar el proyecto de recolección:', error);
+          this.loading.set(false);
+          this.notification.error(
+            'Ocurrió un error al activar el proyecto. Los documentos pueden haberse subido pero el proyecto no se activó.',
+          );
+        },
+      });
+  }
+
+  // ── Map event handlers ────────────────────────────────────────────────
+
+  onMapReady(ready: boolean): void {
+    this.mapIsReady.set(ready);
+  }
+
+  onMapUploadInProgress(inProgress: boolean): void {
+    this.mapUploadActive.set(inProgress);
   }
 
   // ── Cancel / exit ─────────────────────────────────────────────────────
 
   onCancel(): void {
-    if (this.loading()) return;
+    if (this.loading() || this.creatingCollectionProject()) return;
+
+    // Project already created in inactive state — warn with special message
+    if (this.collectionProjectPrepared()) {
+      const confirmRef = this.dialog.open(ConfirmDialogComponent, {
+        data: {
+          title: '¿Abandonar proyecto incompleto?',
+          message:
+            'El proyecto ya fue creado en estado inactivo. Si salís ahora, quedará incompleto y no podrá utilizarse hasta completar el proceso. El proyecto no será eliminado automáticamente.',
+          confirmText: 'Salir de todas formas',
+          cancelText: 'Continuar',
+          type: 'danger',
+        },
+      });
+
+      confirmRef.afterClosed().subscribe((confirmed) => {
+        if (confirmed) this.dialogRef.close();
+      });
+      return;
+    }
 
     const hasChanges = this.isEditMode
       ? (this.projectForm?.dirty ?? false)

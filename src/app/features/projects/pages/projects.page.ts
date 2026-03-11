@@ -81,7 +81,8 @@ export class ProjectsPage implements OnInit {
   searchTerm = signal('');
   selectedProductId = signal<string | null>(null);
   selectedCommunityId = signal<string | null>(null);
-  selectedStatus = signal<string | null>(null);
+  // 'default' = carga inicial (active + archived), 'all' = todos, o un estado específico
+  selectedStatus = signal<string>('default');
   showAdvancedFilters = signal(false);
 
   // Pagination
@@ -97,6 +98,7 @@ export class ProjectsPage implements OnInit {
 
   // Status options for filter
   statusOptions = [
+    { value: 'all', label: 'Todos los estados' },
     { value: 'active', label: 'Activo' },
     { value: 'inactive', label: 'Inactivo' },
     { value: 'archived', label: 'Archivado' },
@@ -146,6 +148,19 @@ export class ProjectsPage implements OnInit {
     });
   }
 
+  /**
+   * Devuelve los statuses a enviar al backend según el estado actual del filtro:
+   * - 'default': carga inicial → ['active', 'archived']
+   * - 'all': el usuario eligió ver todos → undefined (sin parámetro)
+   * - cualquier otro valor: estado específico → [valor]
+   */
+  getStatusesForQuery(): string[] | undefined {
+    const status = this.selectedStatus();
+    if (status === 'default') return ['active', 'archived'];
+    if (status === 'all') return undefined;
+    return [status];
+  }
+
   loadProjects(): void {
     this.loading.set(true);
     this.projectsService
@@ -155,7 +170,7 @@ export class ProjectsPage implements OnInit {
         this.searchTerm() || undefined,
         this.selectedProductId() || undefined,
         this.selectedCommunityId() || undefined,
-        this.selectedStatus() || undefined,
+        this.getStatusesForQuery(),
       )
       .subscribe({
         next: (response) => {
@@ -175,7 +190,7 @@ export class ProjectsPage implements OnInit {
   openCreateDialog(): void {
     const dialogRef = this.dialog.open(ProjectFormComponent, {
       width: '100%',
-      maxWidth: '600px',
+      maxWidth: '900px',
       data: { mode: 'create' },
       disableClose: true,
     });
@@ -425,33 +440,36 @@ export class ProjectsPage implements OnInit {
   /**
    * Handle status filter change
    */
-  onStatusFilterChange(status: string | null): void {
+  onStatusFilterChange(status: string): void {
     this.selectedStatus.set(status);
     this.currentPage.set(0);
     this.loadProjects();
   }
 
   /**
-   * Clear all filters
+   * Clear all filters and restore initial default state (active + archived)
    */
   clearAllFilters(): void {
     this.searchTerm.set('');
     this.selectedProductId.set(null);
     this.selectedCommunityId.set(null);
-    this.selectedStatus.set(null);
+    this.selectedStatus.set('default');
     this.currentPage.set(0);
     this.loadProjects();
   }
 
   /**
-   * Check if any filter is active
+   * Check if any filter is active.
+   * El estado 'default' (carga inicial) y 'all' (todos los estados) no se consideran filtros activos.
    */
   hasActiveFilters(): boolean {
+    const status = this.selectedStatus();
+    const hasStatusFilter = status !== 'default' && status !== 'all';
     return !!(
       this.searchTerm() ||
       this.selectedProductId() ||
       this.selectedCommunityId() ||
-      this.selectedStatus()
+      hasStatusFilter
     );
   }
 

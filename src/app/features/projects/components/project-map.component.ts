@@ -64,6 +64,8 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
   canEditMap = input(false);
 
   mapLoaded = output<GeoJSONFeatureCollection>();
+  mapReady = output<boolean>();
+  mapUploadInProgress = output<boolean>();
 
   private mapContainerRef?: ElementRef<HTMLDivElement>;
 
@@ -110,15 +112,18 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
           this.hasMap.set(true);
           this.currentGeoJSON.set(geoJSON);
           this.mapLoaded.emit(geoJSON);
+          this.mapReady.emit(true);
           this.scheduleInitializeMap();
         } else {
           this.hasMap.set(false);
+          this.mapReady.emit(false);
         }
         this.loadingMap.set(false);
       },
       error: (error) => {
         if (error.status === 404) {
           this.hasMap.set(false);
+          this.mapReady.emit(false);
         } else {
           console.error('Error checking for map:', error);
         }
@@ -233,6 +238,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
     this.uploadProgress.set(0);
     this.uploadError.set(null);
     this.importStatus.set(ImportStatus.PENDING);
+    this.mapUploadInProgress.emit(true);
 
     this.areasService.importAreaFiles(this.projectId(), files, name, source).subscribe({
       next: (response: AreaImportResponse) => {
@@ -243,6 +249,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
       error: (error) => {
         console.error('Error uploading shapefile:', error);
         this.uploadingFile.set(false);
+        this.mapUploadInProgress.emit(false);
         this.uploadError.set('Error al subir el archivo. Intenta nuevamente.');
         this.notification.error('Error al subir el archivo');
       },
@@ -302,6 +309,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
     this.notification.success('¡Mapa cargado exitosamente!');
 
     setTimeout(() => {
+      this.mapUploadInProgress.emit(false);
       this.checkForExistingMap();
       this.resetUploadState();
     }, 1500);
@@ -309,6 +317,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
 
   private handleImportFailure(errors: string[] | null): void {
     this.uploadingFile.set(false);
+    this.mapUploadInProgress.emit(false);
     const errorMessage =
       errors && errors.length > 0 ? errors.join(', ') : 'Error al procesar el shapefile';
     this.uploadError.set(errorMessage);
@@ -317,6 +326,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
 
   private handleTimeout(): void {
     this.uploadingFile.set(false);
+    this.mapUploadInProgress.emit(false);
     this.uploadError.set(
       'El procesamiento está tomando más tiempo del esperado. Por favor, recarga la página.',
     );
@@ -325,6 +335,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
 
   private handlePollingError(): void {
     this.uploadingFile.set(false);
+    this.mapUploadInProgress.emit(false);
     this.uploadError.set('Error al verificar el estado de la importación');
     this.notification.error('Error al verificar el estado del archivo');
   }
