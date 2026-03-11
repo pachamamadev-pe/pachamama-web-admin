@@ -570,17 +570,6 @@
               </mat-tab>
             }
 
-            @if (showPrimaryTransformationTab()) {
-              <mat-tab label="Transformaciones">
-                <div class="tab-content">
-                  <app-primary-transformation-tab
-                    [projectId]="project()!.id"
-                    [shouldLoad]="tabsLoaded().has(primaryTransformationTabIndex())"
-                  />
-                </div>
-              </mat-tab>
-            }
-
             <mat-tab label="Documentos">
               <div class="tab-content">
                 @if (!project()?.id) {

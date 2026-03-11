@@ -66,7 +66,6 @@ import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.dir
 import { SidebarService } from '@core/services/sidebar.service';
 import { PERMISSIONS } from '@core/auth/permissions';
 import { CollectionBatchesTabComponent } from '../../collection-batches/components/collection-batches-tab.component';
-import { PrimaryTransformationTabComponent } from '../components/primary-transformation-tab.component';
 import { PROJECT_WORKFLOW_STAGES, ProjectWorkflowStage } from '../models/project-stages.constants';
 
 interface ActivityValidationStatusChartItem {
@@ -100,7 +99,6 @@ interface ActivityValidationStatusChartItem {
     ProjectMapComponent,
     ConfigurationTabComponent,
     CollectionBatchesTabComponent,
-    PrimaryTransformationTabComponent,
     PmHasPermissionDirective,
   ],
   templateUrl: './project-detail.page.html',
@@ -552,33 +550,6 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     return index;
   });
 
-  // Computed para mostrar/ocultar el tab de transformación primaria
-  showPrimaryTransformationTab = computed(() => {
-    const stage = this.project()?.stage;
-    // Mostrar tab desde la etapa transformation_primary en adelante
-    const transformationPrimaryStageIndex = this.stages.findIndex(
-      (s) => s.key === 'primary_transformation',
-    );
-    const currentStageIndex = this.stages.findIndex((s) => s.key === stage);
-    return (
-      currentStageIndex >= transformationPrimaryStageIndex && transformationPrimaryStageIndex !== -1
-    );
-  });
-
-  // Computed para calcular el índice dinámico del tab "Transformaciones"
-  primaryTransformationTabIndex = computed(() => {
-    let index = 0;
-    index++; // Tab 0: Resumen
-    index++; // Tab 1: Recolectores
-    if (this.showBrigadesTab()) index++; // Tab: Brigadas
-    if (this.showInventoryEvaluationTab()) index++; // Tab: Inventario
-    if (this.showPmfGenerationTab()) index++; // Tab: PMF
-    if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
-    if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
-    // Tab: Transformaciones - este es el índice que buscamos
-    return index;
-  });
-
   // Computed para calcular el índice dinámico del tab "Documentos"
   documentsTabIndex = computed(() => {
     let index = 0;
@@ -589,7 +560,6 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     if (this.showPmfGenerationTab()) index++; // Tab: PMF
     if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
     if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
-    if (this.showPrimaryTransformationTab()) index++; // Tab: Transformaciones
     // Tab: Documentos - este es el índice que buscamos
     return index;
   });
@@ -604,7 +574,6 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     if (this.showPmfGenerationTab()) index++; // Tab: PMF
     if (this.showCollectionTab()) index++; // Tab: Revisión Solicitudes
     if (this.showAcopioBatchesTab()) index++; // Tab: Lotes de Acopio
-    if (this.showPrimaryTransformationTab()) index++; // Tab: Transformaciones
     index++; // Tab: Documentos
     // Tab: Configuración - este es el índice que buscamos
     return index;
