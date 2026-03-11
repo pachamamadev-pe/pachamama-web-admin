@@ -117,7 +117,7 @@
                 >Tipo de Actividad:</span
               >
               <span class="info-value text-body text-accent-titles">
-                {{ activity()!.activityType == 'harvest' ? 'Recolección' : 'Inventario' }}
+                {{ activity()!.activityType === 'harvest' ? 'Recolección' : 'Inventario' }}
               </span>
             </div>
             @if (activity()!.activityType === 'harvest') {
