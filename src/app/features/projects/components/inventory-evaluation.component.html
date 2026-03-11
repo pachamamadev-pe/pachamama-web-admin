@@ -139,7 +139,7 @@
                   {{ activeTab() === 'harvest' ? 'Código árbol o troza' : 'Código árbol' }}
                 </th>
                 @if (activeTab() === 'harvest') {
-                  <th class="table-th text-left">Código de árbol padre</th>
+                  <th class="table-th text-left">Código de Árbol Padre</th>
                 }
                 <th class="table-th text-left">Fecha de captura</th>
                 <th class="table-th text-left">Tipo</th>
@@ -166,7 +166,7 @@
                   @if (activeTab() === 'harvest') {
                     <td class="table-td">
                       <span class="text-body text-accent-titles">
-                        {{ activity.forestParentUnitManualCode || '-' }}
+                        {{ activity.forestParentManualCode || '-' }}
                       </span>
                     </td>
                   }
@@ -261,9 +261,9 @@
                 @if (activeTab() === 'harvest') {
                   <div class="detail-row">
                     <mat-icon class="detail-icon">account_tree</mat-icon>
-                    <span class="detail-label">Código de árbol padre:</span>
+                    <span class="detail-label">Código de Árbol Padre:</span>
                     <span class="detail-value">
-                      {{ activity.forestParentUnitManualCode || '-' }}
+                      {{ activity.forestParentManualCode || '-' }}
                     </span>
                   </div>
                 }
