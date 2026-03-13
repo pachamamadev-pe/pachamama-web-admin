@@ -878,7 +878,11 @@ export class BrigadeFormDialogComponent {
   }
 
   isProjectCollectionStage(): boolean {
-    return this.data.projectStage === 'collection' || this.data.projectStage === 'ctp_entry';
+    return (
+      this.data.projectStage === 'collection' ||
+      this.data.projectStage === 'ctp_entry' ||
+      this.data.projectStage === 'primary_transformation'
+    );
   }
 
   onCollectorSearch(event: Event): void {

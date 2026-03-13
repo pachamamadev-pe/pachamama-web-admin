@@ -113,11 +113,40 @@
         <mat-card-content>
           <div class="info-grid">
             <div class="info-item">
+              <span class="info-label text-subtitle text-neutral-subheading"
+                >Tipo de Actividad:</span
+              >
+              <span class="info-value text-body text-accent-titles">
+                {{ activity()!.activityType === 'harvest' ? 'Recolección' : 'Inventario' }}
+              </span>
+            </div>
+            @if (activity()!.activityType === 'harvest') {
+              <div class="info-item">
+                <span class="info-label text-subtitle text-neutral-subheading"
+                  >Solicitud de Recolección:</span
+                >
+                <span class="info-value text-body text-accent-titles">
+                  {{ activity()!.collectionRequestCode || '-' }}
+                </span>
+              </div>
+            }
+
+            <div class="info-item">
               <span class="info-label text-subtitle text-neutral-subheading">Código Árbol:</span>
               <span class="info-value text-body text-accent-titles">
                 {{ activity()!.forestManualCode || activity()!.forestCode }}
               </span>
             </div>
+            @if (activity()!.activityType === 'harvest') {
+              <div class="info-item">
+                <span class="info-label text-subtitle text-neutral-subheading"
+                  >Código de Árbol Padre:</span
+                >
+                <span class="info-value text-body text-accent-titles">
+                  {{ activity()!.forestParentManualCode || '-' }}
+                </span>
+              </div>
+            }
             <div class="info-item">
               <span class="info-label text-subtitle text-neutral-subheading">Recolector:</span>
               <span class="info-value text-body text-accent-titles">
@@ -148,7 +177,7 @@
               <div class="info-item">
                 <span class="info-label text-subtitle text-neutral-subheading">Calidad GPS:</span>
                 <span class="info-value text-body">
-                  {{ activity()!.gpsQuality }}
+                  {{ getGpsQualityLabel(activity()!.gpsQuality) }}
                   @if (activity()!.gpsAccuracyM) {
                     <span class="text-subtitle text-neutral-subheading"
                       >(±{{ activity()!.gpsAccuracyM }}m)</span

@@ -33,7 +33,7 @@ export interface ActivityResponse {
   /** Código manual del árbol */
   forestManualCode?: string;
   /** Código manual del árbol padre */
-  forestParentUnitManualCode?: string | null;
+  forestParentManualCode?: string | null;
   /** Tipo de actividad */
   activityType: ActivityType;
   /** Ubicación GPS {latitude, longitude} */
@@ -85,6 +85,8 @@ export interface ActivityResponse {
   validatedAt?: string | null;
 
   validationNotes?: string | null;
+
+  collectionRequestCode?: string | null;
 }
 
 /**
@@ -120,15 +122,9 @@ export interface ActivityEvaluationUpdateRequest {
 /**
  * Tipos de actividad
  */
-export type ActivityType =
-  | 'inventory'
-  | 'TREE_REGISTRATION'
-  | 'TREE_COLLECTION'
-  | 'TREE_STUMP_REGISTRATION'
-  | 'TREE_STUMP_COLLECTION'
-  | 'OTHER';
+export type ActivityType = 'inventory' | 'harvest';
 
 /**
  * Calidad de señal GPS
  */
-export type GpsQuality = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'NO_SIGNAL';
+export type GpsQuality = 'good' | 'poor' | 'acceptable';

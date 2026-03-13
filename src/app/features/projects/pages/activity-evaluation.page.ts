@@ -749,4 +749,17 @@ export class ActivityEvaluationPage implements OnInit {
     };
     return icons[status] || 'help_outline';
   }
+
+  /**
+   * Obtiene el label de calidad GPS
+   */
+  getGpsQualityLabel(quality?: string): string {
+    if (!quality) return 'N/A';
+    const labels: Record<string, string> = {
+      good: 'Buena',
+      acceptable: 'Aceptable',
+      poor: 'Pobre',
+    };
+    return labels[quality.toLowerCase()] ?? quality;
+  }
 }

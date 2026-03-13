@@ -189,6 +189,7 @@ export function getProjectStageLabel(stage?: string): string {
     completed: 'Completado',
     archived: 'Archivado',
     ctp_entry: 'Acopio',
+    primary_transformation: 'Transformación Primaria',
   };
 
   return labels[stage] || stage;

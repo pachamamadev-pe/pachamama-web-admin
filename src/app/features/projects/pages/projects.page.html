@@ -56,7 +56,7 @@
             <span class="filter-badge">{{
               (selectedProductId() ? 1 : 0) +
                 (selectedCommunityId() ? 1 : 0) +
-                (selectedStatus() ? 1 : 0)
+                (selectedStatus() !== 'default' && selectedStatus() !== 'all' ? 1 : 0)
             }}</span>
           }
         </button>
@@ -105,9 +105,8 @@
               <mat-select
                 [ngModel]="selectedStatus()"
                 (ngModelChange)="onStatusFilterChange($event)"
-                placeholder="Todos los estados"
+                placeholder="Activos y archivados"
               >
-                <mat-option [value]="null">Todos los estados</mat-option>
                 @for (status of statusOptions; track status.value) {
                   <mat-option [value]="status.value">{{ status.label }}</mat-option>
                 }
@@ -116,7 +115,7 @@
           </div>
 
           <!-- Clear filters button -->
-          @if (hasActiveFilters()) {
+          @if (hasActiveFilters() || selectedStatus() === 'all') {
             <div class="filter-actions">
               <button mat-button (click)="clearAllFilters()" class="clear-filters-btn">
                 <mat-icon>clear_all</mat-icon>
@@ -252,14 +251,16 @@
                     </button>
 
                     <mat-menu #tableMenu="matMenu">
-                      <button
-                        *appPmHasPermission="PERMISSIONS.PROJECT.READ"
-                        mat-menu-item
-                        (click)="viewProjectDetail(project)"
-                      >
-                        <mat-icon>visibility</mat-icon>
-                        <span>Ver detalle</span>
-                      </button>
+                      @if (project.status !== 'inactive') {
+                        <button
+                          *appPmHasPermission="PERMISSIONS.PROJECT.READ"
+                          mat-menu-item
+                          (click)="viewProjectDetail(project)"
+                        >
+                          <mat-icon>visibility</mat-icon>
+                          <span>Ver detalle</span>
+                        </button>
+                      }
 
                       <button
                         *appPmHasPermission="PERMISSIONS.PROJECT.UPDATE"
@@ -320,10 +321,12 @@
                 </button>
 
                 <mat-menu #mobileMenu="matMenu">
-                  <button mat-menu-item (click)="viewProjectDetail(project)">
-                    <mat-icon>visibility</mat-icon>
-                    <span>Ver detalle</span>
-                  </button>
+                  @if (project.status !== 'inactive') {
+                    <button mat-menu-item (click)="viewProjectDetail(project)">
+                      <mat-icon>visibility</mat-icon>
+                      <span>Ver detalle</span>
+                    </button>
+                  }
 
                   <button mat-menu-item (click)="openEditDialog(project)">
                     <mat-icon>edit</mat-icon>

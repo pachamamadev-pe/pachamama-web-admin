@@ -81,10 +81,10 @@ module.exports = {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       fontSize: {
-        body: '14pt', // Regular / Texto de lectura
+        body: '11pt', // Regular / Texto de lectura
         subtitle: '12pt', // Subtítulos
-        button: '14pt', // Botones
-        title: '30pt', // Títulos, títulos de gráficos bold
+        button: '11pt', // Botones
+        title: '24pt', // Títulos, títulos de gráficos bold
       },
     },
   },

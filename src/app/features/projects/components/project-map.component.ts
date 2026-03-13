@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   inject,
   input,
@@ -17,6 +18,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
 import { AreasService } from '../services/areas.service';
 import { NotificationService } from '@core/services/notification.service';
 import {
@@ -42,6 +44,7 @@ import { PERMISSIONS } from '@core/auth/permissions';
     MatProgressBarModule,
     MatCardModule,
     MatTooltipModule,
+    MatMenuModule,
     PmHasPermissionDirective,
   ],
   templateUrl: './project-map.component.html',
@@ -64,6 +67,8 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
   canEditMap = input(false);
 
   mapLoaded = output<GeoJSONFeatureCollection>();
+  mapReady = output<boolean>();
+  mapUploadInProgress = output<boolean>();
 
   private mapContainerRef?: ElementRef<HTMLDivElement>;
 
@@ -79,12 +84,28 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
   private map: L.Map | null = null;
   private geoJsonLayer: L.GeoJSON | null = null;
   private areaLabelsLayer: L.LayerGroup | null = null;
-  private inventoryStageLayer: L.LayerGroup | null = null;
+  private collectionIconsLayer: L.LayerGroup | null = null;
+  private inventoryIconsLayer: L.LayerGroup | null = null;
 
   hasMap = signal(false);
   loadingMap = signal(true);
   currentGeoJSON = signal<GeoJSONFeatureCollection | null>(null);
   isMapFullscreen = signal(false);
+  stageFilter = signal<'all' | 'inventory' | 'collection'>('all');
+
+  hasCollectionStage = computed(
+    () =>
+      this.currentGeoJSON()?.features?.some(
+        (f) => f.properties?.['project_stage'] === 'collection',
+      ) ?? false,
+  );
+
+  hasInventoryStage = computed(
+    () =>
+      this.currentGeoJSON()?.features?.some(
+        (f) => f.properties?.['project_stage'] === 'inventory',
+      ) ?? false,
+  );
 
   uploadingFile = signal(false);
   uploadProgress = signal(0);
@@ -110,15 +131,18 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
           this.hasMap.set(true);
           this.currentGeoJSON.set(geoJSON);
           this.mapLoaded.emit(geoJSON);
+          this.mapReady.emit(true);
           this.scheduleInitializeMap();
         } else {
           this.hasMap.set(false);
+          this.mapReady.emit(false);
         }
         this.loadingMap.set(false);
       },
       error: (error) => {
         if (error.status === 404) {
           this.hasMap.set(false);
+          this.mapReady.emit(false);
         } else {
           console.error('Error checking for map:', error);
         }
@@ -233,6 +257,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
     this.uploadProgress.set(0);
     this.uploadError.set(null);
     this.importStatus.set(ImportStatus.PENDING);
+    this.mapUploadInProgress.emit(true);
 
     this.areasService.importAreaFiles(this.projectId(), files, name, source).subscribe({
       next: (response: AreaImportResponse) => {
@@ -243,6 +268,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
       error: (error) => {
         console.error('Error uploading shapefile:', error);
         this.uploadingFile.set(false);
+        this.mapUploadInProgress.emit(false);
         this.uploadError.set('Error al subir el archivo. Intenta nuevamente.');
         this.notification.error('Error al subir el archivo');
       },
@@ -302,6 +328,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
     this.notification.success('¡Mapa cargado exitosamente!');
 
     setTimeout(() => {
+      this.mapUploadInProgress.emit(false);
       this.checkForExistingMap();
       this.resetUploadState();
     }, 1500);
@@ -309,6 +336,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
 
   private handleImportFailure(errors: string[] | null): void {
     this.uploadingFile.set(false);
+    this.mapUploadInProgress.emit(false);
     const errorMessage =
       errors && errors.length > 0 ? errors.join(', ') : 'Error al procesar el shapefile';
     this.uploadError.set(errorMessage);
@@ -317,6 +345,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
 
   private handleTimeout(): void {
     this.uploadingFile.set(false);
+    this.mapUploadInProgress.emit(false);
     this.uploadError.set(
       'El procesamiento está tomando más tiempo del esperado. Por favor, recarga la página.',
     );
@@ -325,6 +354,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
 
   private handlePollingError(): void {
     this.uploadingFile.set(false);
+    this.mapUploadInProgress.emit(false);
     this.uploadError.set('Error al verificar el estado de la importación');
     this.notification.error('Error al verificar el estado del archivo');
   }
@@ -362,20 +392,14 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
     this.destroyMap();
 
     try {
-      const iconRetinaUrl = '/marker-icon-2x.png';
-      const iconUrl = '/marker-icon.png';
-      const shadowUrl = '/marker-shadow.png';
-      const iconDefault = L.icon({
-        iconRetinaUrl,
-        iconUrl,
-        shadowUrl,
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        tooltipAnchor: [16, -28],
-        shadowSize: [41, 41],
+      const dotIcon = L.divIcon({
+        className: '',
+        html: '<div style="width:12px;height:12px;border-radius:50%;background:#218358;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>',
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+        popupAnchor: [0, -10],
       });
-      L.Marker.prototype.options.icon = iconDefault;
+      L.Marker.prototype.options.icon = dotIcon;
 
       this.map = L.map(this.mapContainerRef.nativeElement, {
         zoomControl: true,
@@ -406,7 +430,7 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
             const popupContent = this.buildPopupContent(feature.properties);
             (layer as L.Path).bindPopup(popupContent);
             this.addAreaLabel(feature);
-            // this.addInventoryStageIcon(feature, popupContent);
+            this.addStageIcon(feature, popupContent);
           }
         },
       }).addTo(this.map);
@@ -488,9 +512,13 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
       this.areaLabelsLayer.clearLayers();
       this.areaLabelsLayer = null;
     }
-    if (this.inventoryStageLayer) {
-      this.inventoryStageLayer.clearLayers();
-      this.inventoryStageLayer = null;
+    if (this.collectionIconsLayer) {
+      this.collectionIconsLayer.clearLayers();
+      this.collectionIconsLayer = null;
+    }
+    if (this.inventoryIconsLayer) {
+      this.inventoryIconsLayer.clearLayers();
+      this.inventoryIconsLayer = null;
     }
     if (this.geoJsonLayer) {
       this.geoJsonLayer.remove();
@@ -528,34 +556,39 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private addInventoryStageIcon(feature: GeoJSON.Feature, popupContent: string): void {
+  private addStageIcon(feature: GeoJSON.Feature, popupContent: string): void {
     if (!this.map || !feature.properties) return;
 
-    const projectStage = feature.properties['project_stage'];
-    if (typeof projectStage !== 'string' || projectStage.trim().toLowerCase() !== 'inventory') {
-      return;
-    }
+    const stage = (feature.properties['project_stage'] as string | undefined)?.trim().toLowerCase();
+
+    if (stage !== 'inventory' && stage !== 'collection') return;
 
     const center = this.getFeatureCenter(feature);
-    if (!center) {
-      return;
-    }
+    if (!center) return;
 
-    const inventoryIcon = L.divIcon({
-      className: 'inventory-stage-label',
-      html: '<div class="inventory-stage-icon" title="Etapa inventory">🌳</div>',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
+    const iconUrl = stage === 'inventory' ? '/arbol.png' : '/herramientas-de-cosecha.png';
+
+    const stageIcon = L.icon({
+      iconUrl,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -18],
     });
 
-    const marker = L.marker(center, { icon: inventoryIcon });
+    const marker = L.marker(center, { icon: stageIcon });
     marker.bindPopup(popupContent);
 
-    if (!this.inventoryStageLayer) {
-      this.inventoryStageLayer = L.layerGroup().addTo(this.map);
+    if (stage === 'inventory') {
+      if (!this.inventoryIconsLayer) {
+        this.inventoryIconsLayer = L.layerGroup().addTo(this.map);
+      }
+      this.inventoryIconsLayer.addLayer(marker);
+    } else {
+      if (!this.collectionIconsLayer) {
+        this.collectionIconsLayer = L.layerGroup().addTo(this.map);
+      }
+      this.collectionIconsLayer.addLayer(marker);
     }
-
-    this.inventoryStageLayer.addLayer(marker);
   }
 
   private buildPopupContent(properties: Record<string, unknown>): string {
@@ -638,6 +671,29 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
         }
       }
     }, 100);
+  }
+
+  setStageFilter(filter: 'all' | 'inventory' | 'collection'): void {
+    this.stageFilter.set(filter);
+    if (!this.map) return;
+
+    const showCollection = filter === 'all' || filter === 'collection';
+    const showInventory = filter === 'all' || filter === 'inventory';
+
+    if (this.collectionIconsLayer) {
+      if (showCollection) {
+        this.collectionIconsLayer.addTo(this.map);
+      } else {
+        this.collectionIconsLayer.remove();
+      }
+    }
+    if (this.inventoryIconsLayer) {
+      if (showInventory) {
+        this.inventoryIconsLayer.addTo(this.map);
+      } else {
+        this.inventoryIconsLayer.remove();
+      }
+    }
   }
 
   downloadGeoJSON(): void {
