@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +12,7 @@ import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.
 import { CollectionBatch, BATCH_STATUS_LABELS } from '../models/collection-batch.model';
 import { parseDateValue } from '@shared/utils/date-helpers';
 import { BatchCreationWizardComponent } from './batch-creation-wizard.component';
+import { BatchLocationMapDialogComponent } from './batch-location-map-dialog.component';
 
 /**
  * Tab de lotes de acopio
@@ -21,6 +22,7 @@ import { BatchCreationWizardComponent } from './batch-creation-wizard.component'
   selector: 'app-collection-batches-tab',
   imports: [
     CommonModule,
+    DecimalPipe,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -122,6 +124,22 @@ export class CollectionBatchesTabComponent {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
+    });
+  }
+
+  /**
+   * Abre el dialog de mapa con la ubicación del lote
+   */
+  openLocationDialog(event: Event, batch: CollectionBatch): void {
+    event.stopPropagation();
+    if (!batch.location) return;
+    this.dialog.open(BatchLocationMapDialogComponent, {
+      width: '100%',
+      maxWidth: '560px',
+      data: {
+        batchNumber: batch.batchNumber,
+        location: batch.location,
+      },
     });
   }
 

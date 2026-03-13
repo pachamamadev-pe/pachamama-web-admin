@@ -176,6 +176,12 @@ export interface CollectionBatch {
   // Hash de integridad
   rootHash?: string;
 
+  // Geolocalización del punto de acopio
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+
   // Información de transporte
   transportInfo?: TransportInfo;
 
@@ -333,6 +339,7 @@ export interface CreateBatchRequest {
   collectionRequestId: string;
   areaId?: string;
   batchDate: string;
+  location: { latitude: number; longitude: number };
   totalWeightKg?: number;
   totalSacks?: number;
   totalUnits?: number;
