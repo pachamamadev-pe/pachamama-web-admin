@@ -133,9 +133,21 @@ export interface BrigadeCollectorsDialogData {
                 </td>
               </ng-container>
 
-              <!-- Estado Column -->
+              <!-- Estado de recolector Column -->
+              <ng-container matColumnDef="collectorStatus">
+                <th mat-header-cell *matHeaderCellDef class="table-th">Estado de recolector</th>
+                <td mat-cell *matCellDef="let collector" class="table-td">
+                  <span [class]="'status-badge status-' + collector.collectorStatus.toLowerCase()">
+                    {{ getStatusLabel(collector.collectorStatus) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Estado de asignación Column -->
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef class="table-th">Estado</th>
+                <th mat-header-cell *matHeaderCellDef class="table-th">
+                  Estado asignación brigada
+                </th>
                 <td mat-cell *matCellDef="let collector" class="table-td">
                   <span [class]="'status-badge status-' + collector.status.toLowerCase()">
                     {{ getStatusLabel(collector.status) }}
@@ -202,17 +214,18 @@ export interface BrigadeCollectorsDialogData {
                       {{ getStatusLabel(collector.status) }}
                     </span>
                   </div>
-                  <mat-slide-toggle
-                    [checked]="collector.status.toLowerCase() === 'active'"
-                    (change)="toggleCollectorStatus(collector, $event.checked)"
-                    [matTooltip]="
-                      collector.status.toLowerCase() === 'active' ? 'Inactivar' : 'Activar'
-                    "
-                    color="primary"
-                  />
                 </div>
 
                 <div class="card-details">
+                  <div class="detail-row">
+                    <mat-icon class="detail-icon">person_outline</mat-icon>
+                    <span class="detail-label">Estado de recolector:</span>
+                    <span
+                      [class]="'status-badge status-' + collector.collectorStatus.toLowerCase()"
+                    >
+                      {{ getStatusLabel(collector.collectorStatus) }}
+                    </span>
+                  </div>
                   <div class="detail-row">
                     <mat-icon class="detail-icon">phone</mat-icon>
                     <span class="detail-label">Teléfono:</span>
@@ -739,6 +752,7 @@ export class BrigadeCollectorsDialogComponent {
     'collectorPhone',
     'startDate',
     'endDate',
+    'collectorStatus',
     'status',
     'actions',
   ];

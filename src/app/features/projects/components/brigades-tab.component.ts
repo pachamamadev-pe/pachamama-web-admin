@@ -60,7 +60,7 @@ import { Brigade } from '../models/brigade.model';
           </button>
         </div>
       } @else {
-        <!-- Brigades Table (Desktop) -->
+        <!-- Desktop Table (Desktop) -->
         <div class="desktop-only">
           <div class="brigades-table">
             <table mat-table [dataSource]="brigades()" class="table-auto w-full responsive-table">
@@ -120,22 +120,26 @@ import { Brigade } from '../models/brigade.model';
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef class="table-th text-right">Acciones</th>
                 <td mat-cell *matCellDef="let brigade" class="table-td text-right">
-                  <button
-                    mat-icon-button
-                    class="btn-add"
-                    (click)="onAddMembers(brigade)"
-                    matTooltip="Agregar recolectores"
-                  >
-                    <mat-icon>person_add</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    class="btn-edit"
-                    (click)="onEditBrigade(brigade)"
-                    matTooltip="Editar brigada"
-                  >
-                    <mat-icon>edit</mat-icon>
-                  </button>
+                  @if (brigade.status === 'active') {
+                    <button
+                      mat-icon-button
+                      class="btn-add"
+                      (click)="onAddMembers(brigade)"
+                      matTooltip="Agregar recolectores"
+                    >
+                      <mat-icon>person_add</mat-icon>
+                    </button>
+                  }
+                  @if (brigade.status !== 'archived') {
+                    <button
+                      mat-icon-button
+                      class="btn-edit"
+                      (click)="onEditBrigade(brigade)"
+                      matTooltip="Editar brigada"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
                 </td>
               </ng-container>
 
@@ -143,7 +147,7 @@ import { Brigade } from '../models/brigade.model';
               <tr
                 mat-row
                 *matRowDef="let row; columns: displayedColumns"
-                [class.row-inactive]="row.status === 'inactive'"
+                [class.row-archived]="row.status === 'archived'"
               ></tr>
             </table>
           </div>
@@ -155,7 +159,7 @@ import { Brigade } from '../models/brigade.model';
             @for (brigade of brigades(); track brigade.id) {
               <div
                 class="brigade-card bg-primary-white rounded-lg shadow p-4"
-                [class.row-inactive]="brigade.status === 'inactive'"
+                [class.row-archived]="brigade.status === 'archived'"
               >
                 <div class="card-header mb-3">
                   <div class="card-title">
@@ -199,22 +203,26 @@ import { Brigade } from '../models/brigade.model';
                 </div>
 
                 <div class="card-actions mt-4">
-                  <button
-                    mat-stroked-button
-                    class="btn-add-mobile w-full"
-                    (click)="onAddMembers(brigade)"
-                  >
-                    <mat-icon>person_add</mat-icon>
-                    <span>Agregar recolectores</span>
-                  </button>
-                  <button
-                    mat-raised-button
-                    class="btn-edit-mobile w-full"
-                    (click)="onEditBrigade(brigade)"
-                  >
-                    <mat-icon>edit</mat-icon>
-                    <span>Editar brigada</span>
-                  </button>
+                  @if (brigade.status === 'active') {
+                    <button
+                      mat-stroked-button
+                      class="btn-add-mobile w-full"
+                      (click)="onAddMembers(brigade)"
+                    >
+                      <mat-icon>person_add</mat-icon>
+                      <span>Agregar recolectores</span>
+                    </button>
+                  }
+                  @if (brigade.status !== 'archived') {
+                    <button
+                      mat-raised-button
+                      class="btn-edit-mobile w-full"
+                      (click)="onEditBrigade(brigade)"
+                    >
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar brigada</span>
+                    </button>
+                  }
                 </div>
               </div>
             }
@@ -248,6 +256,7 @@ import { Brigade } from '../models/brigade.model';
     }
 
     .empty-icon {
+      width: 80px;
       width: 80px;
       height: 80px;
       background-color: #f4fbf6;
@@ -319,7 +328,7 @@ import { Brigade } from '../models/brigade.model';
       border-bottom: 1px solid #e5e5e5;
     }
 
-    .row-inactive {
+    .row-archived {
       opacity: 0.6;
       background-color: #f9fafb;
       color: #737373;

@@ -64,17 +64,6 @@ import { CollectorAssignmentStatusGuideDialogComponent } from './collector-assig
         </div>
       } @else {
         <div class="collectors-filters">
-          <button
-            mat-icon-button
-            type="button"
-            class="btn-guide"
-            (click)="openStatusGuideDialog()"
-            matTooltip="Ver guía de estados de asignación"
-            aria-label="Ver guía de estados de asignación"
-          >
-            <mat-icon>info</mat-icon>
-          </button>
-
           <mat-checkbox [checked]="showArchived()" (change)="onToggleShowArchived($event.checked)">
             Mostrar recolectores archivados
           </mat-checkbox>
@@ -174,13 +163,12 @@ import { CollectorAssignmentStatusGuideDialogComponent } from './collector-assig
                   }
                   @if (!showArchived() && getAssignmentStatus(collector) !== 'archived') {
                     <button
-                      mat-stroked-button
+                      mat-icon-button
                       class="btn-change-status"
                       (click)="openStatusChangeDialog(collector)"
                       matTooltip="Cambiar estado de asignación"
                     >
                       <mat-icon>published_with_changes</mat-icon>
-                      <span>Cambiar estado</span>
                     </button>
                   }
                 </td>

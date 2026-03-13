@@ -50,6 +50,8 @@ import { DocumentReviewDialogComponent } from '../components/document-review-dia
 import { DocumentResubmitDialogComponent } from '../components/document-resubmit-dialog.component';
 import { CollectorsTabComponent } from '../components/collectors-tab.component';
 import { BrigadesTabComponent } from '../components/brigades-tab.component';
+import { BrigadeStatusGuideDialogComponent } from '../components/brigade-status-guide-dialog.component';
+import { CollectorStatusGuideDialogComponent } from '../components/collector-status-guide-dialog.component';
 import { DocumentsTabComponent } from '../components/documents-tab.component';
 import { CollectionReviewTabComponent } from '../components/collection-review-tab.component';
 import { ProjectMapComponent } from '../components/project-map.component';
@@ -170,6 +172,28 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
 
   // Computed: verifica si todos los documentos obligatorios están aprobados
   allDocsApproved = computed(() => this.areAllRequiredDocumentsApproved());
+
+  /**
+   * Abre la guía de estados de recolectores
+   */
+  openCollectorStatusGuide(): void {
+    this.dialog.open(CollectorStatusGuideDialogComponent, {
+      width: '100%',
+      maxWidth: '500px',
+      autoFocus: false,
+    });
+  }
+
+  /**
+   * Abre la guía de estados de brigada
+   */
+  openBrigadeStatusGuide(): void {
+    this.dialog.open(BrigadeStatusGuideDialogComponent, {
+      width: '100%',
+      maxWidth: '500px',
+      autoFocus: false,
+    });
+  }
 
   /**
    * Abre dialogo para crear brigada

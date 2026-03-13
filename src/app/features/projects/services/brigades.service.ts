@@ -70,4 +70,11 @@ export class BrigadesService {
   ): Observable<Brigade> {
     return this.http.post<Brigade>(`${this.apiUrl}/${brigadeId}/members`, data);
   }
+
+  /**
+   * Finaliza la asignación de una brigada y sus miembros
+   */
+  finalizeBrigade(brigadeId: string): Observable<Brigade> {
+    return this.http.patch<Brigade>(`${this.apiUrl}/${brigadeId}/finalize`, {});
+  }
 }

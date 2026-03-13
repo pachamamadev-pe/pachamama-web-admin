@@ -8,6 +8,7 @@ export interface BrigadeCollector {
   collectorName: string;
   collectorEmail: string;
   collectorPhone: string;
+  collectorStatus: string;
   brigadeId: string;
   brigadeName: string;
   projectCommunityId: string;

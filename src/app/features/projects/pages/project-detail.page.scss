@@ -954,6 +954,39 @@
   }
 }
 
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    flex-direction: row;
+    justify-content: stretch;
+
+    button {
+      flex: 1;
+    }
+
+    button.btn-guide {
+      flex: 0 0 auto;
+    }
+  }
+}
+
+.btn-guide {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #737373;
+  background-color: #f3f4f6;
+
+  &:hover {
+    background-color: #e5e7eb;
+    color: #0a0a0a;
+  }
+}
+
 .table-wrapper {
   overflow-x: auto;
   background-color: #ffffff;
@@ -1095,24 +1128,6 @@
 /* Brigades Table Styles */
 .brigades-table-container {
   padding: 20px 0;
-}
-
-.brigades-header-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-}
-
-.create-brigade-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-  }
 }
 
 .brigades-table {
