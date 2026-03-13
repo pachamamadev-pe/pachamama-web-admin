@@ -16,10 +16,15 @@ export const PERMISSIONS = {
 
   COLLECTOR: {
     ALL: 'collector:*',
+    READ: 'collector:read',
+    UPDATE: 'collector:update',
   },
 
   BRIGADE: {
     ALL: 'brigade:*',
+    READ: 'brigade:read',
+    CREATE: 'brigade:create',
+    UPDATE: 'brigade:update', //Ray revisando 02
   },
 
   COMMUNITY: {

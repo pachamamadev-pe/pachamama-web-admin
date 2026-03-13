@@ -410,7 +410,7 @@
               </div>
             </mat-tab>
 
-            @if (sidebarService.hasPermission(PERMISSIONS.COLLECTOR.ALL)) {
+            @if (sidebarService.hasPermission(PERMISSIONS.COLLECTOR.READ)) {
               <mat-tab label="Recolectores">
                 <div class="tab-content">
                   @if (!project()?.communityLink?.id) {
@@ -493,7 +493,7 @@
               </mat-tab>
             }
 
-            @if (showBrigadesTab() && sidebarService.hasPermission(PERMISSIONS.BRIGADE.ALL)) {
+            @if (showBrigadesTab() && sidebarService.hasPermission(PERMISSIONS.BRIGADE.READ)) {
               <mat-tab label="Brigadas">
                 <div class="tab-content">
                   @if (!project()?.communityLink?.id) {
@@ -528,6 +528,7 @@
                             <mat-icon>info</mat-icon>
                           </button>
                           <button
+                            *appPmHasPermission="PERMISSIONS.BRIGADE.CREATE"
                             mat-raised-button
                             class="btn-primary"
                             (click)="openCreateBrigadeDialog()"

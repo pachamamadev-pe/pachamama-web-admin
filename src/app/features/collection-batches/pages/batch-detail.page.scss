@@ -67,6 +67,144 @@
     height: 15px;
     color: theme('colors.secondary.DEFAULT');
   }
+
+  &.meta-item--location {
+    border: none;
+    background: #f0fdf4;
+    color: #065f46;
+    border-radius: 20px;
+    padding: 2px 8px 2px 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    transition: background-color 0.15s;
+    white-space: nowrap;
+
+    mat-icon {
+      color: #059669;
+    }
+
+    .meta-location-open {
+      font-size: 11px !important;
+      width: 11px !important;
+      height: 11px !important;
+      color: #6b7280 !important;
+      opacity: 0.7;
+      margin-left: 2px;
+    }
+
+    &:hover {
+      background-color: #dcfce7;
+    }
+  }
+}
+
+// ─── Location Section ─────────────────────────────────────────────────────────
+.location-section {
+  @apply px-4 md:px-8 py-4;
+}
+
+.location-card {
+  @apply rounded-xl overflow-hidden;
+  border: 1px solid #bbf7d0;
+  background: #fff;
+  max-width: 640px;
+}
+
+.location-map-wrap {
+  position: relative;
+  line-height: 0;
+
+  .location-map-overlay-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    transition: background 0.15s;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #374151;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 1);
+    }
+  }
+}
+
+.location-coords-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background-color: #f0fdf4;
+  border-top: 1px solid #bbf7d0;
+  flex-wrap: wrap;
+}
+
+.location-pin-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #059669;
+  flex-shrink: 0;
+}
+
+.location-coords-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.location-coords-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.location-coords-value {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  color: #065f46;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.location-view-btn {
+  flex-shrink: 0;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-size: 12px !important;
+  border-color: #6ee7b7 !important;
+  color: #065f46 !important;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+
+  @media (max-width: 480px) {
+    display: none !important;
+  }
 }
 
 .header-actions {

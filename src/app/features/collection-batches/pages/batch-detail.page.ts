@@ -6,7 +6,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -31,6 +31,7 @@ import { CollectionBatchesService } from '../services/collection-batches.service
 import { NotificationService } from '@core/services/notification.service';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { parseDateValue } from '@shared/utils/date-helpers';
+import { BatchLocationMapDialogComponent } from '../components/batch-location-map-dialog.component';
 import {
   CollectionBatch,
   BatchDocumentType,
@@ -61,6 +62,7 @@ interface DocumentTabState {
   selector: 'app-batch-detail-page',
   imports: [
     CommonModule,
+    DecimalPipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatIconModule,
@@ -767,6 +769,16 @@ export class BatchDetailPage implements OnInit {
     } else {
       this.router.navigate(['/projects']);
     }
+  }
+
+  openLocationDialog(): void {
+    const b = this.batch();
+    if (!b?.location) return;
+    this.dialog.open(BatchLocationMapDialogComponent, {
+      width: '100%',
+      maxWidth: '560px',
+      data: { batchNumber: b.batchNumber, location: b.location },
+    });
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────

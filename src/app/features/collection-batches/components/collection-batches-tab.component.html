@@ -135,6 +135,23 @@
                 }
               </div>
             }
+
+            <!-- Geo location chip -->
+            @if (batch.location) {
+              <button
+                type="button"
+                class="geo-location-chip"
+                (click)="openLocationDialog($event, batch)"
+                matTooltip="Ver punto de acopio en el mapa"
+              >
+                <mat-icon>location_on</mat-icon>
+                <span class="geo-chip-coords">
+                  {{ batch.location.latitude | number: '1.4-4' }}°,
+                  {{ batch.location.longitude | number: '1.4-4' }}°
+                </span>
+                <mat-icon class="geo-chip-arrow">open_in_new</mat-icon>
+              </button>
+            }
           </div>
         }
       </div>

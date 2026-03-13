@@ -19,6 +19,10 @@ import { BrigadesService } from '../services/brigades.service';
 import { NotificationService } from '@core/services/notification.service';
 import { Brigade } from '../models/brigade.model';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+//import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 @Component({
   selector: 'app-brigades-tab',
   standalone: true,
@@ -31,6 +35,7 @@ import { Brigade } from '../models/brigade.model';
     MatChipsModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    PmHasPermissionDirective,
   ],
   template: `
     <div class="brigades-container">
@@ -51,6 +56,7 @@ import { Brigade } from '../models/brigade.model';
             Aún no se han registrado brigadas para este proyecto
           </p>
           <button
+            *appPmHasPermission="PERMISSIONS.BRIGADE.CREATE"
             mat-raised-button
             class="btn-primary create-brigade-button"
             (click)="onCreateBrigade()"
@@ -122,6 +128,7 @@ import { Brigade } from '../models/brigade.model';
                 <td mat-cell *matCellDef="let brigade" class="table-td text-right">
                   @if (brigade.status === 'active') {
                     <button
+                      *appPmHasPermission="PERMISSIONS.BRIGADE.UPDATE"
                       mat-icon-button
                       class="btn-add"
                       (click)="onAddMembers(brigade)"
@@ -132,6 +139,7 @@ import { Brigade } from '../models/brigade.model';
                   }
                   @if (brigade.status !== 'archived') {
                     <button
+                      *appPmHasPermission="PERMISSIONS.BRIGADE.UPDATE"
                       mat-icon-button
                       class="btn-edit"
                       (click)="onEditBrigade(brigade)"
@@ -205,6 +213,7 @@ import { Brigade } from '../models/brigade.model';
                 <div class="card-actions mt-4">
                   @if (brigade.status === 'active') {
                     <button
+                      *appPmHasPermission="PERMISSIONS.BRIGADE.UPDATE"
                       mat-stroked-button
                       class="btn-add-mobile w-full"
                       (click)="onAddMembers(brigade)"
@@ -215,6 +224,7 @@ import { Brigade } from '../models/brigade.model';
                   }
                   @if (brigade.status !== 'archived') {
                     <button
+                      *appPmHasPermission="PERMISSIONS.BRIGADE.UPDATE"
                       mat-raised-button
                       class="btn-edit-mobile w-full"
                       (click)="onEditBrigade(brigade)"
@@ -462,6 +472,9 @@ import { Brigade } from '../models/brigade.model';
 export class BrigadesTabComponent {
   private brigadesService = inject(BrigadesService);
   private notification = inject(NotificationService);
+
+  //readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Inputs
   projectCommunityId = input.required<string>();

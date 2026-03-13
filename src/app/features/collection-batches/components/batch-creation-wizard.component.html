@@ -95,6 +95,7 @@
                   [disabled]="request.fullyIncludedInOtherBatch"
                   class="request-checkbox"
                   (click)="$event.stopPropagation()"
+                  (change)="selectRequest(request)"
                 />
 
                 <div class="request-info">
@@ -219,6 +220,145 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- ─────── Ubicación del acopio (acordeón) ──────────────────────────── -->
+        <div
+          class="geo-card"
+          [class.geo-card--success]="geoStatus() === 'success'"
+          [class.geo-card--collapsed]="!geoExpanded()"
+        >
+          <!-- ── Cabecera: siempre visible, clic para expandir/colapsar ──────── -->
+          <button
+            type="button"
+            class="geo-header"
+            [class.geo-header--expandable]="!!geoCoords()"
+            (click)="toggleGeoPanel()"
+            [attr.aria-expanded]="geoExpanded()"
+          >
+            <!-- Izquierda: icono de estado + título + resumen colapsado -->
+            <div class="geo-icon-group">
+              @if (geoStatus() === 'detecting') {
+                <mat-spinner diameter="15" />
+              } @else if (geoStatus() === 'success') {
+                <mat-icon class="geo-status-icon geo-status-icon--success">gps_fixed</mat-icon>
+              } @else if (geoStatus() === 'error') {
+                <mat-icon class="geo-status-icon geo-status-icon--warn"
+                  >location_searching</mat-icon
+                >
+              } @else {
+                <mat-icon class="geo-status-icon">location_on</mat-icon>
+              }
+              <div class="geo-title-group">
+                <span class="geo-title">Ubicación del acopio</span>
+                @if (!geoExpanded() && geoCoords()) {
+                  <span class="geo-collapsed-coords">
+                    {{ geoCoords()!.latitude | number: '1.4-4' }}°,
+                    {{ geoCoords()!.longitude | number: '1.4-4' }}°
+                    @if (geoAccuracy()) {
+                      · ±{{ geoAccuracy() }}m
+                    }
+                  </span>
+                }
+                @if (!geoExpanded() && !geoCoords()) {
+                  <span class="geo-collapsed-pending">Sin ubicación — toca para abrir el mapa</span>
+                }
+              </div>
+            </div>
+
+            <!-- Derecha: botones de acción -->
+            <div class="geo-header-right">
+              <!-- GPS auto-detect (siempre disponible) -->
+              <button
+                mat-icon-button
+                type="button"
+                class="geo-gps-btn"
+                (click)="$event.stopPropagation(); detectLocation()"
+                [disabled]="geoStatus() === 'detecting'"
+                matTooltip="Detectar mi ubicación automáticamente"
+              >
+                <mat-icon>my_location</mat-icon>
+              </button>
+              <!-- Chevron: visual cue del estado del acordeón -->
+              <mat-icon class="geo-chevron">
+                {{ geoExpanded() ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </div>
+          </button>
+
+          <!-- ── Cuerpo: colapsable ─────────────────────────────────────────── -->
+          @if (geoExpanded()) {
+            <!-- Banner de estado -->
+            @if (geoStatus() === 'detecting') {
+              <div class="geo-status-banner geo-status-banner--detecting">
+                <mat-spinner diameter="13" />
+                <span>Detectando tu ubicación...</span>
+              </div>
+            } @else if (geoStatus() === 'error') {
+              <div class="geo-status-banner geo-status-banner--warn">
+                <mat-icon>info_outline</mat-icon>
+                <span
+                  >{{ geoError() }} Mueve el marcador o toca el mapa para fijar tu posición.</span
+                >
+              </div>
+            }
+
+            <!-- Mapa -->
+            <div class="geo-map-wrapper">
+              <google-map
+                height="220px"
+                width="100%"
+                [center]="mapCenter()"
+                [zoom]="mapZoom()"
+                [options]="mapOptions"
+                (mapClick)="onMapClick($event)"
+              >
+                @if (markerPosition()) {
+                  <map-marker
+                    [position]="markerPosition()!"
+                    [options]="markerOptions"
+                    (mapDragend)="onMarkerDragEnd($event)"
+                  />
+                }
+              </google-map>
+              @if (geoStatus() === 'idle' || geoStatus() === 'detecting') {
+                <div class="geo-map-overlay">
+                  <mat-spinner diameter="32" />
+                  <span>Cargando mapa...</span>
+                </div>
+              }
+            </div>
+
+            <!-- Barra inferior con CTA -->
+            @if (geoStatus() === 'success') {
+              <div class="geo-coords-bar">
+                <mat-icon class="geo-coords-icon">check_circle</mat-icon>
+                <span class="geo-coords-text">Ubicación registrada</span>
+                @if (geoAccuracy()) {
+                  <span class="geo-accuracy-chip">± {{ geoAccuracy() }}m</span>
+                }
+                <button mat-button type="button" class="geo-confirm-btn" (click)="toggleGeoPanel()">
+                  <mat-icon>expand_less</mat-icon>
+                  Colapsar
+                </button>
+              </div>
+            } @else if (markerPosition()) {
+              <div class="geo-coords-bar geo-coords-bar--adjusted">
+                <mat-icon class="geo-coords-icon">push_pin</mat-icon>
+                <span class="geo-coords-text">Posición seleccionada</span>
+                <span class="geo-coords-hint">Arrastra el marcador para ajustar</span>
+                <button mat-button type="button" class="geo-confirm-btn" (click)="toggleGeoPanel()">
+                  <mat-icon>check</mat-icon>
+                  Confirmar
+                </button>
+              </div>
+            } @else {
+              <div class="geo-coords-bar geo-coords-bar--empty">
+                <mat-icon class="geo-coords-icon">touch_app</mat-icon>
+                <span class="geo-coords-text">Toca el mapa para fijar la ubicación</span>
+              </div>
+            }
+          }
         </div>
 
         <!-- Form -->
@@ -547,7 +687,7 @@
       <button
         mat-raised-button
         class="btn-primary"
-        [disabled]="batchForm.invalid"
+        [disabled]="!canProceedStep3()"
         (click)="goToStep3()"
       >
         Siguiente

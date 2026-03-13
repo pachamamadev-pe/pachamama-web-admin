@@ -38,6 +38,10 @@ import {
 import { CollectorAssignmentStatusHistoryDialogComponent } from './collector-assignment-status-history-dialog.component';
 import { CollectorAssignmentStatusGuideDialogComponent } from './collector-assignment-status-guide-dialog.component';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+//import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 @Component({
   selector: 'app-collectors-tab',
   standalone: true,
@@ -53,6 +57,7 @@ import { CollectorAssignmentStatusGuideDialogComponent } from './collector-assig
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatCheckboxModule,
+    PmHasPermissionDirective,
   ],
   template: `
     <div class="collectors-container">
@@ -164,6 +169,8 @@ import { CollectorAssignmentStatusGuideDialogComponent } from './collector-assig
                   @if (!showArchived() && getAssignmentStatus(collector) !== 'archived') {
                     <button
                       mat-icon-button
+                      *appPmHasPermission="PERMISSIONS.COLLECTOR.UPDATE"
+                      mat-stroked-button
                       class="btn-change-status"
                       (click)="openStatusChangeDialog(collector)"
                       matTooltip="Cambiar estado de asignación"
@@ -261,6 +268,7 @@ import { CollectorAssignmentStatusGuideDialogComponent } from './collector-assig
                   }
                   @if (!showArchived() && getAssignmentStatus(collector) !== 'archived') {
                     <button
+                      *appPmHasPermission="PERMISSIONS.COLLECTOR.UPDATE"
                       mat-raised-button
                       class="btn-change-status w-full"
                       (click)="openStatusChangeDialog(collector)"
@@ -489,6 +497,9 @@ export class CollectorsTabComponent implements OnInit {
   private collectorAssignmentStatusService = inject(CollectorAssignmentStatusService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
+
+  //readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Inputs
   projectCommunityId = input.required<string>();

@@ -39,6 +39,19 @@
               <mat-icon>scale</mat-icon>
               {{ batch()!.totalWeightKg | number: '1.0-1' }} kg
             </span>
+            @if (batch()!.location) {
+              <button
+                type="button"
+                class="meta-item meta-item--location"
+                (click)="openLocationDialog()"
+                matTooltip="Ver punto de acopio en el mapa"
+              >
+                <mat-icon>location_on</mat-icon>
+                {{ batch()!.location!.latitude | number: '1.4-4' }}°,
+                {{ batch()!.location!.longitude | number: '1.4-4' }}°
+                <mat-icon class="meta-location-open">open_in_new</mat-icon>
+              </button>
+            }
           </div>
         </div>
 
