@@ -51,7 +51,11 @@
         <mat-spinner diameter="48" />
         <p class="text-body text-neutral-subheading mt-4">Cargando comunidades...</p>
       </div>
-    } @else if (communities().length === 0 && !searchTerm()) {
+    } @else if (
+      communities().length === 0 &&
+      !searchTerm() &&
+      sidebarService.hasPermission(PERMISSIONS.COMMUNITY.CREATE)
+    ) {
       <!-- Empty state -->
       <app-empty-state
         icon="groups"
@@ -71,7 +75,7 @@
         <p class="text-subtitle text-neutral-subheading">Intenta con otros términos de búsqueda</p>
         <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
       </div>
-    } @else {
+    } @else if (sidebarService.hasPermission(PERMISSIONS.COMMUNITY.READ)) {
       <!-- Communities Table (Desktop only) -->
       <section class="communities-table">
         <div class="products-table hidden md:block">
@@ -145,17 +149,30 @@
                 </button>
 
                 <mat-menu #tableMenu="matMenu">
-                  <button mat-menu-item (click)="viewCommunityDetail(community)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMMUNITY.READ"
+                    mat-menu-item
+                    (click)="viewCommunityDetail(community)"
+                  >
                     <mat-icon>visibility</mat-icon>
                     <span>Ver detalle</span>
                   </button>
 
-                  <button mat-menu-item (click)="openEditDialog(community)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMMUNITY.UPDATE"
+                    mat-menu-item
+                    (click)="openEditDialog(community)"
+                  >
                     <mat-icon>edit</mat-icon>
                     <span>Editar</span>
                   </button>
 
-                  <button mat-menu-item (click)="deleteCommunity(community)" class="text-red-600">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMMUNITY.DELETE"
+                    mat-menu-item
+                    (click)="deleteCommunity(community)"
+                    class="text-red-600"
+                  >
                     <mat-icon class="text-red-600">delete</mat-icon>
                     <span>Eliminar</span>
                   </button>
@@ -214,17 +231,30 @@
                 </button>
 
                 <mat-menu #mobileMenu="matMenu">
-                  <button mat-menu-item (click)="viewCommunityDetail(community)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMMUNITY.READ"
+                    mat-menu-item
+                    (click)="viewCommunityDetail(community)"
+                  >
                     <mat-icon>visibility</mat-icon>
                     <span>Ver detalle</span>
                   </button>
 
-                  <button mat-menu-item (click)="openEditDialog(community)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMMUNITY.UPDATE"
+                    mat-menu-item
+                    (click)="openEditDialog(community)"
+                  >
                     <mat-icon>edit</mat-icon>
                     <span>Editar</span>
                   </button>
 
-                  <button mat-menu-item (click)="deleteCommunity(community)" class="text-red-600">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMMUNITY.DELETE"
+                    mat-menu-item
+                    (click)="deleteCommunity(community)"
+                    class="text-red-600"
+                  >
                     <mat-icon class="text-red-600">delete</mat-icon>
                     <span>Eliminar</span>
                   </button>
@@ -260,6 +290,12 @@
           </div>
         }
       </section>
+    } @else {
+      <!-- Unauthorized state -->
+      <div class="empty-state">
+        <mat-icon>lock</mat-icon>
+        <h3>No tienes permisos para visualizar comunidades</h3>
+      </div>
     }
   </div>
 </div>

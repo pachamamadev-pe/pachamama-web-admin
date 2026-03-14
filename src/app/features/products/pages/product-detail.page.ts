@@ -36,6 +36,10 @@ import { ProductProtocol, CreateProductProtocolDto, UpdateProductProtocolDto } f
 import { ReorderProductProtocolsDto } from '../models/reorder-product-protocols.dto';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 
+//import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 /**
  * Página de detalle del producto
  * Muestra información completa del producto en 3 pestañas:
@@ -70,6 +74,9 @@ export class ProductDetailPage implements OnInit {
   private notification = inject(NotificationService);
   private dialog = inject(MatDialog);
   private productProtocolsService = inject(ProductProtocolsService);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // ViewChild for side panel
   @ViewChild(ProductProtocolFormSidePanelComponent, { static: false })

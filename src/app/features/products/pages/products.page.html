@@ -137,7 +137,12 @@
           <p class="text-subtitle text-neutral-subheading mb-4">
             Comienza agregando tu primer producto de recolección
           </p>
-          <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+          <button
+            *appPmHasPermission="PERMISSIONS.PRODUCT.CREATE"
+            mat-raised-button
+            class="btn-primary"
+            (click)="openCreateDialog()"
+          >
             <mat-icon>add</mat-icon>
             Añadir primer producto
           </button>
@@ -211,11 +216,19 @@
                 </button>
 
                 <mat-menu #cardMenu="matMenu">
-                  <button mat-menu-item (click)="openEditDialog(product)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.PRODUCT.UPDATE"
+                    mat-menu-item
+                    (click)="openEditDialog(product)"
+                  >
                     <mat-icon>edit</mat-icon>
                     <span>Editar</span>
                   </button>
-                  <button mat-menu-item (click)="toggleStatus(product)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.PRODUCT.UPDATE"
+                    mat-menu-item
+                    (click)="toggleStatus(product)"
+                  >
                     <mat-icon>
                       {{ product.status === 'ACTIVE' ? 'block' : 'check_circle' }}
                     </mat-icon>
@@ -223,7 +236,12 @@
                       {{ product.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
                     </span>
                   </button>
-                  <button mat-menu-item class="text-red-600" (click)="confirmDelete(product)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.PRODUCT.DELETE"
+                    mat-menu-item
+                    class="text-red-600"
+                    (click)="confirmDelete(product)"
+                  >
                     <mat-icon class="text-red-600">delete</mat-icon>
                     <span>Eliminar</span>
                   </button>
@@ -290,11 +308,19 @@
                   </button>
 
                   <mat-menu #mobileMenu="matMenu">
-                    <button mat-menu-item (click)="openEditDialog(product)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.PRODUCT.UPDATE"
+                      mat-menu-item
+                      (click)="openEditDialog(product)"
+                    >
                       <mat-icon>edit</mat-icon>
                       <span>Editar</span>
                     </button>
-                    <button mat-menu-item (click)="toggleStatus(product)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.PRODUCT.UPDATE"
+                      mat-menu-item
+                      (click)="toggleStatus(product)"
+                    >
                       <mat-icon>
                         {{ product.status === 'ACTIVE' ? 'block' : 'check_circle' }}
                       </mat-icon>
@@ -302,7 +328,12 @@
                         {{ product.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
                       </span>
                     </button>
-                    <button mat-menu-item class="text-red-600" (click)="confirmDelete(product)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.PRODUCT.DELETE"
+                      mat-menu-item
+                      class="text-red-600"
+                      (click)="confirmDelete(product)"
+                    >
                       <mat-icon class="text-red-600">delete</mat-icon>
                       <span>Eliminar</span>
                     </button>
@@ -405,11 +436,19 @@
                       </button>
 
                       <mat-menu #tableMenu="matMenu">
-                        <button mat-menu-item (click)="openEditDialog(product)">
+                        <button
+                          *appPmHasPermission="PERMISSIONS.PRODUCT.UPDATE"
+                          mat-menu-item
+                          (click)="openEditDialog(product)"
+                        >
                           <mat-icon>edit</mat-icon>
                           <span>Editar</span>
                         </button>
-                        <button mat-menu-item (click)="toggleStatus(product)">
+                        <button
+                          *appPmHasPermission="PERMISSIONS.PRODUCT.UPDATE"
+                          mat-menu-item
+                          (click)="toggleStatus(product)"
+                        >
                           <mat-icon>
                             {{ product.status === 'ACTIVE' ? 'block' : 'check_circle' }}
                           </mat-icon>
@@ -417,7 +456,12 @@
                             {{ product.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
                           </span>
                         </button>
-                        <button mat-menu-item class="text-red-600" (click)="confirmDelete(product)">
+                        <button
+                          *appPmHasPermission="PERMISSIONS.PRODUCT.DELETE"
+                          mat-menu-item
+                          class="text-red-600"
+                          (click)="confirmDelete(product)"
+                        >
                           <mat-icon class="text-red-600">delete</mat-icon>
                           <span>Eliminar</span>
                         </button>
