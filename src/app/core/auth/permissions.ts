@@ -59,7 +59,12 @@ export const PERMISSIONS = {
     UPDATE: 'company:update',
     DELETE: 'company:delete',
     MANAGE_DOCUMENTS: 'company:manage_documents',
-    MANAGE_ADMINS: 'company:manage_admins', //Ray revisando 02
+    MANAGE_ADMINS: 'company:manage_admins',
+  },
+
+  DASHBOARD: {
+    ALL: 'dashboard:*',
+    VIEW: 'dashboard:view', //Ray revisando 02
   },
 
   USER: {

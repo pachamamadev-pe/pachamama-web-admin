@@ -69,3 +69,90 @@
     }
   }
 }
+
+// ─── Welcome Page (sin permiso dashboard) ────────────────────────────────────
+
+.welcome-container {
+  @apply flex items-center justify-center min-h-screen bg-secondary-light p-4;
+
+  .welcome-card {
+    @apply bg-white rounded-2xl shadow-lg w-full max-w-lg p-8 flex flex-col gap-6;
+
+    .welcome-logo {
+      @apply flex justify-center;
+
+      .welcome-logo-img {
+        @apply h-12 object-contain;
+      }
+    }
+
+    .welcome-greeting {
+      @apply flex flex-col items-center gap-3 text-center;
+
+      .welcome-title {
+        @apply text-2xl md:text-3xl font-bold text-accent-titles leading-snug;
+
+        .welcome-name {
+          @apply text-secondary;
+        }
+      }
+
+      .welcome-role-badge {
+        @apply inline-flex items-center gap-1.5 bg-secondary-light text-secondary font-medium text-sm px-4 py-1.5 rounded-full;
+
+        .role-icon {
+          @apply text-base leading-none;
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      .welcome-company {
+        @apply flex items-center gap-1.5 text-sm text-neutral-subheading mt-1;
+
+        .company-icon {
+          @apply text-base;
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+
+    .welcome-divider {
+      @apply border-t border-neutral-border;
+    }
+
+    .welcome-description {
+      @apply flex flex-col gap-4;
+
+      .welcome-subtitle {
+        @apply text-center font-semibold text-accent-titles text-base;
+      }
+
+      .welcome-body {
+        @apply text-neutral-subheading text-sm leading-relaxed text-center;
+      }
+
+      .welcome-features {
+        @apply grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1;
+
+        .feature-item {
+          @apply flex items-center gap-2 text-sm text-accent-titles bg-secondary-light rounded-lg px-3 py-2;
+
+          .feature-icon {
+            @apply text-secondary flex-shrink-0;
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+        }
+      }
+    }
+
+    .welcome-footer {
+      @apply text-center text-xs text-neutral-subheading mt-2;
+    }
+  }
+}
