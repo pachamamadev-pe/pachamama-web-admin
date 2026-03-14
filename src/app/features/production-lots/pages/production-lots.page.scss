@@ -610,6 +610,49 @@
   color: #d1d5db;
 }
 
+.lot-location-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px 2px 4px;
+  border-radius: 999px;
+  background-color: #d1fae5;
+  border: 1px solid #6ee7b7;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  font-size: 10px;
+  font-weight: 600;
+  color: #065f46;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.01em;
+
+  mat-icon {
+    font-size: 11px !important;
+    width: 11px !important;
+    height: 11px !important;
+    color: #059669 !important;
+  }
+
+  &:hover {
+    background-color: #a7f3d0;
+  }
+}
+
+.lot-location-coords {
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+}
+
+.lot-location-external {
+  font-size: 9px !important;
+  width: 9px !important;
+  height: 9px !important;
+  color: #059669 !important;
+  opacity: 0.7;
+}
+
 /* ══════════════════════════════════════════════════════════════
    BTN SECTION CREATE — botones dentro de cada sección header
 ══════════════════════════════════════════════════════════════ */

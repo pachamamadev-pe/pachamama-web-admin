@@ -7,7 +7,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -50,12 +50,17 @@ import {
   SecondaryLotCreationWizardComponent,
   SecondaryLotWizardResult,
 } from '../components/secondary-lot-creation-wizard.component';
+import {
+  ProductionLotLocationMapDialogComponent,
+  ProductionLotLocationDialogData,
+} from '../components/production-lot-location-map-dialog.component';
 
 @Component({
   selector: 'app-production-lots-page',
   imports: [
     CommonModule,
     DatePipe,
+    DecimalPipe,
     FormsModule,
     MatButtonModule,
     MatIconModule,
@@ -310,6 +315,21 @@ export class ProductionLotsPage implements OnInit {
         transformationStage: lot.transformationStage,
         companyName: lot.derivedCompanyName ?? undefined,
       },
+    });
+  }
+
+  openLocationDialog(event: Event, lot: ProductionLotRecord): void {
+    event.stopPropagation();
+    if (!lot.location) return;
+    const data: ProductionLotLocationDialogData = {
+      lotNumber: lot.lotNumber,
+      transformationStage: lot.transformationStage,
+      location: lot.location,
+    };
+    this.dialog.open(ProductionLotLocationMapDialogComponent, {
+      width: '100%',
+      maxWidth: '560px',
+      data,
     });
   }
 

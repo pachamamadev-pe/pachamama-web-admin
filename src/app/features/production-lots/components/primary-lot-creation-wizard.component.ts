@@ -28,6 +28,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialogRef } from '@angular/material/dialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { GoogleMap, MapMarker } from '@angular/google-maps';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { SidebarService } from '@core/services/sidebar.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -61,6 +62,8 @@ export interface PrimaryLotWizardResult {
     MatTooltipModule,
     MatPaginatorModule,
     MatDividerModule,
+    GoogleMap,
+    MapMarker,
   ],
 })
 export class PrimaryLotCreationWizardComponent implements OnInit {
@@ -121,6 +124,47 @@ export class PrimaryLotCreationWizardComponent implements OnInit {
 
   // ── Step 3: notes ──────────────────────────────────────────────────────────
   notesControl = new FormControl<string | null>(null, Validators.maxLength(1000));
+
+  // ── Step 3: Geolocation ────────────────────────────────────────────────────
+  geoStatus = signal<'idle' | 'detecting' | 'success' | 'error'>('idle');
+  geoCoords = signal<{ latitude: number; longitude: number } | null>(null);
+  geoAccuracy = signal<number | null>(null);
+  geoError = signal('');
+  geoExpanded = signal(true);
+
+  // Google Maps
+  readonly defaultCenter: google.maps.LatLngLiteral = { lat: -9.19, lng: -75.0152 };
+  mapCenter = signal<google.maps.LatLngLiteral>(this.defaultCenter);
+  markerPosition = signal<google.maps.LatLngLiteral | null>(null);
+  mapZoom = signal(5);
+  readonly mapOptions: google.maps.MapOptions = {
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    zoomControl: true,
+    clickableIcons: false,
+    styles: [
+      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+      { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+    ],
+  };
+  readonly markerOptions: google.maps.MarkerOptions = {
+    draggable: true,
+    animation: google.maps.Animation.DROP,
+    icon: {
+      url:
+        'data:image/svg+xml;charset=UTF-8,' +
+        encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
+          <path d="M18 0C8.059 0 0 8.059 0 18c0 13.5 18 30 18 30S36 31.5 36 18C36 8.059 27.941 0 18 0z" fill="#218358"/>
+          <circle cx="18" cy="18" r="8" fill="white"/>
+          <circle cx="18" cy="18" r="4" fill="#218358"/>
+        </svg>
+      `),
+      anchor: new google.maps.Point(18, 48),
+      scaledSize: new google.maps.Size(36, 48),
+    },
+  };
 
   // ── Saving ─────────────────────────────────────────────────────────────────
   saving = signal(false);
@@ -280,9 +324,16 @@ export class PrimaryLotCreationWizardComponent implements OnInit {
     return this.receptionForm?.valid ?? false;
   }
 
+  canCreateLot(): boolean {
+    return this.geoCoords() !== null;
+  }
+
   goToStep3(): void {
     if (this.canProceedStep3()) {
       this.currentStep.set(3);
+      if (this.geoCoords() === null) {
+        this.detectLocation();
+      }
     } else {
       this.receptionForm.markAllAsTouched();
     }
@@ -350,6 +401,7 @@ export class PrimaryLotCreationWizardComponent implements OnInit {
         jabasCount: e.jabasCount ?? undefined,
         observations: e.observations ?? undefined,
       })),
+      location: this.geoCoords() ?? undefined,
     };
 
     this.saving.set(true);
@@ -366,6 +418,77 @@ export class PrimaryLotCreationWizardComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  // ── Geolocation ──────────────────────────────────────────────────────────────────────────
+
+  detectLocation(): void {
+    if (!navigator.geolocation) {
+      this.geoStatus.set('error');
+      this.geoError.set(
+        'Tu dispositivo no soporta geolocalización. Mueve el marcador en el mapa para seleccionar tu ubicación.',
+      );
+      return;
+    }
+    this.geoStatus.set('detecting');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+        const latlng = { lat: coords.latitude, lng: coords.longitude };
+        this.geoCoords.set(coords);
+        this.geoAccuracy.set(Math.round(position.coords.accuracy));
+        this.mapCenter.set(latlng);
+        this.markerPosition.set(latlng);
+        this.mapZoom.set(16);
+        this.geoStatus.set('success');
+        this.geoExpanded.set(false);
+        this.cdr.markForCheck();
+      },
+      (error) => {
+        let msg = 'No se pudo detectar tu ubicación automáticamente.';
+        if (error.code === 1) {
+          msg = 'Permiso denegado. Mueve el marcador en el mapa para indicar dónde estás.';
+        } else if (error.code === 3) {
+          msg = 'Tiempo de espera agotado. Mueve el marcador en el mapa para indicar tu ubicación.';
+        }
+        this.geoError.set(msg);
+        const lima = { lat: -12.0464, lng: -77.0428 };
+        this.mapCenter.set(lima);
+        this.markerPosition.set(lima);
+        this.mapZoom.set(6);
+        this.geoCoords.set({ latitude: lima.lat, longitude: lima.lng });
+        this.geoStatus.set('error');
+        this.cdr.markForCheck();
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
+    );
+  }
+
+  onMarkerDragEnd(event: google.maps.MapMouseEvent): void {
+    if (!event.latLng) return;
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    this.geoCoords.set({ latitude: lat, longitude: lng });
+    this.markerPosition.set({ lat, lng });
+    this.geoAccuracy.set(null);
+    this.geoStatus.set('success');
+  }
+
+  onMapClick(event: google.maps.MapMouseEvent): void {
+    if (!event.latLng) return;
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    this.geoCoords.set({ latitude: lat, longitude: lng });
+    this.markerPosition.set({ lat, lng });
+    this.mapCenter.set({ lat, lng });
+    this.geoAccuracy.set(null);
+    this.geoStatus.set('success');
+  }
+
+  toggleGeoPanel(): void {
+    if (this.geoCoords()) {
+      this.geoExpanded.update((v) => !v);
+    }
   }
 
   close(): void {

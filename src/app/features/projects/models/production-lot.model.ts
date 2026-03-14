@@ -189,6 +189,8 @@ export interface ProductionLotDetail {
   publicUrl: string | null;
   metadata: Record<string, unknown> | null;
   transportInfo: TransportInfoRequest | null;
+  /** Coordenadas GPS del punto de transformación */
+  location?: { latitude: number; longitude: number } | null;
   /** Nombre de empresa derivado de los lotes fuente */
   derivedCompanyName: string | null;
   /** Solo disponible para lotes primarios */

@@ -59,6 +59,15 @@
                 {{ lot()!.totalJabasCount }} jabas
               </span>
             }
+            @if (lot()!.location) {
+              <button class="meta-item meta-item--location" (click)="openLocationDialog()">
+                <mat-icon>location_on</mat-icon>
+                <span>
+                  {{ lot()!.location!.latitude | number: '1.4-4' }}°,
+                  {{ lot()!.location!.longitude | number: '1.4-4' }}°
+                </span>
+              </button>
+            }
           </div>
 
           <!-- Source lots modal trigger -->

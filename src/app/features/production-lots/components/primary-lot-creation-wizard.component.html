@@ -15,7 +15,7 @@
           } @else if (currentStep() === 2) {
             Paso 2 de 3 · Ajusta los datos de recepción en planta
           } @else {
-            Paso 3 de 3 · Confirma y crea el lote de producción
+            Paso 3 de 3 · Ubicación y confirmación del lote
           }
         </p>
       </div>
@@ -435,6 +435,139 @@
     <!-- ══════════════════════════════════════ PASO 3: Confirmar -->
     @if (currentStep() === 3) {
       <div class="step3-content">
+        <!-- ► Geo accordion -->
+        <div
+          class="geo-card"
+          [class.geo-card--success]="geoCoords() !== null && geoStatus() === 'success'"
+          [class.geo-card--collapsed]="!geoExpanded() && geoCoords() !== null"
+        >
+          <button
+            type="button"
+            class="geo-header"
+            [class.geo-header--expandable]="!!geoCoords()"
+            (click)="toggleGeoPanel()"
+            [attr.aria-expanded]="geoExpanded()"
+          >
+            <div class="geo-icon-group">
+              @if (geoStatus() === 'detecting') {
+                <mat-spinner diameter="20" class="geo-status-icon" />
+              } @else if (geoStatus() === 'success') {
+                <mat-icon class="geo-status-icon geo-status-icon--success">gps_fixed</mat-icon>
+              } @else if (geoStatus() === 'error') {
+                <mat-icon class="geo-status-icon geo-status-icon--error"
+                  >location_searching</mat-icon
+                >
+              } @else {
+                <mat-icon class="geo-status-icon geo-status-icon--idle">location_on</mat-icon>
+              }
+              <div class="geo-title-group">
+                <span class="geo-title">Ubicación del lote</span>
+                @if (!geoExpanded() && geoCoords()) {
+                  <span class="geo-collapsed-coords">
+                    {{ geoCoords()!.latitude | number: '1.4-4' }}°,
+                    {{ geoCoords()!.longitude | number: '1.4-4' }}°
+                    @if (geoAccuracy()) {
+                      · ±{{ geoAccuracy() }}m
+                    }
+                  </span>
+                }
+                @if (!geoExpanded() && !geoCoords()) {
+                  <span class="geo-collapsed-pending">Sin ubicación — toca para abrir el mapa</span>
+                }
+              </div>
+            </div>
+            <div class="geo-header-right">
+              <button
+                mat-icon-button
+                class="geo-gps-btn"
+                type="button"
+                (click)="$event.stopPropagation(); detectLocation()"
+                [matTooltip]="'Detectar mi ubicación'"
+              >
+                <mat-icon>my_location</mat-icon>
+              </button>
+              <mat-icon class="geo-chevron">
+                {{ geoExpanded() ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </div>
+          </button>
+
+          @if (geoExpanded()) {
+            <!-- Status banners -->
+            @if (geoStatus() === 'detecting') {
+              <div class="geo-status-banner geo-status-banner--detecting">
+                <mat-icon>sensors</mat-icon>
+                <span>Detectando ubicación GPS…</span>
+              </div>
+            } @else if (geoStatus() === 'error') {
+              <div class="geo-status-banner geo-status-banner--error">
+                <mat-icon>warning_amber</mat-icon>
+                <span>{{ geoError() }} Puedes seleccionar manualmente en el mapa.</span>
+              </div>
+            }
+
+            <!-- Map -->
+            <div class="geo-map-wrapper">
+              <google-map
+                height="280px"
+                width="100%"
+                [center]="mapCenter()"
+                [zoom]="mapZoom()"
+                [options]="mapOptions"
+                (mapClick)="onMapClick($event)"
+              >
+                @if (markerPosition()) {
+                  <map-marker
+                    [position]="markerPosition()!"
+                    [options]="markerOptions"
+                    (mapDragend)="onMarkerDragEnd($event)"
+                  />
+                }
+              </google-map>
+              @if (geoStatus() === 'idle') {
+                <div class="geo-map-overlay">
+                  <mat-icon>touch_app</mat-icon>
+                  <span>Toca el mapa para marcar la ubicación o usa el botón GPS</span>
+                </div>
+              }
+            </div>
+
+            <!-- Coords bar -->
+            @if (geoCoords()) {
+              <div
+                class="geo-coords-bar"
+                [class.geo-coords-bar--adjusted]="
+                  geoStatus() !== 'success' || geoAccuracy() === null
+                "
+              >
+                <mat-icon>location_on</mat-icon>
+                <span class="geo-coords-text">
+                  {{ geoCoords()!.latitude | number: '1.6-6' }}° &nbsp;
+                  {{ geoCoords()!.longitude | number: '1.6-6' }}°
+                  @if (geoAccuracy()) {
+                    &nbsp;·&nbsp;±{{ geoAccuracy() }}m
+                  }
+                </span>
+                @if (geoCoords() && geoStatus() !== 'detecting') {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    class="geo-confirm-btn"
+                    (click)="geoExpanded.set(false)"
+                  >
+                    <mat-icon>check</mat-icon>
+                    Confirmar
+                  </button>
+                }
+              </div>
+            } @else {
+              <div class="geo-coords-bar geo-coords-bar--empty">
+                <mat-icon>location_off</mat-icon>
+                <span>Toca el mapa o usa GPS para registrar la ubicación</span>
+              </div>
+            }
+          }
+        </div>
         <!-- Resumen de totales -->
         <div class="review-card">
           <h3 class="review-card-title">Resumen del nuevo lote</h3>
@@ -588,7 +721,12 @@
         <mat-icon>chevron_left</mat-icon>
         Anterior
       </button>
-      <button mat-raised-button class="btn-primary" [disabled]="saving()" (click)="createLot()">
+      <button
+        mat-raised-button
+        class="btn-primary"
+        [disabled]="saving() || !canCreateLot()"
+        (click)="createLot()"
+      >
         @if (saving()) {
           <mat-spinner diameter="18" class="btn-spinner" />
         } @else {

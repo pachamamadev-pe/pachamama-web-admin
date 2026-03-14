@@ -267,6 +267,21 @@
                       <span class="lot-footer-sep">&bull;</span>
                       <mat-icon>person</mat-icon>
                       <span>{{ lot.createdByName ?? '—' }}</span>
+                      @if (lot.location) {
+                        <button
+                          type="button"
+                          class="lot-location-chip"
+                          (click)="openLocationDialog($event, lot)"
+                          [matTooltip]="'Ver ubicación de transformación'"
+                        >
+                          <mat-icon>location_on</mat-icon>
+                          <span class="lot-location-coords">
+                            {{ lot.location.latitude | number: '1.4-4' }}°,
+                            {{ lot.location.longitude | number: '1.4-4' }}°
+                          </span>
+                          <mat-icon class="lot-location-external">open_in_new</mat-icon>
+                        </button>
+                      }
                     </div>
                   </div>
                 }
@@ -400,6 +415,21 @@
                       <span class="lot-footer-sep">&bull;</span>
                       <mat-icon>person</mat-icon>
                       <span>{{ lot.createdByName ?? '—' }}</span>
+                      @if (lot.location) {
+                        <button
+                          type="button"
+                          class="lot-location-chip"
+                          (click)="openLocationDialog($event, lot)"
+                          [matTooltip]="'Ver ubicación de transformación'"
+                        >
+                          <mat-icon>location_on</mat-icon>
+                          <span class="lot-location-coords">
+                            {{ lot.location.latitude | number: '1.4-4' }}°,
+                            {{ lot.location.longitude | number: '1.4-4' }}°
+                          </span>
+                          <mat-icon class="lot-location-external">open_in_new</mat-icon>
+                        </button>
+                      }
                     </div>
                   </div>
                 }
@@ -407,8 +437,6 @@
             }
           </div>
         }
-
-        <!-- Paginador global -->
         <mat-paginator
           [length]="totalElements()"
           [pageSize]="pageSize()"

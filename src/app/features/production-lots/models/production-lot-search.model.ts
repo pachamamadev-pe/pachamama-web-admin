@@ -57,6 +57,8 @@ export interface ProductionLotRecord {
   updatedAt: string;
   createdBy: string;
   createdByName: string | null;
+  /** Coordenadas GPS del punto de transformación */
+  location?: { latitude: number; longitude: number } | null;
 }
 
 /**
@@ -123,6 +125,8 @@ export interface CreateSecondaryLotMultiRequest {
   totalJabasCount?: number | null;
   transformationNotes?: string | null;
   transportInfo: TransportInfoRequest;
+  /** Coordenadas GPS del punto de transformación */
+  location?: { latitude: number; longitude: number };
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -173,4 +177,6 @@ export interface CreatePrimaryProductionLotRequest {
   sourceBatches: SourceBatchEntry[];
   /** Datos de recepción en planta por lote (uno por cada entrada en sourceBatches) */
   receptions: ReceptionEntry[];
+  /** Coordenadas GPS del punto de transformación */
+  location?: { latitude: number; longitude: number };
 }

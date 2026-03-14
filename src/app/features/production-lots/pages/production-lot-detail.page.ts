@@ -7,7 +7,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -17,10 +17,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ProductionLotsService } from '../../projects/services/production-lots.service';
 import { NotificationService } from '@core/services/notification.service';
+import {
+  ProductionLotLocationMapDialogComponent,
+  ProductionLotLocationDialogData,
+} from '../components/production-lot-location-map-dialog.component';
 import {
   ProductionLotDetail,
   ProductionLotStatus,
@@ -201,6 +206,7 @@ export const STAGE_INDEX: Record<ProductionLotStatus, number> = {
   selector: 'app-production-lot-detail-page',
   imports: [
     CommonModule,
+    DecimalPipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatIconModule,
@@ -208,6 +214,7 @@ export const STAGE_INDEX: Record<ProductionLotStatus, number> = {
     MatTooltipModule,
     MatFormFieldModule,
     MatInputModule,
+    MatDialogModule,
     NgxExtendedPdfViewerModule,
   ],
   templateUrl: './production-lot-detail.page.html',
@@ -220,6 +227,7 @@ export class ProductionLotDetailPage implements OnInit {
   private lotsService = inject(ProductionLotsService);
   private azureStorage = inject(AzureStorageService);
   private notification = inject(NotificationService);
+  private dialog = inject(MatDialog);
   private fb = inject(FormBuilder);
 
   // ─── State ────────────────────────────────────────────────────────────────
@@ -351,6 +359,24 @@ export class ProductionLotDetailPage implements OnInit {
     totalJabasRipening: this.receptions().reduce((sum, r) => sum + (r.jabasRipeningCount ?? 0), 0),
     count: this.receptions().length,
   }));
+
+  locationCenter = computed<google.maps.LatLngLiteral>(() => {
+    const loc = this.lot()?.location;
+    return loc ? { lat: loc.latitude, lng: loc.longitude } : { lat: -9.19, lng: -75.0152 };
+  });
+
+  readonly locationMapOptions: google.maps.MapOptions = {
+    mapTypeId: 'roadmap',
+    disableDefaultUI: true,
+    zoomControl: false,
+    scrollwheel: false,
+    clickableIcons: false,
+  };
+
+  readonly locationMarkerOptions: google.maps.MarkerOptions = {
+    draggable: false,
+    animation: google.maps.Animation.DROP,
+  };
 
   constructor() {
     // React to stage/lot changes → refresh PDF URL
@@ -756,6 +782,21 @@ export class ProductionLotDetailPage implements OnInit {
     if (idx > 0) {
       this.viewingStage.set(STAGE_ORDER[idx - 1]);
     }
+  }
+
+  openLocationDialog(): void {
+    const lot = this.lot();
+    if (!lot?.location) return;
+    const data: ProductionLotLocationDialogData = {
+      lotNumber: lot.lotNumber,
+      transformationStage: lot.transformationStage,
+      location: lot.location,
+    };
+    this.dialog.open(ProductionLotLocationMapDialogComponent, {
+      width: '100%',
+      maxWidth: '560px',
+      data,
+    });
   }
 
   goBack(): void {

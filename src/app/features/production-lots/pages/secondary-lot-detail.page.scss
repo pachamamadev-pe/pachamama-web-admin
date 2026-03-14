@@ -110,6 +110,21 @@
   }
 }
 
+.meta-item--location {
+  @apply cursor-pointer rounded-full px-2 py-0.5 transition-colors;
+  border: 1px solid theme('colors.secondary.DEFAULT');
+  background: transparent;
+  color: theme('colors.secondary.DEFAULT');
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  &:hover {
+    background: theme('colors.secondary.light');
+  }
+  mat-icon {
+    color: theme('colors.secondary.DEFAULT');
+  }
+}
+
 // ─── Parent Lot Row ───────────────────────────────────────────────────────────
 .parent-lot-row {
   @apply flex items-center gap-2 mt-1;
@@ -320,6 +335,61 @@
     mat-icon:not(.tab-check) {
       color: theme('colors.secondary.DEFAULT');
     }
+  }
+}
+
+// ─── Location Section ─────────────────────────────────────────────────────────
+.location-section {
+  @apply mx-6 mb-4 rounded-xl overflow-hidden;
+  border: 1px solid theme('colors.neutral.border');
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  @media (max-width: 767px) {
+    @apply mx-4;
+  }
+}
+
+.location-mini-map {
+  @apply w-full;
+  google-map {
+    display: block;
+  }
+}
+
+.location-coords-bar {
+  @apply flex items-center gap-2 px-4 py-2;
+  background: theme('colors.secondary.light');
+  border-top: 1px solid theme('colors.neutral.border');
+  font-size: 12px;
+  color: #374151;
+  font-family: 'Roboto Mono', monospace;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: theme('colors.secondary.DEFAULT');
+    flex-shrink: 0;
+  }
+
+  span {
+    flex: 1;
+  }
+}
+
+.location-full-btn {
+  @apply flex-shrink-0;
+  font-size: 12px;
+  height: 28px;
+  line-height: 28px;
+  padding: 0 10px;
+  border-color: theme('colors.secondary.DEFAULT') !important;
+  color: theme('colors.secondary.DEFAULT') !important;
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
   }
 }
 

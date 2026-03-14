@@ -6,7 +6,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +17,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ProductionLotsService } from '../../projects/services/production-lots.service';
@@ -30,6 +31,10 @@ import {
   TRANSFORMATION_STAGE_LABELS,
 } from '../../projects/models/production-lot.model';
 import { TransportInfoRequest } from '../../collection-batches/models/collection-batch.model';
+import {
+  ProductionLotLocationMapDialogComponent,
+  ProductionLotLocationDialogData,
+} from '../components/production-lot-location-map-dialog.component';
 
 const RECEPTION_DOC_CODE = 'FRUIT_RECEPTION_RECORD' as const;
 const TRANSPORT_DOC_CODE = 'TRANSPORT_WAYBILL' as const;
@@ -47,6 +52,8 @@ const TRANSPORT_DOC_CODE = 'TRANSPORT_WAYBILL' as const;
     MatTooltipModule,
     MatSelectModule,
     MatStepperModule,
+    MatDialogModule,
+    DecimalPipe,
     NgxExtendedPdfViewerModule,
   ],
   templateUrl: './secondary-lot-detail.page.html',
@@ -60,6 +67,7 @@ export class SecondaryLotDetailCompanyPage implements OnInit {
   private azureStorage = inject(AzureStorageService);
   private notification = inject(NotificationService);
   private fb = inject(FormBuilder);
+  private dialog = inject(MatDialog);
 
   readonly STATUS_LABELS = PRODUCTION_LOT_STATUS_LABELS;
   readonly TRANSFORMATION_LABELS = TRANSFORMATION_STAGE_LABELS;
@@ -134,6 +142,24 @@ export class SecondaryLotDetailCompanyPage implements OnInit {
   });
 
   isFluvialTransport = computed(() => this.selectedTransportType() === 'fluvial');
+
+  locationCenter = computed<google.maps.LatLngLiteral>(() => {
+    const loc = this.lot()?.location;
+    return loc ? { lat: loc.latitude, lng: loc.longitude } : { lat: -9.19, lng: -75.0152 };
+  });
+
+  readonly locationMapOptions: google.maps.MapOptions = {
+    mapTypeId: 'roadmap',
+    disableDefaultUI: true,
+    zoomControl: false,
+    scrollwheel: false,
+    clickableIcons: false,
+  };
+
+  readonly locationMarkerOptions: google.maps.MarkerOptions = {
+    draggable: false,
+    animation: google.maps.Animation.DROP,
+  };
 
   // ─── Ciclo de vida ───────────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -384,7 +410,20 @@ export class SecondaryLotDetailCompanyPage implements OnInit {
       if (doc?.blobName) this.loadPdf(doc.blobName);
     }
   }
-
+  openLocationDialog(): void {
+    const lot = this.lot();
+    if (!lot?.location) return;
+    const data: ProductionLotLocationDialogData = {
+      lotNumber: lot.lotNumber,
+      transformationStage: lot.transformationStage,
+      location: lot.location,
+    };
+    this.dialog.open(ProductionLotLocationMapDialogComponent, {
+      width: '100%',
+      maxWidth: '560px',
+      data,
+    });
+  }
   // ─── Navegación ───────────────────────────────────────────────────────────────
   goBack(): void {
     this.router.navigate(['/production-lots']);
