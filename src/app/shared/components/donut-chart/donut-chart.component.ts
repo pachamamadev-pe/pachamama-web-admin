@@ -45,9 +45,10 @@ export interface DonutChartData {
           transform: translate(-50%, -50%);
           text-align: center;
           font-weight: bold;
-          font-size: 14px;
-          color: #333;
+          font-size: 18px;
+          color: #0a0a0a;
           pointer-events: none;
+          white-space: nowrap;
         }
       }
     `,
@@ -60,6 +61,7 @@ export class DonutChartComponent {
   // Inputs
   data = input.required<DonutChartData>();
   height = input<number>(250);
+  showLegend = input<boolean>(true);
   chartType: ChartType = 'doughnut';
 
   // Computed chart data
@@ -90,6 +92,7 @@ export class DonutChartComponent {
     cutout: '70%',
     plugins: {
       legend: {
+        display: this.showLegend(),
         position: 'bottom',
         labels: {
           usePointStyle: true,
