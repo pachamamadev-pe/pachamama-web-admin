@@ -69,6 +69,10 @@ import { SidebarService } from '@core/services/sidebar.service';
 import { PERMISSIONS } from '@core/auth/permissions';
 import { CollectionBatchesTabComponent } from '../../collection-batches/components/collection-batches-tab.component';
 import { PROJECT_WORKFLOW_STAGES, ProjectWorkflowStage } from '../models/project-stages.constants';
+import {
+  DonutChartComponent,
+  DonutChartData,
+} from '@shared/components/donut-chart/donut-chart.component';
 
 interface ActivityValidationStatusChartItem {
   activityType: string;
@@ -102,6 +106,7 @@ interface ActivityValidationStatusChartItem {
     ConfigurationTabComponent,
     CollectionBatchesTabComponent,
     PmHasPermissionDirective,
+    DonutChartComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -1423,6 +1428,19 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
       status,
     }));
   });
+
+  activityValidationDonutCharts = computed<{ title: string; data: DonutChartData }[]>(() =>
+    this.activityValidationStatusChartItems().map((item) => ({
+      title: this.getActivityTypeDisplayName(item.activityType),
+      data: {
+        labels: ['Pendiente', 'Aprobada', 'Rechazada'],
+        values: [item.status.pending, item.status.approved, item.status.rejected],
+        colors: ['#F59E0B', '#10B981', '#EF4444'],
+        centerText: String(item.status.total),
+        tooltipLabel: 'Actividades',
+      },
+    })),
+  );
 
   getValidationStatusWidth(
     status: ActivityValidationStatusKpi,

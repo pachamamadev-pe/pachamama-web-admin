@@ -336,67 +336,24 @@
                                 >
                               </div>
                             } @else {
-                              <div class="validation-chart-list">
-                                @for (
-                                  item of activityValidationStatusChartItems();
-                                  track item.activityType
-                                ) {
-                                  <div class="validation-chart-row">
-                                    <div class="validation-row-header">
-                                      <span class="validation-type">{{
-                                        getActivityTypeDisplayName(item.activityType)
-                                      }}</span>
-                                      <span class="validation-total"
-                                        >{{ item.status.total }} total</span
-                                      >
-                                    </div>
-
-                                    <div class="validation-bars">
-                                      <div class="validation-bar-row">
-                                        <span class="validation-bar-label pending">Pendiente</span>
-                                        <div class="validation-bar-track">
-                                          <div
-                                            class="validation-bar-fill validation-pending"
-                                            [style.width.%]="
-                                              getValidationStatusWidth(item.status, 'pending')
-                                            "
-                                          ></div>
-                                        </div>
-                                        <span class="validation-bar-value">{{
-                                          item.status.pending
-                                        }}</span>
-                                      </div>
-
-                                      <div class="validation-bar-row">
-                                        <span class="validation-bar-label approved">Aprobada</span>
-                                        <div class="validation-bar-track">
-                                          <div
-                                            class="validation-bar-fill validation-approved"
-                                            [style.width.%]="
-                                              getValidationStatusWidth(item.status, 'approved')
-                                            "
-                                          ></div>
-                                        </div>
-                                        <span class="validation-bar-value">{{
-                                          item.status.approved
-                                        }}</span>
-                                      </div>
-
-                                      <div class="validation-bar-row">
-                                        <span class="validation-bar-label rejected">Rechazada</span>
-                                        <div class="validation-bar-track">
-                                          <div
-                                            class="validation-bar-fill validation-rejected"
-                                            [style.width.%]="
-                                              getValidationStatusWidth(item.status, 'rejected')
-                                            "
-                                          ></div>
-                                        </div>
-                                        <span class="validation-bar-value">{{
-                                          item.status.rejected
-                                        }}</span>
-                                      </div>
-                                    </div>
+                              <!-- Leyenda compartida -->
+                              <div class="validation-shared-legend">
+                                <span class="legend-dot" style="background: #f59e0b"></span
+                                ><span class="legend-label">Pendiente</span>
+                                <span class="legend-dot" style="background: #10b981"></span
+                                ><span class="legend-label">Aprobada</span>
+                                <span class="legend-dot" style="background: #ef4444"></span
+                                ><span class="legend-label">Rechazada</span>
+                              </div>
+                              <div class="validation-donut-grid">
+                                @for (item of activityValidationDonutCharts(); track item.title) {
+                                  <div class="validation-donut-item">
+                                    <p class="validation-donut-title">{{ item.title }}</p>
+                                    <app-donut-chart
+                                      [data]="item.data"
+                                      [height]="180"
+                                      [showLegend]="false"
+                                    />
                                   </div>
                                 }
                               </div>
