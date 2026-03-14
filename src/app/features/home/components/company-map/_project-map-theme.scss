@@ -1,0 +1,203 @@
+@mixin project-map-theme($theme) {
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+  .map-card {
+    transition: all 0.3s ease-in-out;
+    border: 1px solid mat.get-color-from-palette($foreground, divider);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .map-card-header {
+    padding: 12px 16px;
+    background-color: mat.get-color-from-palette($background, 'background');
+    border-bottom: 1px solid mat.get-color-from-palette($foreground, divider);
+  }
+
+  .map-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: mat.get-color-from-palette($foreground, 'main-text');
+  }
+
+  .title-icon {
+    color: mat.get-color-from-palette($accent, 500);
+  }
+
+  .map-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .map-action-btn {
+    color: mat.get-color-from-palette($foreground, 'secondary-text');
+  }
+
+  .map-card-content {
+    padding: 0;
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .map-loading,
+  .map-upload-area,
+  .map-uploading {
+    padding: 24px;
+    text-align: center;
+    width: 100%;
+  }
+
+  .upload-icon,
+  .error-icon,
+  .progress-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: mat.get-color-from-palette($primary, 200);
+    margin: 0 auto 16px;
+  }
+
+  .error-icon {
+    color: mat.get-color-from-palette($warn, 400);
+  }
+
+  .upload-title,
+  .error-title,
+  .progress-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: mat.get-color-from-palette($foreground, 'main-text');
+  }
+
+  .upload-description,
+  .error-message,
+  .progress-text {
+    font-size: 0.9rem;
+    color: mat.get-color-from-palette($foreground, 'secondary-text');
+    margin-top: 4px;
+  }
+
+  .upload-hint,
+  .progress-hint {
+    font-size: 0.8rem;
+    color: mat.get-color-from-palette($foreground, 'hint-text');
+    margin-top: 16px;
+  }
+
+  .map-loaded {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
+  }
+
+  .leaflet-map-container {
+    width: 100%;
+    height: 250px;
+    border-radius: 0 0 12px 12px;
+    background-color: mat.get-color-from-palette($background, 'hover');
+    transition: height 0.3s ease-in-out;
+  }
+
+  .map-stats,
+  .map-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 401;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    backdrop-filter: blur(4px);
+  }
+
+  .map-hint {
+    left: auto;
+    right: 10px;
+  }
+
+  .stats-icon,
+  .hint-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .map-edit-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 401;
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  .map-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    border-radius: 0;
+    border: none;
+
+    .leaflet-map-container {
+      height: 100%;
+      border-radius: 0;
+    }
+  }
+
+  .stage-legend {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 401;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 8px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .legend-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .legend-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .filter-menu-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    opacity: 0.7;
+  }
+
+  .active-filter {
+    background-color: mat.get-color-from-palette($primary, 50, 0.1);
+    font-weight: 600;
+  }
+}

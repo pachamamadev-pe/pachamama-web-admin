@@ -1,0 +1,72 @@
+<div class="map-card" [class.map-fullscreen]="isMapFullscreen()">
+  <div class="map-card-header">
+    <div class="map-card-title">
+      <mat-icon class="title-icon">map</mat-icon>
+      <span class="map-title-text">Área de Operaciones</span>
+    </div>
+    @if (hasMap()) {
+      <div class="map-actions">
+        <button
+          mat-icon-button
+          class="map-action-btn"
+          (click)="toggleFullscreen()"
+          matTooltip="Pantalla completa"
+          matTooltipPosition="below"
+        >
+          <mat-icon>{{ isMapFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+
+  <div class="map-card-body">
+    @if (loadingMap()) {
+      <div class="map-loading">
+        <mat-spinner diameter="40" />
+        <p class="text-subtitle text-neutral-subheading mt-3">Verificando mapa...</p>
+      </div>
+    } @else if (mapError()) {
+      <div class="map-uploading">
+        <div class="upload-error">
+          <div class="error-icon">
+            <mat-icon>error_outline</mat-icon>
+          </div>
+          <h4 class="error-title">Error al cargar el mapa</h4>
+          <p class="error-message">{{ mapError() }}</p>
+          <button mat-raised-button class="btn-primary mt-4" (click)="loadCompanyMap()">
+            <mat-icon>refresh</mat-icon>
+            Intentar nuevamente
+          </button>
+        </div>
+      </div>
+    } @else if (!hasMap()) {
+      <div class="map-upload-area">
+        <div class="upload-content">
+          <div class="upload-icon">
+            <mat-icon>public_off</mat-icon>
+          </div>
+          <h4 class="upload-title">Sin Mapa de Operaciones</h4>
+          <p class="upload-description">
+            No se encontraron áreas geoespaciales para los proyectos de la empresa.
+          </p>
+        </div>
+      </div>
+    } @else if (hasMap()) {
+      <div class="map-loaded">
+        <div class="map-stats">
+          <mat-icon class="stats-icon">terrain</mat-icon>
+          <span class="stats-text">
+            {{ currentGeoJSON()?.features?.length || 0 }} área(s) delimitada(s)
+          </span>
+        </div>
+
+        <div class="map-hint">
+          <mat-icon class="hint-icon">info</mat-icon>
+          <span class="hint-text">Usa los botones +/- o doble clic para hacer zoom</span>
+        </div>
+
+        <div #mapContainer class="leaflet-map-container"></div>
+      </div>
+    }
+  </div>
+</div>
