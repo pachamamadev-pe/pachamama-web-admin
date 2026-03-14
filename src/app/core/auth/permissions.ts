@@ -40,19 +40,26 @@ export const PERMISSIONS = {
     READ: 'product:read',
     UPDATE: 'product:update',
     DELETE: 'product:delete',
-    CREATE: 'product:create', //Ray revisando 02
+    CREATE: 'product:create',
   },
 
   FORM: {
     ALL: 'form:*',
     READ: 'form:read',
     CREATE: 'form:create',
+    UPDATE: 'form:update',
+    DELETE: 'form:delete',
+    PUBLISH: 'form:publish',
   },
 
   COMPANY: {
     ALL: 'company:*',
     READ: 'company:read',
     CREATE: 'company:create',
+    UPDATE: 'company:update',
+    DELETE: 'company:delete',
+    MANAGE_DOCUMENTS: 'company:manage_documents',
+    MANAGE_ADMINS: 'company:manage_admins', //Ray revisando 02
   },
 
   USER: {
