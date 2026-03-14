@@ -24,18 +24,23 @@ export const PERMISSIONS = {
     ALL: 'brigade:*',
     READ: 'brigade:read',
     CREATE: 'brigade:create',
-    UPDATE: 'brigade:update', //Ray revisando 02
+    UPDATE: 'brigade:update',
   },
 
   COMMUNITY: {
     ALL: 'community:*',
+    READ: 'community:read',
     CREATE: 'community:create',
+    UPDATE: 'community:update',
+    DELETE: 'community:delete',
   },
 
   PRODUCT: {
     ALL: 'product:*',
     READ: 'product:read',
-    CREATE: 'product:create',
+    UPDATE: 'product:update',
+    DELETE: 'product:delete',
+    CREATE: 'product:create', //Ray revisando 02
   },
 
   FORM: {
