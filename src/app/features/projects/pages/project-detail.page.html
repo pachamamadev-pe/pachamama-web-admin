@@ -336,67 +336,24 @@
                                 >
                               </div>
                             } @else {
-                              <div class="validation-chart-list">
-                                @for (
-                                  item of activityValidationStatusChartItems();
-                                  track item.activityType
-                                ) {
-                                  <div class="validation-chart-row">
-                                    <div class="validation-row-header">
-                                      <span class="validation-type">{{
-                                        getActivityTypeDisplayName(item.activityType)
-                                      }}</span>
-                                      <span class="validation-total"
-                                        >{{ item.status.total }} total</span
-                                      >
-                                    </div>
-
-                                    <div class="validation-bars">
-                                      <div class="validation-bar-row">
-                                        <span class="validation-bar-label pending">Pendiente</span>
-                                        <div class="validation-bar-track">
-                                          <div
-                                            class="validation-bar-fill validation-pending"
-                                            [style.width.%]="
-                                              getValidationStatusWidth(item.status, 'pending')
-                                            "
-                                          ></div>
-                                        </div>
-                                        <span class="validation-bar-value">{{
-                                          item.status.pending
-                                        }}</span>
-                                      </div>
-
-                                      <div class="validation-bar-row">
-                                        <span class="validation-bar-label approved">Aprobada</span>
-                                        <div class="validation-bar-track">
-                                          <div
-                                            class="validation-bar-fill validation-approved"
-                                            [style.width.%]="
-                                              getValidationStatusWidth(item.status, 'approved')
-                                            "
-                                          ></div>
-                                        </div>
-                                        <span class="validation-bar-value">{{
-                                          item.status.approved
-                                        }}</span>
-                                      </div>
-
-                                      <div class="validation-bar-row">
-                                        <span class="validation-bar-label rejected">Rechazada</span>
-                                        <div class="validation-bar-track">
-                                          <div
-                                            class="validation-bar-fill validation-rejected"
-                                            [style.width.%]="
-                                              getValidationStatusWidth(item.status, 'rejected')
-                                            "
-                                          ></div>
-                                        </div>
-                                        <span class="validation-bar-value">{{
-                                          item.status.rejected
-                                        }}</span>
-                                      </div>
-                                    </div>
+                              <!-- Leyenda compartida -->
+                              <div class="validation-shared-legend">
+                                <span class="legend-dot" style="background: #f59e0b"></span
+                                ><span class="legend-label">Pendiente</span>
+                                <span class="legend-dot" style="background: #10b981"></span
+                                ><span class="legend-label">Aprobada</span>
+                                <span class="legend-dot" style="background: #ef4444"></span
+                                ><span class="legend-label">Rechazada</span>
+                              </div>
+                              <div class="validation-donut-grid">
+                                @for (item of activityValidationDonutCharts(); track item.title) {
+                                  <div class="validation-donut-item">
+                                    <p class="validation-donut-title">{{ item.title }}</p>
+                                    <app-donut-chart
+                                      [data]="item.data"
+                                      [height]="180"
+                                      [showLegend]="false"
+                                    />
                                   </div>
                                 }
                               </div>
@@ -410,7 +367,7 @@
               </div>
             </mat-tab>
 
-            @if (sidebarService.hasPermission(PERMISSIONS.COLLECTOR.ALL)) {
+            @if (sidebarService.hasPermission(PERMISSIONS.COLLECTOR.READ)) {
               <mat-tab label="Recolectores">
                 <div class="tab-content">
                   @if (!project()?.communityLink?.id) {
@@ -464,16 +421,26 @@
                             Puedes generar un nuevo código QR para invitar más recolectores
                           </p>
                         </div>
-                        <button
-                          mat-raised-button
-                          class="btn-secondary"
-                          (click)="generateOnboardingInvitation()"
-                          matTooltip="Genera un código QR para que más recolectores puedan registrarse"
-                        >
-                          <mat-icon>qr_code_2</mat-icon>
-                          <span class="hidden sm:inline">Generar QR / Código</span>
-                          <span class="sm:hidden">QR</span>
-                        </button>
+                        <div class="action-buttons-group">
+                          <button
+                            mat-icon-button
+                            matTooltip="Guía de estados"
+                            class="mr-2 btn-guide"
+                            (click)="openCollectorStatusGuide()"
+                          >
+                            <mat-icon>info</mat-icon>
+                          </button>
+                          <button
+                            mat-raised-button
+                            class="btn-secondary"
+                            (click)="generateOnboardingInvitation()"
+                            matTooltip="Genera un código QR para que más recolectores puedan registrarse"
+                          >
+                            <mat-icon>qr_code_2</mat-icon>
+                            <span class="hidden sm:inline">Generar QR / Código</span>
+                            <span class="sm:hidden">QR</span>
+                          </button>
+                        </div>
                       </div>
 
                       <app-collectors-tab [projectCommunityId]="project()!.communityLink!.id" />
@@ -483,7 +450,7 @@
               </mat-tab>
             }
 
-            @if (showBrigadesTab() && sidebarService.hasPermission(PERMISSIONS.BRIGADE.ALL)) {
+            @if (showBrigadesTab() && sidebarService.hasPermission(PERMISSIONS.BRIGADE.READ)) {
               <mat-tab label="Brigadas">
                 <div class="tab-content">
                   @if (!project()?.communityLink?.id) {
@@ -499,15 +466,34 @@
                   } @else {
                     <!-- Brigades Tab Component -->
                     <div class="brigades-tab-wrapper">
-                      <div class="brigades-header-actions">
-                        <button
-                          mat-raised-button
-                          class="btn-primary create-brigade-button"
-                          (click)="openCreateBrigadeDialog()"
-                        >
-                          <mat-icon>add</mat-icon>
-                          <span>Crear brigada</span>
-                        </button>
+                      <div class="table-header-actions">
+                        <div class="header-info">
+                          <h3 class="text-body font-bold text-accent-titles">
+                            Brigadas de Trabajo
+                          </h3>
+                          <p class="text-subtitle text-neutral-subheading">
+                            Las brigadas agrupan a recolectores para hacer el trabajo de campo.
+                          </p>
+                        </div>
+                        <div class="action-buttons-group">
+                          <button
+                            mat-icon-button
+                            matTooltip="Guía de estados"
+                            class="mr-2 btn-guide"
+                            (click)="openBrigadeStatusGuide()"
+                          >
+                            <mat-icon>info</mat-icon>
+                          </button>
+                          <button
+                            *appPmHasPermission="PERMISSIONS.BRIGADE.CREATE"
+                            mat-raised-button
+                            class="btn-primary"
+                            (click)="openCreateBrigadeDialog()"
+                          >
+                            <mat-icon>add</mat-icon>
+                            <span>Crear brigada</span>
+                          </button>
+                        </div>
                       </div>
 
                       <app-brigades-tab

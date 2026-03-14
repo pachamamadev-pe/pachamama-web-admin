@@ -9,16 +9,21 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+} from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatListModule } from '@angular/material/list';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BrigadesService } from '../services/brigades.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -29,6 +34,7 @@ import { Collector } from '../models/collector.model';
 import { CollectionRequestsService } from '../../collection-requests/services/collection-requests.service';
 import { CollectionRequest } from '../../collection-requests/models/collection-request.model';
 import { formatDateISO, parseDateValue } from '@shared/utils/date-helpers';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 
 interface BrigadeFormDialogData {
   projectCommunityId: string;
@@ -70,11 +76,11 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSlideToggleModule,
     MatDatepickerModule,
     MatNativeDateModule,
     MatSelectModule,
     MatListModule,
+    MatRadioModule,
     MatProgressSpinnerModule,
   ],
   providers: [provideNativeDateAdapter()],
@@ -113,6 +119,7 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
                     formControlName="name"
                     placeholder="Ej: Brigada Norte, Brigada A"
                     maxlength="100"
+                    [readonly]="isEditMode()"
                   />
                   @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
                     <mat-error>El nombre de la brigada es requerido</mat-error>
@@ -122,6 +129,28 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
                   }
                   <mat-hint align="end">{{ form.get('name')?.value?.length || 0 }}/100</mat-hint>
                 </mat-form-field>
+
+                @if (isEditMode()) {
+                  <div class="info-box warning-box">
+                    <mat-icon class="info-icon">info</mat-icon>
+                    <div class="info-content">
+                      <p class="info-title">Nombre bloqueado en edición</p>
+                      <p class="info-text">
+                        El nombre de la brigada no puede modificarse en este paso.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="status-section">
+                    <h4 class="text-subtitle font-bold text-accent-titles mb-2">
+                      Estado de la brigada
+                    </h4>
+                    <mat-radio-group formControlName="status" class="flex gap-4">
+                      <mat-radio-button value="active">Activo</mat-radio-button>
+                      <mat-radio-button value="inactive">Inactivo</mat-radio-button>
+                    </mat-radio-group>
+                  </div>
+                }
 
                 <!-- Descripción -->
                 <mat-form-field appearance="outline" class="full-width">
@@ -139,34 +168,26 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
                   </mat-hint>
                 </mat-form-field>
               }
-
-              <!-- Status Toggle (solo en modo edición) -->
-              @if (isEditMode()) {
-                <div class="status-toggle-container">
-                  <div class="status-info">
-                    <mat-icon class="status-icon">{{
-                      form.get('status')?.value === 'active' ? 'check_circle' : 'cancel'
-                    }}</mat-icon>
-                    <div class="status-text">
-                      <span class="status-label">Estado de la Brigada</span>
-                      <span class="status-description">{{
-                        form.get('status')?.value === 'active'
-                          ? 'La brigada está activa y puede recibir asignaciones'
-                          : 'La brigada está inactiva y no recibirá nuevas asignaciones'
-                      }}</span>
-                    </div>
-                  </div>
-                  <mat-slide-toggle
-                    color="primary"
-                    [checked]="form.get('status')?.value === 'active'"
-                    (change)="onStatusChange($event.checked)"
-                  >
-                    {{ form.get('status')?.value === 'active' ? 'Activa' : 'Inactiva' }}
-                  </mat-slide-toggle>
-                </div>
-              }
             </div>
           </div>
+
+          @if (isEditMode()) {
+            <div class="form-section">
+              <h3 class="section-title text-body font-bold text-accent-titles">
+                Finalizar Asignación
+              </h3>
+              <div class="info-box warning-box">
+                <mat-icon class="info-icon">warning_amber</mat-icon>
+                <div class="info-content">
+                  <p class="info-title">Acción irreversible</p>
+                  <p class="info-text">
+                    Al finalizar la asignación de la brigada, también se finalizará la asignación de
+                    todos sus miembros.
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
 
           @if (isCreateMode()) {
             <div class="form-section">
@@ -335,6 +356,18 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
               </span>
             </div>
           }
+          @if (isEditMode()) {
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="confirmFinalizeAssignment()"
+              [disabled]="submitting()"
+              class="finalize-button"
+            >
+              <mat-icon>flag</mat-icon>
+              Finalizar asignación
+            </button>
+          }
           <button mat-stroked-button type="button" (click)="close()" [disabled]="submitting()">
             Cancelar
           </button>
@@ -464,50 +497,6 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
       margin-right: 8px;
     }
 
-    /* Status Toggle */
-    .status-toggle-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px;
-      background: #f9fafb;
-      border: 1px solid #e5e5e5;
-      border-radius: 8px;
-      gap: 16px;
-    }
-
-    .status-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-    }
-
-    .status-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-      color: #218358;
-    }
-
-    .status-text {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .status-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #0a0a0a;
-    }
-
-    .status-description {
-      font-size: 13px;
-      color: #737373;
-      line-height: 1.4;
-    }
-
     /* Info Box */
     .info-box {
       display: flex;
@@ -521,6 +510,15 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
     .warning-box {
       background: #fff7ed;
       border-color: #fdba74;
+
+      .info-icon {
+        color: #ea580c;
+      }
+
+      .info-title,
+      .info-text {
+        color: #9a3412;
+      }
     }
 
     .info-icon {
@@ -661,6 +659,11 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
       gap: 4px;
     }
 
+    .finalize-button {
+      border-color: #fdba74;
+      color: #9a3412;
+    }
+
     .spin {
       animation: spin 1s linear infinite;
     }
@@ -707,6 +710,7 @@ const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationEr
 })
 export class BrigadeFormDialogComponent {
   private fb = inject(FormBuilder);
+  private dialog = inject(MatDialog);
   private brigadesService = inject(BrigadesService);
   private collectorsService = inject(CollectorsService);
   private collectionRequestsService = inject(CollectionRequestsService);
@@ -718,7 +722,7 @@ export class BrigadeFormDialogComponent {
     {
       name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
       description: ['', [Validators.maxLength(500)]],
-      status: ['active'],
+      status: ['active', [Validators.required]],
       collectionRequestId: [null],
       startDate: [new Date(), [Validators.required]],
       endDate: [null],
@@ -868,13 +872,9 @@ export class BrigadeFormDialogComponent {
       this.form.patchValue({
         name: this.data.brigade.name,
         description: this.data.brigade.description || '',
-        status: this.data.brigade.status,
+        status: this.data.brigade.status || 'active',
       });
     }
-  }
-
-  onStatusChange(isActive: boolean): void {
-    this.form.patchValue({ status: isActive ? 'active' : 'inactive' });
   }
 
   isProjectCollectionStage(): boolean {
@@ -904,6 +904,7 @@ export class BrigadeFormDialogComponent {
 
   private configureFormForMode(): void {
     if (this.isEditMode()) {
+      this.form.get('name')?.disable();
       this.form.get('collectionRequestId')?.disable();
       this.form.get('startDate')?.disable();
       this.form.get('endDate')?.disable();
@@ -913,7 +914,6 @@ export class BrigadeFormDialogComponent {
     if (this.isAddMembersMode()) {
       this.form.get('name')?.disable();
       this.form.get('description')?.disable();
-      this.form.get('status')?.disable();
       this.form.get('collectionRequestId')?.disable();
     }
   }
@@ -966,6 +966,49 @@ export class BrigadeFormDialogComponent {
       });
   }
 
+  confirmFinalizeAssignment(): void {
+    if (!this.data.brigade || this.submitting()) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Finalizar asignación de brigada?',
+        message:
+          'Esta acción finalizará la asignación de la brigada y también la asignación de todos sus miembros.',
+        confirmText: 'Finalizar',
+        type: 'warning',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.finalizeAssignment();
+      }
+    });
+  }
+
+  private finalizeAssignment(): void {
+    if (!this.data.brigade || this.submitting()) {
+      return;
+    }
+
+    this.submitting.set(true);
+    this.brigadesService.finalizeBrigade(this.data.brigade.id).subscribe({
+      next: () => {
+        this.notification.success('Asignación finalizada correctamente');
+        this.submitting.set(false);
+        this.dialogRef.close({ finalized: true });
+      },
+      error: (error) => {
+        console.error('Error finalizando asignación de brigada:', error);
+        const errorMessage = error?.error?.message || 'Error al finalizar la asignación';
+        this.notification.error(errorMessage);
+        this.submitting.set(false);
+      },
+    });
+  }
+
   close(): void {
     this.dialogRef.close();
   }
@@ -985,9 +1028,9 @@ export class BrigadeFormDialogComponent {
 
     if (this.isEditMode() && this.data.brigade) {
       const updatePayload = {
-        name: value.name!.trim(),
+        name: this.data.brigade.name,
         description: value.description?.trim() || '',
-        status: value.status || '',
+        status: value.status as 'active' | 'inactive',
       };
 
       this.brigadesService.updateBrigade(this.data.brigade.id, updatePayload).subscribe({

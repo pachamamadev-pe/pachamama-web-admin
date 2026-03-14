@@ -11,7 +11,7 @@
 
       <div class="header-actions">
         <button
-          *appPmHasPermission="PERMISSIONS.PRODUCT.CREATE"
+          *appPmHasPermission="PERMISSIONS.COMPANY.CREATE"
           mat-raised-button
           class="btn-primary"
           (click)="openCreateDialog()"
@@ -51,7 +51,11 @@
         <mat-spinner diameter="48" />
         <p class="text-body text-neutral-subheading mt-4">Cargando empresas...</p>
       </div>
-    } @else if (companies().length === 0 && !searchTerm()) {
+    } @else if (
+      companies().length === 0 &&
+      !searchTerm() &&
+      sidebarService.hasPermission(PERMISSIONS.COMPANY.CREATE)
+    ) {
       <!-- Empty state -->
       <app-empty-state
         icon="business"
@@ -161,22 +165,38 @@
                     </button>
 
                     <mat-menu #tableMenu="matMenu">
-                      <button mat-menu-item (click)="openEditDialog(company)">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.COMPANY.UPDATE"
+                        mat-menu-item
+                        (click)="openEditDialog(company)"
+                      >
                         <mat-icon>edit</mat-icon>
                         <span>Editar</span>
                       </button>
 
-                      <button mat-menu-item (click)="openDocumentsDialog(company)">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.COMPANY.MANAGE_DOCUMENTS"
+                        mat-menu-item
+                        (click)="openDocumentsDialog(company)"
+                      >
                         <mat-icon>upload_file</mat-icon>
                         <span>Gestionar documentos</span>
                       </button>
 
-                      <button mat-menu-item (click)="openAssignAdminDialog(company)">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.COMPANY.MANAGE_ADMINS"
+                        mat-menu-item
+                        (click)="openAssignAdminDialog(company)"
+                      >
                         <mat-icon>group</mat-icon>
                         <span>Gestionar administradores</span>
                       </button>
 
-                      <button mat-menu-item (click)="toggleStatus(company)">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.COMPANY.UPDATE"
+                        mat-menu-item
+                        (click)="toggleStatus(company)"
+                      >
                         <mat-icon>{{
                           company.status === CompanyStatus.ACTIVE ? 'block' : 'check_circle'
                         }}</mat-icon>
@@ -185,7 +205,12 @@
                         }}</span>
                       </button>
 
-                      <button mat-menu-item (click)="deleteCompany(company)" class="text-red-600">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.COMPANY.DELETE"
+                        mat-menu-item
+                        (click)="deleteCompany(company)"
+                        class="text-red-600"
+                      >
                         <mat-icon class="text-red-600">delete</mat-icon>
                         <span>Eliminar</span>
                       </button>
@@ -237,22 +262,38 @@
                 </button>
 
                 <mat-menu #mobileMenu="matMenu">
-                  <button mat-menu-item (click)="openEditDialog(company)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMPANY.UPDATE"
+                    mat-menu-item
+                    (click)="openEditDialog(company)"
+                  >
                     <mat-icon>edit</mat-icon>
                     <span>Editar</span>
                   </button>
 
-                  <button mat-menu-item (click)="openDocumentsDialog(company)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMPANY.MANAGE_DOCUMENTS"
+                    mat-menu-item
+                    (click)="openDocumentsDialog(company)"
+                  >
                     <mat-icon>upload_file</mat-icon>
                     <span>Gestionar documentos</span>
                   </button>
 
-                  <button mat-menu-item (click)="openAssignAdminDialog(company)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMPANY.MANAGE_ADMINS"
+                    mat-menu-item
+                    (click)="openAssignAdminDialog(company)"
+                  >
                     <mat-icon>group</mat-icon>
                     <span>Gestionar administradores</span>
                   </button>
 
-                  <button mat-menu-item (click)="toggleStatus(company)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMPANY.UPDATE"
+                    mat-menu-item
+                    (click)="toggleStatus(company)"
+                  >
                     <mat-icon>{{
                       company.status === CompanyStatus.ACTIVE ? 'block' : 'check_circle'
                     }}</mat-icon>
@@ -261,7 +302,12 @@
                     }}</span>
                   </button>
 
-                  <button mat-menu-item (click)="deleteCompany(company)" class="text-red-600">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COMPANY.DELETE"
+                    mat-menu-item
+                    (click)="deleteCompany(company)"
+                    class="text-red-600"
+                  >
                     <mat-icon class="text-red-600">delete</mat-icon>
                     <span>Eliminar</span>
                   </button>

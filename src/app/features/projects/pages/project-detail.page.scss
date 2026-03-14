@@ -665,6 +665,52 @@
   transition: width 0.25s ease;
 }
 
+.validation-shared-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 8px 0 16px;
+  flex-wrap: wrap;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  font-size: 12px;
+  color: #737373;
+  font-weight: 500;
+}
+
+.validation-donut-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+  padding: 8px 0;
+}
+
+.validation-donut-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.validation-donut-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a0a0a;
+  text-align: center;
+  margin: 0;
+}
+
+// Legacy styles kept for reference (no longer used in template)
 .validation-chart-list {
   display: flex;
   flex-direction: column;
@@ -954,6 +1000,39 @@
   }
 }
 
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    flex-direction: row;
+    justify-content: stretch;
+
+    button {
+      flex: 1;
+    }
+
+    button.btn-guide {
+      flex: 0 0 auto;
+    }
+  }
+}
+
+.btn-guide {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #737373;
+  background-color: #f3f4f6;
+
+  &:hover {
+    background-color: #e5e7eb;
+    color: #0a0a0a;
+  }
+}
+
 .table-wrapper {
   overflow-x: auto;
   background-color: #ffffff;
@@ -1095,24 +1174,6 @@
 /* Brigades Table Styles */
 .brigades-table-container {
   padding: 20px 0;
-}
-
-.brigades-header-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-}
-
-.create-brigade-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-  }
 }
 
 .brigades-table {

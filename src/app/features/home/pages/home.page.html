@@ -1,178 +1,156 @@
-<!-- Home Page - Pachamama Admin Dashboard -->
-<div class="home-container">
-  <!-- Hero Section with Welcome Message -->
-  <app-hero-section
-    [title]="'Novedades'"
-    [subtitle]="'Construyendo un futuro sostenible'"
-    [imageUrl]="'/images/illustrations/amazon-forest.jpg'"
-  ></app-hero-section>
-
-  <!-- Impact Metric Tabs -->
-  <div class="metric-tabs">
-    @for (metric of impactMetrics(); track metric.label) {
-      <button mat-button [class.active]="metric.active" class="metric-tab">
-        <mat-icon>{{ metric.icon }}</mat-icon>
-        <span>{{ metric.label }}</span>
+<!-- Dashboard Empresarial -->
+<div class="dashboard-container">
+  <!-- Header with Datepicker & Refresh -->
+  <header class="dashboard-header">
+    <div class="header-title">
+      <h1 class="text-title font-bold text-accent-titles">Dashboard Empresarial</h1>
+    </div>
+    <div class="header-actions">
+      <span class="text-sm text-neutral-subheading"
+        >Actualizado: {{ asOfDate() | date: 'dd/MM/yyyy' }}</span
+      >
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>Fecha de corte</mat-label>
+        <input
+          matInput
+          [matDatepicker]="picker"
+          [ngModel]="asOfDate()"
+          (ngModelChange)="asOfDate.set($event); onDateChange()"
+          [max]="maxDate"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+      <button mat-icon-button color="primary" (click)="refresh()" aria-label="Actualizar">
+        <mat-icon>refresh</mat-icon>
       </button>
-    }
+    </div>
+  </header>
 
-    <!-- Download Button -->
-    <button mat-button class="download-button ml-auto">
-      <mat-icon>download</mat-icon>
-      <span>Descargar</span>
-    </button>
-  </div>
+  <!-- Error State -->
+  @if (error()) {
+    <div
+      class="error-banner bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative flex justify-between items-center mb-6"
+    >
+      <div>
+        <mat-icon class="align-middle mr-2">error</mat-icon>
+        <span class="block sm:inline">{{ error() }}</span>
+      </div>
+      <button mat-button color="warn" (click)="loadDashboard()">Reintentar</button>
+    </div>
+  }
 
-  <!-- Stats Cards Grid -->
-  <div class="stats-grid">
-    @for (stat of stats(); track stat.title) {
-      <mat-card class="stat-card" [class]="'stat-card-' + stat.color">
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-state flex flex-col items-center justify-center p-12">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p class="mt-4 text-neutral-subheading">Cargando dashboard...</p>
+    </div>
+  }
+
+  <!-- Content -->
+  @if (!loading() && overview()) {
+    <!-- 1. KPI Cards Row -->
+    <div class="stats-grid">
+      <!-- Proyectos -->
+      <mat-card class="stat-card" style="border-left: 4px solid #6366f1">
         <mat-card-content>
           <div class="stat-header">
-            <span class="stat-title">{{ stat.title }}</span>
-            <mat-icon class="stat-icon">{{ stat.icon }}</mat-icon>
+            <span class="stat-title">Proyectos vigentes</span>
+            <mat-icon class="stat-icon text-[#6366F1]">folder_open</mat-icon>
           </div>
+          <div class="stat-value text-accent-titles">{{ totalProjects() }}</div>
+        </mat-card-content>
+      </mat-card>
 
-          <div class="stat-value">{{ stat.value }}</div>
-
-          <div class="stat-change" [class.positive]="stat.trend === 'up'">
-            <mat-icon class="change-icon">
-              {{ stat.trend === 'up' ? 'trending_up' : 'trending_down' }}
-            </mat-icon>
-            <span>{{ stat.change }} con respecto al mes pasado</span>
+      <!-- Comunidades socias -->
+      <mat-card class="stat-card" style="border-left: 4px solid #10b981">
+        <mat-card-content>
+          <div class="stat-header">
+            <span class="stat-title">Comunidades socias</span>
+            <mat-icon class="stat-icon text-[#10B981]">holiday_village</mat-icon>
           </div>
-
-          <!-- Sparkline Chart (Professional mini chart) -->
-          <div class="mini-chart">
-            <app-sparkline-chart
-              [values]="stat.sparklineData"
-              [color]="stat.color === 'accent' ? '#fe714b' : '#218358'"
-            />
+          <div class="stat-value text-accent-titles">
+            {{ overview()?.partnerCommunities?.total || 0 }}
           </div>
         </mat-card-content>
       </mat-card>
-    }
-  </div>
 
-  <!-- Charts Section -->
-  <div class="charts-grid">
-    <!-- Evolution Chart -->
-    <mat-card class="chart-card">
-      <mat-card-header>
-        <mat-card-title>{{ evolutionTitle }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <!-- Chart.js Line Chart -->
-        <app-line-chart
-          [data]="evolutionChartData()"
-          [height]="280"
-          [showGrid]="true"
-          color="#218358"
-        />
-        <p class="chart-note">
-          <mat-icon class="text-sm">info</mat-icon>
-          Gráfico generado con Chart.js - TODO: Conectar con API real
-        </p>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Species Chart -->
-    <mat-card class="chart-card">
-      <mat-card-header>
-        <mat-card-title>{{ speciesTitle }}</mat-card-title>
-        <mat-card-subtitle>{{ speciesSubtitle }}</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <!-- Chart.js Bar Chart -->
-        <app-bar-chart
-          [data]="speciesChartData()"
-          [height]="280"
-          [horizontal]="false"
-          [showGrid]="true"
-        />
-        <p class="chart-note">
-          <mat-icon class="text-sm">info</mat-icon>
-          Datos de biodiversidad - TODO: Conectar con API real
-        </p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <!-- Distribution Map & Activity Section -->
-  <div class="bottom-grid">
-    <!-- Project Distribution Map -->
-    <mat-card class="map-card">
-      <mat-card-header>
-        <mat-card-title>Distribución de proyectos</mat-card-title>
-        <mat-card-subtitle>Todos los productos</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="map-placeholder">
-          <img src="/images/maps/peru-regions.svg" alt="Mapa de Perú" class="peru-map" />
-          <div class="map-legend">
-            <div class="legend-item">
-              <div class="legend-color high"></div>
-              <span>Alta actividad</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color medium"></div>
-              <span>Media actividad</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color low"></div>
-              <span>Baja actividad</span>
-            </div>
+      <!-- Recolectores -->
+      <mat-card class="stat-card" style="border-left: 4px solid #f59e0b">
+        <mat-card-content>
+          <div class="stat-header">
+            <span class="stat-title">Recolectores</span>
+            <mat-icon class="stat-icon text-[#F59E0B]">groups</mat-icon>
           </div>
-        </div>
-        <p class="chart-note">
-          <mat-icon class="text-sm">info</mat-icon>
-          Mapa interactivo - Integración con API geográfica pendiente
-        </p>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Recent Activity Feed -->
-    <mat-card class="activity-card">
-      <mat-card-header>
-        <mat-card-title>Actividad reciente</mat-card-title>
-        <button mat-icon-button>
-          <mat-icon>more_vert</mat-icon>
-        </button>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="activity-list">
-          @for (activity of recentActivities(); track activity.title) {
-            <div class="activity-item">
-              <div class="activity-icon" [class]="'activity-icon-' + activity.color">
-                <mat-icon>{{ activity.icon }}</mat-icon>
-              </div>
-              <div class="activity-content">
-                <h4 class="activity-title">{{ activity.title }}</h4>
-                <p class="activity-description">{{ activity.description }}</p>
-                <span class="activity-time">{{ activity.time }}</span>
-              </div>
+          <div class="stat-value text-accent-titles">{{ overview()?.collectors?.total || 0 }}</div>
+          @if (overview()?.collectors?.total! > 0) {
+            <div class="stat-change mt-2 text-sm text-neutral-subheading">
+              <span
+                >{{ overview()?.collectors?.femaleTotal }} mujeres ({{
+                  overview()?.collectors?.femalePercentage | number: '1.0-1'
+                }}%)</span
+              >
             </div>
           }
-        </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
 
-        <!-- View All Button -->
-        <button mat-button color="primary" class="view-all-button">
-          Ver todas las actividades
-          <mat-icon>arrow_forward</mat-icon>
-        </button>
-      </mat-card-content>
-    </mat-card>
+    <!-- 2. Charts Row -->
+    <div class="charts-grid">
+      <!-- Proyectos por Etapa -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Proyectos por Etapa</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (hasProjectsData) {
+            <app-bar-chart
+              [data]="projectsChartData()!"
+              [height]="300"
+              [horizontal]="true"
+              [showGrid]="true"
+              aria-label="Gráfico de barras de proyectos por etapa"
+            />
+          } @else {
+            <app-empty-state
+              icon="pie_chart"
+              [useMaterialIcon]="true"
+              title="Sin datos"
+              description="No hay proyectos registrados para la fecha seleccionada."
+            />
+          }
+        </mat-card-content>
+      </mat-card>
 
-    <!-- Permissions Card -->
-    <mat-card class="permissions-card">
-      <mat-card-content>
-        <div class="permissions-content">
-          <mat-icon class="permissions-icon">verified</mat-icon>
-          <div class="permissions-value">100%</div>
-          <div class="permissions-label">% de permisos al día</div>
-          <mat-progress-bar mode="determinate" value="100" color="primary"></mat-progress-bar>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+      <!-- Recolectores por Género -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Recolectores por Género</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="flex items-center justify-center min-h-[300px]">
+          @if (overview()?.collectors?.total! > 0 && collectorsChartData()) {
+            <app-donut-chart
+              [data]="collectorsChartData()!"
+              [height]="280"
+              aria-label="Gráfico donut de recolectores por género"
+            />
+          } @else {
+            <app-empty-state
+              icon="groups"
+              [useMaterialIcon]="true"
+              title="Sin recolectores"
+              description="No hay recolectores registrados para la fecha seleccionada."
+            />
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Company Map Section -->
+    <div class="mt-6">
+      <app-company-map class="block w-full overflow-hidden rounded-b-md" />
+    </div>
+  }
 </div>

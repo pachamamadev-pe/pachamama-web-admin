@@ -16,20 +16,30 @@ export const PERMISSIONS = {
 
   COLLECTOR: {
     ALL: 'collector:*',
+    READ: 'collector:read',
+    UPDATE: 'collector:update',
   },
 
   BRIGADE: {
     ALL: 'brigade:*',
+    READ: 'brigade:read',
+    CREATE: 'brigade:create',
+    UPDATE: 'brigade:update',
   },
 
   COMMUNITY: {
     ALL: 'community:*',
+    READ: 'community:read',
     CREATE: 'community:create',
+    UPDATE: 'community:update',
+    DELETE: 'community:delete',
   },
 
   PRODUCT: {
     ALL: 'product:*',
     READ: 'product:read',
+    UPDATE: 'product:update',
+    DELETE: 'product:delete',
     CREATE: 'product:create',
   },
 
@@ -37,12 +47,19 @@ export const PERMISSIONS = {
     ALL: 'form:*',
     READ: 'form:read',
     CREATE: 'form:create',
+    UPDATE: 'form:update',
+    DELETE: 'form:delete',
+    PUBLISH: 'form:publish',
   },
 
   COMPANY: {
     ALL: 'company:*',
     READ: 'company:read',
     CREATE: 'company:create',
+    UPDATE: 'company:update',
+    DELETE: 'company:delete',
+    MANAGE_DOCUMENTS: 'company:manage_documents',
+    MANAGE_ADMINS: 'company:manage_admins', //Ray revisando 02
   },
 
   USER: {

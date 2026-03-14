@@ -23,84 +23,86 @@
     </div>
 
     <!-- Filtros -->
-    <div class="filters-container">
-      <div class="filters-row">
-        <!-- Producto -->
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Producto</mat-label>
-          <mat-select
-            [ngModel]="selectedProductId()"
-            (ngModelChange)="selectedProductId.set($event); onProductChange()"
-          >
-            <mat-option value="all">Todos los productos</mat-option>
-            @for (product of products(); track product.id) {
-              <mat-option [value]="product.id">{{ product.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <!-- Etapa -->
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Etapa</mat-label>
-          <mat-select
-            [ngModel]="selectedStage()"
-            (ngModelChange)="selectedStage.set($event); onStageChange()"
-          >
-            <mat-option value="all">Todas las etapas</mat-option>
-            @for (stage of allStages; track stage) {
-              <mat-option [value]="stage">{{ stageLabels[stage] }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <!-- Ámbito -->
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Ámbito</mat-label>
-          <mat-select [ngModel]="selectedScope()" (ngModelChange)="onScopeChange($event)">
-            <mat-option value="all">Todos</mat-option>
-            <mat-option value="company">Mi Empresa</mat-option>
-            <mat-option value="project">Por Proyecto</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <!-- Proyecto (solo si ámbito=proyecto) -->
-        @if (selectedScope() === 'project') {
+    @if (sidebarService.hasPermission(PERMISSIONS.FORM.READ)) {
+      <div class="search-filters-container">
+        <div class="filters-grid">
+          <!-- Producto -->
           <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Proyecto</mat-label>
+            <mat-label>Producto</mat-label>
             <mat-select
-              [ngModel]="selectedProjectId()"
-              (ngModelChange)="selectedProjectId.set($event); onProjectChange()"
+              [ngModel]="selectedProductId()"
+              (ngModelChange)="selectedProductId.set($event); onProductChange()"
             >
-              <mat-option [value]="null">Seleccionar proyecto</mat-option>
-              @for (project of projects(); track project.id) {
-                <mat-option [value]="project.id">{{ project.name }}</mat-option>
+              <mat-option value="all">Todos los productos</mat-option>
+              @for (product of products(); track product.id) {
+                <mat-option [value]="product.id">{{ product.name }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
-        }
 
-        <!-- Búsqueda -->
-        <mat-form-field appearance="outline" class="search-field">
-          <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
-          <input
-            matInput
-            [ngModel]="searchTerm()"
-            (ngModelChange)="searchTerm.set($event)"
-            (keyup.enter)="onSearchChange()"
-            placeholder="Buscar formularios..."
-            class="text-body"
-          />
-          @if (searchTerm()) {
-            <button matSuffix mat-icon-button (click)="searchTerm.set(''); onSearchChange()">
-              <mat-icon>close</mat-icon>
-            </button>
+          <!-- Etapa -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Etapa</mat-label>
+            <mat-select
+              [ngModel]="selectedStage()"
+              (ngModelChange)="selectedStage.set($event); onStageChange()"
+            >
+              <mat-option value="all">Todas las etapas</mat-option>
+              @for (stage of allStages; track stage) {
+                <mat-option [value]="stage">{{ stageLabels[stage] }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Ámbito -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Ámbito</mat-label>
+            <mat-select [ngModel]="selectedScope()" (ngModelChange)="onScopeChange($event)">
+              <mat-option value="all">Todos</mat-option>
+              <mat-option value="company">Mi Empresa</mat-option>
+              <mat-option value="project">Por Proyecto</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Proyecto (solo si ámbito=proyecto) -->
+          @if (selectedScope() === 'project') {
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Proyecto</mat-label>
+              <mat-select
+                [ngModel]="selectedProjectId()"
+                (ngModelChange)="selectedProjectId.set($event); onProjectChange()"
+              >
+                <mat-option [value]="null">Seleccionar proyecto</mat-option>
+                @for (project of projects(); track project.id) {
+                  <mat-option [value]="project.id">{{ project.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
           }
-          <button matSuffix mat-icon-button (click)="onSearchChange()" matTooltip="Buscar">
-            <mat-icon>search</mat-icon>
-          </button>
-        </mat-form-field>
+
+          <!-- Búsqueda -->
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
+            <input
+              matInput
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)"
+              (keyup.enter)="onSearchChange()"
+              placeholder="Buscar formularios..."
+              class="text-body"
+            />
+            @if (searchTerm()) {
+              <button matSuffix mat-icon-button (click)="searchTerm.set(''); onSearchChange()">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+            <button matSuffix mat-icon-button (click)="onSearchChange()" matTooltip="Buscar">
+              <mat-icon>search</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
       </div>
-    </div>
+    }
   </header>
 
   <!-- Contenido -->
@@ -173,140 +175,165 @@
 
     <!-- Tabla -->
     @else if (sidebarService.hasPermission(PERMISSIONS.FORM.READ)) {
-      <div class="forms-table-container">
-        <table mat-table [dataSource]="filteredForms()" class="forms-table">
-          <!-- Nombre -->
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>Nombre</th>
-            <td mat-cell *matCellDef="let form">
-              <div class="form-name">
-                <span class="font-bold text-accent-titles">{{ form.name }}</span>
-                @if (form.description) {
+      <div class="forms-table">
+        <div class="forms-table-wrapper">
+          <table mat-table [dataSource]="filteredForms()" class="forms-mat-table">
+            <!-- Nombre -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Nombre</th>
+              <td mat-cell *matCellDef="let form">
+                <div class="form-name">
+                  <span class="font-bold text-accent-titles">{{ form.name }}</span>
+                  @if (form.description) {
+                    <span class="text-subtitle text-neutral-subheading block mt-1">{{
+                      form.description
+                    }}</span>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Producto -->
+            <ng-container matColumnDef="product">
+              <th mat-header-cell *matHeaderCellDef>Producto</th>
+              <td mat-cell *matCellDef="let form">
+                <span class="text-body">{{ form.productName }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Etapas -->
+            <ng-container matColumnDef="stages">
+              <th mat-header-cell *matHeaderCellDef>Etapas Aplicables</th>
+              <td mat-cell *matCellDef="let form">
+                <div class="stage-chips">
+                  @for (label of form.stageLabels; track label) {
+                    <mat-chip class="stage-chip">{{ label }}</mat-chip>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Ámbito -->
+            <ng-container matColumnDef="scope">
+              <th mat-header-cell *matHeaderCellDef>Ámbito</th>
+              <td mat-cell *matCellDef="let form">
+                <div class="scope-badge">
+                  <mat-icon [class]="'scope-icon ' + form.scope">{{
+                    getScopeIcon(form.scope)
+                  }}</mat-icon>
+                  <span class="text-subtitle">{{ getScopeLabel(form.scope) }}</span>
+                </div>
+                @if (form.projectName) {
                   <span class="text-subtitle text-neutral-subheading block mt-1">{{
-                    form.description
+                    form.projectName
                   }}</span>
                 }
-              </div>
-            </td>
-          </ng-container>
+              </td>
+            </ng-container>
 
-          <!-- Producto -->
-          <ng-container matColumnDef="product">
-            <th mat-header-cell *matHeaderCellDef>Producto</th>
-            <td mat-cell *matCellDef="let form">
-              <span class="text-body">{{ form.productName }}</span>
-            </td>
-          </ng-container>
+            <!-- Versión -->
+            <ng-container matColumnDef="version">
+              <th mat-header-cell *matHeaderCellDef class="text-center">Ver</th>
+              <td mat-cell *matCellDef="let form" class="text-center">
+                <span class="version-badge">v{{ form.version }}</span>
+              </td>
+            </ng-container>
 
-          <!-- Etapas -->
-          <ng-container matColumnDef="stages">
-            <th mat-header-cell *matHeaderCellDef>Etapas Aplicables</th>
-            <td mat-cell *matCellDef="let form">
-              <div class="stage-chips">
-                @for (label of form.stageLabels; track label) {
-                  <mat-chip class="stage-chip">{{ label }}</mat-chip>
+            <!-- Estado -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let form">
+                <mat-chip [class]="getStatusChipClass(form.status)">
+                  {{ getStatusLabel(form.status) }}
+                </mat-chip>
+                @if (form.isVigent && form.status === 'published') {
+                  <mat-icon class="vigent-icon" matTooltip="Vigente actualmente"
+                    >check_circle</mat-icon
+                  >
                 }
-              </div>
-            </td>
-          </ng-container>
+              </td>
+            </ng-container>
 
-          <!-- Ámbito -->
-          <ng-container matColumnDef="scope">
-            <th mat-header-cell *matHeaderCellDef>Ámbito</th>
-            <td mat-cell *matCellDef="let form">
-              <div class="scope-badge">
-                <mat-icon [class]="'scope-icon ' + form.scope">{{
-                  getScopeIcon(form.scope)
-                }}</mat-icon>
-                <span class="text-subtitle">{{ getScopeLabel(form.scope) }}</span>
-              </div>
-              @if (form.projectName) {
-                <span class="text-subtitle text-neutral-subheading block mt-1">{{
-                  form.projectName
+            <!-- Vigencia -->
+            <ng-container matColumnDef="vigency">
+              <th mat-header-cell *matHeaderCellDef>Vigencia</th>
+              <td mat-cell *matCellDef="let form">
+                <span class="text-subtitle">{{
+                  formatDateRange(form.validFrom, form.validUntil)
                 }}</span>
-              }
-            </td>
-          </ng-container>
+              </td>
+            </ng-container>
 
-          <!-- Versión -->
-          <ng-container matColumnDef="version">
-            <th mat-header-cell *matHeaderCellDef class="text-center">Ver</th>
-            <td mat-cell *matCellDef="let form" class="text-center">
-              <span class="version-badge">v{{ form.version }}</span>
-            </td>
-          </ng-container>
-
-          <!-- Estado -->
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Estado</th>
-            <td mat-cell *matCellDef="let form">
-              <mat-chip [class]="getStatusChipClass(form.status)">
-                {{ getStatusLabel(form.status) }}
-              </mat-chip>
-              @if (form.isVigent && form.status === 'published') {
-                <mat-icon class="vigent-icon" matTooltip="Vigente actualmente"
-                  >check_circle</mat-icon
-                >
-              }
-            </td>
-          </ng-container>
-
-          <!-- Vigencia -->
-          <ng-container matColumnDef="vigency">
-            <th mat-header-cell *matHeaderCellDef>Vigencia</th>
-            <td mat-cell *matCellDef="let form">
-              <span class="text-subtitle">{{
-                formatDateRange(form.validFrom, form.validUntil)
-              }}</span>
-            </td>
-          </ng-container>
-
-          <!-- Acciones -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
-            <td mat-cell *matCellDef="let form" class="text-right">
-              <button mat-icon-button [matMenuTriggerFor]="menu">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-              <mat-menu #menu="matMenu">
-                <button mat-menu-item (click)="editForm(form)">
-                  <mat-icon>edit</mat-icon>
-                  <span>Editar</span>
+            <!-- Acciones -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+              <td mat-cell *matCellDef="let form" class="text-right">
+                <button mat-icon-button [matMenuTriggerFor]="menu">
+                  <mat-icon>more_vert</mat-icon>
                 </button>
-                <button mat-menu-item (click)="copyForm(form)">
-                  <mat-icon>content_copy</mat-icon>
-                  <span>Copiar</span>
-                </button>
-                @if (form.status === 'draft') {
-                  <button mat-menu-item (click)="publishForm(form)">
-                    <mat-icon>publish</mat-icon>
-                    <span>Publicar</span>
+                <mat-menu #menu="matMenu">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.FORM.UPDATE"
+                    mat-menu-item
+                    (click)="editForm(form)"
+                  >
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
                   </button>
-                }
-                @if (form.status === 'published') {
-                  <button mat-menu-item (click)="unpublishForm(form)">
-                    <mat-icon>unpublished</mat-icon>
-                    <span>Despublicar</span>
+                  <button
+                    *appPmHasPermission="PERMISSIONS.FORM.UPDATE"
+                    mat-menu-item
+                    (click)="copyForm(form)"
+                  >
+                    <mat-icon>content_copy</mat-icon>
+                    <span>Copiar</span>
                   </button>
-                }
-                @if (form.status !== 'archived') {
-                  <button mat-menu-item (click)="archiveForm(form)">
-                    <mat-icon>archive</mat-icon>
-                    <span>Archivar</span>
+                  @if (form.status === 'draft') {
+                    <button
+                      *appPmHasPermission="PERMISSIONS.FORM.PUBLISH"
+                      mat-menu-item
+                      (click)="publishForm(form)"
+                    >
+                      <mat-icon>publish</mat-icon>
+                      <span>Publicar</span>
+                    </button>
+                  }
+                  @if (form.status === 'published') {
+                    <button
+                      *appPmHasPermission="PERMISSIONS.FORM.PUBLISH"
+                      mat-menu-item
+                      (click)="unpublishForm(form)"
+                    >
+                      <mat-icon>unpublished</mat-icon>
+                      <span>Despublicar</span>
+                    </button>
+                  }
+                  @if (form.status !== 'archived') {
+                    <button
+                      *appPmHasPermission="PERMISSIONS.FORM.DELETE"
+                      mat-menu-item
+                      (click)="archiveForm(form)"
+                    >
+                      <mat-icon>archive</mat-icon>
+                      <span>Archivar</span>
+                    </button>
+                  }
+                  <button
+                    *appPmHasPermission="PERMISSIONS.FORM.READ"
+                    mat-menu-item
+                    (click)="viewHistory(form)"
+                  >
+                    <mat-icon>history</mat-icon>
+                    <span>Ver Historial</span>
                   </button>
-                }
-                <button mat-menu-item (click)="viewHistory(form)">
-                  <mat-icon>history</mat-icon>
-                  <span>Ver Historial</span>
-                </button>
-              </mat-menu>
-            </td>
-          </ng-container>
+                </mat-menu>
+              </td>
+            </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
-        </table>
-
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+          </table>
+        </div>
         <!-- Paginador -->
         <mat-paginator
           [length]="totalElements()"
@@ -315,7 +342,6 @@
           [pageSizeOptions]="[10, 20, 50, 100]"
           (page)="onPageChange($event)"
           showFirstLastButtons
-          class="mt-4"
         />
       </div>
     } @else {

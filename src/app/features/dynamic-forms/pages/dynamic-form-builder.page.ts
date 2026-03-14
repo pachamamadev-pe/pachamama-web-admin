@@ -801,7 +801,7 @@ export class DynamicFormBuilderPage implements OnInit {
       isRequired: false,
       protocolId: null,
       validationConfig: {},
-      appliesTo: 'tree',
+      appliesTo: this.appliesToFieldState().value || 'tree',
     });
     this.tempOption.set('');
     this.tempArrayValues.set({});
@@ -852,7 +852,7 @@ export class DynamicFormBuilderPage implements OnInit {
       isRequired: false,
       protocolId: null,
       validationConfig: {},
-      appliesTo: 'tree',
+      appliesTo: this.appliesToFieldState().value || 'tree',
     });
     this.tempOption.set('');
     this.tempArrayValues.set({});
