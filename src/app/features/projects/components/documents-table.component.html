@@ -132,18 +132,30 @@
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #tableMenu="matMenu">
-              <button mat-menu-item (click)="downloadDocument.emit(doc)">
+              <button
+                *appPmHasPermission="PERMISSIONS.DOCUMENT.DOWNLOAD"
+                mat-menu-item
+                (click)="downloadDocument.emit(doc)"
+              >
                 <mat-icon>download</mat-icon>
                 <span>Descargar</span>
               </button>
               @if (canBeReviewed(doc)) {
-                <button mat-menu-item (click)="reviewDocument.emit(doc)">
+                <button
+                  *appPmHasPermission="PERMISSIONS.DOCUMENT.REVIEW"
+                  mat-menu-item
+                  (click)="reviewDocument.emit(doc)"
+                >
                   <mat-icon>rate_review</mat-icon>
                   <span>Revisar</span>
                 </button>
               }
               @if (canResubmit(doc)) {
-                <button mat-menu-item (click)="resubmitDocument.emit(doc)">
+                <button
+                  *appPmHasPermission="PERMISSIONS.DOCUMENT.UPLOAD"
+                  mat-menu-item
+                  (click)="resubmitDocument.emit(doc)"
+                >
                   <mat-icon>upload</mat-icon>
                   <span>Resubir</span>
                 </button>
@@ -179,18 +191,30 @@
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #mobileMenu="matMenu">
-              <button mat-menu-item (click)="downloadDocument.emit(doc)">
+              <button
+                *appPmHasPermission="PERMISSIONS.DOCUMENT.DOWNLOAD"
+                mat-menu-item
+                (click)="downloadDocument.emit(doc)"
+              >
                 <mat-icon>download</mat-icon>
                 <span>Descargar</span>
               </button>
               @if (canBeReviewed(doc)) {
-                <button mat-menu-item (click)="reviewDocument.emit(doc)">
+                <button
+                  *appPmHasPermission="PERMISSIONS.DOCUMENT.REVIEW"
+                  mat-menu-item
+                  (click)="reviewDocument.emit(doc)"
+                >
                   <mat-icon>rate_review</mat-icon>
                   <span>Revisar</span>
                 </button>
               }
               @if (canResubmit(doc)) {
-                <button mat-menu-item (click)="resubmitDocument.emit(doc)">
+                <button
+                  *appPmHasPermission="PERMISSIONS.DOCUMENT.UPLOAD"
+                  mat-menu-item
+                  (click)="resubmitDocument.emit(doc)"
+                >
                   <mat-icon>upload</mat-icon>
                   <span>Resubir</span>
                 </button>

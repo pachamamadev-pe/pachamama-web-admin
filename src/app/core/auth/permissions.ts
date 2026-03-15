@@ -79,6 +79,26 @@ export const PERMISSIONS = {
     ALL: 'profile:*',
   },
 
+  DOCUMENT: {
+    ALL: 'document:*',
+    READ: 'document:read',
+    UPLOAD: 'document:upload',
+    DOWNLOAD: 'document:download',
+    REVIEW: 'document:review',
+  },
+
+  ACTIVITY_INVENTORY: {
+    ALL: 'activity_inventory:*',
+    READ: 'activity_inventory:read',
+    REVIEW: 'activity_inventory:review',
+  },
+
+  ACTIVITY_COLLECTION: {
+    ALL: 'activity_collection:*',
+    READ: 'activity_collection:read',
+    REVIEW: 'activity_collection:review',
+  },
+
   PROJECT: {
     ALL: 'project:*',
 
@@ -86,20 +106,12 @@ export const PERMISSIONS = {
     CREATE: 'project:create',
     UPDATE: 'project:update',
     DELETE: 'project:delete',
-
     UPLOAD_MAP: 'project:upload_map',
-    NEXT_STAGE: 'project:next_stage',
-    APPROVE_PMF: 'project:approve_pmf', //revisando RLC
+    NEXT_STAGE: 'project:next_stage', //revisando RLC
+
     APPROVE_INVENTORY: 'project:approve_inventory',
     UPLOAD_UMF_MAP: 'project:upload_umf_map',
     INSERT_CALCULATED_COLUMNS: 'project:insert_calculated_columns',
-
-    VIEW_DOCUMENTS: 'project:view_documents',
-    REGISTER_DOCUMENTS: 'project:register_documents',
-
-    DOWNLOAD_PDF: 'project:download_pdf',
-    SEND_PDF: 'project:send_pdf',
-    UPLOAD_PMF_APPROVAL_DOCS: 'project:upload_pmf_approval_docs',
 
     CREATE_COLLECTION_ORDERS: 'project:create_collection_orders',
     GENERATE_PAYMENT_ORDERS: 'project:generate_payment_orders',
@@ -112,14 +124,6 @@ export const PERMISSIONS = {
     APPROVE_LOT_RECEPTION: 'project:approve_lot_reception',
     REGISTER_LOT_DELIVERY: 'project:register_lot_delivery',
     APPROVE_FINISHED_LOT_RECEPTION: 'project:approve_finished_lot_reception',
-  },
-
-  ACTIVITY: {
-    ALL: 'activity:*',
-  },
-
-  COLLECTION: {
-    APPROVE_REQUESTS: 'collection:approve_requests',
   },
 } as const;
 

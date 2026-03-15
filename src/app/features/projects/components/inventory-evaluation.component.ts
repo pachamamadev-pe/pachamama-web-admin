@@ -30,6 +30,8 @@ import { ActivitiesService } from '../services/activities.service';
 import { ActivityResponse, ValidationStatus } from '../models/activity.model';
 import { CalculatedFieldsService } from '../services/calculated-fields.service';
 import { RecalculateResponse } from '../models/calculated-field.model';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
 
 interface RecordStats {
   date: string;
@@ -69,6 +71,9 @@ export class InventoryEvaluationComponent implements OnDestroy {
   private notification = inject(NotificationService);
   private dialog = inject(MatDialog);
   private router = inject(Router);
+  private sidebarService = inject(SidebarService);
+
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Inputs
   productId = input.required<string>();
@@ -82,6 +87,31 @@ export class InventoryEvaluationComponent implements OnDestroy {
   totalElements = signal(0); // Total de elementos para paginación
   selectedFilter = signal('all');
   activeTab = signal<'inventory' | 'harvest'>('inventory'); // Tab activo
+
+  // Permisos por tipo de actividad
+  canReadInventory = computed(() =>
+    this.sidebarService.hasPermission(PERMISSIONS.ACTIVITY_INVENTORY.READ),
+  );
+  canReviewInventory = computed(() =>
+    this.sidebarService.hasPermission(PERMISSIONS.ACTIVITY_INVENTORY.REVIEW),
+  );
+  canReadCollection = computed(() =>
+    this.sidebarService.hasPermission(PERMISSIONS.ACTIVITY_COLLECTION.READ),
+  );
+  canReviewCollection = computed(() =>
+    this.sidebarService.hasPermission(PERMISSIONS.ACTIVITY_COLLECTION.REVIEW),
+  );
+
+  // Visibilidad de tabs internos
+  showInventoryTab = computed(() => this.canReadInventory() || this.canReviewInventory());
+  showCollectionTab = computed(() => this.canReadCollection() || this.canReviewCollection());
+
+  // Índice seleccionado del mat-tab-group, calculado dinámicamente según tabs visibles
+  selectedTabIndex = computed(() => {
+    if (this.activeTab() === 'inventory') return 0;
+    // harvest: si el tab de inventario está visible, harvest es el segundo (índice 1)
+    return this.showInventoryTab() ? 1 : 0;
+  });
   refreshing = signal(false); // Indicador de refresh silencioso
   recalculating = signal(false); // Indicador de recálculo en progreso
   lastUpdated = signal<Date | null>(null); // Última actualización
@@ -187,18 +217,22 @@ export class InventoryEvaluationComponent implements OnDestroy {
       'primary_transformation',
       'map_adjustment',
     ];
-    const canApprove = !restrictedStages.includes(stage);
+    const stageAllowsApproval = !restrictedStages.includes(stage);
 
     if (activity.activityType === 'inventory') {
-      // Para actividades de inventario
-      if (activity.overallValidationStatus === 'pending' && canApprove) {
-        return 'Evaluar'; // Puede aprobar
+      const canReview = this.canReviewInventory();
+      if (activity.overallValidationStatus === 'pending' && stageAllowsApproval && canReview) {
+        return 'Evaluar';
       }
-      return 'Ver Detalle'; // No puede aprobar o ya está aprobada/rechazada
+      return 'Ver Detalle';
     }
 
-    // Para otros tipos de actividades
-    return activity.overallValidationStatus === 'approved' ? 'Ver Detalle' : 'Evaluar';
+    // harvest / recolección
+    const canReview = this.canReviewCollection();
+    if (activity.overallValidationStatus === 'pending' && canReview) {
+      return 'Evaluar';
+    }
+    return 'Ver Detalle';
   };
 
   // Filtrar actividades según el filtro seleccionado y término de búsqueda
@@ -268,6 +302,10 @@ export class InventoryEvaluationComponent implements OnDestroy {
     effect(() => {
       if (this.shouldLoad() && !this.hasLoaded()) {
         this.hasLoaded.set(true);
+        // Ajustar tab inicial según permisos disponibles
+        if (!this.showInventoryTab() && this.showCollectionTab()) {
+          this.activeTab.set('harvest');
+        }
         const projId = this.projectId();
         if (projId) {
           this.loadActivities(projId, true); // Primera carga con spinner
@@ -424,7 +462,14 @@ export class InventoryEvaluationComponent implements OnDestroy {
    * Maneja el cambio de tab
    */
   onTabChange(index: number): void {
-    const tab = index === 0 ? 'inventory' : 'harvest';
+    let tab: 'inventory' | 'harvest';
+    if (this.showInventoryTab() && this.showCollectionTab()) {
+      tab = index === 0 ? 'inventory' : 'harvest';
+    } else if (this.showInventoryTab()) {
+      tab = 'inventory';
+    } else {
+      tab = 'harvest';
+    }
     this.activeTab.set(tab);
     this.currentPage.set(0); // Resetear paginación local
     const projId = this.projectId();
@@ -476,7 +521,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
       return;
     }
 
-    // Determinar el modo basado en la misma lógica del botón
+    // Determinar el modo basado en permisos y estado de la actividad
     const stage = this.projectStage().toLowerCase();
     const restrictedStages = [
       'collection',
@@ -484,19 +529,20 @@ export class InventoryEvaluationComponent implements OnDestroy {
       'primary_transformation',
       'map_adjustment',
     ];
-    const canApprove = !restrictedStages.includes(stage);
+    const stageAllowsApproval = !restrictedStages.includes(stage);
 
     let mode = 'evaluate'; // Por defecto modo evaluación
 
     if (activity.activityType === 'inventory') {
-      // Para actividades de inventario
-      if (activity.overallValidationStatus !== 'pending' || !canApprove) {
-        mode = 'readOnly'; // Solo lectura si no está pending o no puede aprobar
+      const canReview = this.canReviewInventory();
+      if (activity.overallValidationStatus !== 'pending' || !stageAllowsApproval || !canReview) {
+        mode = 'readOnly';
       }
     } else {
-      // Para otros tipos de actividades
-      if (activity.overallValidationStatus === 'approved') {
-        mode = 'readOnly'; // Solo lectura si está aprobada
+      // harvest / recolección
+      const canReview = this.canReviewCollection();
+      if (activity.overallValidationStatus !== 'pending' || !canReview) {
+        mode = 'readOnly';
       }
     }
 

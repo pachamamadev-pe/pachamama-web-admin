@@ -510,17 +510,22 @@
               </mat-tab>
             }
 
-            @if (showInventoryEvaluationTab()) {
-              <mat-tab label="Registro de actividades">
-                <div class="tab-content">
-                  <app-inventory-evaluation
-                    [productId]="project()!.productId"
-                    [projectId]="project()!.id"
-                    [projectStage]="project()!.stage || ''"
-                    [shouldLoad]="tabsLoaded().has(inventoryTabIndex())"
-                  />
-                </div>
-              </mat-tab>
+            @if (
+              sidebarService.hasPermission(PERMISSIONS.ACTIVITY_INVENTORY.READ) ||
+              sidebarService.hasPermission(PERMISSIONS.ACTIVITY_COLLECTION.READ)
+            ) {
+              @if (showInventoryEvaluationTab()) {
+                <mat-tab label="Registro de actividades">
+                  <div class="tab-content">
+                    <app-inventory-evaluation
+                      [productId]="project()!.productId"
+                      [projectId]="project()!.id"
+                      [projectStage]="project()!.stage || ''"
+                      [shouldLoad]="tabsLoaded().has(inventoryTabIndex())"
+                    />
+                  </div>
+                </mat-tab>
+              }
             }
 
             @if (showPmfGenerationTab()) {
@@ -556,31 +561,33 @@
               </mat-tab>
             }
 
-            <mat-tab label="Documentos">
-              <div class="tab-content">
-                @if (!project()?.id) {
-                  <!-- No project ID error -->
-                  <div class="empty-state">
-                    <div class="empty-icon">
-                      <mat-icon>error_outline</mat-icon>
+            @if (sidebarService.hasPermission(PERMISSIONS.DOCUMENT.READ)) {
+              <mat-tab label="Documentos">
+                <div class="tab-content">
+                  @if (!project()?.id) {
+                    <!-- No project ID error -->
+                    <div class="empty-state">
+                      <div class="empty-icon">
+                        <mat-icon>error_outline</mat-icon>
+                      </div>
+                      <h3 class="text-body font-bold text-accent-titles">
+                        Error: No se encontró ID del proyecto
+                      </h3>
                     </div>
-                    <h3 class="text-body font-bold text-accent-titles">
-                      Error: No se encontró ID del proyecto
-                    </h3>
-                  </div>
-                } @else {
-                  <!-- Documents Tab Component -->
-                  <app-documents-tab
-                    [projectId]="project()!.id"
-                    [shouldLoad]="tabsLoaded().has(documentsTabIndex())"
-                    (uploadDocument)="openUploadDialog()"
-                    (reviewDocument)="openReviewDialog($event)"
-                    (resubmitDocument)="openResubmitDialog($event)"
-                    (requirementsLoaded)="onRequirementsLoaded($event)"
-                  />
-                }
-              </div>
-            </mat-tab>
+                  } @else {
+                    <!-- Documents Tab Component -->
+                    <app-documents-tab
+                      [projectId]="project()!.id"
+                      [shouldLoad]="tabsLoaded().has(documentsTabIndex())"
+                      (uploadDocument)="openUploadDialog()"
+                      (reviewDocument)="openReviewDialog($event)"
+                      (resubmitDocument)="openResubmitDialog($event)"
+                      (requirementsLoaded)="onRequirementsLoaded($event)"
+                    />
+                  }
+                </div>
+              </mat-tab>
+            }
 
             <mat-tab label="Configuración">
               <app-configuration-tab
