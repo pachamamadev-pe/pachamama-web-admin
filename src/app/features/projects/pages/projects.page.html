@@ -322,18 +322,31 @@
 
                 <mat-menu #mobileMenu="matMenu">
                   @if (project.status !== 'inactive') {
-                    <button mat-menu-item (click)="viewProjectDetail(project)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.PROJECT.READ"
+                      mat-menu-item
+                      (click)="viewProjectDetail(project)"
+                    >
                       <mat-icon>visibility</mat-icon>
                       <span>Ver detalle</span>
                     </button>
                   }
 
-                  <button mat-menu-item (click)="openEditDialog(project)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.PROJECT.UPDATE"
+                    mat-menu-item
+                    (click)="openEditDialog(project)"
+                  >
                     <mat-icon>edit</mat-icon>
                     <span>Editar</span>
                   </button>
 
-                  <button mat-menu-item (click)="deleteProject(project)" class="text-red-600">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.PROJECT.DELETE"
+                    mat-menu-item
+                    (click)="deleteProject(project)"
+                    class="text-red-600"
+                  >
                     <mat-icon class="text-red-600">delete</mat-icon>
                     <span>Eliminar</span>
                   </button>

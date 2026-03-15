@@ -64,13 +64,15 @@ export const PERMISSIONS = {
 
   DASHBOARD: {
     ALL: 'dashboard:*',
-    VIEW: 'dashboard:view', //Ray revisando 02
+    VIEW: 'dashboard:view',
   },
 
   USER: {
     ALL: 'user:*',
     READ: 'user:read',
     CREATE: 'user:create',
+    UPDATE: 'user:update',
+    DELETE: 'user:delete',
   },
 
   PROFILE: {
@@ -86,8 +88,8 @@ export const PERMISSIONS = {
     DELETE: 'project:delete',
 
     UPLOAD_MAP: 'project:upload_map',
-    NEXT_STAGE: 'project:next_stage', //revisando RLC
-    APPROVE_PMF: 'project:approve_pmf',
+    NEXT_STAGE: 'project:next_stage',
+    APPROVE_PMF: 'project:approve_pmf', //revisando RLC
     APPROVE_INVENTORY: 'project:approve_inventory',
     UPLOAD_UMF_MAP: 'project:upload_umf_map',
     INSERT_CALCULATED_COLUMNS: 'project:insert_calculated_columns',
@@ -114,10 +116,6 @@ export const PERMISSIONS = {
 
   ACTIVITY: {
     ALL: 'activity:*',
-  },
-
-  PAYMENT: {
-    ALL: 'payment:*',
   },
 
   COLLECTION: {
