@@ -16,6 +16,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { NotificationService } from '@core/services/notification.service';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
 import { CollectionRequestsService } from '@features/collection-requests/services/collection-requests.service';
 import { CollectionRequest } from '@features/collection-requests/models/collection-request.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
@@ -151,6 +153,7 @@ import { parseDateValue } from '@shared/utils/date-helpers';
                   mat-raised-button
                   [color]="request.status === 'pending' ? 'primary' : 'accent'"
                   (click)="openReviewDialog(request)"
+                  [disabled]="request.status === 'pending' ? !canReview() : !canRead()"
                   [matTooltip]="
                     request.status === 'pending' ? 'Revisar solicitud' : 'Ver detalles e historial'
                   "
@@ -349,6 +352,15 @@ export class CollectionReviewTabComponent implements OnInit {
   private collectionRequestsService = inject(CollectionRequestsService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
+  private sidebarService = inject(SidebarService);
+
+  protected readonly PERMISSIONS = PERMISSIONS;
+
+  // Permissions
+  canRead = computed(() => this.sidebarService.hasPermission(PERMISSIONS.COLLECTION_REQUEST.READ));
+  canReview = computed(() =>
+    this.sidebarService.hasPermission(PERMISSIONS.COLLECTION_REQUEST.REVIEW),
+  );
 
   // Input: ID del proyecto
   projectId = input.required<string>();

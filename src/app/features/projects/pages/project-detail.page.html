@@ -542,12 +542,14 @@
               </mat-tab>
             }
 
-            @if (showCollectionTab()) {
-              <mat-tab label="Revisión Solicitudes">
-                <div class="tab-content">
-                  <app-collection-review-tab [projectId]="project()!.id" />
-                </div>
-              </mat-tab>
+            @if (sidebarService.hasPermission(PERMISSIONS.COLLECTION_REQUEST.READ)) {
+              @if (showCollectionTab()) {
+                <mat-tab label="Revisión Solicitudes">
+                  <div class="tab-content">
+                    <app-collection-review-tab [projectId]="project()!.id" />
+                  </div>
+                </mat-tab>
+              }
             }
 
             @if (showAcopioBatchesTab()) {

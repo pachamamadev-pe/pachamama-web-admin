@@ -99,6 +99,14 @@ export const PERMISSIONS = {
     REVIEW: 'activity_collection:review',
   },
 
+  COLLECTION_REQUEST: {
+    ALL: 'collection_request:*',
+    READ: 'collection_request:read',
+    CREATE: 'collection_request:create',
+    UPDATE: 'collection_request:update',
+    REVIEW: 'collection_request:review',
+  },
+
   PROJECT: {
     ALL: 'project:*',
 
@@ -108,13 +116,6 @@ export const PERMISSIONS = {
     DELETE: 'project:delete',
     UPLOAD_MAP: 'project:upload_map',
     NEXT_STAGE: 'project:next_stage', //revisando RLC
-
-    APPROVE_INVENTORY: 'project:approve_inventory',
-    UPLOAD_UMF_MAP: 'project:upload_umf_map',
-    INSERT_CALCULATED_COLUMNS: 'project:insert_calculated_columns',
-
-    CREATE_COLLECTION_ORDERS: 'project:create_collection_orders',
-    GENERATE_PAYMENT_ORDERS: 'project:generate_payment_orders',
 
     APPROVE_COLLECTION_RECEPTION: 'project:approve_collection_reception',
     PROCESS_COLLECTION: 'project:process_collection',
