@@ -34,6 +34,10 @@ import {
 } from '../components/document-type-create-mode-dialog.component';
 import { getProjectWorkflowStageLabel } from '../../projects/models/project-stages.constants';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 @Component({
   selector: 'app-document-types-page',
   imports: [
@@ -52,6 +56,7 @@ import { getProjectWorkflowStageLabel } from '../../projects/models/project-stag
     MatChipsModule,
     MatButtonToggleModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './document-types.page.html',
   styleUrl: './document-types.page.scss',
@@ -62,6 +67,9 @@ export class DocumentTypesPage implements OnInit {
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private loadingService = inject(LoadingService);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Search and filtering
   searchTerm = signal('');

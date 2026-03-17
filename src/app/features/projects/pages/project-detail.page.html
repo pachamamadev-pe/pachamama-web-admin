@@ -528,18 +528,20 @@
               }
             }
 
-            @if (showPmfGenerationTab()) {
-              <mat-tab label="Generar PMF">
-                <div class="tab-content">
-                  <app-pmf-generation
-                    [projectId]="project()!.id"
-                    [currentStage]="project()?.stage || ''"
-                    [shouldLoad]="tabsLoaded().has(pmfTabIndex())"
-                    (reportGenerated)="onReportGenerated()"
-                    (stageAdvanced)="onPmfStageAdvanced()"
-                  />
-                </div>
-              </mat-tab>
+            @if (sidebarService.hasPermission(PERMISSIONS.PROJECT.GENERATION_PMF)) {
+              @if (showPmfGenerationTab()) {
+                <mat-tab label="Generar PMF">
+                  <div class="tab-content">
+                    <app-pmf-generation
+                      [projectId]="project()!.id"
+                      [currentStage]="project()?.stage || ''"
+                      [shouldLoad]="tabsLoaded().has(pmfTabIndex())"
+                      (reportGenerated)="onReportGenerated()"
+                      (stageAdvanced)="onPmfStageAdvanced()"
+                    />
+                  </div>
+                </mat-tab>
+              }
             }
 
             @if (sidebarService.hasPermission(PERMISSIONS.COLLECTION_REQUEST.READ)) {

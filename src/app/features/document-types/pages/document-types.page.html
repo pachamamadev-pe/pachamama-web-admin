@@ -10,7 +10,12 @@
       </div>
 
       <div class="header-actions">
-        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+        <button
+          *appPmHasPermission="PERMISSIONS.DOCUMENT_TYPE.CREATE"
+          mat-raised-button
+          class="btn-primary"
+          (click)="openCreateDialog()"
+        >
           <mat-icon>add</mat-icon>
           <span class="hidden sm:inline">Añadir tipo</span>
           <span class="sm:hidden">Añadir</span>
@@ -38,26 +43,28 @@
     </div>
 
     <!-- Status Filter -->
-    <div class="filter-container">
-      <mat-button-toggle-group
-        [value]="statusFilter()"
-        (change)="onStatusFilterChange($event.value)"
-        class="status-filter-toggle"
-      >
-        <mat-button-toggle value="active">
-          <mat-icon>check_circle</mat-icon>
-          <span>Activos</span>
-        </mat-button-toggle>
-        <mat-button-toggle value="archived">
-          <mat-icon>archive</mat-icon>
-          <span>Archivados</span>
-        </mat-button-toggle>
-        <mat-button-toggle value="all">
-          <mat-icon>list</mat-icon>
-          <span>Todos</span>
-        </mat-button-toggle>
-      </mat-button-toggle-group>
-    </div>
+    @if (sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ)) {
+      <div class="filter-container">
+        <mat-button-toggle-group
+          [value]="statusFilter()"
+          (change)="onStatusFilterChange($event.value)"
+          class="status-filter-toggle"
+        >
+          <mat-button-toggle value="active">
+            <mat-icon>check_circle</mat-icon>
+            <span>Activos</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="archived">
+            <mat-icon>archive</mat-icon>
+            <span>Archivados</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="all">
+            <mat-icon>list</mat-icon>
+            <span>Todos</span>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    }
   </header>
 
   <!-- Content -->
@@ -68,7 +75,11 @@
         <mat-spinner diameter="48" />
         <p class="text-body text-neutral-subheading mt-4">Cargando tipos de documento...</p>
       </div>
-    } @else if (documentTypes().length === 0 && !searchTerm()) {
+    } @else if (
+      documentTypes().length === 0 &&
+      !searchTerm() &&
+      sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.CREATE)
+    ) {
       <!-- Empty state general (sin datos del backend) -->
       <app-empty-state
         icon="description"
@@ -98,7 +109,7 @@
         actionLabel="Limpiar búsqueda"
         (action)="clearSearch()"
       />
-    } @else {
+    } @else if (sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ)) {
       <!-- Document Types Table (Desktop only) -->
       <div class="document-types-table">
         <div class="products-table hidden md:block">
@@ -115,7 +126,18 @@
             </thead>
             <tbody class="table-body">
               @for (docType of filteredDocumentTypes(); track docType.id) {
-                <tr class="table-row" (click)="viewDetails(docType)">
+                <tr
+                  class="table-row"
+                  [style.cursor]="
+                    sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ)
+                      ? 'pointer'
+                      : 'default'
+                  "
+                  (click)="
+                    sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ) &&
+                      viewDetails(docType)
+                  "
+                >
                   <!-- Nombre -->
                   <td class="table-td">
                     <div class="flex flex-col">
@@ -188,16 +210,28 @@
                       <mat-icon>more_vert</mat-icon>
                     </button>
                     <mat-menu #tableMenu="matMenu">
-                      <button mat-menu-item (click)="viewDetails(docType)">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.DOCUMENT_TYPE.READ"
+                        mat-menu-item
+                        (click)="viewDetails(docType)"
+                      >
                         <mat-icon>visibility</mat-icon>
                         <span>Ver detalles</span>
                       </button>
                       @if (docType.status === 'active') {
-                        <button mat-menu-item (click)="openEditDialog(docType)">
+                        <button
+                          *appPmHasPermission="PERMISSIONS.DOCUMENT_TYPE.UPDATE"
+                          mat-menu-item
+                          (click)="openEditDialog(docType)"
+                        >
                           <mat-icon>edit</mat-icon>
                           <span>Editar</span>
                         </button>
-                        <button mat-menu-item (click)="archiveDocumentType(docType)">
+                        <button
+                          *appPmHasPermission="PERMISSIONS.DOCUMENT_TYPE.DELETE"
+                          mat-menu-item
+                          (click)="archiveDocumentType(docType)"
+                        >
                           <mat-icon>archive</mat-icon>
                           <span>Archivar</span>
                         </button>
@@ -226,11 +260,23 @@
         @for (docType of filteredDocumentTypes(); track docType.id) {
           <div
             class="document-type-card bg-primary-white rounded-lg shadow p-4"
-            role="button"
-            tabindex="0"
-            (click)="viewDetails(docType)"
-            (keydown.enter)="viewDetails(docType)"
-            (keydown.space)="viewDetails(docType); $event.preventDefault()"
+            [style.cursor]="
+              sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ) ? 'pointer' : 'default'
+            "
+            [attr.role]="
+              sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ) ? 'button' : null
+            "
+            [attr.tabindex]="sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ) ? 0 : -1"
+            (click)="
+              sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ) && viewDetails(docType)
+            "
+            (keydown.enter)="
+              sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ) && viewDetails(docType)
+            "
+            (keydown.space)="
+              sidebarService.hasPermission(PERMISSIONS.DOCUMENT_TYPE.READ) && viewDetails(docType);
+              $event.preventDefault()
+            "
           >
             <div class="card-header">
               <div class="card-title">
@@ -248,16 +294,28 @@
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #mobileMenu="matMenu">
-                  <button mat-menu-item (click)="viewDetails(docType)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.DOCUMENT_TYPE.READ"
+                    mat-menu-item
+                    (click)="viewDetails(docType)"
+                  >
                     <mat-icon>visibility</mat-icon>
                     <span>Ver detalles</span>
                   </button>
                   @if (docType.status === 'active') {
-                    <button mat-menu-item (click)="openEditDialog(docType)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.DOCUMENT_TYPE.UPDATE"
+                      mat-menu-item
+                      (click)="openEditDialog(docType)"
+                    >
                       <mat-icon>edit</mat-icon>
                       <span>Editar</span>
                     </button>
-                    <button mat-menu-item (click)="archiveDocumentType(docType)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.DOCUMENT_TYPE.DELETE"
+                      mat-menu-item
+                      (click)="archiveDocumentType(docType)"
+                    >
                       <mat-icon>archive</mat-icon>
                       <span>Archivar</span>
                     </button>
@@ -324,6 +382,12 @@
             </div>
           </div>
         }
+      </div>
+    } @else {
+      <!-- Unauthorized state -->
+      <div class="empty-state">
+        <mat-icon>lock</mat-icon>
+        <h3>No tienes permisos para visualizar los tipos de documento de la empresa</h3>
       </div>
     }
   </div>

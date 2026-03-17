@@ -264,31 +264,38 @@
                   <mat-icon>radio_button_unchecked</mat-icon>
                   <span>Pendiente de generación</span>
                 </div>
-                <!-- Generate document button -->
-                <button
-                  mat-raised-button
-                  class="generate-doc-btn"
-                  [disabled]="generatingDocument() || savingProcessingRecord()"
-                  (click)="
-                    processingRecordStageCode() ? saveProcessingRecord() : generateDocument()
-                  "
-                >
-                  @if (generatingDocument() || savingProcessingRecord()) {
-                    <ng-container>
-                      <mat-spinner diameter="16" />
-                      Generando...
-                    </ng-container>
-                  } @else {
-                    <ng-container>
-                      <mat-icon>auto_awesome</mat-icon>
-                      Generar Documento
-                    </ng-container>
+                @if (canEditStage()) {
+                  <!-- Generate document button -->
+                  <button
+                    mat-raised-button
+                    class="generate-doc-btn"
+                    [disabled]="generatingDocument() || savingProcessingRecord()"
+                    (click)="
+                      processingRecordStageCode() ? saveProcessingRecord() : generateDocument()
+                    "
+                  >
+                    @if (generatingDocument() || savingProcessingRecord()) {
+                      <ng-container>
+                        <mat-spinner diameter="16" />
+                        Generando...
+                      </ng-container>
+                    } @else {
+                      <ng-container>
+                        <mat-icon>auto_awesome</mat-icon>
+                        Generar Documento
+                      </ng-container>
+                    }
+                  </button>
+                  @if (isViewingCurrentStage()) {
+                    <p class="advance-blocked-msg">
+                      <mat-icon>lock</mat-icon>
+                      Debes generar el documento para avanzar a la siguiente etapa.
+                    </p>
                   }
-                </button>
-                @if (isViewingCurrentStage()) {
+                } @else {
                   <p class="advance-blocked-msg">
-                    <mat-icon>lock</mat-icon>
-                    Debes generar el documento para avanzar a la siguiente etapa.
+                    <mat-icon>visibility</mat-icon>
+                    Esta etapa es de solo lectura para tu rol.
                   </p>
                 }
               }
@@ -545,31 +552,33 @@
                           }
                           <div class="reception-form-actions">
                             <button mat-button type="button" (click)="toggleReception(r.id)">
-                              Cancelar
+                              {{ canEditStage() ? 'Cancelar' : 'Cerrar' }}
                             </button>
-                            <button
-                              mat-raised-button
-                              class="btn-save-reception"
-                              type="button"
-                              [disabled]="generatingDocument()"
-                              (click)="saveReception(r)"
-                            >
-                              @if (generatingDocument()) {
-                                <ng-container>
-                                  <mat-spinner diameter="16" />
-                                  Generando...
-                                </ng-container>
-                              } @else {
-                                <ng-container>
-                                  <mat-icon>auto_awesome</mat-icon>
-                                  @if (receptionDocumentCode() === 'FRUIT_RECEPTION_RECORD') {
-                                    Guardar y generar ficha
-                                  } @else {
-                                    Guardar y generar registro
-                                  }
-                                </ng-container>
-                              }
-                            </button>
+                            @if (canEditStage()) {
+                              <button
+                                mat-raised-button
+                                class="btn-save-reception"
+                                type="button"
+                                [disabled]="generatingDocument()"
+                                (click)="saveReception(r)"
+                              >
+                                @if (generatingDocument()) {
+                                  <ng-container>
+                                    <mat-spinner diameter="16" />
+                                    Generando...
+                                  </ng-container>
+                                } @else {
+                                  <ng-container>
+                                    <mat-icon>auto_awesome</mat-icon>
+                                    @if (receptionDocumentCode() === 'FRUIT_RECEPTION_RECORD') {
+                                      Guardar y generar ficha
+                                    } @else {
+                                      Guardar y generar registro
+                                    }
+                                  </ng-container>
+                                }
+                              </button>
+                            }
                           </div>
                         </div>
                       }
@@ -809,22 +818,24 @@
 
                     <!-- Actions -->
                     <div class="processing-form-actions">
-                      <button
-                        mat-raised-button
-                        class="btn-save-processing"
-                        type="submit"
-                        [disabled]="savingProcessingRecord()"
-                      >
-                        @if (savingProcessingRecord()) {
-                          <mat-spinner diameter="16" />
-                          Guardando...
-                        } @else {
-                          <ng-container>
-                            <mat-icon>save</mat-icon>
-                            Guardar y generar registro
-                          </ng-container>
-                        }
-                      </button>
+                      @if (canEditStage()) {
+                        <button
+                          mat-raised-button
+                          class="btn-save-processing"
+                          type="submit"
+                          [disabled]="savingProcessingRecord()"
+                        >
+                          @if (savingProcessingRecord()) {
+                            <mat-spinner diameter="16" />
+                            Guardando...
+                          } @else {
+                            <ng-container>
+                              <mat-icon>save</mat-icon>
+                              Guardar y generar registro
+                            </ng-container>
+                          }
+                        </button>
+                      }
                     </div>
                   </form>
                 }
@@ -921,22 +932,24 @@
 
                     <!-- Actions -->
                     <div class="processing-form-actions">
-                      <button
-                        mat-raised-button
-                        class="btn-save-processing"
-                        type="submit"
-                        [disabled]="savingProcessingRecord()"
-                      >
-                        @if (savingProcessingRecord()) {
-                          <mat-spinner diameter="16" />
-                          Guardando...
-                        } @else {
-                          <ng-container>
-                            <mat-icon>save</mat-icon>
-                            Guardar y generar registro
-                          </ng-container>
-                        }
-                      </button>
+                      @if (canEditStage()) {
+                        <button
+                          mat-raised-button
+                          class="btn-save-processing"
+                          type="submit"
+                          [disabled]="savingProcessingRecord()"
+                        >
+                          @if (savingProcessingRecord()) {
+                            <mat-spinner diameter="16" />
+                            Guardando...
+                          } @else {
+                            <ng-container>
+                              <mat-icon>save</mat-icon>
+                              Guardar y generar registro
+                            </ng-container>
+                          }
+                        </button>
+                      }
                     </div>
                   </form>
                 }

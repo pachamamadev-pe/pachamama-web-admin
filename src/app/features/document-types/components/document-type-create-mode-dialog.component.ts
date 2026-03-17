@@ -451,7 +451,7 @@ export class DocumentTypeCreateModeDialogComponent {
     this.loadingTemplates.set(true);
     this.documentTypesService.getTemplatesForEntity('projects').subscribe({
       next: (templates) => {
-        this.templates.set(templates);
+        this.templates.set(templates.filter((t) => t.code !== 'PMF'));
         this.loadingTemplates.set(false);
       },
       error: (error) => {

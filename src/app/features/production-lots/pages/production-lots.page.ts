@@ -30,6 +30,11 @@ import { ProjectsService } from '../../projects/services/projects.service';
 import { Project } from '../../projects/models/project.model';
 import { ProductionLotsService } from '../../projects/services/production-lots.service';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+//import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 import {
   ProductionLotRecord,
   StageFilter,
@@ -73,6 +78,7 @@ import {
     MatSelectModule,
     MatTooltipModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './production-lots.page.html',
   styleUrl: './production-lots.page.scss',
@@ -80,13 +86,16 @@ import {
 })
 export class ProductionLotsPage implements OnInit {
   private lotsService = inject(ProductionLotsService);
-  private sidebarService = inject(SidebarService);
+  //private sidebarService = inject(SidebarService);
   private productsService = inject(ProductsService);
   private projectsService = inject(ProjectsService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   private readonly searchSubject = new Subject<string>();
 
@@ -133,10 +142,25 @@ export class ProductionLotsPage implements OnInit {
     () => this.lots().filter((l) => l.transformationStage === 'secundaria').length,
   );
 
-  /** Lotes primarios del conjunto filtrado (para la sección Primaria) */
-  primaryLots = computed(() =>
-    this.filteredLots().filter((l) => l.transformationStage === 'primaria'),
+  /**
+   * true cuando el usuario solo tiene STORAGE (no PROCESS) para transformación primaria.
+   * Representa al rol GESTOR_ALMACENAMIENTO_TEMPORAL.
+   */
+  isStorageOnlyUser = computed(
+    () =>
+      this.sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.STORAGE) &&
+      !this.sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.PROCESS),
   );
+
+  /** Lotes primarios del conjunto filtrado (para la sección Primaria) */
+  primaryLots = computed(() => {
+    const base = this.filteredLots().filter((l) => l.transformationStage === 'primaria');
+    // GESTOR_ALMACENAMIENTO_TEMPORAL solo ve lotes en etapa de almacenamiento
+    if (this.isStorageOnlyUser()) {
+      return base.filter((l) => l.status === 'almacenamiento');
+    }
+    return base;
+  });
 
   /** Lotes secundarios del conjunto filtrado (para la sección Secundaria) */
   secondaryLots = computed(() =>

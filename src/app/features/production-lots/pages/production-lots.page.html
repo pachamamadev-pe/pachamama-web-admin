@@ -11,47 +11,56 @@
           Gestiona todos los lotes de transformación primaria y secundaria de la empresa
         </p>
       </div>
-      <div class="header-actions">
-        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
-          <mat-icon>add</mat-icon>
-          <span class="hidden sm:inline">Nuevo lote</span>
-          <span class="sm:hidden">Nuevo</span>
+      @if (
+        sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.CREATE) &&
+        sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_SECONDARY.CREATE)
+      ) {
+        <div class="header-actions">
+          <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+            <mat-icon>add</mat-icon>
+            <span class="hidden sm:inline">Nuevo lote</span>
+            <span class="sm:hidden">Nuevo</span>
+          </button>
+        </div>
+      }
+    </div>
+    <!-- Stage Filter Tabs -->
+    @if (
+      sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.READ) &&
+      sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_SECONDARY.READ)
+    ) {
+      <div class="stage-filters">
+        <button
+          class="stage-tab"
+          [class.stage-tab--active]="activeStageFilter() === 'all'"
+          (click)="setStageFilter('all')"
+        >
+          <mat-icon class="stage-tab-icon">layers</mat-icon>
+          <span>Todos</span>
+          <span class="stage-tab-count">{{ lots().length }}</span>
+        </button>
+
+        <button
+          class="stage-tab stage-tab--primary"
+          [class.stage-tab--active]="activeStageFilter() === 'primaria'"
+          (click)="setStageFilter('primaria')"
+        >
+          <mat-icon class="stage-tab-icon">factory</mat-icon>
+          <span>Primaria</span>
+          <span class="stage-tab-count">{{ primaryCount() }}</span>
+        </button>
+
+        <button
+          class="stage-tab stage-tab--secondary"
+          [class.stage-tab--active]="activeStageFilter() === 'secundaria'"
+          (click)="setStageFilter('secundaria')"
+        >
+          <mat-icon class="stage-tab-icon">transform</mat-icon>
+          <span>Secundaria</span>
+          <span class="stage-tab-count">{{ secondaryCount() }}</span>
         </button>
       </div>
-    </div>
-
-    <!-- Stage Filter Tabs -->
-    <div class="stage-filters">
-      <button
-        class="stage-tab"
-        [class.stage-tab--active]="activeStageFilter() === 'all'"
-        (click)="setStageFilter('all')"
-      >
-        <mat-icon class="stage-tab-icon">layers</mat-icon>
-        <span>Todos</span>
-        <span class="stage-tab-count">{{ lots().length }}</span>
-      </button>
-
-      <button
-        class="stage-tab stage-tab--primary"
-        [class.stage-tab--active]="activeStageFilter() === 'primaria'"
-        (click)="setStageFilter('primaria')"
-      >
-        <mat-icon class="stage-tab-icon">factory</mat-icon>
-        <span>Primaria</span>
-        <span class="stage-tab-count">{{ primaryCount() }}</span>
-      </button>
-
-      <button
-        class="stage-tab stage-tab--secondary"
-        [class.stage-tab--active]="activeStageFilter() === 'secundaria'"
-        (click)="setStageFilter('secundaria')"
-      >
-        <mat-icon class="stage-tab-icon">transform</mat-icon>
-        <span>Secundaria</span>
-        <span class="stage-tab-count">{{ secondaryCount() }}</span>
-      </button>
-    </div>
+    }
 
     <!-- Advanced Filters Row -->
     <div class="filters-row">
@@ -163,7 +172,10 @@
         <!-- ═══════════════════════════════════════════════════════
              SECCIÓN 1 — TRANSFORMACIÓN PRIMARIA
         ═══════════════════════════════════════════════════════ -->
-        @if (activeStageFilter() !== 'secundaria') {
+        @if (
+          activeStageFilter() !== 'secundaria' &&
+          sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.READ)
+        ) {
           <div class="stage-section">
             <div class="stage-header stage-header--primary">
               <div class="stage-header-title">
@@ -176,6 +188,7 @@
                 </div>
               </div>
               <button
+                *appPmHasPermission="PERMISSIONS.TRANSFORMATION_PRIMARY.CREATE"
                 mat-raised-button
                 class="btn-primary btn-section-create"
                 (click)="openCreatePrimaryDirect()"
@@ -219,11 +232,25 @@
                         <mat-icon>more_vert</mat-icon>
                       </button>
                       <mat-menu #primaryMenu="matMenu" xPosition="before">
-                        <button mat-menu-item (click)="viewLotDetail(lot)">
-                          <mat-icon>visibility</mat-icon>
-                          <span>Ver detalle</span>
-                        </button>
-                        <button mat-menu-item (click)="generateTraceabilityQr(lot)">
+                        @if (
+                          sidebarService.hasPermission(
+                            PERMISSIONS.TRANSFORMATION_PRIMARY.PROCESS
+                          ) ||
+                          (sidebarService.hasPermission(
+                            PERMISSIONS.TRANSFORMATION_PRIMARY.STORAGE
+                          ) &&
+                            lot.status === 'almacenamiento')
+                        ) {
+                          <button mat-menu-item (click)="viewLotDetail(lot)">
+                            <mat-icon>visibility</mat-icon>
+                            <span>Ver detalle</span>
+                          </button>
+                        }
+                        <button
+                          *appPmHasPermission="PERMISSIONS.TRANSFORMATION_PRIMARY.GENERATE_QR"
+                          mat-menu-item
+                          (click)="generateTraceabilityQr(lot)"
+                        >
                           <mat-icon>qr_code_2</mat-icon>
                           <span>Generar QR trazabilidad</span>
                         </button>
@@ -267,7 +294,12 @@
                       <span class="lot-footer-sep">&bull;</span>
                       <mat-icon>person</mat-icon>
                       <span>{{ lot.createdByName ?? '—' }}</span>
-                      @if (lot.location) {
+                      @if (
+                        lot.location &&
+                        sidebarService.hasPermission(
+                          PERMISSIONS.TRANSFORMATION_PRIMARY.VIEW_LOCATION
+                        )
+                      ) {
                         <button
                           type="button"
                           class="lot-location-chip"
@@ -293,7 +325,10 @@
         <!-- ═══════════════════════════════════════════════════════
              SECCIÓN 2 — TRANSFORMACIÓN SECUNDARIA
         ═══════════════════════════════════════════════════════ -->
-        @if (activeStageFilter() !== 'primaria') {
+        @if (
+          activeStageFilter() !== 'primaria' &&
+          sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_SECONDARY.READ)
+        ) {
           <div class="stage-section">
             <div class="stage-header stage-header--secondary">
               <div class="stage-header-title">
@@ -308,6 +343,7 @@
                 </div>
               </div>
               <button
+                *appPmHasPermission="PERMISSIONS.TRANSFORMATION_SECONDARY.CREATE"
                 mat-stroked-button
                 class="btn-section-create btn-section-create--secondary"
                 (click)="openCreateSecondaryDirect()"
@@ -349,11 +385,19 @@
                         <mat-icon>more_vert</mat-icon>
                       </button>
                       <mat-menu #secondaryMenu="matMenu" xPosition="before">
-                        <button mat-menu-item (click)="viewLotDetail(lot)">
+                        <button
+                          *appPmHasPermission="PERMISSIONS.TRANSFORMATION_SECONDARY.PROCESS"
+                          mat-menu-item
+                          (click)="viewLotDetail(lot)"
+                        >
                           <mat-icon>visibility</mat-icon>
                           <span>Ver detalle</span>
                         </button>
-                        <button mat-menu-item (click)="generateTraceabilityQr(lot)">
+                        <button
+                          *appPmHasPermission="PERMISSIONS.TRANSFORMATION_SECONDARY.GENERATE_QR"
+                          mat-menu-item
+                          (click)="generateTraceabilityQr(lot)"
+                        >
                           <mat-icon>qr_code_2</mat-icon>
                           <span>Generar QR trazabilidad</span>
                         </button>
@@ -415,7 +459,12 @@
                       <span class="lot-footer-sep">&bull;</span>
                       <mat-icon>person</mat-icon>
                       <span>{{ lot.createdByName ?? '—' }}</span>
-                      @if (lot.location) {
+                      @if (
+                        lot.location &&
+                        sidebarService.hasPermission(
+                          PERMISSIONS.TRANSFORMATION_SECONDARY.VIEW_LOCATION
+                        )
+                      ) {
                         <button
                           type="button"
                           class="lot-location-chip"

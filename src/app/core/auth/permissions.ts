@@ -116,6 +116,7 @@ export const PERMISSIONS = {
     DELETE: 'project:delete',
     UPLOAD_MAP: 'project:upload_map',
     NEXT_STAGE: 'project:next_stage',
+    GENERATION_PMF: 'project:generation_pmf',
   },
 
   COLLECTION_BATCH: {
@@ -139,6 +140,33 @@ export const PERMISSIONS = {
     CREATE: 'project_aggregation:create',
     UPDATE: 'project_aggregation:update',
     DELETE: 'project_aggregation:delete',
+  },
+
+  DOCUMENT_TYPE: {
+    ALL: 'document_type:*',
+    READ: 'document_type:read',
+    CREATE: 'document_type:create',
+    UPDATE: 'document_type:update',
+    DELETE: 'document_type:delete',
+  },
+
+  TRANSFORMATION_PRIMARY: {
+    ALL: 'transformation_primary:*',
+    READ: 'transformation_primary:read',
+    CREATE: 'transformation_primary:create',
+    PROCESS: 'transformation_primary:process',
+    GENERATE_QR: 'transformation_primary:generate_qr',
+    VIEW_LOCATION: 'transformation_primary:view_location',
+    STORAGE: 'transformation_primary:storage',
+  },
+
+  TRANSFORMATION_SECONDARY: {
+    ALL: 'transformation_secondary:*',
+    READ: 'transformation_secondary:read',
+    CREATE: 'transformation_secondary:create',
+    PROCESS: 'transformation_secondary:process',
+    GENERATE_QR: 'transformation_secondary:generate_qr',
+    VIEW_LOCATION: 'transformation_secondary:view_location',
   },
 } as const;
 
