@@ -115,16 +115,30 @@ export const PERMISSIONS = {
     UPDATE: 'project:update',
     DELETE: 'project:delete',
     UPLOAD_MAP: 'project:upload_map',
-    NEXT_STAGE: 'project:next_stage', //revisando RLC
+    NEXT_STAGE: 'project:next_stage',
+  },
 
-    APPROVE_COLLECTION_RECEPTION: 'project:approve_collection_reception',
-    PROCESS_COLLECTION: 'project:process_collection',
-    PRIMARY_TRANSFORMATION: 'project:primary_transformation',
-    ISSUE_PRODUCTION_LOT: 'project:issue_production_lot',
+  COLLECTION_BATCH: {
+    ALL: 'collection_batch:*',
+    READ: 'collection_batch:read',
+    CREATE: 'collection_batch:create',
+    PROCESS: 'collection_batch:process',
+  },
 
-    APPROVE_LOT_RECEPTION: 'project:approve_lot_reception',
-    REGISTER_LOT_DELIVERY: 'project:register_lot_delivery',
-    APPROVE_FINISHED_LOT_RECEPTION: 'project:approve_finished_lot_reception',
+  ACTIVITY_FORMULA: {
+    ALL: 'activity_formula:*',
+    READ: 'activity_formula:read',
+    CREATE: 'activity_formula:create',
+    UPDATE: 'activity_formula:update',
+    DELETE: 'activity_formula:delete',
+  },
+
+  PROJECT_AGGREGATION: {
+    ALL: 'project_aggregation:*',
+    READ: 'project_aggregation:read',
+    CREATE: 'project_aggregation:create',
+    UPDATE: 'project_aggregation:update',
+    DELETE: 'project_aggregation:delete',
   },
 } as const;
 

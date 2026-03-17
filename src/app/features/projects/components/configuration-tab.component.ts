@@ -30,6 +30,11 @@ import {
   UpdateCalculatedFieldRequest,
 } from '../models/calculated-field.model';
 import { CalculatedFieldFormDialogComponent } from './calculated-field-form-dialog.component';
+
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 /**
  * Componente para configurar columnas calculadas y agregaciones
  */
@@ -47,6 +52,7 @@ import { CalculatedFieldFormDialogComponent } from './calculated-field-form-dial
     MatMenuModule,
     MatTabsModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './configuration-tab.component.html',
   styleUrl: './configuration-tab.component.scss',
@@ -56,6 +62,9 @@ export class ConfigurationTabComponent {
   private calculatedFieldsService = inject(CalculatedFieldsService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Inputs
   projectId = input.required<string>();

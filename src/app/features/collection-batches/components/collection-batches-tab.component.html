@@ -9,7 +9,12 @@
         </p>
       </div>
       <div class="header-actions">
-        <button mat-raised-button class="btn-primary" (click)="openCreateBatchDialog()">
+        <button
+          *appPmHasPermission="PERMISSIONS.COLLECTION_BATCH.CREATE"
+          mat-raised-button
+          class="btn-primary"
+          (click)="openCreateBatchDialog()"
+        >
           <mat-icon>add</mat-icon>
           <span class="hidden sm:inline">Crear Nuevo Lote</span>
           <span class="sm:hidden">Crear</span>
@@ -26,7 +31,9 @@
         <mat-spinner diameter="48" />
         <p class="text-body text-neutral-subheading mt-4">Cargando lotes de acopio...</p>
       </div>
-    } @else if (batches().length === 0) {
+    } @else if (
+      batches().length === 0 && sidebarService.hasPermission(PERMISSIONS.COLLECTION_BATCH.CREATE)
+    ) {
       <!-- Empty State -->
       <app-empty-state
         icon="inventory_2"
@@ -36,15 +43,20 @@
         actionLabel="Crear Primer Lote"
         (action)="openCreateBatchDialog()"
       />
-    } @else {
+    } @else if (
+      sidebarService.hasPermission(PERMISSIONS.COLLECTION_BATCH.READ) ||
+      sidebarService.hasPermission(PERMISSIONS.COLLECTION_BATCH.PROCESS)
+    ) {
       <!-- Batches Grid -->
       <div class="batches-grid">
         @for (batch of batches(); track batch.id) {
           <div
             class="batch-card"
             [class]="'batch-card batch-card--' + batch.status"
-            role="button"
-            tabindex="0"
+            [style.cursor]="canOpenBatch(batch) ? 'pointer' : 'default'"
+            [attr.role]="canOpenBatch(batch) ? 'button' : 'article'"
+            [attr.tabindex]="canOpenBatch(batch) ? 0 : -1"
+            [matTooltip]="!canOpenBatch(batch) ? 'No tienes permiso para ver este lote' : ''"
             (click)="openBatchDetail(batch)"
             (keyup.enter)="openBatchDetail(batch)"
             (keyup.space)="openBatchDetail(batch)"

@@ -552,15 +552,17 @@
               }
             }
 
-            @if (showAcopioBatchesTab()) {
-              <mat-tab label="Lotes de Acopio">
-                <div class="tab-content">
-                  <app-collection-batches-tab
-                    [projectId]="project()!.id"
-                    [shouldLoad]="tabsLoaded().has(acopioBatchesTabIndex())"
-                  />
-                </div>
-              </mat-tab>
+            @if (sidebarService.hasPermission(PERMISSIONS.COLLECTION_BATCH.READ)) {
+              @if (showAcopioBatchesTab()) {
+                <mat-tab label="Lotes de Acopio">
+                  <div class="tab-content">
+                    <app-collection-batches-tab
+                      [projectId]="project()!.id"
+                      [shouldLoad]="tabsLoaded().has(acopioBatchesTabIndex())"
+                    />
+                  </div>
+                </mat-tab>
+              }
             }
 
             @if (sidebarService.hasPermission(PERMISSIONS.DOCUMENT.READ)) {
@@ -591,12 +593,17 @@
               </mat-tab>
             }
 
-            <mat-tab label="Configuración">
-              <app-configuration-tab
-                [projectId]="project()!.id"
-                [shouldLoad]="selectedTabIndex() === getConfigurationTabIndex()"
-              />
-            </mat-tab>
+            @if (
+              sidebarService.hasPermission(PERMISSIONS.ACTIVITY_FORMULA.READ) ||
+              sidebarService.hasPermission(PERMISSIONS.PROJECT_AGGREGATION.READ)
+            ) {
+              <mat-tab label="Configuración">
+                <app-configuration-tab
+                  [projectId]="project()!.id"
+                  [shouldLoad]="selectedTabIndex() === getConfigurationTabIndex()"
+                />
+              </mat-tab>
+            }
           </mat-tab-group>
         </div>
       </main>

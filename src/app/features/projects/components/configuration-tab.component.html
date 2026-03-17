@@ -22,187 +22,233 @@
     <!-- Content: Two Sections -->
     <div class="configuration-content">
       <!-- Section 1: Activity Formulas -->
-      <section class="config-section">
-        <div class="section-header">
-          <div class="section-title">
-            <div class="title-icon activity-icon">
-              <mat-icon>functions</mat-icon>
-            </div>
-            <div>
-              <h3 class="text-body font-bold text-accent-titles">Fórmulas de Actividad</h3>
-              <p class="text-subtitle text-neutral-subheading">
-                Expresiones matemáticas calculadas para cada actividad
-              </p>
-            </div>
-          </div>
-          <button mat-raised-button class="btn-primary" (click)="openCreateFormulaDialog()">
-            <mat-icon>add</mat-icon>
-            <span class="hidden sm:inline">Nueva Fórmula</span>
-            <span class="sm:hidden">Añadir</span>
-          </button>
-        </div>
-
-        @if (activityFormulas().length === 0) {
-          <!-- Empty State -->
-          <app-empty-state
-            icon="functions"
-            [useMaterialIcon]="true"
-            title="No hay fórmulas de actividad"
-            description="Crea fórmulas para calcular valores automáticamente en cada actividad"
-            actionLabel="Crear Primera Fórmula"
-            (action)="openCreateFormulaDialog()"
-          />
-        } @else {
-          <!-- Formula Cards -->
-          <div class="cards-grid">
-            @for (formula of activityFormulas(); track formula.id) {
-              <div class="formula-card">
-                <div class="card-header">
-                  <div class="card-title-section">
-                    <mat-icon class="card-icon activity-color">calculate</mat-icon>
-                    <div class="card-title-text">
-                      <h4 class="text-body font-bold text-primary-black">{{ formula.name }}</h4>
-                      @if (formula.description) {
-                        <p class="text-subtitle text-neutral-subheading">
-                          {{ formula.description }}
-                        </p>
-                      }
-                    </div>
-                  </div>
-                  <button
-                    mat-icon-button
-                    [matMenuTriggerFor]="formulaMenu"
-                    class="card-menu-button"
-                    matTooltip="Acciones"
-                  >
-                    <mat-icon>more_vert</mat-icon>
-                  </button>
-                  <mat-menu #formulaMenu="matMenu">
-                    <button mat-menu-item (click)="openEditDialog(formula)">
-                      <mat-icon>edit</mat-icon>
-                      <span>Editar</span>
-                    </button>
-                    <button mat-menu-item (click)="archiveField(formula)">
-                      <mat-icon>archive</mat-icon>
-                      <span>Archivar</span>
-                    </button>
-                  </mat-menu>
-                </div>
-
-                <div class="card-content">
-                  <!-- Expression -->
-                  <div class="formula-expression">
-                    <div class="expression-label">
-                      <mat-icon class="small-icon">code</mat-icon>
-                      <span class="text-subtitle text-neutral-subheading">Expresión:</span>
-                    </div>
-                    <div class="expression-value">
-                      <code class="text-body">{{ formula.expression }}</code>
-                    </div>
-                  </div>
-                </div>
+      @if (sidebarService.hasPermission(PERMISSIONS.ACTIVITY_FORMULA.READ)) {
+        <section class="config-section">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="title-icon activity-icon">
+                <mat-icon>functions</mat-icon>
               </div>
-            }
+              <div>
+                <h3 class="text-body font-bold text-accent-titles">Fórmulas de Actividad</h3>
+                <p class="text-subtitle text-neutral-subheading">
+                  Expresiones matemáticas calculadas para cada actividad
+                </p>
+              </div>
+            </div>
+            <button
+              *appPmHasPermission="PERMISSIONS.ACTIVITY_FORMULA.CREATE"
+              mat-raised-button
+              class="btn-primary"
+              (click)="openCreateFormulaDialog()"
+            >
+              <mat-icon>add</mat-icon>
+              <span class="hidden sm:inline">Nueva Fórmula</span>
+              <span class="sm:hidden">Añadir</span>
+            </button>
           </div>
-        }
-      </section>
+
+          @if (
+            activityFormulas().length === 0 &&
+            sidebarService.hasPermission(PERMISSIONS.ACTIVITY_FORMULA.READ)
+          ) {
+            <!-- Empty State -->
+            <app-empty-state
+              icon="functions"
+              [useMaterialIcon]="true"
+              title="No hay fórmulas de actividad"
+              description="Crea fórmulas para calcular valores automáticamente en cada actividad"
+              [actionLabel]="
+                sidebarService.hasPermission(PERMISSIONS.ACTIVITY_FORMULA.CREATE)
+                  ? 'Crear Primera Fórmula'
+                  : ''
+              "
+              (action)="openCreateFormulaDialog()"
+            />
+          } @else if (sidebarService.hasPermission(PERMISSIONS.ACTIVITY_FORMULA.READ)) {
+            <!-- Formula Cards -->
+            <div class="cards-grid">
+              @for (formula of activityFormulas(); track formula.id) {
+                <div class="formula-card">
+                  <div class="card-header">
+                    <div class="card-title-section">
+                      <mat-icon class="card-icon activity-color">calculate</mat-icon>
+                      <div class="card-title-text">
+                        <h4 class="text-body font-bold text-primary-black">{{ formula.name }}</h4>
+                        @if (formula.description) {
+                          <p class="text-subtitle text-neutral-subheading">
+                            {{ formula.description }}
+                          </p>
+                        }
+                      </div>
+                    </div>
+                    <button
+                      mat-icon-button
+                      [matMenuTriggerFor]="formulaMenu"
+                      class="card-menu-button"
+                      matTooltip="Acciones"
+                    >
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #formulaMenu="matMenu">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.ACTIVITY_FORMULA.UPDATE"
+                        mat-menu-item
+                        (click)="openEditDialog(formula)"
+                      >
+                        <mat-icon>edit</mat-icon>
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        *appPmHasPermission="PERMISSIONS.ACTIVITY_FORMULA.DELETE"
+                        mat-menu-item
+                        (click)="archiveField(formula)"
+                      >
+                        <mat-icon>archive</mat-icon>
+                        <span>Archivar</span>
+                      </button>
+                    </mat-menu>
+                  </div>
+
+                  <div class="card-content">
+                    <!-- Expression -->
+                    <div class="formula-expression">
+                      <div class="expression-label">
+                        <mat-icon class="small-icon">code</mat-icon>
+                        <span class="text-subtitle text-neutral-subheading">Expresión:</span>
+                      </div>
+                      <div class="expression-value">
+                        <code class="text-body">{{ formula.expression }}</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </section>
+      }
 
       <!-- Section 2: Project Aggregations -->
-      <section class="config-section">
-        <div class="section-header">
-          <div class="section-title">
-            <div class="title-icon aggregation-icon">
-              <mat-icon>analytics</mat-icon>
+      @if (sidebarService.hasPermission(PERMISSIONS.PROJECT_AGGREGATION.READ)) {
+        <section class="config-section">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="title-icon aggregation-icon">
+                <mat-icon>analytics</mat-icon>
+              </div>
+              <div>
+                <h3 class="text-body font-bold text-accent-titles">Agregaciones de Proyecto</h3>
+                <p class="text-subtitle text-neutral-subheading">
+                  Valores consolidados a nivel de proyecto (suma, promedio, etc.)
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 class="text-body font-bold text-accent-titles">Agregaciones de Proyecto</h3>
-              <p class="text-subtitle text-neutral-subheading">
-                Valores consolidados a nivel de proyecto (suma, promedio, etc.)
-              </p>
-            </div>
+            <button
+              *appPmHasPermission="PERMISSIONS.PROJECT_AGGREGATION.CREATE"
+              mat-raised-button
+              class="btn-secondary"
+              (click)="openCreateAggregationDialog()"
+            >
+              <mat-icon>add</mat-icon>
+              <span class="hidden sm:inline">Nueva Agregación</span>
+              <span class="sm:hidden">Añadir</span>
+            </button>
           </div>
-          <button mat-raised-button class="btn-secondary" (click)="openCreateAggregationDialog()">
-            <mat-icon>add</mat-icon>
-            <span class="hidden sm:inline">Nueva Agregación</span>
-            <span class="sm:hidden">Añadir</span>
-          </button>
-        </div>
 
-        @if (projectAggregations().length === 0) {
-          <!-- Empty State -->
-          <app-empty-state
-            icon="analytics"
-            [useMaterialIcon]="true"
-            title="No hay agregaciones de proyecto"
-            description="Define agregaciones para consolidar datos de todas las actividades"
-            actionLabel="Crear Primera Agregación"
-            (action)="openCreateAggregationDialog()"
-          />
-        } @else {
-          <!-- Aggregation Cards -->
-          <div class="cards-grid">
-            @for (aggregation of projectAggregations(); track aggregation.id) {
-              <div class="formula-card aggregation-card">
-                <div class="card-header">
-                  <div class="card-title-section">
-                    <mat-icon class="card-icon aggregation-color">{{
-                      AGGREGATION_TYPE_ICONS[aggregation.aggregationType!]
-                    }}</mat-icon>
-                    <div class="card-title-text">
-                      <h4 class="text-body font-bold text-primary-black">{{ aggregation.name }}</h4>
-                      @if (aggregation.description) {
-                        <p class="text-subtitle text-neutral-subheading">
-                          {{ aggregation.description }}
-                        </p>
-                      }
-                    </div>
-                  </div>
-                  <button
-                    mat-icon-button
-                    [matMenuTriggerFor]="aggMenu"
-                    class="card-menu-button"
-                    matTooltip="Acciones"
-                  >
-                    <mat-icon>more_vert</mat-icon>
-                  </button>
-                  <mat-menu #aggMenu="matMenu">
-                    <button mat-menu-item (click)="openEditDialog(aggregation)">
-                      <mat-icon>edit</mat-icon>
-                      <span>Editar</span>
-                    </button>
-                    <button mat-menu-item (click)="archiveField(aggregation)">
-                      <mat-icon>archive</mat-icon>
-                      <span>Archivar</span>
-                    </button>
-                  </mat-menu>
-                </div>
-
-                <div class="card-content">
-                  <!-- Aggregation Type -->
-                  <div class="aggregation-info">
-                    <mat-chip class="type-chip">
-                      <mat-icon class="chip-icon">{{
+          @if (
+            projectAggregations().length === 0 &&
+            sidebarService.hasPermission(PERMISSIONS.PROJECT_AGGREGATION.READ)
+          ) {
+            <!-- Empty State -->
+            <app-empty-state
+              icon="analytics"
+              [useMaterialIcon]="true"
+              title="No hay agregaciones de proyecto"
+              description="Define agregaciones para consolidar datos de todas las actividades"
+              [actionLabel]="
+                sidebarService.hasPermission(PERMISSIONS.PROJECT_AGGREGATION.CREATE)
+                  ? 'Crear Primera Agregación'
+                  : ''
+              "
+              (action)="openCreateAggregationDialog()"
+            />
+          } @else {
+            <!-- Aggregation Cards -->
+            <div class="cards-grid">
+              @for (aggregation of projectAggregations(); track aggregation.id) {
+                <div class="formula-card aggregation-card">
+                  <div class="card-header">
+                    <div class="card-title-section">
+                      <mat-icon class="card-icon aggregation-color">{{
                         AGGREGATION_TYPE_ICONS[aggregation.aggregationType!]
                       }}</mat-icon>
-                      {{ AGGREGATION_TYPE_LABELS[aggregation.aggregationType!] }}
-                    </mat-chip>
+                      <div class="card-title-text">
+                        <h4 class="text-body font-bold text-primary-black">
+                          {{ aggregation.name }}
+                        </h4>
+                        @if (aggregation.description) {
+                          <p class="text-subtitle text-neutral-subheading">
+                            {{ aggregation.description }}
+                          </p>
+                        }
+                      </div>
+                    </div>
+                    <button
+                      mat-icon-button
+                      [matMenuTriggerFor]="aggMenu"
+                      class="card-menu-button"
+                      matTooltip="Acciones"
+                    >
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #aggMenu="matMenu">
+                      <button
+                        *appPmHasPermission="PERMISSIONS.PROJECT_AGGREGATION.UPDATE"
+                        mat-menu-item
+                        (click)="openEditDialog(aggregation)"
+                      >
+                        <mat-icon>edit</mat-icon>
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        *appPmHasPermission="PERMISSIONS.PROJECT_AGGREGATION.DELETE"
+                        mat-menu-item
+                        (click)="archiveField(aggregation)"
+                      >
+                        <mat-icon>archive</mat-icon>
+                        <span>Archivar</span>
+                      </button>
+                    </mat-menu>
                   </div>
 
-                  <!-- Source Field -->
-                  @if (aggregation.sourceFieldKey) {
-                    <div class="formula-meta">
-                      <mat-icon class="small-icon text-neutral-subheading">data_object</mat-icon>
-                      <span class="text-subtitle"
-                        >Campo origen: {{ getAttributeName(aggregation.sourceFieldKey) }}</span
-                      >
+                  <div class="card-content">
+                    <!-- Aggregation Type -->
+                    <div class="aggregation-info">
+                      <mat-chip class="type-chip">
+                        <mat-icon class="chip-icon">{{
+                          AGGREGATION_TYPE_ICONS[aggregation.aggregationType!]
+                        }}</mat-icon>
+                        {{ AGGREGATION_TYPE_LABELS[aggregation.aggregationType!] }}
+                      </mat-chip>
                     </div>
-                  }
+
+                    <!-- Source Field -->
+                    @if (aggregation.sourceFieldKey) {
+                      <div class="formula-meta">
+                        <mat-icon class="small-icon text-neutral-subheading">data_object</mat-icon>
+                        <span class="text-subtitle"
+                          >Campo origen: {{ getAttributeName(aggregation.sourceFieldKey) }}</span
+                        >
+                      </div>
+                    }
+                  </div>
                 </div>
-              </div>
-            }
-          </div>
-        }
-      </section>
+              }
+            </div>
+          }
+        </section>
+      }
     </div>
   }
 </div>
