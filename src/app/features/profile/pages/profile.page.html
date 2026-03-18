@@ -16,7 +16,7 @@
     <!-- Section 1: Avatar and Name -->
     <mat-card class="avatar-card">
       <mat-card-content>
-        <div class="avatar-section">
+        <div class="avatar-section mb-1 mt-5">
           <div class="avatar-container">
             @if (avatarPreview()) {
               <img [src]="avatarPreview()" alt="Avatar" class="avatar-image" />
@@ -36,7 +36,31 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Section 2: Personal Information -->
+    <!-- Section 2: Role Information -->
+    <mat-card class="info-card">
+      <mat-card-content>
+        <div class="flex items-center gap-3">
+          <div
+            class="flex items-center justify-center w-10 h-10 rounded-full bg-secondary-light shrink-0"
+          >
+            <mat-icon class="text-secondary">verified_user</mat-icon>
+          </div>
+          <div class="">
+            <p class="text-xs text-neutral-subheading leading-none mb-1 mt-5">Rol asignado</p>
+            <p class="text-sm font-semibold text-accent-titles leading-tight">
+              {{ sidebarService.roleInfo().name }}
+            </p>
+            @if (sidebarService.roleInfo().description) {
+              <p class="text-xs text-neutral-subheading mt-0.5">
+                {{ sidebarService.roleInfo().description }}
+              </p>
+            }
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Section 3: Personal Information -->
     <mat-card class="info-card">
       <mat-card-header>
         <mat-card-title>

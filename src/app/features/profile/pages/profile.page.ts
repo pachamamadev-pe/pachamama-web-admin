@@ -51,7 +51,7 @@ import { HeroSectionComponent } from '@app/shared/components/hero-section/hero-s
 export default class ProfilePage implements OnInit {
   private fb = inject(FormBuilder);
   private usersService = inject(UsersService);
-  private sidebarService = inject(SidebarService);
+  readonly sidebarService = inject(SidebarService);
   private notificationService = inject(NotificationService);
   private auth = inject(Auth);
   private azureStorage = inject(AzureStorageService);
