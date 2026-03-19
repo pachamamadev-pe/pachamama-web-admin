@@ -1,14 +1,16 @@
 <!-- Dashboard Empresarial -->
 <div class="dashboard-container">
-  <!-- Header with Datepicker & Refresh -->
-  <header class="dashboard-header">
-    <div class="header-title">
+  <!-- ─── Header ──────────────────────────────────────────────────────────── -->
+  <header class="dash-header">
+    <div class="dash-header__title">
       <h1 class="text-title font-bold text-accent-titles">Dashboard Empresarial</h1>
+      <p class="dash-header__subtitle">Vista general de operaciones</p>
     </div>
-    <div class="header-actions">
-      <span class="text-sm text-neutral-subheading"
-        >Actualizado: {{ asOfDate() | date: 'dd/MM/yyyy' }}</span
-      >
+    <div class="dash-header__controls">
+      <span class="dash-header__updated">
+        <mat-icon>schedule</mat-icon>
+        Actualizado: {{ asOfDate() | date: 'dd/MM/yyyy' }}
+      </span>
       <mat-form-field appearance="outline" class="date-field">
         <mat-label>Fecha de corte</mat-label>
         <input
@@ -21,136 +23,156 @@
         <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
       </mat-form-field>
-      <button mat-icon-button color="primary" (click)="refresh()" aria-label="Actualizar">
+      <button
+        mat-icon-button
+        (click)="refresh()"
+        matTooltip="Actualizar a hoy"
+        aria-label="Actualizar"
+        class="refresh-btn"
+      >
         <mat-icon>refresh</mat-icon>
       </button>
     </div>
   </header>
 
-  <!-- Error State -->
+  <!-- ─── Error Banner ─────────────────────────────────────────────────────── -->
   @if (error()) {
-    <div
-      class="error-banner bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative flex justify-between items-center mb-6"
-    >
-      <div>
-        <mat-icon class="align-middle mr-2">error</mat-icon>
-        <span class="block sm:inline">{{ error() }}</span>
-      </div>
-      <button mat-button color="warn" (click)="loadDashboard()">Reintentar</button>
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+      <button mat-button (click)="loadDashboard()">Reintentar</button>
     </div>
   }
 
-  <!-- Loading State -->
+  <!-- ─── Loading ──────────────────────────────────────────────────────────── -->
   @if (loading()) {
-    <div class="loading-state flex flex-col items-center justify-center p-12">
-      <mat-spinner diameter="48"></mat-spinner>
-      <p class="mt-4 text-neutral-subheading">Cargando dashboard...</p>
+    <div class="loading-state">
+      <mat-spinner diameter="44"></mat-spinner>
+      <p class="text-body text-neutral-subheading">Cargando dashboard...</p>
     </div>
   }
 
-  <!-- Content -->
+  <!-- ─── Content ──────────────────────────────────────────────────────────── -->
   @if (!loading() && overview()) {
-    <!-- 1. KPI Cards Row -->
-    <div class="stats-grid">
-      <!-- Proyectos -->
-      <mat-card class="stat-card" style="border-left: 4px solid #6366f1">
-        <mat-card-content>
-          <div class="stat-header">
-            <span class="stat-title">Proyectos vigentes</span>
-            <mat-icon class="stat-icon text-[#6366F1]">folder_open</mat-icon>
+    <!-- 1. KPI Section -->
+    <section class="dash-section">
+      <h2 class="dash-section__label">Resumen operacional</h2>
+      <div class="kpi-grid">
+        <!-- Proyectos -->
+        <div class="kpi-card">
+          <div class="kpi-card__icon kpi-card__icon--green">
+            <mat-icon>folder_open</mat-icon>
           </div>
-          <div class="stat-value text-accent-titles">{{ totalProjects() }}</div>
-        </mat-card-content>
-      </mat-card>
+          <div class="kpi-card__body">
+            <span class="kpi-card__label">Proyectos vigentes</span>
+            <span class="kpi-card__value">{{ totalProjects() }}</span>
+          </div>
+        </div>
 
-      <!-- Comunidades socias -->
-      <mat-card class="stat-card" style="border-left: 4px solid #10b981">
-        <mat-card-content>
-          <div class="stat-header">
-            <span class="stat-title">Comunidades socias</span>
-            <mat-icon class="stat-icon text-[#10B981]">holiday_village</mat-icon>
+        <!-- Comunidades -->
+        <div class="kpi-card">
+          <div class="kpi-card__icon kpi-card__icon--blue">
+            <mat-icon>holiday_village</mat-icon>
           </div>
-          <div class="stat-value text-accent-titles">
-            {{ overview()?.partnerCommunities?.total || 0 }}
+          <div class="kpi-card__body">
+            <span class="kpi-card__label">Comunidades socias</span>
+            <span class="kpi-card__value">{{ overview()?.partnerCommunities?.total || 0 }}</span>
           </div>
-        </mat-card-content>
-      </mat-card>
+        </div>
 
-      <!-- Recolectores -->
-      <mat-card class="stat-card" style="border-left: 4px solid #f59e0b">
-        <mat-card-content>
-          <div class="stat-header">
-            <span class="stat-title">Recolectores</span>
-            <mat-icon class="stat-icon text-[#F59E0B]">groups</mat-icon>
+        <!-- Recolectores -->
+        <div class="kpi-card">
+          <div class="kpi-card__icon kpi-card__icon--orange">
+            <mat-icon>groups</mat-icon>
           </div>
-          <div class="stat-value text-accent-titles">{{ overview()?.collectors?.total || 0 }}</div>
-          @if (overview()?.collectors?.total! > 0) {
-            <div class="stat-change mt-2 text-sm text-neutral-subheading">
-              <span
-                >{{ overview()?.collectors?.femaleTotal }} mujeres ({{
+          <div class="kpi-card__body">
+            <span class="kpi-card__label">Recolectores activos</span>
+            <span class="kpi-card__value">{{ overview()?.collectors?.total || 0 }}</span>
+            @if ((overview()?.collectors?.total ?? 0) > 0) {
+              <span class="kpi-card__detail">
+                <mat-icon>female</mat-icon>
+                {{ overview()?.collectors?.femaleTotal }} mujeres ({{
                   overview()?.collectors?.femalePercentage | number: '1.0-1'
-                }}%)</span
-              >
+                }}%)
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Charts Section -->
+    <section class="dash-section">
+      <h2 class="dash-section__label">Análisis</h2>
+      <div class="charts-grid">
+        <!-- Proyectos por Etapa -->
+        <div class="chart-card">
+          <div class="chart-card__header">
+            <div class="chart-card__header-icon">
+              <mat-icon>bar_chart</mat-icon>
             </div>
-          }
-        </mat-card-content>
-      </mat-card>
-    </div>
+            <div>
+              <h3 class="chart-card__title">Proyectos por etapa</h3>
+              <p class="chart-card__subtitle">Distribución actual de proyectos</p>
+            </div>
+          </div>
+          <div class="chart-card__body">
+            @if (hasProjectsData) {
+              <app-bar-chart
+                [data]="projectsChartData()!"
+                [height]="280"
+                [horizontal]="true"
+                [showGrid]="true"
+                aria-label="Gráfico de barras de proyectos por etapa"
+              />
+            } @else {
+              <app-empty-state
+                icon="bar_chart"
+                [useMaterialIcon]="true"
+                title="Sin datos"
+                description="No hay proyectos registrados para la fecha seleccionada."
+              />
+            }
+          </div>
+        </div>
 
-    <!-- 2. Charts Row -->
-    <div class="charts-grid">
-      <!-- Proyectos por Etapa -->
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title>Proyectos por Etapa</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          @if (hasProjectsData) {
-            <app-bar-chart
-              [data]="projectsChartData()!"
-              [height]="300"
-              [horizontal]="true"
-              [showGrid]="true"
-              aria-label="Gráfico de barras de proyectos por etapa"
-            />
-          } @else {
-            <app-empty-state
-              icon="pie_chart"
-              [useMaterialIcon]="true"
-              title="Sin datos"
-              description="No hay proyectos registrados para la fecha seleccionada."
-            />
-          }
-        </mat-card-content>
-      </mat-card>
+        <!-- Recolectores por Género -->
+        <div class="chart-card">
+          <div class="chart-card__header">
+            <div class="chart-card__header-icon">
+              <mat-icon>donut_large</mat-icon>
+            </div>
+            <div>
+              <h3 class="chart-card__title">Recolectores por género</h3>
+              <p class="chart-card__subtitle">Composición del equipo de campo</p>
+            </div>
+          </div>
+          <div class="chart-card__body chart-card__body--center">
+            @if ((overview()?.collectors?.total ?? 0) > 0 && collectorsChartData()) {
+              <app-donut-chart
+                [data]="collectorsChartData()!"
+                [height]="280"
+                aria-label="Gráfico donut de recolectores por género"
+              />
+            } @else {
+              <app-empty-state
+                icon="groups"
+                [useMaterialIcon]="true"
+                title="Sin recolectores"
+                description="No hay recolectores registrados para la fecha seleccionada."
+              />
+            }
+          </div>
+        </div>
+      </div>
+    </section>
 
-      <!-- Recolectores por Género -->
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title>Recolectores por Género</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="flex items-center justify-center min-h-[300px]">
-          @if (overview()?.collectors?.total! > 0 && collectorsChartData()) {
-            <app-donut-chart
-              [data]="collectorsChartData()!"
-              [height]="280"
-              aria-label="Gráfico donut de recolectores por género"
-            />
-          } @else {
-            <app-empty-state
-              icon="groups"
-              [useMaterialIcon]="true"
-              title="Sin recolectores"
-              description="No hay recolectores registrados para la fecha seleccionada."
-            />
-          }
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <!-- Company Map Section -->
-    <div class="mt-6">
-      <app-company-map class="block w-full overflow-hidden rounded-b-md" />
-    </div>
+    <!-- 3. Map Section -->
+    <section class="dash-section">
+      <h2 class="dash-section__label">Mapa de operaciones</h2>
+      <div class="map-card">
+        <app-company-map class="block w-full" />
+      </div>
+    </section>
   }
 </div>

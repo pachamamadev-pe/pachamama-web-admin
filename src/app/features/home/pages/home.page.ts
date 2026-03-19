@@ -17,6 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   BarChartComponent,
   type BarChartData,
@@ -49,6 +50,7 @@ import { DashboardService } from '../services/dashboard.service';
     MatDatepickerModule,
     MatNativeDateModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     BarChartComponent,
     DonutChartComponent,
     EmptyStateComponent,
