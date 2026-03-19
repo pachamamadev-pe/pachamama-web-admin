@@ -72,6 +72,9 @@
               <div class="kpi-content">
                 <span class="kpi-label">Proyectos vigentes</span>
                 <span class="kpi-value">{{ totalProjects() }}</span>
+                <span class="kpi-sub"
+                  >{{ overview()?.projectStageDistribution?.length || 0 }} etapas activas</span
+                >
               </div>
             </div>
             <div class="kpi-bar"></div>
@@ -83,6 +86,7 @@
               <div class="kpi-content">
                 <span class="kpi-label">Comunidades socias</span>
                 <span class="kpi-value">{{ overview()?.partnerCommunities?.total || 0 }}</span>
+                <span class="kpi-sub">Activas al corte</span>
               </div>
             </div>
             <div class="kpi-bar"></div>

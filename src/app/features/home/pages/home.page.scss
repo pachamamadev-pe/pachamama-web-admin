@@ -7,26 +7,41 @@
 .dash-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 100%;
   background: #f2f5f3;
 }
 
 // ── Banner ────────────────────────────────────────────────────
 .dash-banner {
-  background: linear-gradient(135deg, #0b3320 0%, #186641 60%, #218358 100%);
-  padding: 2rem 2rem 2.25rem;
+  background: linear-gradient(135deg, #0b3320 0%, #145530 40%, #186641 70%, #218358 100%);
+  padding: 2rem 2rem 2.5rem;
   position: relative;
   overflow: hidden;
 
+  // Large circle — top right
+  &::before {
+    content: '';
+    position: absolute;
+    right: -4rem;
+    top: -4rem;
+    width: 18rem;
+    height: 18rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    pointer-events: none;
+  }
+
+  // Medium ring — middle right
   &::after {
     content: '';
     position: absolute;
-    right: -3rem;
-    top: -3rem;
-    width: 14rem;
-    height: 14rem;
+    right: 4rem;
+    top: -1.5rem;
+    width: 9rem;
+    height: 9rem;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
     pointer-events: none;
   }
 }
@@ -221,15 +236,26 @@
   display: flex;
   flex-direction: column;
   transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
 
   &:hover {
     box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.1),
-      0 1px 4px rgba(0, 0, 0, 0.06);
-    transform: translateY(-2px);
+      0 6px 24px rgba(0, 0, 0, 0.1),
+      0 2px 6px rgba(0, 0, 0, 0.06);
+    transform: translateY(-3px);
   }
+}
+
+// Colored top-accent border per variant
+.kpi-card--projects {
+  border-top: 3px solid #065f46;
+}
+.kpi-card--communities {
+  border-top: 3px solid #0f766e;
+}
+.kpi-card--collectors {
+  border-top: 3px solid #b45309;
 }
 
 .kpi-card-inner {
@@ -258,23 +284,23 @@
 }
 
 .kpi-card--projects .kpi-icon-wrap {
-  background: #ede9fe;
+  background: #d1fae5;
   mat-icon {
-    color: #6d28d9;
+    color: #065f46;
   }
 }
 
 .kpi-card--communities .kpi-icon-wrap {
-  background: #dcfce7;
+  background: #ccfbf1;
   mat-icon {
-    color: #15803d;
+    color: #0f766e;
   }
 }
 
 .kpi-card--collectors .kpi-icon-wrap {
-  background: #fef9c3;
+  background: #fef3c7;
   mat-icon {
-    color: #a16207;
+    color: #b45309;
   }
 }
 
@@ -295,11 +321,12 @@
 }
 
 .kpi-value {
-  font-size: 2.75rem;
+  font-size: 3rem;
   font-weight: 700;
   line-height: 1;
   color: #0a0a0a;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .kpi-sub {
@@ -313,15 +340,15 @@
 }
 
 .kpi-card--projects .kpi-bar {
-  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  background: linear-gradient(90deg, #065f46, #34d399);
 }
 
 .kpi-card--communities .kpi-bar {
-  background: linear-gradient(90deg, #218358, #4ade80);
+  background: linear-gradient(90deg, #0f766e, #2dd4bf);
 }
 
 .kpi-card--collectors .kpi-bar {
-  background: linear-gradient(90deg, #d97706, #fbbf24);
+  background: linear-gradient(90deg, #b45309, #fbbf24);
 }
 
 // ── Chart Panels ──────────────────────────────────────────────
@@ -351,6 +378,7 @@
   justify-content: space-between;
   padding: 1.125rem 1.5rem;
   border-bottom: 1px solid #f0f0f0;
+  border-left: 3px solid #218358;
 }
 
 .chart-panel-title-group {
@@ -394,26 +422,31 @@
 // ════════════════════════════════════════════════════════════
 
 .welcome-shell {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(150deg, #f4fbf6 0%, #ffffff 55%, #f0f4f2 100%);
+  // fill the content area (section has its own padding, header ~64px)
+  min-height: calc(100svh - 7rem);
+  display: grid;
+  place-items: center;
   padding: 2rem 1rem;
+  background:
+    radial-gradient(ellipse at 30% 20%, #e8f5ed 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 80%, #f0faf4 0%, transparent 50%), #fafcfb;
 }
 
 .welcome-card {
   background: #fff;
-  border-radius: 1.5rem;
+  border-radius: 1.75rem;
   box-shadow:
-    0 8px 48px rgba(33, 131, 88, 0.1),
-    0 1px 4px rgba(0, 0, 0, 0.05);
+    0 0 0 1px rgba(33, 131, 88, 0.07),
+    0 4px 24px rgba(33, 131, 88, 0.09),
+    0 16px 56px rgba(0, 0, 0, 0.06);
   width: 100%;
-  max-width: 460px;
-  padding: 2.5rem 2rem;
+  max-width: 480px;
+  padding: 2.75rem 2.25rem 2.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.625rem;
+  // subtle top accent line
+  border-top: 3px solid #218358;
 }
 
 .welcome-top {
@@ -523,11 +556,23 @@
   align-items: center;
   gap: 0.5rem;
   background: #f4fbf6;
+  border: 1px solid #d1ead9;
   border-radius: 0.75rem;
   padding: 0.625rem 0.875rem;
   font-size: 0.75rem;
   font-weight: 500;
   color: #0a0a0a;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+  cursor: default;
+
+  &:hover {
+    background: #e6f5ed;
+    border-color: #a7d4b8;
+    transform: translateY(-1px);
+  }
 
   mat-icon {
     color: #218358;
