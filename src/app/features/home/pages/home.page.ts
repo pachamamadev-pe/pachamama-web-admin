@@ -17,7 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatChipsModule } from '@angular/material/chips';
 import {
   BarChartComponent,
   type BarChartData,
@@ -29,7 +29,10 @@ import {
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CompanyMapComponent } from '../components/company-map/company-map.component';
 import { SidebarService } from '@app/core/services/sidebar.service';
+import { AuthService } from '@app/core/auth/auth.service';
 import { ChangePasswordDialogComponent } from '@app/shared/components/change-password-dialog/change-password-dialog.component';
+import { PERMISSIONS } from '@core/auth/permissions';
+import { getRoleDisplayName } from '@app/features/company-users/models/role.model';
 
 import { BusinessDashboardOverviewDto } from '../models/dashboard.model';
 import { stageLabel, stageColor } from '../utils/stage-catalog';
@@ -50,7 +53,7 @@ import { DashboardService } from '../services/dashboard.service';
     MatDatepickerModule,
     MatNativeDateModule,
     MatProgressSpinnerModule,
-    MatTooltipModule,
+    MatChipsModule,
     BarChartComponent,
     DonutChartComponent,
     EmptyStateComponent,
@@ -62,8 +65,10 @@ import { DashboardService } from '../services/dashboard.service';
 })
 export class HomePage implements OnInit {
   private dialog = inject(MatDialog);
-  private sidebarService = inject(SidebarService);
+  readonly sidebarService = inject(SidebarService);
+  private authService = inject(AuthService);
   private dashboardService = inject(DashboardService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   private dialogRef:
     | import('@angular/material/dialog').MatDialogRef<ChangePasswordDialogComponent>
@@ -78,6 +83,25 @@ export class HomePage implements OnInit {
   asOfDate = signal<Date>(new Date());
   maxDate = new Date();
 
+  hasDashboardPermission = computed(() =>
+    this.sidebarService.hasPermission(PERMISSIONS.DASHBOARD.VIEW),
+  );
+
+  userName = computed(() => {
+    const displayName = this.authService.currentUser()?.displayName;
+    if (displayName) {
+      return displayName.split(' ')[0];
+    }
+    const email = this.authService.currentUser()?.email ?? '';
+    if (!email) return 'Usuario';
+    const namePart = email.split('@')[0];
+    const parts = namePart.split('.');
+    const first = parts[0];
+    return first.charAt(0).toUpperCase() + first.slice(1);
+  });
+
+  userRole = computed(() => getRoleDisplayName(this.sidebarService.roleCode()));
+
   ngOnInit(): void {
     // Pequeño delay para asegurar que sidebar service haya cargado correctamente
     setTimeout(() => {
@@ -86,7 +110,9 @@ export class HomePage implements OnInit {
       }
     }, 100);
 
-    this.loadDashboard();
+    if (this.hasDashboardPermission()) {
+      this.loadDashboard();
+    }
   }
 
   loadDashboard(): void {

@@ -59,17 +59,52 @@ export const PERMISSIONS = {
     UPDATE: 'company:update',
     DELETE: 'company:delete',
     MANAGE_DOCUMENTS: 'company:manage_documents',
-    MANAGE_ADMINS: 'company:manage_admins', //Ray revisando 02
+    MANAGE_ADMINS: 'company:manage_admins',
+  },
+
+  DASHBOARD: {
+    ALL: 'dashboard:*',
+    VIEW: 'dashboard:view',
   },
 
   USER: {
     ALL: 'user:*',
     READ: 'user:read',
     CREATE: 'user:create',
+    UPDATE: 'user:update',
+    DELETE: 'user:delete',
   },
 
   PROFILE: {
     ALL: 'profile:*',
+  },
+
+  DOCUMENT: {
+    ALL: 'document:*',
+    READ: 'document:read',
+    UPLOAD: 'document:upload',
+    DOWNLOAD: 'document:download',
+    REVIEW: 'document:review',
+  },
+
+  ACTIVITY_INVENTORY: {
+    ALL: 'activity_inventory:*',
+    READ: 'activity_inventory:read',
+    REVIEW: 'activity_inventory:review',
+  },
+
+  ACTIVITY_COLLECTION: {
+    ALL: 'activity_collection:*',
+    READ: 'activity_collection:read',
+    REVIEW: 'activity_collection:review',
+  },
+
+  COLLECTION_REQUEST: {
+    ALL: 'collection_request:*',
+    READ: 'collection_request:read',
+    CREATE: 'collection_request:create',
+    UPDATE: 'collection_request:update',
+    REVIEW: 'collection_request:review',
   },
 
   PROJECT: {
@@ -79,44 +114,59 @@ export const PERMISSIONS = {
     CREATE: 'project:create',
     UPDATE: 'project:update',
     DELETE: 'project:delete',
-
     UPLOAD_MAP: 'project:upload_map',
-    NEXT_STAGE: 'project:next_stage', //revisando RLC
-    APPROVE_PMF: 'project:approve_pmf',
-    APPROVE_INVENTORY: 'project:approve_inventory',
-    UPLOAD_UMF_MAP: 'project:upload_umf_map',
-    INSERT_CALCULATED_COLUMNS: 'project:insert_calculated_columns',
-
-    VIEW_DOCUMENTS: 'project:view_documents',
-    REGISTER_DOCUMENTS: 'project:register_documents',
-
-    DOWNLOAD_PDF: 'project:download_pdf',
-    SEND_PDF: 'project:send_pdf',
-    UPLOAD_PMF_APPROVAL_DOCS: 'project:upload_pmf_approval_docs',
-
-    CREATE_COLLECTION_ORDERS: 'project:create_collection_orders',
-    GENERATE_PAYMENT_ORDERS: 'project:generate_payment_orders',
-
-    APPROVE_COLLECTION_RECEPTION: 'project:approve_collection_reception',
-    PROCESS_COLLECTION: 'project:process_collection',
-    PRIMARY_TRANSFORMATION: 'project:primary_transformation',
-    ISSUE_PRODUCTION_LOT: 'project:issue_production_lot',
-
-    APPROVE_LOT_RECEPTION: 'project:approve_lot_reception',
-    REGISTER_LOT_DELIVERY: 'project:register_lot_delivery',
-    APPROVE_FINISHED_LOT_RECEPTION: 'project:approve_finished_lot_reception',
+    NEXT_STAGE: 'project:next_stage',
+    GENERATION_PMF: 'project:generation_pmf',
   },
 
-  ACTIVITY: {
-    ALL: 'activity:*',
+  COLLECTION_BATCH: {
+    ALL: 'collection_batch:*',
+    READ: 'collection_batch:read',
+    CREATE: 'collection_batch:create',
+    PROCESS: 'collection_batch:process',
   },
 
-  PAYMENT: {
-    ALL: 'payment:*',
+  ACTIVITY_FORMULA: {
+    ALL: 'activity_formula:*',
+    READ: 'activity_formula:read',
+    CREATE: 'activity_formula:create',
+    UPDATE: 'activity_formula:update',
+    DELETE: 'activity_formula:delete',
   },
 
-  COLLECTION: {
-    APPROVE_REQUESTS: 'collection:approve_requests',
+  PROJECT_AGGREGATION: {
+    ALL: 'project_aggregation:*',
+    READ: 'project_aggregation:read',
+    CREATE: 'project_aggregation:create',
+    UPDATE: 'project_aggregation:update',
+    DELETE: 'project_aggregation:delete',
+  },
+
+  DOCUMENT_TYPE: {
+    ALL: 'document_type:*',
+    READ: 'document_type:read',
+    CREATE: 'document_type:create',
+    UPDATE: 'document_type:update',
+    DELETE: 'document_type:delete',
+  },
+
+  TRANSFORMATION_PRIMARY: {
+    ALL: 'transformation_primary:*',
+    READ: 'transformation_primary:read',
+    CREATE: 'transformation_primary:create',
+    PROCESS: 'transformation_primary:process',
+    GENERATE_QR: 'transformation_primary:generate_qr',
+    VIEW_LOCATION: 'transformation_primary:view_location',
+    STORAGE: 'transformation_primary:storage',
+  },
+
+  TRANSFORMATION_SECONDARY: {
+    ALL: 'transformation_secondary:*',
+    READ: 'transformation_secondary:read',
+    CREATE: 'transformation_secondary:create',
+    PROCESS: 'transformation_secondary:process',
+    GENERATE_QR: 'transformation_secondary:generate_qr',
+    VIEW_LOCATION: 'transformation_secondary:view_location',
   },
 } as const;
 

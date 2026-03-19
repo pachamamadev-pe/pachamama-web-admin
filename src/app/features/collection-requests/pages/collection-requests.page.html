@@ -9,7 +9,12 @@
         </p>
       </div>
       <div class="header-actions">
-        <button mat-raised-button class="btn-primary" (click)="openCreateDialog()">
+        <button
+          *appPmHasPermission="PERMISSIONS.COLLECTION_REQUEST.CREATE"
+          mat-raised-button
+          class="btn-primary"
+          (click)="openCreateDialog()"
+        >
           <mat-icon>add</mat-icon>
           <span class="hidden sm:inline">Nueva Solicitud</span>
           <span class="sm:hidden">Nueva</span>
@@ -57,7 +62,12 @@
         <mat-spinner diameter="48" />
         <p class="text-body text-neutral-subheading mt-4">Cargando solicitudes...</p>
       </div>
-    } @else if (requests().length === 0 && !searchTerm() && statusFilter() === 'all') {
+    } @else if (
+      requests().length === 0 &&
+      !searchTerm() &&
+      statusFilter() === 'all' &&
+      sidebarService.hasPermission(PERMISSIONS.COLLECTION_REQUEST.CREATE)
+    ) {
       <!-- Empty State -->
       <app-empty-state
         icon="description"
@@ -79,7 +89,7 @@
         </p>
         <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
       </div>
-    } @else {
+    } @else if (sidebarService.hasPermission(PERMISSIONS.COLLECTION_REQUEST.READ)) {
       <!-- Desktop Table (hidden on mobile) -->
       <div class="requests-table desktop-only">
         <div>
@@ -163,12 +173,20 @@
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #tableMenu="matMenu">
-                  <button mat-menu-item (click)="viewDetail(request)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COLLECTION_REQUEST.READ"
+                    mat-menu-item
+                    (click)="viewDetail(request)"
+                  >
                     <mat-icon>visibility</mat-icon>
                     <span>Ver Detalle</span>
                   </button>
                   @if (canEdit(request)) {
-                    <button mat-menu-item (click)="openEditDialog(request)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.COLLECTION_REQUEST.UPDATE"
+                      mat-menu-item
+                      (click)="openEditDialog(request)"
+                    >
                       <mat-icon>edit</mat-icon>
                       <span>Actualizar</span>
                     </button>
@@ -211,12 +229,20 @@
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #mobileMenu="matMenu">
-                  <button mat-menu-item (click)="viewDetail(request)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.COLLECTION_REQUEST.READ"
+                    mat-menu-item
+                    (click)="viewDetail(request)"
+                  >
                     <mat-icon>visibility</mat-icon>
                     <span>Ver Detalle</span>
                   </button>
                   @if (canEdit(request)) {
-                    <button mat-menu-item (click)="openEditDialog(request)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.COLLECTION_REQUEST.UPDATE"
+                      mat-menu-item
+                      (click)="openEditDialog(request)"
+                    >
                       <mat-icon>edit</mat-icon>
                       <span>Actualizar</span>
                     </button>
@@ -260,6 +286,12 @@
             </div>
           </div>
         }
+      </div>
+    } @else {
+      <!-- Unauthorized state -->
+      <div class="empty-state">
+        <mat-icon>lock</mat-icon>
+        <h3>No tienes permisos para visualizar las solicitudes de recolección</h3>
       </div>
     }
   </div>

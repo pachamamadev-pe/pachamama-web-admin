@@ -14,6 +14,10 @@ import { parseDateValue } from '@shared/utils/date-helpers';
 import { BatchCreationWizardComponent } from './batch-creation-wizard.component';
 import { BatchLocationMapDialogComponent } from './batch-location-map-dialog.component';
 
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+
 /**
  * Tab de lotes de acopio
  * Muestra un grid de cards con los lotes del proyecto
@@ -28,6 +32,7 @@ import { BatchLocationMapDialogComponent } from './batch-location-map-dialog.com
     MatProgressSpinnerModule,
     MatTooltipModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './collection-batches-tab.component.html',
   styleUrl: './collection-batches-tab.component.scss',
@@ -38,6 +43,9 @@ export class CollectionBatchesTabComponent {
   private notification = inject(NotificationService);
   private dialog = inject(MatDialog);
   private router = inject(Router);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Inputs
   projectId = input.required<string>();
@@ -144,9 +152,30 @@ export class CollectionBatchesTabComponent {
   }
 
   /**
-   * Abre el detalle de un lote navegando a la ruta de detalle
+   * Determina si el usuario puede abrir el detalle de un lote según su estado y permisos:
+   * - "Borrador" requiere permiso collection_batch:process
+   * - "Docs. Generados" requiere permiso collection_batch:read
+   * - Resto de estados: cualquiera de los dos permisos es suficiente
+   */
+  canOpenBatch(batch: CollectionBatch): boolean {
+    if (batch.status === 'draft') {
+      return this.sidebarService.hasPermission(PERMISSIONS.COLLECTION_BATCH.PROCESS);
+    }
+    if (batch.status === 'documents_generated') {
+      return this.sidebarService.hasPermission(PERMISSIONS.COLLECTION_BATCH.READ);
+    }
+    return (
+      this.sidebarService.hasPermission(PERMISSIONS.COLLECTION_BATCH.READ) ||
+      this.sidebarService.hasPermission(PERMISSIONS.COLLECTION_BATCH.PROCESS)
+    );
+  }
+
+  /**
+   * Abre el detalle de un lote navegando a la ruta de detalle.
+   * Solo navega si el usuario tiene el permiso correspondiente al estado del lote.
    */
   openBatchDetail(batch: CollectionBatch): void {
+    if (!this.canOpenBatch(batch)) return;
     this.router.navigate(['/projects', this.projectId(), 'batches', batch.id]);
   }
 }

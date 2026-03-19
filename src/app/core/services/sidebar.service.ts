@@ -1,7 +1,43 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
+
+export interface RoleInfo {
+  name: string;
+  description: string;
+}
+
+const ROLE_METADATA: Record<string, RoleInfo> = {
+  GESTOR_TRANSFORMACION_PRIMARIA: {
+    name: 'Gestor de Transformación Primaria',
+    description: 'Gestor encargado de la transformación primaria de productos',
+  },
+  ADMIN_PACHAMAMA: {
+    name: 'Administrador Pachamama',
+    description: 'Administrador global de la plataforma Pachamama con acceso total',
+  },
+  GESTOR_ALMACENAMIENTO_TEMPORAL: {
+    name: 'Gestor de Almacenamiento Temporal',
+    description: 'Gestor encargado del almacenamiento temporal de productos',
+  },
+  GESTOR_TRANSFORMACION_SECUNDARIA: {
+    name: 'Gestor de Transformación Secundaria',
+    description: 'Gestor encargado de la transformación secundaria de productos',
+  },
+  RECOLECTOR_ADMINISTRADOR: {
+    name: 'Recolector Administrador',
+    description: 'Administrador de recolectores que gestiona solicitudes y brigadas',
+  },
+  GESTOR_RELACIONAMIENTO_COMUNITARIO: {
+    name: 'Gestor de Relacionamiento Comunitario',
+    description: 'Gestor encargado de la gestión de comunidades, productos y formularios dinámicos',
+  },
+  ADMIN_EMPRESA: {
+    name: 'Administrador de Empresa',
+    description: 'Administrador con acceso completo a su empresa',
+  },
+};
 
 interface MenuItem {
   id: string;
@@ -45,6 +81,16 @@ export class SidebarService {
   avatarUrl = signal<string | null>(null);
   roleCode = signal<string>('');
   permissions = signal<string[]>([]);
+
+  roleInfo = computed<RoleInfo>(() => {
+    const code = this.roleCode();
+    return (
+      ROLE_METADATA[code] ?? {
+        name: code || 'Pachamama Platform',
+        description: '',
+      }
+    );
+  });
 
   constructor() {
     this.loadFromLocalStorage();

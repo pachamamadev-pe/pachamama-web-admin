@@ -1,6 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogModule,
+} from '@angular/material/dialog';
+import { RolePermissionsModalComponent } from './role-permissions-modal.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -124,6 +130,13 @@ export interface AssignRoleDialogData {
           <mat-hint>Selecciona el nuevo rol para este usuario</mat-hint>
         </mat-form-field>
 
+        <!-- Permissions hint link -->
+        <button type="button" class="role-permissions-hint" (click)="openPermissionsModal()">
+          <mat-icon>help_outline</mat-icon>
+          ¿Qué accesos tiene cada rol? Ver matriz de permisos
+          <mat-icon class="hint-arrow">open_in_new</mat-icon>
+        </button>
+
         <!-- Footer -->
         <div class="dialog-footer">
           <button type="button" mat-stroked-button mat-dialog-close [disabled]="submitting()">
@@ -244,6 +257,32 @@ export interface AssignRoleDialogData {
         @apply flex justify-end gap-3 pt-6 border-t border-neutral-border mt-6;
       }
 
+      .role-permissions-hint {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        background: none;
+        border: none;
+        padding: 0.25rem 0;
+        font-size: 0.75rem;
+        color: #218358;
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+        mat-icon {
+          font-size: 0.875rem;
+          width: 0.875rem;
+          height: 0.875rem;
+          line-height: 0.875rem;
+        }
+        .hint-arrow {
+          opacity: 0.6;
+        }
+        &:hover {
+          opacity: 0.75;
+          text-decoration: underline;
+        }
+      }
+
       @media (max-width: 640px) {
         .assign-role-dialog {
           @apply p-4 min-w-0;
@@ -268,6 +307,7 @@ export interface AssignRoleDialogData {
 export class AssignRoleDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private rolesService = inject(RolesService);
+  private dialog = inject(MatDialog);
   private dialogRef = inject(MatDialogRef<AssignRoleDialogComponent>);
   data = inject<AssignRoleDialogData>(MAT_DIALOG_DATA);
 
@@ -326,5 +366,13 @@ export class AssignRoleDialogComponent implements OnInit {
 
   hasRoleChanged(): boolean {
     return this.form.value.roleCode !== this.data.user.role;
+  }
+
+  openPermissionsModal(): void {
+    this.dialog.open(RolePermissionsModalComponent, {
+      data: { highlightRole: this.form.value.roleCode || this.data.user.role },
+      panelClass: 'role-permissions-panel',
+      maxWidth: '100vw',
+    });
   }
 }

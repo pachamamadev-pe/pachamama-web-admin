@@ -678,8 +678,17 @@
    PAGINATOR
 ══════════════════════════════════════════════════════════════ */
 
-.lots-paginator {
+.section-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  color: #737373;
+  font-size: 0.8125rem;
+}
+
+.section-paginator {
   border-top: 1px solid #e5e7eb;
   background: #fff;
-  border-radius: 0.75rem;
+  border-radius: 0 0 0.75rem 0.75rem;
 }

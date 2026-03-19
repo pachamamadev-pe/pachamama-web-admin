@@ -510,84 +510,102 @@
               </mat-tab>
             }
 
-            @if (showInventoryEvaluationTab()) {
-              <mat-tab label="Registro de actividades">
-                <div class="tab-content">
-                  <app-inventory-evaluation
-                    [productId]="project()!.productId"
-                    [projectId]="project()!.id"
-                    [projectStage]="project()!.stage || ''"
-                    [shouldLoad]="tabsLoaded().has(inventoryTabIndex())"
-                  />
-                </div>
-              </mat-tab>
-            }
-
-            @if (showPmfGenerationTab()) {
-              <mat-tab label="Generar PMF">
-                <div class="tab-content">
-                  <app-pmf-generation
-                    [projectId]="project()!.id"
-                    [currentStage]="project()?.stage || ''"
-                    [shouldLoad]="tabsLoaded().has(pmfTabIndex())"
-                    (reportGenerated)="onReportGenerated()"
-                    (stageAdvanced)="onPmfStageAdvanced()"
-                  />
-                </div>
-              </mat-tab>
-            }
-
-            @if (showCollectionTab()) {
-              <mat-tab label="Revisión Solicitudes">
-                <div class="tab-content">
-                  <app-collection-review-tab [projectId]="project()!.id" />
-                </div>
-              </mat-tab>
-            }
-
-            @if (showAcopioBatchesTab()) {
-              <mat-tab label="Lotes de Acopio">
-                <div class="tab-content">
-                  <app-collection-batches-tab
-                    [projectId]="project()!.id"
-                    [shouldLoad]="tabsLoaded().has(acopioBatchesTabIndex())"
-                  />
-                </div>
-              </mat-tab>
-            }
-
-            <mat-tab label="Documentos">
-              <div class="tab-content">
-                @if (!project()?.id) {
-                  <!-- No project ID error -->
-                  <div class="empty-state">
-                    <div class="empty-icon">
-                      <mat-icon>error_outline</mat-icon>
-                    </div>
-                    <h3 class="text-body font-bold text-accent-titles">
-                      Error: No se encontró ID del proyecto
-                    </h3>
+            @if (
+              sidebarService.hasPermission(PERMISSIONS.ACTIVITY_INVENTORY.READ) ||
+              sidebarService.hasPermission(PERMISSIONS.ACTIVITY_COLLECTION.READ)
+            ) {
+              @if (showInventoryEvaluationTab()) {
+                <mat-tab label="Registro de actividades">
+                  <div class="tab-content">
+                    <app-inventory-evaluation
+                      [productId]="project()!.productId"
+                      [projectId]="project()!.id"
+                      [projectStage]="project()!.stage || ''"
+                      [shouldLoad]="tabsLoaded().has(inventoryTabIndex())"
+                    />
                   </div>
-                } @else {
-                  <!-- Documents Tab Component -->
-                  <app-documents-tab
-                    [projectId]="project()!.id"
-                    [shouldLoad]="tabsLoaded().has(documentsTabIndex())"
-                    (uploadDocument)="openUploadDialog()"
-                    (reviewDocument)="openReviewDialog($event)"
-                    (resubmitDocument)="openResubmitDialog($event)"
-                    (requirementsLoaded)="onRequirementsLoaded($event)"
-                  />
-                }
-              </div>
-            </mat-tab>
+                </mat-tab>
+              }
+            }
 
-            <mat-tab label="Configuración">
-              <app-configuration-tab
-                [projectId]="project()!.id"
-                [shouldLoad]="selectedTabIndex() === getConfigurationTabIndex()"
-              />
-            </mat-tab>
+            @if (sidebarService.hasPermission(PERMISSIONS.PROJECT.GENERATION_PMF)) {
+              @if (showPmfGenerationTab()) {
+                <mat-tab label="Generar PMF">
+                  <div class="tab-content">
+                    <app-pmf-generation
+                      [projectId]="project()!.id"
+                      [currentStage]="project()?.stage || ''"
+                      [shouldLoad]="tabsLoaded().has(pmfTabIndex())"
+                      (reportGenerated)="onReportGenerated()"
+                      (stageAdvanced)="onPmfStageAdvanced()"
+                    />
+                  </div>
+                </mat-tab>
+              }
+            }
+
+            @if (sidebarService.hasPermission(PERMISSIONS.COLLECTION_REQUEST.READ)) {
+              @if (showCollectionTab()) {
+                <mat-tab label="Revisión Solicitudes">
+                  <div class="tab-content">
+                    <app-collection-review-tab [projectId]="project()!.id" />
+                  </div>
+                </mat-tab>
+              }
+            }
+
+            @if (sidebarService.hasPermission(PERMISSIONS.COLLECTION_BATCH.READ)) {
+              @if (showAcopioBatchesTab()) {
+                <mat-tab label="Lotes de Acopio">
+                  <div class="tab-content">
+                    <app-collection-batches-tab
+                      [projectId]="project()!.id"
+                      [shouldLoad]="tabsLoaded().has(acopioBatchesTabIndex())"
+                    />
+                  </div>
+                </mat-tab>
+              }
+            }
+
+            @if (sidebarService.hasPermission(PERMISSIONS.DOCUMENT.READ)) {
+              <mat-tab label="Documentos">
+                <div class="tab-content">
+                  @if (!project()?.id) {
+                    <!-- No project ID error -->
+                    <div class="empty-state">
+                      <div class="empty-icon">
+                        <mat-icon>error_outline</mat-icon>
+                      </div>
+                      <h3 class="text-body font-bold text-accent-titles">
+                        Error: No se encontró ID del proyecto
+                      </h3>
+                    </div>
+                  } @else {
+                    <!-- Documents Tab Component -->
+                    <app-documents-tab
+                      [projectId]="project()!.id"
+                      [shouldLoad]="tabsLoaded().has(documentsTabIndex())"
+                      (uploadDocument)="openUploadDialog()"
+                      (reviewDocument)="openReviewDialog($event)"
+                      (resubmitDocument)="openResubmitDialog($event)"
+                      (requirementsLoaded)="onRequirementsLoaded($event)"
+                    />
+                  }
+                </div>
+              </mat-tab>
+            }
+
+            @if (
+              sidebarService.hasPermission(PERMISSIONS.ACTIVITY_FORMULA.READ) ||
+              sidebarService.hasPermission(PERMISSIONS.PROJECT_AGGREGATION.READ)
+            ) {
+              <mat-tab label="Configuración">
+                <app-configuration-tab
+                  [projectId]="project()!.id"
+                  [shouldLoad]="selectedTabIndex() === getConfigurationTabIndex()"
+                />
+              </mat-tab>
+            }
           </mat-tab-group>
         </div>
       </main>

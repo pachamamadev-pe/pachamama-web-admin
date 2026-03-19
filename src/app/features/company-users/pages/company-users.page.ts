@@ -25,6 +25,7 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { CompanyUserFormComponent } from '../components/company-user-form.component';
 import { AssignRoleDialogComponent } from '../components/assign-role-dialog.component';
+import { RolePermissionsModalComponent } from '../components/role-permissions-modal.component';
 import {
   CompanyUser,
   CreateCompanyUserRequest,
@@ -292,4 +293,12 @@ export class CompanyUsersPage implements OnInit {
   getUserInitials = getUserInitials;
   getDocumentTypeLabel = getDocumentTypeLabel;
   getRoleBadgeColor = getRoleBadgeColor;
+
+  openPermissionsModal(): void {
+    this.dialog.open(RolePermissionsModalComponent, {
+      data: {},
+      panelClass: 'role-permissions-panel',
+      maxWidth: '100vw',
+    });
+  }
 }

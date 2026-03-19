@@ -16,6 +16,9 @@ import { ProjectDocument } from '../models/project-document.model';
 import { ProjectStage } from '../models/project.model';
 import { getProjectStageLabel } from '../models/project.model';
 
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { PERMISSIONS } from '@core/auth/permissions';
+
 /**
  * Componente tabla de documentos del proyecto
  */
@@ -35,6 +38,7 @@ import { getProjectStageLabel } from '../models/project.model';
     MatTooltipModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    PmHasPermissionDirective,
   ],
   templateUrl: './documents-table.component.html',
   styleUrl: './documents-table.component.scss',
@@ -44,6 +48,8 @@ export class DocumentsTableComponent {
   documents = input.required<ProjectDocument[]>();
   canReview = input<boolean>(false); // Si puede aprobar/observar/rechazar
   loading = input<boolean>(false);
+
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // Outputs
   reviewDocument = output<ProjectDocument>();

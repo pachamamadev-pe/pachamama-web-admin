@@ -90,14 +90,18 @@
 
       <!-- Tabs -->
       <mat-tab-group
-        [selectedIndex]="activeTab() === 'inventory' ? 0 : 1"
+        [selectedIndex]="selectedTabIndex()"
         (selectedIndexChange)="onTabChange($event)"
         class="mb-4"
         mat-stretch-tabs="false"
         animationDuration="0ms"
       >
-        <mat-tab label="Actividades de Inventario"></mat-tab>
-        <mat-tab label="Actividades de Recolección"></mat-tab>
+        @if (showInventoryTab()) {
+          <mat-tab label="Actividades de Inventario"></mat-tab>
+        }
+        @if (showCollectionTab()) {
+          <mat-tab label="Actividades de Recolección"></mat-tab>
+        }
       </mat-tab-group>
 
       <!-- Search Bar -->

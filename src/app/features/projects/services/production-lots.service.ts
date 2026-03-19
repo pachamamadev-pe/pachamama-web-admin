@@ -248,6 +248,8 @@ export class ProductionLotsService {
 
     if (params.projectId) httpParams = httpParams.set('projectId', params.projectId);
     if (params.productId) httpParams = httpParams.set('productId', params.productId);
+    if (params.transformationStage)
+      httpParams = httpParams.set('transformationStage', params.transformationStage);
     if (params.page !== undefined) httpParams = httpParams.set('page', params.page.toString());
     if (params.size !== undefined) httpParams = httpParams.set('size', params.size.toString());
     if (params.q?.trim()) httpParams = httpParams.set('q', params.q.trim());

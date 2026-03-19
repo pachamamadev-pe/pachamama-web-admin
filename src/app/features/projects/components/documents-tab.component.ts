@@ -51,7 +51,7 @@ import { DocumentsTableComponent } from '../components/documents-table.component
         <div class="documents-header">
           <h2 class="text-body font-bold text-accent-titles">Documentos del Proyecto</h2>
           <button
-            *appPmHasPermission="PERMISSIONS.PROJECT.REGISTER_DOCUMENTS"
+            *appPmHasPermission="PERMISSIONS.DOCUMENT.UPLOAD"
             mat-raised-button
             class="btn-primary"
             (click)="onUploadDocument()"

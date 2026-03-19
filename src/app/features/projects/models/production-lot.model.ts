@@ -204,6 +204,8 @@ export interface ProductionLotDetail {
   updatedAt: string;
   createdBy: string;
   createdByName: string | null;
+  /** Indica si este lote primario ya fue utilizado como origen de un lote secundario. */
+  usedInSecondaryLot?: boolean;
 }
 
 /**

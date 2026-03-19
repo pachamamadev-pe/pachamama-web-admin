@@ -10,7 +10,8 @@ import {
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
+import { forkJoin, catchError, of, debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -20,8 +21,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
 import { NotificationService } from '@core/services/notification.service';
 import { SidebarService } from '@core/services/sidebar.service';
 import { ProductsService } from '../../products/services/products.service';
@@ -30,6 +30,8 @@ import { ProjectsService } from '../../projects/services/projects.service';
 import { Project } from '../../projects/models/project.model';
 import { ProductionLotsService } from '../../projects/services/production-lots.service';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { PmHasPermissionDirective } from '@core/directives/pm-has-permission.directive';
+import { PERMISSIONS } from '@core/auth/permissions';
 import {
   ProductionLotRecord,
   StageFilter,
@@ -55,6 +57,9 @@ import {
   ProductionLotLocationDialogData,
 } from '../components/production-lot-location-map-dialog.component';
 
+/** Respuesta vacía usada como fallback cuando una llamada paralela falla. */
+const EMPTY_PAGE = { items: [] as ProductionLotRecord[], total: 0, page: 0, size: 0 };
+
 @Component({
   selector: 'app-production-lots-page',
   imports: [
@@ -73,6 +78,7 @@ import {
     MatSelectModule,
     MatTooltipModule,
     EmptyStateComponent,
+    PmHasPermissionDirective,
   ],
   templateUrl: './production-lots.page.html',
   styleUrl: './production-lots.page.scss',
@@ -80,13 +86,15 @@ import {
 })
 export class ProductionLotsPage implements OnInit {
   private lotsService = inject(ProductionLotsService);
-  private sidebarService = inject(SidebarService);
   private productsService = inject(ProductsService);
   private projectsService = inject(ProjectsService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   private readonly searchSubject = new Subject<string>();
 
@@ -95,14 +103,40 @@ export class ProductionLotsPage implements OnInit {
   readonly STAGE_LABELS = TRANSFORMATION_STAGE_LABELS;
   readonly STAGE_SHORT_LABELS = STAGE_SHORT_LABELS;
 
-  // ── State signals ────────────────────────────────────────────────
-  loading = signal(true);
-  lots = signal<ProductionLotRecord[]>([]);
-  totalElements = signal(0);
-  currentPage = signal(0);
-  pageSize = signal(20);
+  // ── Permission gates ─────────────────────────────────────────────
+  /**
+   * true si el usuario puede acceder a la sección de transformación primaria.
+   * Tanto READ (gestor) como STORAGE (gestor almacenamiento temporal) dan acceso.
+   */
+  canSeePrimary = computed(
+    () =>
+      this.sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.READ) ||
+      this.sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.STORAGE),
+  );
 
-  // ── Filter signals ───────────────────────────────────────────────
+  /** true si el usuario puede acceder a la sección de transformación secundaria. */
+  canSeeSecondary = computed(() =>
+    this.sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_SECONDARY.READ),
+  );
+
+  // ── Carga inicial (spinner de página completa en el primer fetch) ─
+  initialLoading = signal(true);
+
+  // ── Estado sección Primaria ──────────────────────────────────────
+  primaryLots = signal<ProductionLotRecord[]>([]);
+  primaryTotal = signal(0);
+  primaryPage = signal(0);
+  primaryPageSize = signal(20);
+  primaryLoading = signal(false);
+
+  // ── Estado sección Secundaria ────────────────────────────────────
+  secondaryLots = signal<ProductionLotRecord[]>([]);
+  secondaryTotal = signal(0);
+  secondaryPage = signal(0);
+  secondaryPageSize = signal(20);
+  secondaryLoading = signal(false);
+
+  // ── Filtros ──────────────────────────────────────────────────────
   searchTerm = signal('');
   activeStageFilter = signal<StageFilter>('all');
   selectedProductId = signal<string | null>(null);
@@ -116,31 +150,48 @@ export class ProductionLotsPage implements OnInit {
 
   // ── Computed ─────────────────────────────────────────────────────
 
-  /** Lotes filtrados por etapa (client-side) */
-  filteredLots = computed(() => {
-    const filter = this.activeStageFilter();
-    if (filter === 'all') return this.lots();
-    return this.lots().filter((l) => l.transformationStage === filter);
+  /**
+   * true cuando el usuario solo tiene STORAGE (no PROCESS) para transformación primaria.
+   * GESTOR_ALMACENAMIENTO_TEMPORAL solo puede ver lotes en estado 'almacenamiento'.
+   */
+  isStorageOnlyUser = computed(
+    () =>
+      this.sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.STORAGE) &&
+      !this.sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.PROCESS),
+  );
+
+  /**
+   * Lotes primarios visibles según el rol.
+   * GESTOR_ALMACENAMIENTO_TEMPORAL solo ve los que están en 'almacenamiento'.
+   */
+  filteredPrimaryLots = computed(() => {
+    if (this.isStorageOnlyUser()) {
+      return this.primaryLots().filter((l) => l.status === 'almacenamiento');
+    }
+    return this.primaryLots();
   });
 
-  /** Cantidad de lotes primarios en la página actual */
-  primaryCount = computed(
-    () => this.lots().filter((l) => l.transformationStage === 'primaria').length,
-  );
+  /** Total paginado de lotes primarios – badge del tab y header de sección. */
+  primaryCount = computed(() => this.primaryTotal());
 
-  /** Cantidad de lotes secundarios en la página actual */
-  secondaryCount = computed(
-    () => this.lots().filter((l) => l.transformationStage === 'secundaria').length,
-  );
+  /** Total paginado de lotes secundarios – badge del tab y header de sección. */
+  secondaryCount = computed(() => this.secondaryTotal());
 
-  /** Lotes primarios del conjunto filtrado (para la sección Primaria) */
-  primaryLots = computed(() =>
-    this.filteredLots().filter((l) => l.transformationStage === 'primaria'),
-  );
+  /** Total combinado para el tab "Todos". */
+  totalCount = computed(() => this.primaryTotal() + this.secondaryTotal());
 
-  /** Lotes secundarios del conjunto filtrado (para la sección Secundaria) */
-  secondaryLots = computed(() =>
-    this.filteredLots().filter((l) => l.transformationStage === 'secundaria'),
+  /**
+   * true cuando no hay ningún lote en ninguna sección y no hay filtros activos.
+   * Se usa para mostrar el estado vacío de página completa.
+   */
+  isEmpty = computed(
+    () =>
+      !this.initialLoading() &&
+      this.primaryTotal() === 0 &&
+      this.secondaryTotal() === 0 &&
+      !this.searchTerm() &&
+      !this.selectedProductId() &&
+      !this.selectedProjectId(),
   );
 
   // ── Lifecycle ────────────────────────────────────────────────────
@@ -150,49 +201,207 @@ export class ProductionLotsPage implements OnInit {
     this.loadProjects();
     this.loadLots();
 
-    // Búsqueda con debounce → llama al backend
+    // Búsqueda con debounce → resetea ambas páginas y recarga en paralelo
     this.searchSubject
       .pipe(debounceTime(400), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        this.currentPage.set(0);
+        this.primaryPage.set(0);
+        this.secondaryPage.set(0);
         this.loadLots();
       });
   }
 
   // ── Data loading ─────────────────────────────────────────────────
 
+  /**
+   * Carga inicial y recarga por cambio de filtros.
+   * - Ambas secciones accesibles → forkJoin paralelo con catchError individual.
+   * - Solo primaria → llamada única para primaria.
+   * - Solo secundaria → llamada única para secundaria.
+   */
   loadLots(): void {
     const companyId = this.sidebarService.tenantId();
     if (!companyId) {
       this.notification.error('No se pudo identificar la empresa activa');
-      this.loading.set(false);
+      this.initialLoading.set(false);
       return;
     }
 
-    this.loading.set(true);
+    const canP = this.canSeePrimary();
+    const canS = this.canSeeSecondary();
 
+    const baseParams = {
+      companyId,
+      q: this.searchTerm() || undefined,
+      productId: this.selectedProductId() ?? undefined,
+      projectId: this.selectedProjectId() ?? undefined,
+    };
+
+    if (canP && canS) {
+      // ── Carga paralela ──────────────────────────────────────────
+      this.primaryLoading.set(true);
+      this.secondaryLoading.set(true);
+
+      forkJoin({
+        primary: this.lotsService
+          .search({
+            ...baseParams,
+            transformationStage: 'primaria',
+            page: this.primaryPage(),
+            size: this.primaryPageSize(),
+          })
+          .pipe(
+            catchError((err) => {
+              const msg = err?.error?.message;
+              this.notification.error(msg ?? 'Error al cargar lotes de transformación primaria');
+              return of({ ...EMPTY_PAGE });
+            }),
+          ),
+        secondary: this.lotsService
+          .search({
+            ...baseParams,
+            transformationStage: 'secundaria',
+            page: this.secondaryPage(),
+            size: this.secondaryPageSize(),
+          })
+          .pipe(
+            catchError((err) => {
+              const msg = err?.error?.message;
+              this.notification.error(msg ?? 'Error al cargar lotes de transformación secundaria');
+              return of({ ...EMPTY_PAGE });
+            }),
+          ),
+      }).subscribe(({ primary, secondary }) => {
+        this.primaryLots.set(primary.items ?? []);
+        this.primaryTotal.set(primary.total ?? 0);
+        this.secondaryLots.set(secondary.items ?? []);
+        this.secondaryTotal.set(secondary.total ?? 0);
+        this.primaryLoading.set(false);
+        this.secondaryLoading.set(false);
+        this.initialLoading.set(false);
+      });
+    } else if (canP) {
+      // ── Solo primaria ───────────────────────────────────────────
+      this.primaryLoading.set(true);
+      this.lotsService
+        .search({
+          ...baseParams,
+          transformationStage: 'primaria',
+          page: this.primaryPage(),
+          size: this.primaryPageSize(),
+        })
+        .subscribe({
+          next: (res) => {
+            this.primaryLots.set(res.items ?? []);
+            this.primaryTotal.set(res.total ?? 0);
+            this.primaryLoading.set(false);
+            this.initialLoading.set(false);
+          },
+          error: (err) => {
+            const msg = err?.error?.message;
+            this.notification.error(msg ?? 'Error al cargar lotes de transformación primaria');
+            this.primaryLots.set([]);
+            this.primaryTotal.set(0);
+            this.primaryLoading.set(false);
+            this.initialLoading.set(false);
+          },
+        });
+    } else if (canS) {
+      // ── Solo secundaria ─────────────────────────────────────────
+      this.secondaryLoading.set(true);
+      this.lotsService
+        .search({
+          ...baseParams,
+          transformationStage: 'secundaria',
+          page: this.secondaryPage(),
+          size: this.secondaryPageSize(),
+        })
+        .subscribe({
+          next: (res) => {
+            this.secondaryLots.set(res.items ?? []);
+            this.secondaryTotal.set(res.total ?? 0);
+            this.secondaryLoading.set(false);
+            this.initialLoading.set(false);
+          },
+          error: (err) => {
+            const msg = err?.error?.message;
+            this.notification.error(msg ?? 'Error al cargar lotes de transformación secundaria');
+            this.secondaryLots.set([]);
+            this.secondaryTotal.set(0);
+            this.secondaryLoading.set(false);
+            this.initialLoading.set(false);
+          },
+        });
+    } else {
+      // Sin permisos para ninguna sección
+      this.initialLoading.set(false);
+    }
+  }
+
+  /**
+   * Recarga SOLO la sección primaria.
+   * Invocado exclusivamente desde la paginación independiente de esa sección.
+   */
+  private loadPrimarySection(): void {
+    const companyId = this.sidebarService.tenantId();
+    if (!companyId) return;
+    this.primaryLoading.set(true);
     this.lotsService
       .search({
         companyId,
-        page: this.currentPage(),
-        size: this.pageSize(),
+        transformationStage: 'primaria',
+        page: this.primaryPage(),
+        size: this.primaryPageSize(),
         q: this.searchTerm() || undefined,
         productId: this.selectedProductId() ?? undefined,
         projectId: this.selectedProjectId() ?? undefined,
       })
       .subscribe({
-        next: (response) => {
-          this.lots.set(response.items ?? []);
-          this.totalElements.set(response.total ?? 0);
-          this.loading.set(false);
+        next: (res) => {
+          this.primaryLots.set(res.items ?? []);
+          this.primaryTotal.set(res.total ?? 0);
+          this.primaryLoading.set(false);
         },
-        error: (error) => {
-          console.error('Error loading production lots:', error);
-          const msg = error?.error?.message;
-          this.notification.error(msg ?? 'Error al cargar los lotes de transformación');
-          this.lots.set([]);
-          this.totalElements.set(0);
-          this.loading.set(false);
+        error: (err) => {
+          const msg = err?.error?.message;
+          this.notification.error(msg ?? 'Error al cargar lotes de transformación primaria');
+          this.primaryLots.set([]);
+          this.primaryTotal.set(0);
+          this.primaryLoading.set(false);
+        },
+      });
+  }
+
+  /**
+   * Recarga SOLO la sección secundaria.
+   * Invocado exclusivamente desde la paginación independiente de esa sección.
+   */
+  private loadSecondarySection(): void {
+    const companyId = this.sidebarService.tenantId();
+    if (!companyId) return;
+    this.secondaryLoading.set(true);
+    this.lotsService
+      .search({
+        companyId,
+        transformationStage: 'secundaria',
+        page: this.secondaryPage(),
+        size: this.secondaryPageSize(),
+        q: this.searchTerm() || undefined,
+        productId: this.selectedProductId() ?? undefined,
+        projectId: this.selectedProjectId() ?? undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.secondaryLots.set(res.items ?? []);
+          this.secondaryTotal.set(res.total ?? 0);
+          this.secondaryLoading.set(false);
+        },
+        error: (err) => {
+          const msg = err?.error?.message;
+          this.notification.error(msg ?? 'Error al cargar lotes de transformación secundaria');
+          this.secondaryLots.set([]);
+          this.secondaryTotal.set(0);
+          this.secondaryLoading.set(false);
         },
       });
   }
@@ -242,10 +451,6 @@ export class ProductionLotsPage implements OnInit {
 
   // ── Actions ──────────────────────────────────────────────────────
 
-  /**
-   * Abre el diálogo selector de tipo de lote.
-   * El wizard de creación se implementará en una segunda fase.
-   */
   openCreateDialog(): void {
     const dialogRef = this.dialog.open(LotTypeChooserDialogComponent, {
       width: '100%',
@@ -262,10 +467,6 @@ export class ProductionLotsPage implements OnInit {
     });
   }
 
-  /**
-   * Navega al detalle del lote (ruta a nivel empresa).
-   * Los lotes secundarios tienen su propia página de detalle.
-   */
   viewLotDetail(lot: ProductionLotRecord): void {
     if (lot.transformationStage === 'secundaria') {
       this.router.navigate(['/production-lots/secondary', lot.id]);
@@ -274,7 +475,7 @@ export class ProductionLotsPage implements OnInit {
     }
   }
 
-  // ── Filters & Pagination ─────────────────────────────────────────
+  // ── Filtros y Paginación ─────────────────────────────────────────
 
   setStageFilter(filter: StageFilter): void {
     this.activeStageFilter.set(filter);
@@ -292,17 +493,32 @@ export class ProductionLotsPage implements OnInit {
 
   onProductChange(productId: string | null): void {
     this.selectedProductId.set(productId);
-    // Reset project filter and reload projects scoped to the selected product
     this.selectedProjectId.set(null);
     this.loadProjects(productId);
-    this.currentPage.set(0);
+    this.primaryPage.set(0);
+    this.secondaryPage.set(0);
     this.loadLots();
   }
 
   onProjectChange(projectId: string | null): void {
     this.selectedProjectId.set(projectId);
-    this.currentPage.set(0);
+    this.primaryPage.set(0);
+    this.secondaryPage.set(0);
     this.loadLots();
+  }
+
+  /** Paginación independiente de la sección Primaria. */
+  onPrimaryPageChange(event: PageEvent): void {
+    this.primaryPage.set(event.pageIndex);
+    this.primaryPageSize.set(event.pageSize);
+    this.loadPrimarySection();
+  }
+
+  /** Paginación independiente de la sección Secundaria. */
+  onSecondaryPageChange(event: PageEvent): void {
+    this.secondaryPage.set(event.pageIndex);
+    this.secondaryPageSize.set(event.pageSize);
+    this.loadSecondarySection();
   }
 
   generateTraceabilityQr(lot: ProductionLotRecord): void {
@@ -339,26 +555,19 @@ export class ProductionLotsPage implements OnInit {
     this.searchTerm.set('');
     this.searchSubject.next('');
     this.loadProjects();
-    this.currentPage.set(0);
-    this.loadLots();
-  }
-
-  onPageChange(event: PageEvent): void {
-    this.currentPage.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
+    this.primaryPage.set(0);
+    this.secondaryPage.set(0);
     this.loadLots();
   }
 
   // ── Helpers ──────────────────────────────────────────────────────
 
-  /** Texto de cantidad + unidad */
   formatQuantity(lot: ProductionLotRecord): string {
     if (lot.quantity == null) return '—';
     const unit = lot.unit ?? '';
     return `${lot.quantity} ${unit}`.trim();
   }
 
-  /** Abre el wizard de creación de lote primario */
   openCreatePrimaryDirect(): void {
     const dialogRef = this.dialog.open(PrimaryLotCreationWizardComponent, {
       width: '100%',
@@ -368,13 +577,12 @@ export class ProductionLotsPage implements OnInit {
 
     dialogRef.afterClosed().subscribe((result: PrimaryLotWizardResult | null) => {
       if (result?.created) {
-        this.currentPage.set(0);
+        this.primaryPage.set(0);
         this.loadLots();
       }
     });
   }
 
-  /** Abre el wizard de creación de lote secundario multi-fuente */
   openCreateSecondaryDirect(): void {
     const dialogRef = this.dialog.open(SecondaryLotCreationWizardComponent, {
       width: '100%',
@@ -384,12 +592,12 @@ export class ProductionLotsPage implements OnInit {
 
     dialogRef.afterClosed().subscribe((result: SecondaryLotWizardResult | null) => {
       if (result?.created) {
-        this.currentPage.set(0);
+        this.secondaryPage.set(0);
         this.loadLots();
       }
     });
   }
 }
 
-// Alias for dialog return type
+// Alias para el tipo de retorno del diálogo selector
 type LotTypeChoice = TransformationStage | null;

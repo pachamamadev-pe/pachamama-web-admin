@@ -127,16 +127,18 @@ import { AzureStorageService } from '../services/azure-storage.service';
               <p class="text-sm font-semibold text-accent-titles">
                 {{ authService.currentUser()?.email || 'Usuario' }}
               </p>
-              <p class="text-xs text-neutral-subheading mt-1">Pachamama Platform</p>
+              <p class="text-xs text-neutral-subheading mt-1">
+                {{ sidebarService.roleInfo().name }}
+              </p>
             </div>
             <button mat-menu-item (click)="onProfile()">
               <mat-icon>person</mat-icon>
               <span>Mi perfil</span>
             </button>
-            <button mat-menu-item (click)="onSettings()">
+            <!--  <button mat-menu-item (click)="onSettings()">
               <mat-icon>settings</mat-icon>
               <span>Configuración</span>
-            </button>
+            </button> -->
             <mat-divider></mat-divider>
             <button mat-menu-item (click)="onLogout()">
               <mat-icon class="text-red-600">logout</mat-icon>

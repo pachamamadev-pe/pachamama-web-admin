@@ -11,6 +11,15 @@
 
       <div class="header-actions">
         <button
+          mat-stroked-button
+          (click)="openPermissionsModal()"
+          matTooltip="Ver qué accesos tiene cada rol"
+        >
+          <mat-icon>shield</mat-icon>
+          <span class="hidden sm:inline">Ver permisos</span>
+        </button>
+
+        <button
           *appPmHasPermission="PERMISSIONS.USER.CREATE"
           mat-raised-button
           class="btn-primary"
@@ -136,15 +145,27 @@
                     <mat-icon>more_vert</mat-icon>
                   </button>
                   <mat-menu #tableMenu="matMenu">
-                    <button mat-menu-item (click)="openEditDialog(user)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.USER.UPDATE"
+                      mat-menu-item
+                      (click)="openEditDialog(user)"
+                    >
                       <mat-icon>edit</mat-icon>
                       <span>Editar</span>
                     </button>
-                    <button mat-menu-item (click)="openAssignRoleDialog(user)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.USER.UPDATE"
+                      mat-menu-item
+                      (click)="openAssignRoleDialog(user)"
+                    >
                       <mat-icon>shield</mat-icon>
                       <span>Cambiar rol</span>
                     </button>
-                    <button mat-menu-item (click)="deleteUser(user)">
+                    <button
+                      *appPmHasPermission="PERMISSIONS.USER.DELETE"
+                      mat-menu-item
+                      (click)="deleteUser(user)"
+                    >
                       <mat-icon>delete</mat-icon>
                       <span>Desactivar</span>
                     </button>
@@ -183,15 +204,27 @@
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #mobileMenu="matMenu">
-                  <button mat-menu-item (click)="openEditDialog(user)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.USER.UPDATE"
+                    mat-menu-item
+                    (click)="openEditDialog(user)"
+                  >
                     <mat-icon>edit</mat-icon>
                     <span>Editar</span>
                   </button>
-                  <button mat-menu-item (click)="openAssignRoleDialog(user)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.USER.UPDATE"
+                    mat-menu-item
+                    (click)="openAssignRoleDialog(user)"
+                  >
                     <mat-icon>shield</mat-icon>
                     <span>Cambiar rol</span>
                   </button>
-                  <button mat-menu-item (click)="deleteUser(user)">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.USER.DELETE"
+                    mat-menu-item
+                    (click)="deleteUser(user)"
+                  >
                     <mat-icon>delete</mat-icon>
                     <span>Desactivar</span>
                   </button>

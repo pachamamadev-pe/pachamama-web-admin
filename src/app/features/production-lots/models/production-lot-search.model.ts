@@ -71,6 +71,8 @@ export interface ProductionLotSearchParams {
   projectId?: string;
   /** ID del producto (opcional) */
   productId?: string;
+  /** Etapa de transformación: 'primaria' | 'secundaria' (opcional) */
+  transformationStage?: 'primaria' | 'secundaria';
   /** Página (0-based) */
   page?: number;
   /** Tamaño de página */

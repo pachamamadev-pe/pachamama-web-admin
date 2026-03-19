@@ -22,6 +22,8 @@ import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { AzureStorageService } from '@core/services/azure-storage.service';
 import { ProductionLotsService } from '../../projects/services/production-lots.service';
 import { NotificationService } from '@core/services/notification.service';
+import { SidebarService } from '@core/services/sidebar.service';
+import { PERMISSIONS } from '@core/auth/permissions';
 import {
   ProductionLotLocationMapDialogComponent,
   ProductionLotLocationDialogData,
@@ -229,6 +231,8 @@ export class ProductionLotDetailPage implements OnInit {
   private notification = inject(NotificationService);
   private dialog = inject(MatDialog);
   private fb = inject(FormBuilder);
+  readonly sidebarService = inject(SidebarService);
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   // ─── State ────────────────────────────────────────────────────────────────
   lot = signal<ProductionLotDetail | null>(null);
@@ -297,6 +301,31 @@ export class ProductionLotDetailPage implements OnInit {
 
   /** Is the user viewing the lot's CURRENT (active) stage? */
   isViewingCurrentStage = computed(() => this.lot()?.status === this.viewingStage());
+
+  /**
+   * true cuando el usuario solo tiene STORAGE (y no PROCESS).
+   * Representa al GESTOR_ALMACENAMIENTO_TEMPORAL.
+   */
+  isStorageOnlyUser = computed(
+    () =>
+      this.sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.STORAGE) &&
+      !this.sidebarService.hasPermission(PERMISSIONS.TRANSFORMATION_PRIMARY.PROCESS),
+  );
+
+  /**
+   * true si el usuario puede editar la etapa que está viendo.
+   * Para GESTOR_ALMACENAMIENTO_TEMPORAL, solo es editable la etapa 'almacenamiento'.
+   */
+  canEditStage = computed(() => {
+    if (!this.isStorageOnlyUser()) return true;
+    return this.viewingStage() === 'almacenamiento';
+  });
+
+  /**
+   * true cuando el lote primario ya fue utilizado como origen de un lote secundario.
+   * En ese caso se ocultan todos los botones de edición y generación de documentos.
+   */
+  isLockedBySecondaryLot = computed(() => this.lot()?.usedInSecondaryLot === true);
 
   /** Status of the stage the user is viewing relative to the lot's progress */
   viewingStageRelation = computed<'done' | 'current' | 'locked'>(() => {

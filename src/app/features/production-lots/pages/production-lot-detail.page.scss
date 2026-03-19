@@ -324,6 +324,73 @@
   }
 }
 
+// ─── Unified Context Notices banner ──────────────────────────────────────────
+.context-notices {
+  @apply mx-4 md:mx-6 mt-4 mb-2 rounded-lg overflow-hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.context-notice {
+  @apply flex items-start gap-3 px-4 py-3 text-subtitle;
+
+  & + & {
+    border-top: 1px solid #e2e8f0;
+  }
+
+  span {
+    flex: 1;
+    line-height: 1.45;
+    padding-top: 4px;
+  }
+
+  button {
+    @apply flex-shrink-0 self-center ml-2;
+    font-size: 13px;
+  }
+}
+
+.context-notice-icon {
+  @apply flex items-center justify-center flex-shrink-0 rounded-full;
+  width: 30px;
+  height: 30px;
+  margin-top: 1px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.context-notice--history {
+  background: #eff6ff;
+  color: #1e40af;
+
+  .context-notice-icon {
+    background: #dbeafe;
+    color: #2563eb;
+  }
+
+  button {
+    color: #1e40af;
+  }
+
+  & + .context-notice--locked {
+    border-top-color: #c7d2fe;
+  }
+}
+
+.context-notice--locked {
+  background: #fffbeb;
+  color: #92400e;
+
+  .context-notice-icon {
+    background: #fde68a;
+    color: #d97706;
+  }
+}
+
 // ─── Location Section ─────────────────────────────────────────────────────────
 .location-section {
   @apply mx-6 mb-4 rounded-xl overflow-hidden;
