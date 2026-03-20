@@ -108,22 +108,22 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
       {
         code: 'user:read',
         label: 'Ver y listar usuarios',
-        roles: r(true, true, false, false, false, false),
+        roles: r(true, false, false, false, false, false),
       },
       {
         code: 'user:create',
         label: 'Crear usuarios',
-        roles: r(true, true, false, false, false, false),
+        roles: r(true, false, false, false, false, false),
       },
       {
         code: 'user:update',
         label: 'Editar usuario y cambiar rol',
-        roles: r(true, true, false, false, false, false),
+        roles: r(true, false, false, false, false, false),
       },
       {
         code: 'user:delete',
         label: 'Desactivar usuario',
-        roles: r(true, true, false, false, false, false),
+        roles: r(true, false, false, false, false, false),
       },
     ],
   },
