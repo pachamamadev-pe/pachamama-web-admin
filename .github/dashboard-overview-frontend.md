@@ -26,6 +26,7 @@ interface BusinessDashboardOverviewDto {
   projectStageDistribution: ProjectStageItem[];
   partnerCommunities: PartnerCommunitiesDto;
   collectors: CollectorsSummaryDto;
+  productionByProduct: ProductionByProductDto[];
 }
 
 interface ProjectStageItem {
@@ -41,26 +42,50 @@ interface CollectorsSummaryDto {
   total: number;
   femaleTotal: number;
   femalePercentage: number;  // 0–100 con decimales
+  ageDistribution: AgeDistributionDto[];
+}
+
+interface AgeDistributionDto {
+  ageRange: string;
+  count: number;
+}
+
+interface ProductionByProductDto {
+  productId: string;
+  productCode: string;
+  productName: string;
+  totalWeightKg: number;
+  totalUnits: number;
+  batchCount: number;
 }
 ```
 
 ### Ejemplo real de respuesta
 ```json
 {
-  "asOfDate": "2026-03-13",
+  "asOfDate": "2026-03-23",
   "projectStageDistribution": [
-    { "stage": "planning",                "count": 3 },
-    { "stage": "inventory",               "count": 1 },
-    { "stage": "collection",              "count": 6 },
-    { "stage": "serfor_evaluation",       "count": 1 },
-    { "stage": "primary_transformation",  "count": 2 }
+    { "stage": "ctp_entry",               "count": 1 }
   ],
-  "partnerCommunities": { "total": 3 },
+  "partnerCommunities": { "total": 1 },
   "collectors": {
-    "total": 30,
-    "femaleTotal": 6,
-    "femalePercentage": 20.0
-  }
+    "total": 1,
+    "femaleTotal": 0,
+    "femalePercentage": 0.0,
+    "ageDistribution": [
+      { "ageRange": "25-35", "count": 1 }
+    ]
+  },
+  "productionByProduct": [
+    {
+      "productId": "b68fdf46-638b-4b94-aecc-2e22c1f0f64e",
+      "productCode": "aguaje-0b81",
+      "productName": "Aguaje",
+      "totalWeightKg": 20.0,
+      "totalUnits": 3,
+      "batchCount": 1
+    }
+  ]
 }
 ```
 
@@ -87,7 +112,7 @@ Mostrar en este orden fijo para que el gráfico sea coherente:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Dashboard Empresarial              Actualizado: 13/03/2026   [↻]  │
+│  Dashboard Empresarial              Actualizado: 23/03/2026   [↻]  │
 ├───────────────────┬──────────────────────┬──────────────────────────┤
 │  KPI Card         │  KPI Card            │  KPI Card                │
 │  Proyectos        │  Comunidades socias  │  Recolectores            │
@@ -97,7 +122,10 @@ Mostrar en este orden fijo para que el gráfico sea coherente:
 │   Gráfico de barras horizontales         Gráfico pie / donut        │
 │   Proyectos por Etapa                    Recolectores por Género    │
 │                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+├──────────────────────────────────────────┬──────────────────────────┤
+│   Gráfico de barras / Tabla              │  Gráfico de barras col.  │
+│   Producción por Producto                │  Recolectores por Edad   │
+└──────────────────────────────────────────┴──────────────────────────┘
 ```
 
 ---
@@ -174,6 +202,41 @@ const donutData = [
 
 ---
 
+### 5.4 Gráfico de barras columnas — Recolectores por Edad
+
+- **Tipo:** `bar` (columnas verticales)
+- **Eje X:** Rangos de edad (ej. "18-25", "26-35") ordenados
+- **Eje Y:** Cantidad de recolectores (`count`)
+- **Colores:** `#10B981` (verde)
+- **Tooltip:** cantidad absoluta
+
+```typescript
+const ageData = response.collectors.ageDistribution.map(item => ({
+  label: item.ageRange,
+  value: item.count,
+  color: '#10B981'
+}));
+```
+
+---
+
+### 5.5 Gráfico de barras múltiples o Tabla — Producción por Producto
+
+- **Librería o Componente:** Gráfico de columnas / barras múltiples (Peso en base a `totalWeightKg` o `totalUnits`) o una tabla resumen.
+- **Campos a mostrar:** Nombre del producto, Peso total (Kg), Unidades totales.
+- Si se usa gráfico, se recomienda usar el Peso (Kg) como métrica principal.
+
+```typescript
+// Datos para Producción por Producto
+const productionData = response.productionByProduct.map(item => ({
+  label: item.productName,
+  valueKg: item.totalWeightKg,
+  valueUnits: item.totalUnits
+}));
+```
+
+---
+
 ## 6. Servicio Angular
 
 ```typescript
@@ -182,7 +245,20 @@ export interface BusinessDashboardOverview {
   asOfDate: string;
   projectStageDistribution: { stage: string; count: number }[];
   partnerCommunities: { total: number };
-  collectors: { total: number; femaleTotal: number; femalePercentage: number };
+  collectors: { 
+    total: number; 
+    femaleTotal: number; 
+    femalePercentage: number;
+    ageDistribution: { ageRange: string; count: number }[];
+  };
+  productionByProduct: {
+    productId: string;
+    productCode: string;
+    productName: string;
+    totalWeightKg: number;
+    totalUnits: number;
+    batchCount: number;
+  }[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -306,12 +382,14 @@ export function stageColor(stage: string): string {
 
 ## 11. Checklist de implementación
 
-- [ ] Crear `DashboardService` con `getOverview(asOfDate?)`
-- [ ] Crear `DashboardOverviewComponent` con skeleton loading
-- [ ] Implementar KPI Cards (3 columnas)
-- [ ] Implementar gráfico de barras horizontales con `stageLabel` y `stageColor`
-- [ ] Implementar gráfico donut con mujeres vs. resto
-- [ ] Agregar datepicker de fecha de corte en cabecera
+- [x] Crear `DashboardService` con `getOverview(asOfDate?)`
+- [x] Crear `DashboardOverviewComponent` con skeleton loading
+- [x] Implementar KPI Cards (3 columnas)
+- [x] Implementar gráfico de barras horizontales con `stageLabel` y `stageColor`
+- [x] Implementar gráfico donut con mujeres vs. resto
+- [x] Implementar tabla/gráfico para Producción por Producto
+- [x] Implementar gráfico de columnas para Recolectores por Edad
+- [x] Agregar datepicker de fecha de corte en cabecera
 - [ ] Agregar botón "Actualizar"
 - [ ] Manejar estados: loading, error, empty
 - [ ] Verificar responsive en mobile

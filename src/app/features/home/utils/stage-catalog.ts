@@ -4,6 +4,7 @@ const STAGE_META: Record<string, { label: string; color: string }> = {
   collection: { label: 'Recolección', color: '#10B981' },
   serfor_evaluation: { label: 'Eval. SERFOR', color: '#F59E0B' },
   primary_transformation: { label: 'Transform. Primaria', color: '#8B5CF6' },
+  ctp_entry: { label: 'Acopio / Ingreso a CTP', color: '#EF4444' },
   closed: { label: 'Cerrado', color: '#6B7280' },
 };
 

@@ -1,24 +1,4 @@
 <div class="map-card" [class.map-fullscreen]="isMapFullscreen()">
-  <div class="map-card-header">
-    <div class="map-card-title">
-      <mat-icon class="title-icon">map</mat-icon>
-      <span class="map-title-text">Área de Operaciones</span>
-    </div>
-    @if (hasMap()) {
-      <div class="map-actions">
-        <button
-          mat-icon-button
-          class="map-action-btn"
-          (click)="toggleFullscreen()"
-          matTooltip="Pantalla completa"
-          matTooltipPosition="below"
-        >
-          <mat-icon>{{ isMapFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-        </button>
-      </div>
-    }
-  </div>
-
   <div class="map-card-body">
     @if (loadingMap()) {
       <div class="map-loading">
@@ -53,6 +33,18 @@
       </div>
     } @else if (hasMap()) {
       <div class="map-loaded">
+        <div class="map-actions">
+          <button
+            mat-icon-button
+            class="map-action-btn"
+            (click)="toggleFullscreen()"
+            matTooltip="Pantalla completa"
+            matTooltipPosition="left"
+          >
+            <mat-icon>{{ isMapFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+          </button>
+        </div>
+
         <div class="map-stats">
           <mat-icon class="stats-icon">terrain</mat-icon>
           <span class="stats-text">
