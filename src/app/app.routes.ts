@@ -124,6 +124,14 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'projects/:id/pending-documents',
+        title: 'Documentos Pendientes',
+        loadComponent: () =>
+          import('./features/projects/pages/project-pending-documents.page').then(
+            (m) => m.ProjectPendingDocumentsPage,
+          ),
+      },
+      {
         path: 'projects/:id',
         title: 'Detalle del Proyecto',
         loadComponent: () =>
