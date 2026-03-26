@@ -61,6 +61,7 @@ import {
   ProjectActivityTypeKpi,
   CollectorsGenderKpi,
   ActivityValidationStatusKpi,
+  SyncSuccessRateKpi,
 } from '../models/project.model';
 import { BrigadeFormDialogComponent } from '../components/brigade-form.component';
 import { ConfigurationTabComponent } from '../components/configuration-tab.component';
@@ -151,6 +152,20 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   loadingCollectorsGenderKpis = signal(false);
   activityValidationStatusKpis = signal<Record<string, ActivityValidationStatusKpi>>({});
   loadingActivityValidationStatusKpis = signal(false);
+  syncSuccessRateKpi = signal<SyncSuccessRateKpi | null>(null);
+  loadingSyncSuccessRateKpi = signal(false);
+
+  syncSuccessRateDonutData = computed((): DonutChartData | null => {
+    const kpi = this.syncSuccessRateKpi();
+    if (!kpi || kpi.totalActivities === 0) return null;
+    return {
+      labels: ['Exitosas', 'Fallidas', 'Recuperadas'],
+      values: [kpi.successfulActivities, kpi.failedActivities, kpi.recoveredActivities],
+      colors: ['#10b981', '#ef4444', '#3b82f6'],
+      centerText: `${kpi.successRatePct.toFixed(1)}%`,
+      tooltipLabel: 'Actividades',
+    };
+  });
 
   // Track which tabs have loaded their data (lazy loading)
   tabsLoaded = signal<Set<number>>(new Set([0])); // Tab 0 (Resumen) loads immediately
@@ -645,6 +660,7 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         this.loadActivityTypeKpis(id);
         this.loadCollectorsGenderKpis(id);
         this.loadActivityValidationStatusKpis(id);
+        this.loadSyncSuccessRateKpi(id);
 
         //  comunidad relacionados
         forkJoin({
@@ -1392,6 +1408,24 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         console.error('Error loading activity validation status KPIs:', error);
         this.activityValidationStatusKpis.set({});
         this.loadingActivityValidationStatusKpis.set(false);
+      },
+    });
+  }
+
+  /**
+   * Carga la tasa de éxito de sincronización de actividades para el proyecto
+   */
+  loadSyncSuccessRateKpi(projectId: string): void {
+    this.loadingSyncSuccessRateKpi.set(true);
+    this.projectsService.getSyncSuccessRateKpi(projectId).subscribe({
+      next: (response) => {
+        this.syncSuccessRateKpi.set(response.data);
+        this.loadingSyncSuccessRateKpi.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading sync success rate KPI:', error);
+        this.syncSuccessRateKpi.set(null);
+        this.loadingSyncSuccessRateKpi.set(false);
       },
     });
   }
