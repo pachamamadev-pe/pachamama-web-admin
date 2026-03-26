@@ -179,6 +179,9 @@ export interface SyncSuccessRateKpi {
   failedActivities: number;
   recoveredActivities: number;
   successRatePct: number;
+  failedAttemptsTotal: number;
+  retryAttemptsAfterFailure: number;
+  avgRetriesPerActivity: number;
 }
 
 /**

@@ -74,6 +74,7 @@ import {
   DonutChartComponent,
   DonutChartData,
 } from '@shared/components/donut-chart/donut-chart.component';
+import { BarChartComponent, BarChartData } from '@shared/components/bar-chart/bar-chart.component';
 
 interface ActivityValidationStatusChartItem {
   activityType: string;
@@ -108,6 +109,7 @@ interface ActivityValidationStatusChartItem {
     CollectionBatchesTabComponent,
     PmHasPermissionDirective,
     DonutChartComponent,
+    BarChartComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -155,15 +157,20 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   syncSuccessRateKpi = signal<SyncSuccessRateKpi | null>(null);
   loadingSyncSuccessRateKpi = signal(false);
 
-  syncSuccessRateDonutData = computed((): DonutChartData | null => {
+  syncSuccessRateBarData = computed((): BarChartData | null => {
     const kpi = this.syncSuccessRateKpi();
     if (!kpi || kpi.totalActivities === 0) return null;
     return {
-      labels: ['Exitosas', 'Fallidas', 'Recuperadas'],
-      values: [kpi.successfulActivities, kpi.failedActivities, kpi.recoveredActivities],
-      colors: ['#10b981', '#ef4444', '#3b82f6'],
-      centerText: `${kpi.successRatePct.toFixed(1)}%`,
-      tooltipLabel: 'Actividades',
+      labels: ['Exitosas', 'Fallidas', 'Recuperadas', 'Intentos fallidos', 'Reintentos'],
+      values: [
+        kpi.successfulActivities,
+        kpi.failedActivities,
+        kpi.recoveredActivities,
+        kpi.failedAttemptsTotal,
+        kpi.retryAttemptsAfterFailure,
+      ],
+      colors: ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6'],
+      label: 'Actividades',
     };
   });
 

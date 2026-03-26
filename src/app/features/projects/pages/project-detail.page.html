@@ -333,14 +333,25 @@
                           >
                         </div>
                       } @else {
-                        <app-donut-chart
-                          [data]="syncSuccessRateDonutData()!"
-                          [height]="220"
-                          [showLegend]="true"
+                        <div class="success-rate-header">
+                          <span class="success-rate-pct"
+                            >{{ syncSuccessRateKpi()!.successRatePct | number: '1.0-1' }}%</span
+                          >
+                          <span class="text-subtitle text-neutral-subheading"
+                            >tasa de éxito &nbsp;·&nbsp;
+                            {{ syncSuccessRateKpi()!.totalActivities }} actividades totales
+                            &nbsp;·&nbsp; prom.
+                            {{
+                              syncSuccessRateKpi()!.avgRetriesPerActivity | number: '1.0-2'
+                            }}
+                            reintentos/actividad</span
+                          >
+                        </div>
+                        <app-bar-chart
+                          [data]="syncSuccessRateBarData()!"
+                          [height]="200"
+                          [showGrid]="true"
                         />
-                        <p class="success-rate-total text-subtitle text-neutral-subheading">
-                          Total: {{ syncSuccessRateKpi()!.totalActivities }} actividades
-                        </p>
                       }
                     </mat-card-content>
                   </mat-card>

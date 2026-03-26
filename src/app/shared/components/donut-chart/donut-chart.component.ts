@@ -27,6 +27,11 @@ export interface DonutChartData {
   `,
   styles: [
     `
+      :host {
+        display: block;
+        width: 100%;
+      }
+
       .chart-wrapper {
         position: relative;
         width: 100%;
