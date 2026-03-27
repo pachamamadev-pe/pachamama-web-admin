@@ -186,6 +186,16 @@
                 </span>
               </div>
             }
+            @if (activity()!.appVersion) {
+              <div class="info-item">
+                <span class="info-label text-subtitle text-neutral-subheading"
+                  >Versión de App:</span
+                >
+                <span class="info-value text-body text-accent-titles">
+                  {{ activity()!.appVersion }}
+                </span>
+              </div>
+            }
           </div>
         </mat-card-content>
       </mat-card>

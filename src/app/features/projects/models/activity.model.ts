@@ -87,6 +87,8 @@ export interface ActivityResponse {
   validationNotes?: string | null;
 
   collectionRequestCode?: string | null;
+
+  appVersion?: string | null;
 }
 
 /**
