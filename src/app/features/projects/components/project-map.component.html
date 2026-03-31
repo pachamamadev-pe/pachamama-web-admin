@@ -10,6 +10,15 @@
     </mat-card-title>
     @if (hasMap()) {
       <div class="map-actions">
+        <!-- New settings button, displayed without checking hasMap to allow manage when clicking at card level if they just uploaded something or always available -->
+        <button
+          mat-icon-button
+          class="map-action-btn"
+          (click)="openMapManagement()"
+          matTooltip="Gestionar mapa y áreas"
+        >
+          <mat-icon>settings</mat-icon>
+        </button>
         @if (hasCollectionStage() || hasInventoryStage()) {
           <button
             mat-icon-button
@@ -152,17 +161,6 @@
       </div>
     } @else if (hasMap()) {
       <div class="map-loaded">
-        @if (canEditMap()) {
-          <button
-            mat-icon-button
-            class="map-edit-btn"
-            (click)="enableEditMode()"
-            matTooltip="Actualizar mapa"
-          >
-            <mat-icon>edit</mat-icon>
-          </button>
-        }
-
         <div class="map-stats">
           <mat-icon class="stats-icon">terrain</mat-icon>
           <span class="stats-text"

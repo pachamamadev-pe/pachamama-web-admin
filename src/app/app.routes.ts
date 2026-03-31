@@ -132,6 +132,14 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'projects/:id/map-management',
+        title: 'Gestión de Mapa',
+        loadComponent: () =>
+          import('./features/projects/pages/project-map-management.page').then(
+            (m) => m.ProjectMapManagementPage,
+          ),
+      },
+      {
         path: 'projects/:id',
         title: 'Detalle del Proyecto',
         loadComponent: () =>

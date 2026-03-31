@@ -74,4 +74,21 @@ export class AreasService {
   getImportStatus(projectId: string, importId: string): Observable<AreaImportStatus> {
     return this.http.get<AreaImportStatus>(`${this.apiUrl}/${projectId}/areas/imports/${importId}`);
   }
+
+  /**
+   * Elimina un feature específico por ID
+   * @param projectId UUID del proyecto
+   * @param featureId UUID del área (feature)
+   */
+  deleteFeature(projectId: string, featureId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${projectId}/areas/current/geojson/${featureId}`);
+  }
+
+  /**
+   * Elimina todos los features actuales del proyecto
+   * @param projectId UUID del proyecto
+   */
+  deleteAllFeatures(projectId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${projectId}/areas/current/geojson`);
+  }
 }
