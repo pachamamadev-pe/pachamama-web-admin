@@ -170,6 +170,29 @@ export interface ActivityValidationStatusKpiResponse {
 }
 
 /**
+ * KPI de tasa de éxito de sincronización por proyecto
+ */
+export interface SyncSuccessRateKpi {
+  projectId: string;
+  totalActivities: number;
+  successfulActivities: number;
+  failedActivities: number;
+  recoveredActivities: number;
+  successRatePct: number;
+  failedAttemptsTotal: number;
+  retryAttemptsAfterFailure: number;
+  avgRetriesPerActivity: number;
+}
+
+/**
+ * Respuesta del endpoint de tasa de éxito de sincronización
+ */
+export interface SyncSuccessRateKpiResponse {
+  data: SyncSuccessRateKpi;
+  meta: ProjectKpiMeta;
+}
+
+/**
  * Helper para obtener el label en español de una etapa
  */
 export function getProjectStageLabel(stage?: string): string {

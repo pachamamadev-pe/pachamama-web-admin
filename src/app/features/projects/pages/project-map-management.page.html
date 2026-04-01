@@ -1,0 +1,153 @@
+<div class="page-container h-full flex flex-col">
+  <header
+    class="page-header py-4 flex justify-between items-center bg-white border-b border-gray-200"
+  >
+    <div class="header-content flex items-center gap-4">
+      <button mat-icon-button (click)="goBack()" matTooltip="Volver al proyecto">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-title">
+        <h1 class="text-xl font-bold text-accent-titles m-0">Gestión de Mapa</h1>
+        <p class="text-sm text-neutral-subheading m-0">
+          {{ project()?.name || 'Cargando proyecto...' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      @if (canEdit()) {
+        <input
+          type="file"
+          #fileInput
+          accept=".zip,.rar,.shp,.dbf,.shx,.prj,.cpg,.qmd,.sbn,.sbx,.xml,.shp.xml,.geojson,.json,.kml"
+          multiple
+          (change)="onFileSelected($event)"
+          style="display: none"
+        />
+        <button
+          mat-raised-button
+          class="btn-primary"
+          (click)="fileInput.click()"
+          [disabled]="uploadingFile()"
+        >
+          @if (uploadingFile()) {
+            <span class="flex items-center justify-center gap-2">
+              <mat-spinner diameter="20"></mat-spinner>
+              <span>Subiendo...</span>
+            </span>
+          } @else {
+            <span class="flex items-center justify-center gap-1">
+              <mat-icon class="m-0">add_location</mat-icon>
+              <span class="hidden sm:inline">Añadir mapa o capa</span>
+            </span>
+          }
+        </button>
+      }
+    </div>
+  </header>
+
+  <div
+    class="page-content flex-grow flex flex-col md:flex-row overflow-hidden h-[calc(100vh-120px)] p-0 m-0"
+  >
+    <!-- Sidebar for features list -->
+    <div
+      class="features-sidebar w-full md:w-80 lg:w-96 flex flex-col bg-white border-r border-gray-200 h-full"
+    >
+      <div class="sidebar-header p-4 border-b border-gray-200 flex justify-between items-center">
+        <div>
+          <h2 class="font-bold text-lg m-0 text-accent-titles">Áreas ({{ features().length }})</h2>
+        </div>
+
+        @if (features().length > 0 && canEdit()) {
+          <button
+            mat-stroked-button
+            color="warn"
+            class="text-red-600 border-red-200"
+            (click)="deleteAllFeatures()"
+            matTooltip="Eliminar todas las áreas"
+          >
+            <mat-icon>delete_sweep</mat-icon>
+            <span class="hidden md:inline">Todos</span>
+          </button>
+        } @else if (features().length > 0 && !canEdit()) {
+          <mat-icon
+            class="text-gray-400"
+            matTooltip="La edición solo está disponible en etapa de planificación"
+            >info</mat-icon
+          >
+        }
+      </div>
+
+      <div class="sidebar-content flex-grow overflow-y-auto p-0">
+        @if (loading()) {
+          <div class="flex justify-center items-center p-8">
+            <mat-spinner diameter="40"></mat-spinner>
+          </div>
+        } @else if (features().length === 0) {
+          <div class="p-8 text-center text-gray-500">
+            <mat-icon class="text-4xl mb-2 opacity-50">map</mat-icon>
+            <p>No hay áreas cargadas en este proyecto.</p>
+          </div>
+        } @else {
+          <div class="features-list divide-y divide-gray-100">
+            @for (feature of features(); track feature.id) {
+              <div
+                class="feature-item p-3 hover:bg-gray-50 flex items-center justify-between group transition-colors"
+              >
+                <div class="flex items-center gap-3 overflow-hidden">
+                  <mat-checkbox
+                    [checked]="isFeatureVisible(feature.id)"
+                    (change)="toggleFeatureVisibility(feature.id)"
+                    color="primary"
+                  >
+                  </mat-checkbox>
+
+                  <div class="feature-info overflow-hidden">
+                    <p class="font-medium text-sm text-gray-900 truncate m-0">
+                      {{ feature.properties['name'] || 'Área sin nombre' }}
+                    </p>
+                    <p class="text-xs text-gray-500 truncate m-0 flex gap-2">
+                      <span class="text-gray-400">{{
+                        feature.properties['code'] || 'Sin código'
+                      }}</span>
+                      @if (feature.properties['version']) {
+                        <span class="bg-gray-100 px-1.5 rounded text-[10px]"
+                          >v{{ feature.properties['version'] }}</span
+                        >
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="feature-actions flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    class="h-8 w-8"
+                    (click)="deleteFeature(feature, $event)"
+                    [disabled]="!canEdit()"
+                    [matTooltip]="canEdit() ? 'Eliminar área' : 'Solo editable en planificación'"
+                  >
+                    <mat-icon class="text-[18px]">delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Map Area -->
+    <div class="map-area flex-grow relative bg-gray-100 h-full min-h-[400px]">
+      @if (loading()) {
+        <div class="absolute inset-0 z-10 bg-white bg-opacity-70 flex justify-center items-center">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+      <div #mapContainer class="w-full h-full"></div>
+    </div>
+  </div>
+</div>

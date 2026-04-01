@@ -12,6 +12,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -54,6 +55,7 @@ import { PERMISSIONS } from '@core/auth/permissions';
 export class ProjectMapComponent implements AfterViewInit, OnDestroy {
   private areasService = inject(AreasService);
   private notification = inject(NotificationService);
+  private router = inject(Router);
   private destroy$ = new Subject<void>();
 
   //readonly sidebarService = inject(SidebarService);
@@ -650,10 +652,8 @@ export class ProjectMapComponent implements AfterViewInit, OnDestroy {
     return null;
   }
 
-  enableEditMode(): void {
-    this.hasMap.set(false);
-    this.currentGeoJSON.set(null);
-    this.destroyMap();
+  openMapManagement(): void {
+    this.router.navigate(['/projects', this.projectId(), 'map-management']);
   }
 
   toggleMapFullscreen(): void {

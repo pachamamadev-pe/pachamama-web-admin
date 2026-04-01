@@ -160,6 +160,60 @@
           </div>
         </div>
 
+        <div class="charts-row">
+          <div class="chart-panel">
+            <div class="chart-panel-header">
+              <div class="chart-panel-title-group">
+                <mat-icon class="chart-panel-icon">inventory_2</mat-icon>
+                <span class="chart-panel-title">Producción por Producto</span>
+              </div>
+            </div>
+            <div class="chart-panel-body">
+              @if (productionChartData()) {
+                <app-bar-chart
+                  [data]="productionChartData()!"
+                  [height]="300"
+                  [horizontal]="true"
+                  [showGrid]="true"
+                />
+              } @else {
+                <app-empty-state
+                  icon="inventory"
+                  [useMaterialIcon]="true"
+                  title="Sin producción"
+                  description="No hay datos de producción para la fecha."
+                />
+              }
+            </div>
+          </div>
+
+          <div class="chart-panel">
+            <div class="chart-panel-header">
+              <div class="chart-panel-title-group">
+                <mat-icon class="chart-panel-icon">bar_chart</mat-icon>
+                <span class="chart-panel-title">Recolectores por Edad</span>
+              </div>
+            </div>
+            <div class="chart-panel-body">
+              @if (ageChartData()) {
+                <app-bar-chart
+                  [data]="ageChartData()!"
+                  [height]="300"
+                  [horizontal]="false"
+                  [showGrid]="true"
+                />
+              } @else {
+                <app-empty-state
+                  icon="analytics"
+                  [useMaterialIcon]="true"
+                  title="Sin datos"
+                  description="No hay datos de edades disponibles."
+                />
+              }
+            </div>
+          </div>
+        </div>
+
         <!-- ── Mapa ───────────────────────────────────────────── -->
         <div class="map-panel">
           <div class="chart-panel-header">

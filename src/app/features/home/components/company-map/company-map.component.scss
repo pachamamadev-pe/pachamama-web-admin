@@ -10,47 +10,18 @@
   display: flex;
   flex-direction: column;
   background: #ffffff;
-  border-radius: 0.75rem; // rounded-xl — igual que stat-card y chart-card
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); // shadow-sm — igual que stat-card y chart-card
+  border-radius: 0 0 0.75rem 0.75rem; // rounded-b-xl
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); // shadow-sm
   overflow: hidden;
 }
 
-// Header: flex item con flex-shrink:0, nunca se comprime.
-// z-index: 1 crea un stacking context propio que supera al de .map-card-body (z-index: auto = 0).
-// Todos los z-indexes internos de Leaflet quedan atrapados dentro de .map-card-body
-// gracias a isolation:isolate y no pueden competir con este z-index: 1.
-.map-card-header {
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-  padding: 16px 24px;
-  min-height: 64px;
-  display: flex;
-  align-items: center;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e5e5;
-
-  .map-card-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #0a0a0a;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    flex: 1;
-    margin: 0;
-    padding: 0;
-  }
-}
-
-// Body: contiene TODO el mapa. isolation:isolate encierra los stacking contexts de Leaflet.
+// Body: contiene TODO el mapa. isolation:isolate encierra los stacking contextos de Leaflet.
 .map-card-body {
   flex: 1;
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: 300px;
+  min-height: 400px;
 }
 
 // Fullscreen
@@ -65,7 +36,7 @@
   margin: 0 !important;
 
   .map-loaded {
-    height: calc(100vh - 64px) !important;
+    height: 100vh !important;
   }
 
   .leaflet-map-container {
@@ -77,9 +48,12 @@
   display: flex;
   gap: 4px;
   position: absolute;
-  top: 50%;
-  right: 16px;
-  transform: translateY(-50%);
+  top: 12px;
+  right: 12px;
+  z-index: 2000;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .map-action-btn {
@@ -93,23 +67,8 @@
   }
 
   mat-icon {
-    color: #218358;
+    color: #4b5563; /* changed color to neutral gray so it looks good on white */
   }
-}
-
-.title-icon {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
-  color: #218358;
-}
-
-.map-title-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
 }
 
 .map-loading {

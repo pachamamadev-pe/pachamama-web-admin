@@ -417,22 +417,16 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
+  align-items: start;
 
-  @media (min-width: 1024px) {
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
   }
 }
 
-.left-column,
-.right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-
-  @media (min-width: 768px) {
-    gap: 24px;
-  }
+.summary-grid-span-full {
+  grid-column: 1 / -1;
 }
 
 /* Summary Cards */
@@ -951,6 +945,27 @@
 
 .stat-empty-message {
   margin-top: 8px;
+}
+
+// Success Rate KPI card
+.success-rate-total {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.success-rate-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.success-rate-pct {
+  font-size: 32px;
+  font-weight: 700;
+  color: #10b981;
+  line-height: 1;
 }
 
 /* Collectors Table Styles */

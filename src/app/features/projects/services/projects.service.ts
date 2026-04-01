@@ -11,6 +11,7 @@ import {
   ProjectActivityTypeKpiResponse,
   CollectorsGenderKpiResponse,
   ActivityValidationStatusKpiResponse,
+  SyncSuccessRateKpiResponse,
 } from '../models/project.model';
 
 /**
@@ -235,6 +236,16 @@ export class ProjectsService {
   ): Observable<ActivityValidationStatusKpiResponse> {
     return this.http.get<ActivityValidationStatusKpiResponse>(
       `${environment.apiUrl}/api/v1/admin/kpis/sync/activities/validation-status/by-project/${projectId}`,
+    );
+  }
+
+  /**
+   * Obtiene la tasa de éxito de sincronización de actividades para un proyecto
+   * GET /api/v1/admin/kpis/sync/by-project/{projectId}/success-rate
+   */
+  getSyncSuccessRateKpi(projectId: string): Observable<SyncSuccessRateKpiResponse> {
+    return this.http.get<SyncSuccessRateKpiResponse>(
+      `${environment.apiUrl}/api/v1/admin/kpis/sync/by-project/${projectId}/success-rate`,
     );
   }
 }

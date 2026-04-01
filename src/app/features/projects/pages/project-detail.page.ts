@@ -61,6 +61,7 @@ import {
   ProjectActivityTypeKpi,
   CollectorsGenderKpi,
   ActivityValidationStatusKpi,
+  SyncSuccessRateKpi,
 } from '../models/project.model';
 import { BrigadeFormDialogComponent } from '../components/brigade-form.component';
 import { ConfigurationTabComponent } from '../components/configuration-tab.component';
@@ -73,6 +74,7 @@ import {
   DonutChartComponent,
   DonutChartData,
 } from '@shared/components/donut-chart/donut-chart.component';
+import { BarChartComponent, BarChartData } from '@shared/components/bar-chart/bar-chart.component';
 
 interface ActivityValidationStatusChartItem {
   activityType: string;
@@ -107,6 +109,7 @@ interface ActivityValidationStatusChartItem {
     CollectionBatchesTabComponent,
     PmHasPermissionDirective,
     DonutChartComponent,
+    BarChartComponent,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',
@@ -151,6 +154,25 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   loadingCollectorsGenderKpis = signal(false);
   activityValidationStatusKpis = signal<Record<string, ActivityValidationStatusKpi>>({});
   loadingActivityValidationStatusKpis = signal(false);
+  syncSuccessRateKpi = signal<SyncSuccessRateKpi | null>(null);
+  loadingSyncSuccessRateKpi = signal(false);
+
+  syncSuccessRateBarData = computed((): BarChartData | null => {
+    const kpi = this.syncSuccessRateKpi();
+    if (!kpi || kpi.totalActivities === 0) return null;
+    return {
+      labels: ['Exitosas', 'Fallidas', 'Recuperadas', 'Intentos fallidos', 'Reintentos'],
+      values: [
+        kpi.successfulActivities,
+        kpi.failedActivities,
+        kpi.recoveredActivities,
+        kpi.failedAttemptsTotal,
+        kpi.retryAttemptsAfterFailure,
+      ],
+      colors: ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6'],
+      label: 'Actividades',
+    };
+  });
 
   // Track which tabs have loaded their data (lazy loading)
   tabsLoaded = signal<Set<number>>(new Set([0])); // Tab 0 (Resumen) loads immediately
@@ -645,6 +667,7 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         this.loadActivityTypeKpis(id);
         this.loadCollectorsGenderKpis(id);
         this.loadActivityValidationStatusKpis(id);
+        this.loadSyncSuccessRateKpi(id);
 
         //  comunidad relacionados
         forkJoin({
@@ -1392,6 +1415,24 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
         console.error('Error loading activity validation status KPIs:', error);
         this.activityValidationStatusKpis.set({});
         this.loadingActivityValidationStatusKpis.set(false);
+      },
+    });
+  }
+
+  /**
+   * Carga la tasa de éxito de sincronización de actividades para el proyecto
+   */
+  loadSyncSuccessRateKpi(projectId: string): void {
+    this.loadingSyncSuccessRateKpi.set(true);
+    this.projectsService.getSyncSuccessRateKpi(projectId).subscribe({
+      next: (response) => {
+        this.syncSuccessRateKpi.set(response.data);
+        this.loadingSyncSuccessRateKpi.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading sync success rate KPI:', error);
+        this.syncSuccessRateKpi.set(null);
+        this.loadingSyncSuccessRateKpi.set(false);
       },
     });
   }

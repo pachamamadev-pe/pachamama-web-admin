@@ -18,6 +18,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTableModule } from '@angular/material/table';
 import {
   BarChartComponent,
   type BarChartData,
@@ -54,6 +55,7 @@ import { DashboardService } from '../services/dashboard.service';
     MatNativeDateModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    MatTableModule,
     BarChartComponent,
     DonutChartComponent,
     EmptyStateComponent,
@@ -181,6 +183,44 @@ export class HomePage implements OnInit {
       colors: ['#EC4899', '#6366F1'],
       centerText: `${data.collectors.femalePercentage.toFixed(1)}% Mujeres`,
       tooltipLabel: 'Recolectores',
+    };
+  });
+
+  // Age Distribution Chart Data
+  ageChartData = computed<BarChartData | null>(() => {
+    const data = this.overview();
+    if (
+      !data ||
+      !data.collectors ||
+      !data.collectors.ageDistribution ||
+      data.collectors.ageDistribution.length === 0
+    )
+      return null;
+
+    const ageData = data.collectors.ageDistribution;
+
+    return {
+      labels: ageData.map((item) => item.ageRange),
+      values: ageData.map((item) => item.count),
+      label: 'Recolectores',
+      colors: ageData.map(() => '#10B981'),
+    };
+  });
+
+  // Production Chart Data
+  productionChartData = computed<BarChartData | null>(() => {
+    const data = this.overview();
+    if (!data || !data.productionByProduct || data.productionByProduct.length === 0) return null;
+
+    const prodData = [...data.productionByProduct].sort(
+      (a, b) => b.totalWeightKg - a.totalWeightKg,
+    );
+
+    return {
+      labels: prodData.map((item) => item.productName),
+      values: prodData.map((item) => item.totalWeightKg),
+      label: 'Producción (Kg)',
+      colors: prodData.map(() => '#8B5CF6'), // Violeta, coherente con transformación primaria
     };
   });
 
