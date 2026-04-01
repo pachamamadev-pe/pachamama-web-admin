@@ -343,7 +343,9 @@
                     } @else {
                       <h3>Pulpeado</h3>
                     }
-                    <p>{{ receptions().length }} lote(s) ingresado(s)</p>
+                    <p>
+                      {{ receptions().length + pendingReceptions().length }} lote(s) ingresado(s)
+                    </p>
                   </div>
                 </div>
                 @if (receptions().length > 0 && !loadingReceptions()) {
@@ -469,6 +471,24 @@
                           }
                         </div>
                       </button>
+
+                      <!-- ── Agregar fila duplicada (solo etapas pulpa) ── -->
+                      @if (
+                        receptionDocumentCode() === 'PULP_PROCESSING_RECORD' &&
+                        canEditStage() &&
+                        !isLockedBySecondaryLot()
+                      ) {
+                        <button
+                          type="button"
+                          class="reception-copy-btn"
+                          (click)="addReceptionCopy(r)"
+                          [disabled]="generatingDocument()"
+                          matTooltip="Agregar una nueva fila para este lote de acopio"
+                        >
+                          <mat-icon>add_circle_outline</mat-icon>
+                          <span>Agregar fila para este lote</span>
+                        </button>
+                      }
 
                       <!-- ── Expanded edit form ─────────────────────── -->
                       @if (expandedReceptionId() === r.id) {
@@ -604,6 +624,129 @@
                       }
                     </div>
                   }
+
+                  <!-- ── Filas pendientes (copias nuevas sin id del servidor) ── -->
+                  @for (p of pendingReceptions(); track p.tempKey) {
+                    <div
+                      [class]="
+                        'reception-item reception-item--pending' +
+                        (expandedReceptionId() === p.tempKey ? ' reception-item--open' : '')
+                      "
+                    >
+                      <!-- Header de fila pendiente -->
+                      <div class="reception-pending-header">
+                        <button
+                          class="reception-row"
+                          type="button"
+                          (click)="toggleReception(p.tempKey)"
+                        >
+                          <div class="reception-row-top">
+                            <div class="reception-seq reception-seq--new">
+                              <mat-icon>add</mat-icon>
+                            </div>
+                            <div class="reception-identity">
+                              <span class="rcp-batch">{{ p.collectionBatchNumber }}</span>
+                              <span class="rcp-product">{{ p.productName }}</span>
+                            </div>
+                            <span class="rcp-new-badge">Nueva fila</span>
+                            <div class="reception-edit-hint">
+                              @if (expandedReceptionId() === p.tempKey) {
+                                <mat-icon class="hint-icon hint-icon--open"
+                                  >keyboard_arrow_up</mat-icon
+                                >
+                              } @else {
+                                <mat-icon class="hint-icon">edit</mat-icon>
+                                <span class="hint-label">Editar</span>
+                              }
+                            </div>
+                          </div>
+                        </button>
+                        <!-- Botón eliminar fila (siempre visible) -->
+                        <button
+                          type="button"
+                          class="reception-pending-delete"
+                          (click)="removePendingReception(p.tempKey)"
+                          matTooltip="Eliminar esta fila"
+                        >
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+
+                      <!-- Formulario pulpa expandible -->
+                      @if (expandedReceptionId() === p.tempKey) {
+                        <div class="reception-form" [formGroup]="getReceptionForm(p.tempKey)">
+                          <div class="reception-form-row">
+                            <mat-form-field appearance="outline" class="rcp-field">
+                              <mat-label>Jabas en maduración</mat-label>
+                              <input
+                                matInput
+                                type="number"
+                                formControlName="jabasRipeningCount"
+                                step="1"
+                                min="0"
+                                placeholder="0"
+                              />
+                              <mat-icon matPrefix>grid_view</mat-icon>
+                              <span matSuffix class="field-suffix">uds</span>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="rcp-field">
+                              <mat-label>Tina de maduración</mat-label>
+                              <input
+                                matInput
+                                type="text"
+                                formControlName="ripeningTub"
+                                placeholder="Ej. Tina-01"
+                              />
+                            </mat-form-field>
+                          </div>
+                          <mat-form-field appearance="outline" class="rcp-field rcp-field--full">
+                            <mat-label>Hora de inicio de maduración</mat-label>
+                            <input matInput type="time" formControlName="ripeningStartTime" />
+                            <mat-icon matPrefix>schedule</mat-icon>
+                          </mat-form-field>
+                          <mat-form-field appearance="outline" class="rcp-field rcp-field--full">
+                            <mat-label>Observaciones</mat-label>
+                            <textarea
+                              matInput
+                              formControlName="observations"
+                              rows="2"
+                              placeholder="Condiciones de maduración, temperatura, incidencias, etc."
+                            ></textarea>
+                            <mat-icon matPrefix>notes</mat-icon>
+                          </mat-form-field>
+                          <div class="reception-form-actions">
+                            <button
+                              mat-button
+                              type="button"
+                              (click)="removePendingReception(p.tempKey)"
+                            >
+                              <mat-icon>delete_outline</mat-icon>
+                              Eliminar fila
+                            </button>
+                            <button
+                              mat-raised-button
+                              class="btn-save-reception"
+                              type="button"
+                              [disabled]="generatingDocument()"
+                              (click)="savePendingReception()"
+                            >
+                              @if (generatingDocument()) {
+                                <ng-container>
+                                  <mat-spinner diameter="16" />
+                                  Generando...
+                                </ng-container>
+                              } @else {
+                                <ng-container>
+                                  <mat-icon>auto_awesome</mat-icon>
+                                  Guardar y generar registro
+                                </ng-container>
+                              }
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -638,8 +781,34 @@
                           : 'Registro de Almacenamiento'
                       }}
                     </h3>
+                    @if (processingRecordStageCode() === 'PACKAGING_RECORD') {
+                      <p>
+                        {{ packagingRecords().length + pendingPackagingRows().length }}
+                        {{
+                          packagingRecords().length + pendingPackagingRows().length === 1
+                            ? 'fila'
+                            : 'filas'
+                        }}
+                      </p>
+                    }
                   </div>
                 </div>
+                @if (
+                  processingRecordStageCode() === 'PACKAGING_RECORD' &&
+                  canEditStage() &&
+                  !isLockedBySecondaryLot()
+                ) {
+                  <button
+                    type="button"
+                    class="pkg-add-row-btn"
+                    (click)="addPackagingRow()"
+                    [disabled]="savingProcessingRecord()"
+                    matTooltip="Añadir una nueva fila de envasado"
+                  >
+                    <mat-icon>add</mat-icon>
+                    <span>Añadir fila</span>
+                  </button>
+                }
               </div>
 
               @if (loadingProcessingRecord()) {
@@ -673,177 +842,134 @@
                   </div>
                 }
 
-                <!-- ENVASADO Form -->
+                <!-- ENVASADO — collapsible row list -->
                 @if (processingRecordStageCode() === 'PACKAGING_RECORD') {
-                  <form
-                    class="processing-form"
-                    [formGroup]="processingForm"
-                    (ngSubmit)="saveProcessingRecord()"
-                  >
-                    <!-- Row 1: Insumos (full width) -->
-                    <mat-form-field appearance="outline" class="proc-field proc-field--full">
-                      <mat-label>Insumos utilizados</mat-label>
-                      <textarea
-                        matInput
-                        formControlName="inputs"
-                        rows="2"
-                        placeholder="Lista de insumos y materiales utilizados en el envasado"
-                      ></textarea>
-                      <mat-icon matPrefix>category</mat-icon>
-                    </mat-form-field>
+                  <div class="pkg-list">
+                    <!-- Empty state -->
+                    @if (packagingRecords().length === 0 && pendingPackagingRows().length === 0) {
+                      <div class="pkg-empty-state">
+                        <mat-icon>inventory_2</mat-icon>
+                        <p>
+                          No hay filas registradas. Usa <strong>Añadir fila</strong> para comenzar.
+                        </p>
+                      </div>
+                    }
 
-                    <!-- Row 2: Fecha inicio + Hora inicio -->
-                    <div class="proc-form-row">
-                      <mat-form-field appearance="outline" class="proc-field">
-                        <mat-label>Fecha de inicio</mat-label>
-                        <input matInput type="date" formControlName="startDate" />
-                        <mat-icon matPrefix>calendar_today</mat-icon>
-                      </mat-form-field>
-                      <mat-form-field appearance="outline" class="proc-field">
-                        <mat-label>Hora de inicio</mat-label>
-                        <input matInput type="time" formControlName="startTime" />
-                        <mat-icon matPrefix>schedule</mat-icon>
-                      </mat-form-field>
-                    </div>
+                    <!-- Existing rows (from server) -->
+                    @for (rec of packagingRecords(); track rec.id; let i = $index) {
+                      <div class="pkg-item">
+                        <!-- Row header / toggle -->
+                        <button
+                          type="button"
+                          class="pkg-item-header"
+                          (click)="togglePackagingExpand(rec.id)"
+                        >
+                          <span class="pkg-item-seq">{{ i + 1 }}</span>
+                          <span class="pkg-item-summary">
+                            @if (rec.startDate) {
+                              <mat-icon>calendar_today</mat-icon>
+                              {{ rec.startDate }}
+                            } @else {
+                              <mat-icon>inventory_2</mat-icon>
+                              Fila {{ i + 1 }}
+                            }
+                            @if (rec.quantityKg) {
+                              <span class="pkg-item-kg"
+                                >· {{ rec.quantityKg | number: '1.0-2' }} kg</span
+                              >
+                            }
+                          </span>
+                          <mat-icon
+                            class="pkg-item-chevron"
+                            [class.pkg-item-chevron--open]="expandedPackagingId() === rec.id"
+                          >
+                            expand_more
+                          </mat-icon>
+                        </button>
 
-                    <!-- Row 3: Fecha+hora fin de producción -->
-                    <mat-form-field appearance="outline" class="proc-field proc-field--full">
-                      <mat-label>Fecha y hora final de producción</mat-label>
-                      <input
-                        matInput
-                        type="datetime-local"
-                        formControlName="productionEndDatetime"
-                      />
-                      <mat-icon matPrefix>event_available</mat-icon>
-                    </mat-form-field>
+                        <!-- Expanded form -->
+                        @if (expandedPackagingId() === rec.id) {
+                          <form
+                            class="pkg-item-form"
+                            [formGroup]="getPackagingForm(rec.id)"
+                            (ngSubmit)="saveProcessingRecord()"
+                          >
+                            <ng-container
+                              *ngTemplateOutlet="
+                                packagingFormFields;
+                                context: { $implicit: getPackagingForm(rec.id) }
+                              "
+                            ></ng-container>
+                          </form>
+                        }
+                      </div>
+                    }
 
-                    <!-- Row 4: Brix + pH -->
-                    <div class="proc-form-row">
-                      <mat-form-field appearance="outline" class="proc-field">
-                        <mat-label>Grados Brix</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          formControlName="brixDegrees"
-                          step="0.1"
-                          min="0"
-                          placeholder="0.0"
-                        />
-                        <mat-icon matPrefix>science</mat-icon>
-                        <span matSuffix class="proc-suffix">°Bx</span>
-                      </mat-form-field>
-                      <mat-form-field appearance="outline" class="proc-field">
-                        <mat-label>pH</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          formControlName="ph"
-                          step="0.01"
-                          min="0"
-                          max="14"
-                          placeholder="0.00"
-                        />
-                        <mat-icon matPrefix>water_drop</mat-icon>
-                      </mat-form-field>
-                    </div>
+                    <!-- Pending rows (new, not yet saved) -->
+                    @for (tempKey of pendingPackagingRows(); track tempKey; let j = $index) {
+                      <div class="pkg-item pkg-item--pending">
+                        <!-- Row header / toggle -->
+                        <div class="pkg-item-header pkg-item-header--pending">
+                          <button
+                            type="button"
+                            class="pkg-item-header-btn"
+                            (click)="togglePackagingExpand(tempKey)"
+                          >
+                            <span class="pkg-item-seq pkg-item-seq--new">{{
+                              packagingRecords().length + j + 1
+                            }}</span>
+                            <span class="pkg-item-summary">
+                              <mat-icon>add_circle_outline</mat-icon>
+                              Nueva fila
+                              <span class="pkg-new-badge">Sin guardar</span>
+                            </span>
+                            <mat-icon
+                              class="pkg-item-chevron"
+                              [class.pkg-item-chevron--open]="expandedPackagingId() === tempKey"
+                            >
+                              expand_more
+                            </mat-icon>
+                          </button>
+                          <button
+                            type="button"
+                            class="pkg-pending-delete"
+                            (click)="removePendingPackagingRow(tempKey)"
+                            matTooltip="Eliminar esta fila"
+                          >
+                            <mat-icon>delete_outline</mat-icon>
+                          </button>
+                        </div>
 
-                    <!-- Row 5: Paquetes section label -->
-                    <div class="proc-section-label">
-                      <mat-icon>inventory_2</mat-icon>
-                      <span>Cantidad de paquetes por presentación</span>
-                    </div>
+                        <!-- Expanded form -->
+                        @if (expandedPackagingId() === tempKey) {
+                          <form
+                            class="pkg-item-form"
+                            [formGroup]="getPackagingForm(tempKey)"
+                            (ngSubmit)="saveProcessingRecord()"
+                          >
+                            <ng-container
+                              *ngTemplateOutlet="
+                                packagingFormFields;
+                                context: { $implicit: getPackagingForm(tempKey) }
+                              "
+                            ></ng-container>
+                          </form>
+                        }
+                      </div>
+                    }
 
-                    <!-- Row 6: Paquetes 1kg + 5kg -->
-                    <div class="proc-form-row">
-                      <mat-form-field appearance="outline" class="proc-field">
-                        <mat-label>Paquetes 1 kg</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          formControlName="packages1kgCount"
-                          step="1"
-                          min="0"
-                          placeholder="0"
-                        />
-                        <span matSuffix class="proc-suffix">uds</span>
-                      </mat-form-field>
-                      <mat-form-field appearance="outline" class="proc-field">
-                        <mat-label>Paquetes 5 kg</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          formControlName="packages5kgCount"
-                          step="1"
-                          min="0"
-                          placeholder="0"
-                        />
-                        <span matSuffix class="proc-suffix">uds</span>
-                      </mat-form-field>
-                    </div>
-
-                    <!-- Row 7: Paquetes 20kg + 50kg -->
-                    <div class="proc-form-row">
-                      <mat-form-field appearance="outline" class="proc-field">
-                        <mat-label>Paquetes 20 kg</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          formControlName="packages20kgCount"
-                          step="1"
-                          min="0"
-                          placeholder="0"
-                        />
-                        <span matSuffix class="proc-suffix">uds</span>
-                      </mat-form-field>
-                      <mat-form-field appearance="outline" class="proc-field">
-                        <mat-label>Paquetes 50 kg</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          formControlName="packages50kgCount"
-                          step="1"
-                          min="0"
-                          placeholder="0"
-                        />
-                        <span matSuffix class="proc-suffix">uds</span>
-                      </mat-form-field>
-                    </div>
-
-                    <!-- Row 8: Cantidad total kg -->
-                    <mat-form-field appearance="outline" class="proc-field proc-field--full">
-                      <mat-label>Cantidad total (kg)</mat-label>
-                      <input
-                        matInput
-                        type="number"
-                        formControlName="quantityKg"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                      />
-                      <mat-icon matPrefix>scale</mat-icon>
-                      <span matSuffix class="proc-suffix">kg</span>
-                    </mat-form-field>
-
-                    <!-- Row 9: Observaciones -->
-                    <mat-form-field appearance="outline" class="proc-field proc-field--full">
-                      <mat-label>Observaciones</mat-label>
-                      <textarea
-                        matInput
-                        formControlName="observations"
-                        rows="2"
-                        placeholder="Incidencias, condiciones de procesamiento, etc."
-                      ></textarea>
-                      <mat-icon matPrefix>notes</mat-icon>
-                    </mat-form-field>
-
-                    <!-- Actions -->
-                    <div class="processing-form-actions">
-                      @if (canEditStage() && !isLockedBySecondaryLot()) {
+                    <!-- Global save button -->
+                    @if (canEditStage() && !isLockedBySecondaryLot()) {
+                      <div class="pkg-global-actions">
                         <button
                           mat-raised-button
                           class="btn-save-processing"
-                          type="submit"
-                          [disabled]="savingProcessingRecord()"
+                          type="button"
+                          (click)="saveProcessingRecord()"
+                          [disabled]="
+                            savingProcessingRecord() ||
+                            (packagingRecords().length === 0 && pendingPackagingRows().length === 0)
+                          "
                         >
                           @if (savingProcessingRecord()) {
                             <mat-spinner diameter="16" />
@@ -855,9 +981,176 @@
                             </ng-container>
                           }
                         </button>
-                      }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Packaging form fields template (reused for existing and pending rows) -->
+                  <ng-template #packagingFormFields let-form>
+                    <div [formGroup]="form">
+                      <!-- Row 1: Insumos (full width) -->
+                      <mat-form-field appearance="outline" class="proc-field proc-field--full">
+                        <mat-label>Insumos utilizados</mat-label>
+                        <textarea
+                          matInput
+                          formControlName="inputs"
+                          rows="2"
+                          placeholder="Lista de insumos y materiales utilizados en el envasado"
+                        ></textarea>
+                        <mat-icon matPrefix>category</mat-icon>
+                      </mat-form-field>
+
+                      <!-- Row 2: Fecha inicio + Hora inicio -->
+                      <div class="proc-form-row">
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>Fecha de inicio</mat-label>
+                          <input matInput type="date" formControlName="startDate" />
+                          <mat-icon matPrefix>calendar_today</mat-icon>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>Hora de inicio</mat-label>
+                          <input matInput type="time" formControlName="startTime" />
+                          <mat-icon matPrefix>schedule</mat-icon>
+                        </mat-form-field>
+                      </div>
+
+                      <!-- Row 3: Fecha+hora fin de producción -->
+                      <mat-form-field appearance="outline" class="proc-field proc-field--full">
+                        <mat-label>Fecha y hora final de producción</mat-label>
+                        <input
+                          matInput
+                          type="datetime-local"
+                          formControlName="productionEndDatetime"
+                        />
+                        <mat-icon matPrefix>event_available</mat-icon>
+                      </mat-form-field>
+
+                      <!-- Row 4: Brix + pH -->
+                      <div class="proc-form-row">
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>Grados Brix</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="brixDegrees"
+                            step="0.1"
+                            min="0"
+                            placeholder="0.0"
+                          />
+                          <mat-icon matPrefix>science</mat-icon>
+                          <span matSuffix class="proc-suffix">°Bx</span>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>pH</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="ph"
+                            step="0.01"
+                            min="0"
+                            max="14"
+                            placeholder="0.00"
+                          />
+                          <mat-icon matPrefix>water_drop</mat-icon>
+                        </mat-form-field>
+                      </div>
+
+                      <!-- Row 5: Paquetes section label -->
+                      <div class="proc-section-label">
+                        <mat-icon>inventory_2</mat-icon>
+                        <span>Cantidad de paquetes por presentación</span>
+                      </div>
+
+                      <!-- Row 6: Paquetes 1kg + 5kg -->
+                      <div class="proc-form-row">
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>Paquetes 1 kg</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="packages1kgCount"
+                            step="1"
+                            min="0"
+                            placeholder="0"
+                          />
+                          <span matSuffix class="proc-suffix">uds</span>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>Paquetes 5 kg</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="packages5kgCount"
+                            step="1"
+                            min="0"
+                            placeholder="0"
+                          />
+                          <span matSuffix class="proc-suffix">uds</span>
+                        </mat-form-field>
+                      </div>
+
+                      <!-- Row 7: Paquetes 20kg + 50kg -->
+                      <div class="proc-form-row">
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>Paquetes 20 kg</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="packages20kgCount"
+                            step="1"
+                            min="0"
+                            placeholder="0"
+                          />
+                          <span matSuffix class="proc-suffix">uds</span>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>Paquetes 50 kg</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="packages50kgCount"
+                            step="1"
+                            min="0"
+                            placeholder="0"
+                          />
+                          <span matSuffix class="proc-suffix">uds</span>
+                        </mat-form-field>
+                      </div>
+
+                      <!-- Row 8: Cantidad total kg + Fecha vencimiento -->
+                      <div class="proc-form-row">
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>Cantidad total (kg)</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            formControlName="quantityKg"
+                            placeholder="0.00"
+                          />
+                          <mat-icon matPrefix>calculate</mat-icon>
+                          <span matSuffix class="proc-suffix">kg</span>
+                          <mat-hint>Calculado automáticamente</mat-hint>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="proc-field">
+                          <mat-label>Fecha de vencimiento</mat-label>
+                          <input matInput type="date" formControlName="expirationDate" />
+                          <mat-icon matPrefix>event_busy</mat-icon>
+                        </mat-form-field>
+                      </div>
+
+                      <!-- Row 9: Observaciones -->
+                      <mat-form-field appearance="outline" class="proc-field proc-field--full">
+                        <mat-label>Observaciones</mat-label>
+                        <textarea
+                          matInput
+                          formControlName="observations"
+                          rows="2"
+                          placeholder="Incidencias, condiciones de procesamiento, etc."
+                        ></textarea>
+                        <mat-icon matPrefix>notes</mat-icon>
+                      </mat-form-field>
                     </div>
-                  </form>
+                  </ng-template>
                 }
 
                 <!-- ALMACENAMIENTO Form -->

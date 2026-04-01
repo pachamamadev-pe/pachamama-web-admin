@@ -1264,3 +1264,127 @@
     background: #93c5fd !important;
   }
 }
+
+// ─── Pending Reception Rows ───────────────────────────────────────────────────
+
+// Item container
+.reception-item--pending {
+  background: #f0fdf4;
+  border-left: 3px solid #16a34a;
+
+  .reception-row:hover {
+    background: #dcfce7;
+  }
+
+  &.reception-item--open {
+    background: #f0fdf4;
+
+    .reception-row {
+      background: #dcfce7;
+      border-bottom: 1px solid #86efac;
+    }
+  }
+
+  .reception-form {
+    border-top: 1px dashed #86efac;
+    background: #f0fdf4;
+  }
+}
+
+// Wrapper that holds the toggle button + delete button side by side
+.reception-pending-header {
+  display: flex;
+  align-items: stretch;
+
+  .reception-row {
+    flex: 1;
+  }
+}
+
+// Sequence circle variant for new rows
+.reception-seq--new {
+  background: #dcfce7 !important;
+  color: #16a34a !important;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// "Nueva fila" green badge
+.rcp-new-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+// "Agregar fila para este lote" button (below collapsed row)
+.reception-copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 5px 16px 5px 42px; // indent to align with identity
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: #16a34a;
+  border-top: 1px dashed #bbf7d0;
+  transition: background 0.15s ease;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &:hover:not(:disabled) {
+    background: #f0fdf4;
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+}
+
+// Close (×) button at the top-right of each pending row
+.reception-pending-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #9ca3af;
+  border-left: 1px solid #d1fae5;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+}

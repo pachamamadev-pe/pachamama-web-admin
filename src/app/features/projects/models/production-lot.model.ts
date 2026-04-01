@@ -309,6 +309,7 @@ export interface ProductionLotStatusUpdateRequest {
  * Usado tanto en fruit-reception-record como en pulp-processing-record
  */
 export interface ProductionLotBatchReceptionRequest {
+  id?: string | null;
   collectionBatchId: string;
   weightKg?: number | null;
   sacksCount?: number | null;
@@ -387,6 +388,36 @@ export interface SavePackagingRecordRequest {
   packages20kgCount?: number | null;
   packages50kgCount?: number | null;
   quantityKg?: number | null;
+  observations?: string | null;
+}
+
+/**
+ * Request para generar el registro de envasado (v2) — lista de filas
+ * POST /{id}/packaging-record
+ */
+export interface ProductionLotPackagingRecordRequest {
+  items: ProductionLotPackagingRecordItemRequest[];
+}
+
+/**
+ * Item de una fila del control de envasado.
+ * Si 'id' viene informado se hace UPDATE, si no INSERT.
+ */
+export interface ProductionLotPackagingRecordItemRequest {
+  /** ID del registro existente (para UPDATE). Omitir para INSERT. */
+  id?: string | null;
+  inputs?: string | null;
+  startDate?: string | null;
+  startTime?: string | null;
+  productionEndDatetime?: string | null;
+  brixDegrees?: number | null;
+  ph?: number | null;
+  packages1kgCount?: number | null;
+  packages5kgCount?: number | null;
+  packages20kgCount?: number | null;
+  packages50kgCount?: number | null;
+  quantityKg?: number | null;
+  expirationDate?: string | null;
   observations?: string | null;
 }
 

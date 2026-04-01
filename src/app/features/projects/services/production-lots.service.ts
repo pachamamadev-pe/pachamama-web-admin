@@ -14,7 +14,7 @@ import {
   GenerateFruitReceptionRecordRequest,
   GeneratePulpProcessingRecordRequest,
   ProductionLotProcessingRecord,
-  SavePackagingRecordRequest,
+  ProductionLotPackagingRecordRequest,
   SaveStorageRecordRequest,
   SaveSecondaryTransportRequest,
   SecondaryReceptionRecordRequest,
@@ -181,8 +181,8 @@ export class ProductionLotsService {
   }
 
   /**
-   * Obtiene el registro de procesamiento para envasado o almacenamiento
-   * GET /{id}/processing-record?processingStage=PACKAGING_RECORD | STORAGE_CONTROL_RECORD
+   * Obtiene el registro de procesamiento para envasado o almacenamiento (single, legado)
+   * GET /{id}/processing-record?processingStage=STORAGE_CONTROL_RECORD
    */
   getProcessingRecord(
     lotId: string,
@@ -196,12 +196,27 @@ export class ProductionLotsService {
   }
 
   /**
-   * Guarda/actualiza el registro de envasado y regenera el PDF
+   * Lista todos los registros de procesamiento por etapa
+   * GET /{id}/processing-records?processingStage=PACKAGING_RECORD | ...
+   */
+  listProcessingRecords(
+    lotId: string,
+    processingStage: ProductionLotDocumentCode,
+  ): Observable<ProductionLotProcessingRecord[]> {
+    const params = new HttpParams().set('processingStage', processingStage);
+    return this.http.get<ProductionLotProcessingRecord[]>(
+      `${this.apiUrl}/${lotId}/processing-records`,
+      { params },
+    );
+  }
+
+  /**
+   * Guarda/actualiza el registro de envasado con lista de filas y regenera el PDF
    * POST /{id}/packaging-record
    */
   savePackagingRecord(
     lotId: string,
-    request: SavePackagingRecordRequest,
+    request: ProductionLotPackagingRecordRequest,
   ): Observable<ProductionLot> {
     return this.http.post<ProductionLot>(`${this.apiUrl}/${lotId}/packaging-record`, request);
   }

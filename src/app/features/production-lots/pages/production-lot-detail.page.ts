@@ -35,7 +35,8 @@ import {
   ProductionLotDocument,
   ProductionLotBatchReception,
   ProductionLotProcessingRecord,
-  SavePackagingRecordRequest,
+  ProductionLotPackagingRecordRequest,
+  ProductionLotPackagingRecordItemRequest,
   SaveStorageRecordRequest,
   GenerateFruitReceptionRecordRequest,
   GeneratePulpProcessingRecordRequest,
@@ -43,6 +44,18 @@ import {
   PRODUCTION_LOT_DOCUMENT_LABELS,
   TRANSFORMATION_STAGE_LABELS,
 } from '../../projects/models/production-lot.model';
+
+// ─── Pending reception row (copia sin id, pendiente de guardar) ─────────────
+
+export interface PendingReceptionRow {
+  /** Clave temporal usada como key de form y de expand-state */
+  tempKey: string;
+  collectionBatchId: string;
+  collectionBatchNumber: string;
+  productName: string;
+  entryDate: string;
+  processingStage: ProductionLotDocumentCode;
+}
 
 // ─── Stage configuration ────────────────────────────────────────────────────
 
@@ -253,8 +266,19 @@ export class ProductionLotDetailPage implements OnInit {
   /** true while PATCH /{id}/status is in flight */
   advancingStage = signal(false);
   private receptionForms: Record<string, FormGroup> = {};
-
+  /** Filas nuevas (copias) pendientes de guardar — no tienen id del servidor */
+  pendingReceptions = signal<PendingReceptionRow[]>([]);
   // ─── Processing record state (envasado / almacenamiento) ───────────────────
+  /** Lista de registros de envasado (PACKAGING_RECORD) */
+  packagingRecords = signal<ProductionLotProcessingRecord[]>([]);
+  /** Filas de envasado pendientes de guardar (sin id del servidor) */
+  pendingPackagingRows = signal<string[]>([]); // array of tempKeys
+  /** ID del item de envasado expandido actualmente */
+  expandedPackagingId = signal<string | null>(null);
+  /** FormGroups indexados por id (existentes) o tempKey (pending) */
+  private packagingForms: Record<string, FormGroup> = {};
+  /** Subscriptions de cálculo automático de quantityKg por formulario */
+  private packagingFormSubs: Record<string, Subscription> = {};
   processingRecord = signal<ProductionLotProcessingRecord | null>(null);
   loadingProcessingRecord = signal(false);
   savingProcessingRecord = signal(false);
@@ -426,6 +450,7 @@ export class ProductionLotDetailPage implements OnInit {
       const lot = this.lot();
       const docCode = this.receptionDocumentCode();
       this.expandedReceptionId.set(null);
+      this.pendingReceptions.set([]);
       if (lot && docCode) {
         this.loadReceptions(lot.id, docCode);
       } else {
@@ -438,6 +463,13 @@ export class ProductionLotDetailPage implements OnInit {
     effect(() => {
       const lot = this.lot();
       const stageCode = this.processingRecordStageCode();
+      // Reset packaging list state on every stage change
+      this.packagingRecords.set([]);
+      this.pendingPackagingRows.set([]);
+      this.expandedPackagingId.set(null);
+      Object.values(this.packagingFormSubs).forEach((s) => s.unsubscribe());
+      this.packagingFormSubs = {};
+      this.packagingForms = {};
       if (lot && stageCode) {
         this.loadProcessingRecord(lot.id, stageCode);
       } else {
@@ -508,88 +540,204 @@ export class ProductionLotDetailPage implements OnInit {
   loadProcessingRecord(lotId: string, stageCode: ProductionLotDocumentCode): void {
     this.loadingProcessingRecord.set(true);
     this.processingRecord.set(null);
-    this.lotsService.getProcessingRecord(lotId, stageCode).subscribe({
-      next: (record) => {
-        this.processingRecord.set(record);
-        this.initProcessingForm(record);
-        this.loadingProcessingRecord.set(false);
-      },
-      error: () => {
-        // 404 means no record yet — init empty form
-        this.processingRecord.set(null);
-        this.initProcessingForm(null);
-        this.loadingProcessingRecord.set(false);
-      },
-    });
-  }
 
-  private initProcessingForm(record: ProductionLotProcessingRecord | null): void {
-    const now = new Date();
-    const todayISO = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const nowTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    const stage = this.processingRecordStageCode();
-
-    if (stage === 'PACKAGING_RECORD') {
-      this.processingForm = this.fb.group({
-        inputs: [record?.inputs ?? ''],
-        startDate: [record?.startDate ?? todayISO],
-        startTime: [record?.startTime ? record.startTime.substring(0, 5) : nowTime],
-        productionEndDatetime: [this.toDatetimeLocalFull(record?.productionEndDatetime)],
-        brixDegrees: [record?.brixDegrees ?? null],
-        ph: [record?.ph ?? null],
-        packages1kgCount: [record?.packages1kgCount ?? null],
-        packages5kgCount: [record?.packages5kgCount ?? null],
-        packages20kgCount: [record?.packages20kgCount ?? null],
-        packages50kgCount: [record?.packages50kgCount ?? null],
-        quantityKg: [record?.quantityKg ?? null],
-        observations: [record?.observations ?? ''],
+    if (stageCode === 'PACKAGING_RECORD') {
+      // v2: list endpoint returns an array
+      this.lotsService.listProcessingRecords(lotId, stageCode).subscribe({
+        next: (records) => {
+          this.packagingRecords.set(records);
+          this.packagingForms = {};
+          for (const r of records) {
+            this.packagingForms[r.id] = this.buildPackagingFormGroup(r);
+            this.setupPackagingCalcSub(r.id, this.packagingForms[r.id]);
+          }
+          this.loadingProcessingRecord.set(false);
+        },
+        error: () => {
+          this.packagingRecords.set([]);
+          this.packagingForms = {};
+          this.loadingProcessingRecord.set(false);
+        },
       });
     } else {
-      this.balanceSub?.unsubscribe();
-      const initialBalance = (record?.unitsIn ?? 0) - (record?.unitsOut ?? 0);
-      this.unitsBalanceDisplay.set(initialBalance);
-      this.processingForm = this.fb.group({
-        expirationDate: [record?.expirationDate ?? ''],
-        storageFormat: [record?.storageFormat ?? ''],
-        unitsIn: [record?.unitsIn ?? null],
-        unitsOut: [record?.unitsOut ?? null],
-        observations: [record?.observations ?? ''],
-      });
-      this.balanceSub = this.processingForm.valueChanges.subscribe((vals) => {
-        this.unitsBalanceDisplay.set((vals['unitsIn'] ?? 0) - (vals['unitsOut'] ?? 0));
+      this.lotsService.getProcessingRecord(lotId, stageCode).subscribe({
+        next: (record) => {
+          this.processingRecord.set(record);
+          this.initProcessingForm(record);
+          this.loadingProcessingRecord.set(false);
+        },
+        error: () => {
+          // 404 means no record yet — init empty form
+          this.processingRecord.set(null);
+          this.initProcessingForm(null);
+          this.loadingProcessingRecord.set(false);
+        },
       });
     }
   }
 
+  private initProcessingForm(record: ProductionLotProcessingRecord | null): void {
+    // Only used for STORAGE_CONTROL_RECORD now — PACKAGING_RECORD uses packagingForms
+    this.balanceSub?.unsubscribe();
+    const initialBalance = (record?.unitsIn ?? 0) - (record?.unitsOut ?? 0);
+    this.unitsBalanceDisplay.set(initialBalance);
+    this.processingForm = this.fb.group({
+      expirationDate: [record?.expirationDate ?? ''],
+      storageFormat: [record?.storageFormat ?? ''],
+      unitsIn: [record?.unitsIn ?? null],
+      unitsOut: [record?.unitsOut ?? null],
+      observations: [record?.observations ?? ''],
+    });
+    this.balanceSub = this.processingForm.valueChanges.subscribe((vals) => {
+      this.unitsBalanceDisplay.set((vals['unitsIn'] ?? 0) - (vals['unitsOut'] ?? 0));
+    });
+  }
+
+  /** Construye un FormGroup para una fila de envasado (existente o vacía) */
+  private buildPackagingFormGroup(record?: ProductionLotProcessingRecord | null): FormGroup {
+    const now = new Date();
+    const todayISO = now.toISOString().split('T')[0];
+    const nowTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const initialQty = this.calcPackagingQuantityKg(
+      record?.packages1kgCount ?? null,
+      record?.packages5kgCount ?? null,
+      record?.packages20kgCount ?? null,
+      record?.packages50kgCount ?? null,
+    );
+    const group = this.fb.group({
+      inputs: [record?.inputs ?? ''],
+      startDate: [record?.startDate ?? todayISO],
+      startTime: [record?.startTime ? record.startTime.substring(0, 5) : nowTime],
+      productionEndDatetime: [this.toDatetimeLocalFull(record?.productionEndDatetime)],
+      brixDegrees: [record?.brixDegrees ?? null],
+      ph: [record?.ph ?? null],
+      packages1kgCount: [record?.packages1kgCount ?? null],
+      packages5kgCount: [record?.packages5kgCount ?? null],
+      packages20kgCount: [record?.packages20kgCount ?? null],
+      packages50kgCount: [record?.packages50kgCount ?? null],
+      quantityKg: [{ value: initialQty, disabled: true }],
+      expirationDate: [record?.expirationDate ?? ''],
+      observations: [record?.observations ?? ''],
+    });
+    return group;
+  }
+
+  /** Calcula la cantidad total en kg según los conteos de paquetes */
+  private calcPackagingQuantityKg(
+    p1: number | null,
+    p5: number | null,
+    p20: number | null,
+    p50: number | null,
+  ): number {
+    return (p1 ?? 0) * 1 + (p5 ?? 0) * 5 + (p20 ?? 0) * 20 + (p50 ?? 0) * 50;
+  }
+
+  /** Suscribe el cálculo automático de quantityKg a cambios en los campos de paquetes */
+  private setupPackagingCalcSub(key: string, form: FormGroup): void {
+    const sub = form.valueChanges.subscribe(() => {
+      const raw = form.getRawValue();
+      const qty = this.calcPackagingQuantityKg(
+        raw['packages1kgCount'] as number | null,
+        raw['packages5kgCount'] as number | null,
+        raw['packages20kgCount'] as number | null,
+        raw['packages50kgCount'] as number | null,
+      );
+      form.get('quantityKg')?.setValue(qty, { emitEvent: false });
+    });
+    this.packagingFormSubs[key] = sub;
+  }
+
+  /** Adds a blank packaging row (pending, no server id) */
+  addPackagingRow(): void {
+    const tempKey = `pkg-new-${Date.now()}`;
+    this.packagingForms[tempKey] = this.buildPackagingFormGroup();
+    this.setupPackagingCalcSub(tempKey, this.packagingForms[tempKey]);
+    this.pendingPackagingRows.update((keys) => [...keys, tempKey]);
+    this.expandedPackagingId.set(tempKey);
+  }
+
+  /** Removes a pending packaging row (not yet saved) */
+  removePendingPackagingRow(tempKey: string): void {
+    this.packagingFormSubs[tempKey]?.unsubscribe();
+    delete this.packagingFormSubs[tempKey];
+    delete this.packagingForms[tempKey];
+    this.pendingPackagingRows.update((keys) => keys.filter((k) => k !== tempKey));
+    if (this.expandedPackagingId() === tempKey) {
+      this.expandedPackagingId.set(null);
+    }
+  }
+
+  /** Returns the FormGroup for a packaging row (existing or pending) */
+  getPackagingForm(key: string): FormGroup {
+    return this.packagingForms[key];
+  }
+
+  /** Toggle expand/collapse for a packaging row */
+  togglePackagingExpand(key: string): void {
+    this.expandedPackagingId.set(this.expandedPackagingId() === key ? null : key);
+  }
+
   saveProcessingRecord(): void {
     const lot = this.lot();
-    if (!lot || !this.processingForm) return;
+    if (!lot) return;
     const stage = this.processingRecordStageCode();
     if (!stage) return;
 
     this.savingProcessingRecord.set(true);
-    const raw = this.processingForm.getRawValue();
 
     if (stage === 'PACKAGING_RECORD') {
-      const request: SavePackagingRecordRequest = {
-        productionLotId: lot.id,
-        processingStage: 'PACKAGING_RECORD',
-        inputs: (raw['inputs'] as string) || null,
-        startDate: (raw['startDate'] as string) || null,
-        startTime: (raw['startTime'] as string) || null,
-        productionEndDatetime: this.fromDatetimeLocalFull(raw['productionEndDatetime'] as string),
-        brixDegrees: (raw['brixDegrees'] as number) ?? null,
-        ph: (raw['ph'] as number) ?? null,
-        packages1kgCount: (raw['packages1kgCount'] as number) ?? null,
-        packages5kgCount: (raw['packages5kgCount'] as number) ?? null,
-        packages20kgCount: (raw['packages20kgCount'] as number) ?? null,
-        packages50kgCount: (raw['packages50kgCount'] as number) ?? null,
-        quantityKg: (raw['quantityKg'] as number) ?? null,
-        observations: (raw['observations'] as string) || null,
+      // Build items from existing records + pending rows
+      const existingItems: ProductionLotPackagingRecordItemRequest[] = this.packagingRecords().map(
+        (r) => {
+          const raw = this.packagingForms[r.id]?.getRawValue() ?? {};
+          return {
+            id: r.id,
+            inputs: (raw['inputs'] as string) || null,
+            startDate: (raw['startDate'] as string) || null,
+            startTime: (raw['startTime'] as string) || null,
+            productionEndDatetime: this.fromDatetimeLocalFull(
+              raw['productionEndDatetime'] as string,
+            ),
+            brixDegrees: (raw['brixDegrees'] as number) ?? null,
+            ph: (raw['ph'] as number) ?? null,
+            packages1kgCount: (raw['packages1kgCount'] as number) ?? null,
+            packages5kgCount: (raw['packages5kgCount'] as number) ?? null,
+            packages20kgCount: (raw['packages20kgCount'] as number) ?? null,
+            packages50kgCount: (raw['packages50kgCount'] as number) ?? null,
+            quantityKg: (raw['quantityKg'] as number) ?? null,
+            expirationDate: (raw['expirationDate'] as string) || null,
+            observations: (raw['observations'] as string) || null,
+          };
+        },
+      );
+      const pendingItems: ProductionLotPackagingRecordItemRequest[] =
+        this.pendingPackagingRows().map((tempKey) => {
+          const raw = this.packagingForms[tempKey]?.getRawValue() ?? {};
+          return {
+            inputs: (raw['inputs'] as string) || null,
+            startDate: (raw['startDate'] as string) || null,
+            startTime: (raw['startTime'] as string) || null,
+            productionEndDatetime: this.fromDatetimeLocalFull(
+              raw['productionEndDatetime'] as string,
+            ),
+            brixDegrees: (raw['brixDegrees'] as number) ?? null,
+            ph: (raw['ph'] as number) ?? null,
+            packages1kgCount: (raw['packages1kgCount'] as number) ?? null,
+            packages5kgCount: (raw['packages5kgCount'] as number) ?? null,
+            packages20kgCount: (raw['packages20kgCount'] as number) ?? null,
+            packages50kgCount: (raw['packages50kgCount'] as number) ?? null,
+            quantityKg: (raw['quantityKg'] as number) ?? null,
+            expirationDate: (raw['expirationDate'] as string) || null,
+            observations: (raw['observations'] as string) || null,
+          };
+        });
+      const request: ProductionLotPackagingRecordRequest = {
+        items: [...existingItems, ...pendingItems],
       };
       this.lotsService.savePackagingRecord(lot.id, request).subscribe({
         next: () => {
           this.pdfUrl.set(null);
+          this.pendingPackagingRows.set([]);
           this.reloadLot();
           this.savingProcessingRecord.set(false);
           this.notification.success('Registro de envasado guardado correctamente');
@@ -600,6 +748,7 @@ export class ProductionLotDetailPage implements OnInit {
         },
       });
     } else {
+      const raw = this.processingForm.getRawValue();
       const request: SaveStorageRecordRequest = {
         productionLotId: lot.id,
         processingStage: 'STORAGE_CONTROL_RECORD',
@@ -664,6 +813,44 @@ export class ProductionLotDetailPage implements OnInit {
    */
   saveReception(reception: ProductionLotBatchReception): void {
     this.generateDocument(reception.id);
+  }
+
+  /**
+   * Añade una copia editable de una recepción existente a la lista de pendientes.
+   * La copia no tiene ID — se creará como nuevo registro en el backend al generar.
+   */
+  addReceptionCopy(r: ProductionLotBatchReception): void {
+    const tempKey = `pending-${Date.now()}`;
+    const row: PendingReceptionRow = {
+      tempKey,
+      collectionBatchId: r.collectionBatchId,
+      collectionBatchNumber: r.collectionBatchNumber,
+      productName: r.productName,
+      entryDate: r.entryDate,
+      processingStage: r.processingStage,
+    };
+    this.pendingReceptions.update((list) => [...list, row]);
+    this.receptionForms[tempKey] = this.fb.group({
+      jabasRipeningCount: [null],
+      ripeningTub: [''],
+      ripeningStartTime: [''],
+      observations: [''],
+    });
+    this.expandedReceptionId.set(tempKey);
+  }
+
+  /** Elimina una fila pendiente (sin guardar) */
+  removePendingReception(tempKey: string): void {
+    this.pendingReceptions.update((list) => list.filter((r) => r.tempKey !== tempKey));
+    delete this.receptionForms[tempKey];
+    if (this.expandedReceptionId() === tempKey) {
+      this.expandedReceptionId.set(null);
+    }
+  }
+
+  /** Dispara la generación del documento incluyendo todas las filas pendientes */
+  savePendingReception(): void {
+    this.generateDocument();
   }
 
   private saveReceptionData(reception: ProductionLotBatchReception): void {
@@ -758,10 +945,12 @@ export class ProductionLotDetailPage implements OnInit {
     if (!lot) return;
     this.generatingDocument.set(true);
 
-    const receptions = this.receptions().map((r) => {
+    // Existentes: pasan su id para upsert; se leen del form si es la fila editada
+    const existingMapped = this.receptions().map((r) => {
       const isEdited = !!editedReceptionId && r.id === editedReceptionId;
       const raw = isEdited ? (this.receptionForms[r.id]?.getRawValue() ?? {}) : null;
       return {
+        id: r.id,
         collectionBatchId: r.collectionBatchId,
         weightKg: r.weightKg ?? null,
         sacksCount: r.sacksCount ?? null,
@@ -778,12 +967,30 @@ export class ProductionLotDetailPage implements OnInit {
       };
     });
 
+    // Pendientes: sin id (INSERT), siempre se leen del form
+    const pendingMapped = this.pendingReceptions().map((p) => {
+      const raw = this.receptionForms[p.tempKey]?.getRawValue() ?? {};
+      return {
+        collectionBatchId: p.collectionBatchId,
+        weightKg: null,
+        sacksCount: null,
+        jabasCount: null,
+        observations: (raw['observations'] as string) || null,
+        processingStage: p.processingStage,
+        jabasRipeningCount: (raw['jabasRipeningCount'] as number) ?? null,
+        ripeningTub: (raw['ripeningTub'] as string) || null,
+        ripeningStartTime: this.fromDatetimeLocal(raw['ripeningStartTime'] as string),
+      };
+    });
+
+    const receptions = [...existingMapped, ...pendingMapped];
     const request: GeneratePulpProcessingRecordRequest = { receptions };
     this.lotsService.generatePulpProcessingRecord(lot.id, request).subscribe({
       next: () => {
         this.pdfUrl.set(null);
         this.reloadLot();
         this.expandedReceptionId.set(null);
+        this.pendingReceptions.set([]);
         this.generatingDocument.set(false);
         this.notification.success('Registro de procesamiento generado correctamente');
       },

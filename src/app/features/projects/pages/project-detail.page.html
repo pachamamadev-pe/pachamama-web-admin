@@ -53,22 +53,26 @@
             <mat-icon>arrow_back</mat-icon>
           </button>
 
-          <!-- Botón: Avanzar a Siguiente Etapa -->
-          <div class="stage-action-button">
-            <button
-              *appPmHasPermission="PERMISSIONS.PROJECT.NEXT_STAGE"
-              mat-raised-button
-              class="btn-primary btn-lg"
-              [disabled]="!canAdvanceToNextStage()"
-              (click)="advanceToNextStage()"
-              [matTooltip]="stageAdvanceBlockerMessage()"
-              [matTooltipDisabled]="canAdvanceToNextStage()"
-              matTooltipClass="stage-blocker-tooltip"
-            >
-              <mat-icon>arrow_forward</mat-icon>
-              <span>{{ nextStage() ? 'Avanzar a ' + nextStage()!.name : 'Siguiente Etapa' }}</span>
-            </button>
-          </div>
+          <!-- Botón: Avanzar a Siguiente Etapa (oculto en etapa final) -->
+          @if (project()?.stage !== 'primary_transformation') {
+            <div class="stage-action-button">
+              <button
+                *appPmHasPermission="PERMISSIONS.PROJECT.NEXT_STAGE"
+                mat-raised-button
+                class="btn-primary btn-lg"
+                [disabled]="!canAdvanceToNextStage()"
+                (click)="advanceToNextStage()"
+                [matTooltip]="stageAdvanceBlockerMessage()"
+                [matTooltipDisabled]="canAdvanceToNextStage()"
+                matTooltipClass="stage-blocker-tooltip"
+              >
+                <mat-icon>arrow_forward</mat-icon>
+                <span>{{
+                  nextStage() ? 'Avanzar a ' + nextStage()!.name : 'Siguiente Etapa'
+                }}</span>
+              </button>
+            </div>
+          }
 
           <div class="header-content-wrapper">
             <!-- Project Info -->

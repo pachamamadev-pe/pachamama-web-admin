@@ -308,9 +308,9 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     const stageIndex = this.stages.findIndex((s) => s.key === currentStage);
     if (stageIndex === -1) return 0;
 
-    // Calcular porcentaje: (etapa actual / total etapas) * 100
+    // (índice + 1) para que la última etapa llegue al 100%
     const totalStages = this.stages.length;
-    const progress = Math.round((stageIndex / totalStages) * 100);
+    const progress = Math.round(((stageIndex + 1) / totalStages) * 100);
     return progress;
   });
 

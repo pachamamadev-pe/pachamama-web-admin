@@ -309,7 +309,9 @@
                     } @else {
                       <h3>Pulpeado</h3>
                     }
-                    <p>{{ receptions().length }} lote(s) ingresado(s)</p>
+                    <p>
+                      {{ receptions().length + pendingReceptions().length }} lote(s) ingresado(s)
+                    </p>
                   </div>
                 </div>
                 @if (receptions().length > 0 && !loadingReceptions()) {
@@ -436,6 +438,24 @@
                         </div>
                       </button>
 
+                      <!-- ── Agregar fila duplicada (solo etapas pulpa) ── -->
+                      @if (
+                        receptionDocumentCode() === 'PULP_PROCESSING_RECORD' &&
+                        isViewingCurrentStage() &&
+                        !lot()?.usedInSecondaryLot
+                      ) {
+                        <button
+                          type="button"
+                          class="reception-copy-btn"
+                          (click)="addReceptionCopy(r)"
+                          [disabled]="generatingDocument()"
+                          matTooltip="Agregar una nueva fila para este lote de acopio"
+                        >
+                          <mat-icon>add_circle_outline</mat-icon>
+                          <span>Agregar fila para este lote</span>
+                        </button>
+                      }
+
                       <!-- ── Expanded edit form ─────────────────────── -->
                       @if (expandedReceptionId() === r.id) {
                         <div class="reception-form" [formGroup]="getReceptionForm(r.id)">
@@ -558,6 +578,129 @@
                                   } @else {
                                     Guardar y generar registro
                                   }
+                                </ng-container>
+                              }
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <!-- ── Filas pendientes (copias nuevas sin id del servidor) ── -->
+                  @for (p of pendingReceptions(); track p.tempKey) {
+                    <div
+                      [class]="
+                        'reception-item reception-item--pending' +
+                        (expandedReceptionId() === p.tempKey ? ' reception-item--open' : '')
+                      "
+                    >
+                      <!-- Header de fila pendiente -->
+                      <div class="reception-pending-header">
+                        <button
+                          class="reception-row"
+                          type="button"
+                          (click)="toggleReception(p.tempKey)"
+                        >
+                          <div class="reception-row-top">
+                            <div class="reception-seq reception-seq--new">
+                              <mat-icon>add</mat-icon>
+                            </div>
+                            <div class="reception-identity">
+                              <span class="rcp-batch">{{ p.collectionBatchNumber }}</span>
+                              <span class="rcp-product">{{ p.productName }}</span>
+                            </div>
+                            <span class="rcp-new-badge">Nueva fila</span>
+                            <div class="reception-edit-hint">
+                              @if (expandedReceptionId() === p.tempKey) {
+                                <mat-icon class="hint-icon hint-icon--open"
+                                  >keyboard_arrow_up</mat-icon
+                                >
+                              } @else {
+                                <mat-icon class="hint-icon">edit</mat-icon>
+                                <span class="hint-label">Editar</span>
+                              }
+                            </div>
+                          </div>
+                        </button>
+                        <!-- Botón eliminar fila (siempre visible) -->
+                        <button
+                          type="button"
+                          class="reception-pending-delete"
+                          (click)="removePendingReception(p.tempKey)"
+                          matTooltip="Eliminar esta fila"
+                        >
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+
+                      <!-- Formulario pulpa expandible -->
+                      @if (expandedReceptionId() === p.tempKey) {
+                        <div class="reception-form" [formGroup]="getReceptionForm(p.tempKey)">
+                          <div class="reception-form-row">
+                            <mat-form-field appearance="outline" class="rcp-field">
+                              <mat-label>Jabas en maduración</mat-label>
+                              <input
+                                matInput
+                                type="number"
+                                formControlName="jabasRipeningCount"
+                                step="1"
+                                min="0"
+                                placeholder="0"
+                              />
+                              <mat-icon matPrefix>grid_view</mat-icon>
+                              <span matSuffix class="field-suffix">uds</span>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="rcp-field">
+                              <mat-label>Tina de maduración</mat-label>
+                              <input
+                                matInput
+                                type="text"
+                                formControlName="ripeningTub"
+                                placeholder="Ej. Tina-01"
+                              />
+                            </mat-form-field>
+                          </div>
+                          <mat-form-field appearance="outline" class="rcp-field rcp-field--full">
+                            <mat-label>Hora de inicio de maduración</mat-label>
+                            <input matInput type="time" formControlName="ripeningStartTime" />
+                            <mat-icon matPrefix>schedule</mat-icon>
+                          </mat-form-field>
+                          <mat-form-field appearance="outline" class="rcp-field rcp-field--full">
+                            <mat-label>Observaciones</mat-label>
+                            <textarea
+                              matInput
+                              formControlName="observations"
+                              rows="2"
+                              placeholder="Condiciones de maduración, temperatura, incidencias, etc."
+                            ></textarea>
+                            <mat-icon matPrefix>notes</mat-icon>
+                          </mat-form-field>
+                          <div class="reception-form-actions">
+                            <button
+                              mat-button
+                              type="button"
+                              (click)="removePendingReception(p.tempKey)"
+                            >
+                              <mat-icon>delete_outline</mat-icon>
+                              Eliminar fila
+                            </button>
+                            <button
+                              mat-raised-button
+                              class="btn-save-reception"
+                              type="button"
+                              [disabled]="generatingDocument()"
+                              (click)="savePendingReception()"
+                            >
+                              @if (generatingDocument()) {
+                                <ng-container>
+                                  <mat-spinner diameter="16" />
+                                  Generando...
+                                </ng-container>
+                              } @else {
+                                <ng-container>
+                                  <mat-icon>auto_awesome</mat-icon>
+                                  Guardar y generar registro
                                 </ng-container>
                               }
                             </button>

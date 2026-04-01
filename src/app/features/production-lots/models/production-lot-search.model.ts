@@ -59,6 +59,17 @@ export interface ProductionLotRecord {
   createdByName: string | null;
   /** Coordenadas GPS del punto de transformación */
   location?: { latitude: number; longitude: number } | null;
+  // ─── Output fields (envasado / almacenamiento stages only) ──────────────────────
+  /** Paquetes de 1kg producidos */
+  totalPackages1kgCount?: number | null;
+  /** Paquetes de 5kg producidos */
+  totalPackages5kgCount?: number | null;
+  /** Paquetes de 20kg producidos */
+  totalPackages20kgCount?: number | null;
+  /** Paquetes de 50kg producidos */
+  totalPackages50kgCount?: number | null;
+  /** Total de kg procesados (all packaging rows combined) */
+  totalProcessedQuantityKg?: number | null;
 }
 
 /**

@@ -692,3 +692,183 @@
   background: #fff;
   border-radius: 0 0 0.75rem 0.75rem;
 }
+
+/* ── Input block: Entrada al lote ─────────────────────────────── */
+
+.lot-input {
+  margin: 0 0.75rem 0;
+  border-radius: 0.5rem 0.5rem 0 0;
+  overflow: hidden;
+  border: 1px solid #fed7aa;
+  border-bottom: none;
+  background: #fff7ed;
+}
+
+.lot-input-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.275rem 0.625rem;
+  background: #ffedd5;
+  border-bottom: 1px solid #fed7aa;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    color: #ea580c;
+  }
+
+  span {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #c2410c;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
+/* Stat items ámbar: dentro del bloque entrada */
+.lot-stat-item--input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+}
+
+.lot-stat-icon--input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  background: #fed7aa;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #c2410c;
+  }
+}
+
+/* Input y output son siempre hermanos: se unen visualmente */
+.lot-input + .lot-output {
+  margin-top: 0;
+  border-radius: 0 0 0.5rem 0.5rem;
+  border-top: none;
+}
+/* ── Output block: Resultado de envasado ──────────────────────── */
+
+.lot-output {
+  margin: 0 0.75rem 0.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+}
+
+.lot-output-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.275rem 0.625rem;
+  background: #dcfce7;
+  border-bottom: 1px solid #bbf7d0;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    color: #16a34a;
+  }
+
+  span {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #15803d;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
+.lot-output-body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+}
+
+.lot-output-pending {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  color: #86efac;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+  }
+
+  span {
+    font-size: 0.75rem;
+    font-style: italic;
+    opacity: 0.8;
+  }
+}
+
+.lot-output-main {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.lot-output-kg-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.lot-output-kg {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #15803d;
+  line-height: 1.2;
+}
+
+.lot-output-unit {
+  font-size: 0.6875rem;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.lot-pkg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.lot-pkg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.125rem 0.4375rem;
+  border-radius: 999px;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  font-size: 0.6875rem;
+  color: #166534;
+  white-space: nowrap;
+
+  strong {
+    font-weight: 700;
+  }
+}

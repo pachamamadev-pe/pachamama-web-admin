@@ -253,28 +253,95 @@
                       <span class="lot-product-name">{{ lot.derivedCompanyName ?? '—' }}</span>
                     </div>
 
-                    <!-- Estadísticas: peso + nº de acopios -->
-                    <div class="lot-stats">
-                      <div class="lot-stat-item lot-stat-item--primary">
-                        <div class="lot-stat-icon lot-stat-icon--primary">
-                          <mat-icon>scale</mat-icon>
+                    <!-- ── Entrada siempre visible ── -->
+                    <div class="lot-input">
+                      <div class="lot-input-divider">
+                        <mat-icon>arrow_upward</mat-icon>
+                        <span>Entrada</span>
+                      </div>
+                      <div class="lot-stats">
+                        <div class="lot-stat-item lot-stat-item--input">
+                          <div class="lot-stat-icon lot-stat-icon--input">
+                            <mat-icon>scale</mat-icon>
+                          </div>
+                          <div class="lot-stat-info">
+                            <span class="lot-stat-value">
+                              {{ lot.quantity !== null ? (lot.quantity | number: '1.0-2') : '—' }}
+                            </span>
+                            <span class="lot-stat-label">{{ lot.unit ?? 'kg' }}</span>
+                          </div>
                         </div>
-                        <div class="lot-stat-info">
-                          <span class="lot-stat-value">
-                            {{ lot.quantity !== null ? (lot.quantity | number: '1.0-2') : '—' }}
-                          </span>
-                          <span class="lot-stat-label">{{ lot.unit ?? 'kg' }}</span>
+                        <div class="lot-stat-item lot-stat-item--input">
+                          <div class="lot-stat-icon lot-stat-icon--input">
+                            <mat-icon>inventory_2</mat-icon>
+                          </div>
+                          <div class="lot-stat-info">
+                            <span class="lot-stat-value">{{ lot.sourceBatchesCount ?? 0 }}</span>
+                            <span class="lot-stat-label">Acopios origen</span>
+                          </div>
                         </div>
                       </div>
-                      <div class="lot-stat-item lot-stat-item--primary">
-                        <div class="lot-stat-icon lot-stat-icon--primary">
-                          <mat-icon>inventory_2</mat-icon>
-                        </div>
-                        <div class="lot-stat-info">
-                          <span class="lot-stat-value">{{ lot.sourceBatchesCount ?? 0 }}</span>
-                          <span class="lot-stat-label">Acopios origen</span>
-                        </div>
+                    </div>
+
+                    <!-- ── Resultado siempre visible ── -->
+                    <div class="lot-output">
+                      <div class="lot-output-divider">
+                        <mat-icon>arrow_downward</mat-icon>
+                        <span>Resultado</span>
                       </div>
+                      @if (
+                        (lot.status === 'envasado' || lot.status === 'almacenamiento') &&
+                        (lot.totalProcessedQuantityKg ?? 0) > 0
+                      ) {
+                        <div class="lot-output-body">
+                          <div class="lot-output-main">
+                            <div class="lot-output-kg-block">
+                              <span class="lot-output-kg">{{
+                                lot.totalProcessedQuantityKg | number: '1.0-2'
+                              }}</span>
+                              <span class="lot-output-unit">kg procesados</span>
+                            </div>
+                          </div>
+                          @if (
+                            (lot.totalPackages1kgCount ?? 0) > 0 ||
+                            (lot.totalPackages5kgCount ?? 0) > 0 ||
+                            (lot.totalPackages20kgCount ?? 0) > 0 ||
+                            (lot.totalPackages50kgCount ?? 0) > 0
+                          ) {
+                            <div class="lot-pkg-chips">
+                              @if ((lot.totalPackages1kgCount ?? 0) > 0) {
+                                <span class="lot-pkg-chip">
+                                  {{ lot.totalPackages1kgCount }}&nbsp;×&nbsp;<strong>1 kg</strong>
+                                </span>
+                              }
+                              @if ((lot.totalPackages5kgCount ?? 0) > 0) {
+                                <span class="lot-pkg-chip">
+                                  {{ lot.totalPackages5kgCount }}&nbsp;×&nbsp;<strong>5 kg</strong>
+                                </span>
+                              }
+                              @if ((lot.totalPackages20kgCount ?? 0) > 0) {
+                                <span class="lot-pkg-chip">
+                                  {{ lot.totalPackages20kgCount }}&nbsp;×&nbsp;<strong
+                                    >20 kg</strong
+                                  >
+                                </span>
+                              }
+                              @if ((lot.totalPackages50kgCount ?? 0) > 0) {
+                                <span class="lot-pkg-chip">
+                                  {{ lot.totalPackages50kgCount }}&nbsp;×&nbsp;<strong
+                                    >50 kg</strong
+                                  >
+                                </span>
+                              }
+                            </div>
+                          }
+                        </div>
+                      } @else {
+                        <div class="lot-output-pending">
+                          <mat-icon>hourglass_empty</mat-icon>
+                          <span>Transformación aún no completada</span>
+                        </div>
+                      }
                     </div>
 
                     <!-- Footer: fecha + creador -->
