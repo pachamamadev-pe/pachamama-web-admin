@@ -1,11 +1,4 @@
-import {
-  Component,
-  inject,
-  signal,
-  computed,
-  ChangeDetectionStrategy,
-  OnInit,
-} from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,6 +17,14 @@ import {
 export interface DocumentUploadDialogData {
   projectId: string;
   requirements: DocumentRequirements;
+}
+
+/** Image MIME types that allow camera capture */
+const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png'] as const;
+
+/** Conservative smartphone detection via user-agent */
+function detectSmartphone(): boolean {
+  return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
 }
 
 /**
@@ -45,15 +46,17 @@ export interface DocumentUploadDialogData {
   styleUrl: './document-upload-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DocumentUploadDialogComponent implements OnInit {
+export class DocumentUploadDialogComponent {
   private dialogRef = inject(MatDialogRef<DocumentUploadDialogComponent>);
   private documentsService = inject(ProjectDocumentsService);
   private notification = inject(NotificationService);
   data = inject<DocumentUploadDialogData>(MAT_DIALOG_DATA);
 
+  /** True when running on a smartphone (detected once on load) */
+  isSmartphone = signal<boolean>(detectSmartphone());
+
   // Estado de subida
   uploadingFiles = signal<Set<string>>(new Set());
-  uploadProgress = signal<Map<string, number>>(new Map());
 
   // Documentos obligatorios pendientes
   requiredDocuments = computed(() => {
@@ -70,17 +73,27 @@ export class DocumentUploadDialogComponent implements OnInit {
     return this.data.requirements.documentTypes.filter((doc) => !doc.isRequired);
   });
 
-  ngOnInit(): void {
-    console.log('Requirements:', this.data.requirements);
+  /**
+   * Returns true if the document type accepts JPG or PNG (enables camera capture).
+   */
+  supportsImageCapture(documentType: DocumentTypeRequirement): boolean {
+    return IMAGE_MIME_TYPES.some((mime) => documentType.allowedMimeTypes.includes(mime));
   }
 
   /**
-   * Dispara el input de archivo para un tipo de documento
+   * Opens a file picker for the given document type.
+   * useCamera=true adds capture="environment" and restricts to images (smartphone only).
+   * useCamera=false uses all allowed MIME types without capture.
    */
-  selectFile(documentType: DocumentTypeRequirement): void {
+  openFilePicker(documentType: DocumentTypeRequirement, useCamera: boolean): void {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = documentType.allowedMimeTypes.join(',');
+    if (useCamera) {
+      input.accept = IMAGE_MIME_TYPES.join(',');
+      input.setAttribute('capture', 'environment');
+    } else {
+      input.accept = documentType.allowedMimeTypes.join(',');
+    }
     input.onchange = (event: Event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
       if (file) {
@@ -94,27 +107,11 @@ export class DocumentUploadDialogComponent implements OnInit {
    * Sube un archivo
    */
   private uploadFile(documentType: DocumentTypeRequirement, file: File): void {
-    // Validar tamaño
-    const maxSizeBytes = documentType.maxFileSizeMb * 1024 * 1024;
-    if (file.size > maxSizeBytes) {
-      this.notification.error(
-        `El archivo excede el tamaño máximo de ${documentType.maxFileSizeMb}MB`,
-      );
-      return;
-    }
-
-    // Validar MIME type
-    if (!documentType.allowedMimeTypes.includes(file.type)) {
-      this.notification.error(
-        `Tipo de archivo no permitido. Formatos aceptados: ${this.getFormatsLabel(documentType.allowedMimeTypes)}`,
-      );
-      return;
-    }
+    if (!this.validateFileForUpload(documentType, file)) return;
 
     // Iniciar subida
     const docTypeId = documentType.documentTypeId!;
-    this.uploadingFiles().add(docTypeId);
-    this.uploadProgress().set(docTypeId, 0);
+    this.uploadingFiles.update((set) => new Set(set).add(docTypeId));
 
     const request: UploadDocumentRequest = {
       documentTypeId: docTypeId,
@@ -123,8 +120,11 @@ export class DocumentUploadDialogComponent implements OnInit {
 
     this.documentsService.uploadDocument(this.data.projectId, request, file).subscribe({
       next: (document) => {
-        this.uploadingFiles().delete(docTypeId);
-        this.uploadProgress().delete(docTypeId);
+        this.uploadingFiles.update((set) => {
+          const next = new Set(set);
+          next.delete(docTypeId);
+          return next;
+        });
 
         const statusLabel = document.validationStatus === 'approved' ? 'aprobado' : 'subido';
         this.notification.success(`Documento ${statusLabel} correctamente`);
@@ -134,11 +134,31 @@ export class DocumentUploadDialogComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error uploading document:', error);
-        this.uploadingFiles().delete(docTypeId);
-        this.uploadProgress().delete(docTypeId);
-        // Error manejado por interceptor
+        this.uploadingFiles.update((set) => {
+          const next = new Set(set);
+          next.delete(docTypeId);
+          return next;
+        });
       },
     });
+  }
+
+  /** Returns false and emits a notification if the file fails size or MIME validation. */
+  private validateFileForUpload(documentType: DocumentTypeRequirement, file: File): boolean {
+    const maxSizeBytes = documentType.maxFileSizeMb * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      this.notification.error(
+        `El archivo excede el tamaño máximo de ${documentType.maxFileSizeMb}MB`,
+      );
+      return false;
+    }
+    if (!documentType.allowedMimeTypes.includes(file.type)) {
+      this.notification.error(
+        `Tipo de archivo no permitido. Formatos aceptados: ${this.getFormatsLabel(documentType.allowedMimeTypes)}`,
+      );
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -146,13 +166,6 @@ export class DocumentUploadDialogComponent implements OnInit {
    */
   isUploading(documentTypeId: string): boolean {
     return this.uploadingFiles().has(documentTypeId);
-  }
-
-  /**
-   * Obtiene el progreso de subida de un documento
-   */
-  getProgress(documentTypeId: string): number {
-    return this.uploadProgress().get(documentTypeId) || 0;
   }
 
   /**

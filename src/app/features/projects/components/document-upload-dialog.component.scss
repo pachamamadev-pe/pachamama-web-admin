@@ -128,6 +128,18 @@
             }
           }
 
+          // Container shown on smartphones when the document accepts images
+          .document-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+
+            button {
+              flex-shrink: 0;
+            }
+          }
+
           .btn-upload,
           .btn-upload-optional {
             flex-shrink: 0;

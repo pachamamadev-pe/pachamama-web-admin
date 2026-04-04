@@ -53,9 +53,30 @@
                   <mat-progress-bar mode="indeterminate" />
                   <p class="upload-text">Subiendo documento...</p>
                 </div>
+              } @else if (isSmartphone() && supportsImageCapture(doc)) {
+                <!-- Smartphone + acepta imágenes: dos acciones -->
+                <div class="document-actions">
+                  <button
+                    mat-raised-button
+                    class="btn-upload"
+                    (click)="openFilePicker(doc, true)"
+                    matTooltip="Abre la cámara del dispositivo"
+                  >
+                    <mat-icon>photo_camera</mat-icon>
+                    Tomar foto
+                  </button>
+                  <button
+                    mat-stroked-button
+                    (click)="openFilePicker(doc, false)"
+                    matTooltip="Selecciona un archivo del dispositivo"
+                  >
+                    <mat-icon>folder_open</mat-icon>
+                    Seleccionar archivo
+                  </button>
+                </div>
               } @else {
-                <!-- Botón de Subida -->
-                <button mat-raised-button class="btn-upload" (click)="selectFile(doc)">
+                <!-- Desktop o documento sin soporte de imagen: botón único -->
+                <button mat-raised-button class="btn-upload" (click)="openFilePicker(doc, false)">
                   <mat-icon>upload</mat-icon>
                   <span class="hidden sm:inline">Seleccionar archivo</span>
                   <span class="sm:hidden">Subir</span>
@@ -149,9 +170,35 @@
                   <mat-progress-bar mode="indeterminate" />
                   <p class="upload-text">Subiendo...</p>
                 </div>
+              } @else if (isSmartphone() && supportsImageCapture(doc)) {
+                <!-- Smartphone + acepta imágenes: dos acciones -->
+                <div class="document-actions">
+                  <button
+                    mat-raised-button
+                    class="btn-upload"
+                    (click)="openFilePicker(doc, true)"
+                    matTooltip="Abre la cámara del dispositivo"
+                  >
+                    <mat-icon>photo_camera</mat-icon>
+                    Tomar foto
+                  </button>
+                  <button
+                    mat-stroked-button
+                    class="btn-upload-optional"
+                    (click)="openFilePicker(doc, false)"
+                    matTooltip="Selecciona un archivo del dispositivo"
+                  >
+                    <mat-icon>folder_open</mat-icon>
+                    Seleccionar archivo
+                  </button>
+                </div>
               } @else {
-                <!-- Botón de Subida -->
-                <button mat-stroked-button class="btn-upload-optional" (click)="selectFile(doc)">
+                <!-- Desktop o documento sin soporte de imagen: botón único -->
+                <button
+                  mat-stroked-button
+                  class="btn-upload-optional"
+                  (click)="openFilePicker(doc, false)"
+                >
                   <mat-icon>upload</mat-icon>
                   <span class="hidden sm:inline">Subir</span>
                 </button>
