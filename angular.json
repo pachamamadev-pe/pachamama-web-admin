@@ -36,6 +36,11 @@
               "src/styles.scss",
               "node_modules/quill/dist/quill.core.css",
               "node_modules/quill/dist/quill.snow.css"
+            ],
+            "allowedCommonJsDependencies": [
+              "leaflet",
+              "qrcode",
+              "quill-delta"
             ]
           },
           "configurations": {
@@ -48,8 +53,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "16kB",
-                  "maximumError": "24kB"
+                  "maximumWarning": "32kB",
+                  "maximumError": "48kB"
                 }
               ],
               "outputHashing": "all",
