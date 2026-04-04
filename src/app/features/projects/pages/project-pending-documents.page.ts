@@ -253,16 +253,20 @@ export class ProjectPendingDocumentsPage implements OnInit, OnDestroy {
   // ── Prototype methods ────────────────────────────────────────────────────────
 
   /**
-   * Opens a file picker pre-filtered to JPG/PNG.
-   * When useCamera=true, adds capture="environment" so mobile browsers
-   * may offer the back camera directly.
+   * Opens a file picker for the prototype section.
+   * - useCamera=true: restricts to JPG/PNG and adds capture="environment" so mobile
+   *   browsers may offer the back camera directly.
+   * - useCamera=false: uses the MIME types allowed by the selected document type,
+   *   enabling PDF and other formats without forcing the camera/gallery picker.
    */
   selectImageForPrototype(documentType: DocumentTypeRequirement, useCamera: boolean): void {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/jpeg,image/png';
     if (useCamera) {
+      input.accept = 'image/jpeg,image/png';
       input.setAttribute('capture', 'environment');
+    } else {
+      input.accept = documentType.allowedMimeTypes.join(',');
     }
     input.onchange = (event: Event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
@@ -271,7 +275,9 @@ export class ProjectPendingDocumentsPage implements OnInit, OnDestroy {
 
       this.revokePreviousPreview();
       this.protoFile.set(file);
-      this.protoPreviewUrl.set(URL.createObjectURL(file));
+      // Only generate an object URL for images; PDF has no inline preview
+      const isImage = file.type === 'image/jpeg' || file.type === 'image/png';
+      this.protoPreviewUrl.set(isImage ? URL.createObjectURL(file) : null);
     };
     input.click();
   }
@@ -295,7 +301,7 @@ export class ProjectPendingDocumentsPage implements OnInit, OnDestroy {
       next: (document) => {
         this.protoUploading.set(false);
         const statusLabel = document.validationStatus === 'approved' ? 'aprobado' : 'subido';
-        this.notification.success(`Imagen ${statusLabel} correctamente`);
+        this.notification.success(`Archivo ${statusLabel} correctamente`);
         this.clearPrototype();
         this.loadRequirements();
       },
