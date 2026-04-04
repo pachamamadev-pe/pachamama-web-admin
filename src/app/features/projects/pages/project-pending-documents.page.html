@@ -56,12 +56,12 @@
         <div class="section prototype-section mb-6">
           <div class="section-header mb-4">
             <h3 class="section-title">
-              <mat-icon class="section-icon proto-icon">photo_camera</mat-icon>
-              Prototipo: Captura / Selección de Imagen
+              <mat-icon class="section-icon proto-icon">upload_file</mat-icon>
+              Prototipo: Captura / Selección de Archivo
             </h3>
             <p class="section-description">
-              Zona de prueba aislada para validar la selección y captura de fotos desde el
-              dispositivo. No afecta el flujo real de documentos.
+              Zona de prueba aislada para validar la selección de archivos e imágenes desde el
+              dispositivo (fotos, PDF, etc.). No afecta el flujo real de documentos.
             </p>
           </div>
 
@@ -119,40 +119,40 @@
             </div>
           }
 
-          <!-- Vista previa de la imagen seleccionada -->
-          @if (protoPreviewUrl()) {
+          <!-- Archivo / imagen seleccionada -->
+          @if (protoFile()) {
             <div class="proto-preview mb-4">
-              <img
-                [src]="protoPreviewUrl()"
-                alt="Vista previa de la imagen seleccionada"
-                class="proto-image"
-              />
-              @if (protoFile()) {
-                <div class="proto-file-info mt-3">
-                  <div class="detail-row">
-                    <mat-icon class="detail-icon">insert_drive_file</mat-icon>
-                    <span class="detail-label">Nombre:</span>
-                    <span class="detail-value">{{ protoFile()!.name }}</span>
-                  </div>
-                  <div class="detail-row">
-                    <mat-icon class="detail-icon">label</mat-icon>
-                    <span class="detail-label">Tipo MIME:</span>
-                    <span class="detail-value">{{ protoFile()!.type }}</span>
-                  </div>
-                  <div class="detail-row">
-                    <mat-icon class="detail-icon">data_usage</mat-icon>
-                    <span class="detail-label">Tamaño:</span>
-                    <span class="detail-value">{{ formatFileSizeMb(protoFile()!.size) }} MB</span>
-                  </div>
-                </div>
+              @if (protoPreviewUrl()) {
+                <img
+                  [src]="protoPreviewUrl()"
+                  alt="Vista previa de la imagen seleccionada"
+                  class="proto-image"
+                />
               }
+              <div class="proto-file-info mt-3">
+                <div class="detail-row">
+                  <mat-icon class="detail-icon">insert_drive_file</mat-icon>
+                  <span class="detail-label">Nombre:</span>
+                  <span class="detail-value">{{ protoFile()!.name }}</span>
+                </div>
+                <div class="detail-row">
+                  <mat-icon class="detail-icon">label</mat-icon>
+                  <span class="detail-label">Tipo MIME:</span>
+                  <span class="detail-value">{{ protoFile()!.type }}</span>
+                </div>
+                <div class="detail-row">
+                  <mat-icon class="detail-icon">data_usage</mat-icon>
+                  <span class="detail-label">Tamaño:</span>
+                  <span class="detail-value">{{ formatFileSizeMb(protoFile()!.size) }} MB</span>
+                </div>
+              </div>
             </div>
 
             <!-- Acciones de subida -->
             @if (protoUploading()) {
               <div class="upload-progress mb-2">
                 <mat-progress-bar mode="indeterminate" />
-                <p class="upload-text">Subiendo imagen de prueba...</p>
+                <p class="upload-text">Subiendo archivo de prueba...</p>
               </div>
             } @else {
               <div class="proto-submit-actions">
@@ -163,7 +163,7 @@
                   [disabled]="!protoSelectedDoc()"
                 >
                   <mat-icon>cloud_upload</mat-icon>
-                  Subir imagen de prueba
+                  Subir archivo de prueba
                 </button>
                 <button mat-stroked-button (click)="clearPrototype()">
                   <mat-icon>clear</mat-icon>
