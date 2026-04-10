@@ -8,17 +8,11 @@
             <mat-icon>arrow_back</mat-icon>
           </button>
           <div>
-            <h1 class="text-title font-bold text-accent-titles">Documentos Pendientes</h1>
-            @if (requirements()) {
-              <p class="text-subtitle text-neutral-subheading">
-                {{ requirements()!.projectName }} &mdash; Etapa:
-                <span class="font-bold">{{ requirements()!.currentStage | titlecase }}</span>
-              </p>
-            } @else {
-              <p class="text-subtitle text-neutral-subheading">
-                Cargando información del proyecto...
-              </p>
-            }
+            <h1 class="text-title font-bold text-accent-titles">Prototipo de carga de archivos</h1>
+            <p class="text-subtitle text-neutral-subheading">
+              Pantalla de pruebas para validar captura y selección de archivos. No afecta el flujo
+              real del proyecto.
+            </p>
           </div>
         </div>
       </div>
@@ -48,11 +42,8 @@
         </button>
       </div>
     } @else {
-      <!-- Progress Card -->
-      <app-documents-progress-card [requirements]="requirements()" [documents]="[]" />
-
-      <!-- ── PROTOTIPO: Captura / Selección de Imagen ── -->
-      @if (imageCompatibleDocuments().length > 0) {
+      <!-- ── PROTOTIPO: Captura / Selección de Archivo ── -->
+      @if (prototypeCompatibleDocuments().length > 0) {
         <div class="section prototype-section mb-6">
           <div class="section-header mb-4">
             <h3 class="section-title">
@@ -83,7 +74,7 @@
                 [value]="protoSelectedDoc()"
                 (selectionChange)="protoSelectedDoc.set($event.value)"
               >
-                @for (doc of imageCompatibleDocuments(); track doc.id) {
+                @for (doc of prototypeCompatibleDocuments(); track doc.id) {
                   <mat-option [value]="doc">
                     {{ doc.name }}
                     <span class="proto-option-meta"
@@ -102,7 +93,7 @@
               <button
                 mat-raised-button
                 class="btn-primary"
-                (click)="selectImageForPrototype(protoSelectedDoc()!, true)"
+                (click)="selectFileForPrototype(protoSelectedDoc()!, true)"
                 matTooltip="En móvil puede abrir la cámara trasera directamente"
               >
                 <mat-icon>photo_camera</mat-icon>
@@ -110,7 +101,7 @@
               </button>
               <button
                 mat-stroked-button
-                (click)="selectImageForPrototype(protoSelectedDoc()!, false)"
+                (click)="selectFileForPrototype(protoSelectedDoc()!, false)"
                 matTooltip="Abre el selector de archivos del sistema"
               >
                 <mat-icon>folder_open</mat-icon>
@@ -159,7 +150,7 @@
                 <button
                   mat-raised-button
                   class="btn-primary"
-                  (click)="uploadPrototypeImage()"
+                  (click)="uploadPrototypeFile()"
                   [disabled]="!protoSelectedDoc()"
                 >
                   <mat-icon>cloud_upload</mat-icon>
@@ -172,184 +163,6 @@
               </div>
             }
           }
-        </div>
-      }
-
-      <!-- ── Documentos Obligatorios Pendientes ── -->
-      @if (requiredDocuments().length > 0) {
-        <div class="section mb-6">
-          <div class="section-header mb-4">
-            <h3 class="section-title">
-              <mat-icon class="section-icon text-price">warning</mat-icon>
-              Documentos Obligatorios Pendientes
-              <span class="section-count">({{ requiredDocuments().length }})</span>
-            </h3>
-            <p class="section-description">
-              Estos documentos son requeridos para avanzar a la siguiente etapa
-            </p>
-          </div>
-
-          <div class="documents-list space-y-3">
-            @for (doc of requiredDocuments(); track doc.id) {
-              <div class="document-item required-item">
-                <div class="document-info">
-                  @if (doc.icon) {
-                    <mat-icon class="document-icon">{{ doc.icon }}</mat-icon>
-                  }
-                  <div class="document-details flex-1">
-                    <h4 class="document-name">{{ doc.name }}</h4>
-                    @if (doc.description) {
-                      <p class="document-description">{{ doc.description }}</p>
-                    }
-                    <div class="document-meta">
-                      <span class="meta-item">
-                        <mat-icon class="meta-icon">insert_drive_file</mat-icon>
-                        {{ getFormatsLabel(doc.allowedMimeTypes) }}
-                      </span>
-                      <span class="meta-item">
-                        <mat-icon class="meta-icon">file_present</mat-icon>
-                        Máx: {{ doc.maxFileSizeMb }}MB
-                      </span>
-                      @if (doc.requiresApproval) {
-                        <span class="meta-item">
-                          <mat-icon class="meta-icon">rate_review</mat-icon>
-                          Requiere aprobación
-                        </span>
-                      }
-                    </div>
-                  </div>
-                </div>
-
-                @if (isUploading(doc.documentTypeId!)) {
-                  <div class="upload-progress">
-                    <mat-progress-bar mode="indeterminate" />
-                    <p class="upload-text">Subiendo documento...</p>
-                  </div>
-                } @else {
-                  <div class="document-actions" *appPmHasPermission="PERMISSIONS.DOCUMENT.UPLOAD">
-                    <button mat-raised-button class="btn-upload" (click)="selectFile(doc)">
-                      <mat-icon>upload</mat-icon>
-                      <span class="hidden sm:inline">Seleccionar archivo</span>
-                      <span class="sm:hidden">Subir</span>
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- ── Documentos Obligatorios Ya Subidos ── -->
-      @if (requiredUploadedDocuments().length > 0) {
-        <div class="section mb-6">
-          <div class="section-header mb-4">
-            <h3 class="section-title">
-              <mat-icon class="section-icon text-secondary">check_circle</mat-icon>
-              Documentos Obligatorios Subidos
-            </h3>
-          </div>
-
-          <div class="uploaded-list space-y-2">
-            @for (doc of requiredUploadedDocuments(); track doc.id) {
-              <div class="uploaded-item">
-                @if (doc.icon) {
-                  <mat-icon class="uploaded-icon">{{ doc.icon }}</mat-icon>
-                }
-                <div class="uploaded-info flex-1">
-                  <p class="uploaded-name">{{ doc.name }}</p>
-                  @if (doc.uploadedVersion) {
-                    <p class="uploaded-version">Versión {{ doc.uploadedVersion }}</p>
-                  }
-                </div>
-                @if (doc.uploadedStatus) {
-                  <mat-chip [class]="getStatusColor(doc.uploadedStatus)">
-                    <mat-icon class="chip-icon">{{ getStatusIcon(doc.uploadedStatus) }}</mat-icon>
-                    {{ getStatusLabel(doc.uploadedStatus) }}
-                  </mat-chip>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- ── Documentos Opcionales ── -->
-      @if (optionalDocuments().length > 0) {
-        <div class="section">
-          <div class="section-header mb-4">
-            <h3 class="section-title">
-              <mat-icon class="section-icon text-neutral-subheading">description</mat-icon>
-              Documentos Opcionales
-            </h3>
-            <p class="section-description">
-              Estos documentos no son obligatorios pero pueden ser útiles
-            </p>
-          </div>
-
-          <div class="documents-list space-y-3">
-            @for (doc of optionalDocuments(); track doc.id) {
-              <div class="document-item optional-item">
-                <div class="document-info">
-                  @if (doc.icon) {
-                    <mat-icon class="document-icon">{{ doc.icon }}</mat-icon>
-                  }
-                  <div class="document-details flex-1">
-                    <h4 class="document-name">{{ doc.name }}</h4>
-                    @if (doc.description) {
-                      <p class="document-description">{{ doc.description }}</p>
-                    }
-                    <div class="document-meta">
-                      <span class="meta-item">
-                        <mat-icon class="meta-icon">insert_drive_file</mat-icon>
-                        {{ getFormatsLabel(doc.allowedMimeTypes) }}
-                      </span>
-                      <span class="meta-item">
-                        <mat-icon class="meta-icon">file_present</mat-icon>
-                        Máx: {{ doc.maxFileSizeMb }}MB
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                @if (doc.isUploaded) {
-                  <div class="uploaded-badge">
-                    <mat-icon class="text-secondary">check_circle</mat-icon>
-                    <span class="text-subtitle text-secondary">Subido</span>
-                  </div>
-                } @else if (isUploading(doc.documentTypeId!)) {
-                  <div class="upload-progress">
-                    <mat-progress-bar mode="indeterminate" />
-                    <p class="upload-text">Subiendo...</p>
-                  </div>
-                } @else {
-                  <div class="document-actions" *appPmHasPermission="PERMISSIONS.DOCUMENT.UPLOAD">
-                    <button
-                      mat-stroked-button
-                      class="btn-upload-optional"
-                      (click)="selectFile(doc)"
-                    >
-                      <mat-icon>upload</mat-icon>
-                      <span class="hidden sm:inline">Subir</span>
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- ── Estado Vacío ── -->
-      @if (hasNoDocuments()) {
-        <div class="empty-state">
-          <div class="empty-icon">
-            <mat-icon>folder_open</mat-icon>
-          </div>
-          <h3 class="text-body font-bold text-accent-titles">No hay documentos configurados</h3>
-          <p class="text-subtitle text-neutral-subheading">
-            No se han definido tipos de documentos para esta etapa del proyecto.
-          </p>
         </div>
       }
     }
