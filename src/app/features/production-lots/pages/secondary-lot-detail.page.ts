@@ -35,6 +35,7 @@ import {
   ProductionLotLocationMapDialogComponent,
   ProductionLotLocationDialogData,
 } from '../components/production-lot-location-map-dialog.component';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 
 const RECEPTION_DOC_CODE = 'FRUIT_RECEPTION_RECORD' as const;
 const TRANSPORT_DOC_CODE = 'TRANSPORT_WAYBILL' as const;
@@ -273,6 +274,22 @@ export class SecondaryLotDetailCompanyPage implements OnInit {
     const lot = this.lot();
     if (!lot || !this.sourceLots().length) return;
 
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Generar ficha de recepción?',
+        message:
+          'Una vez generado el documento ya no podrás editar la información de recepción. ¿Deseas continuar?',
+        confirmText: 'Generar documento',
+        type: 'warning',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) this.doGenerateReception(lot);
+    });
+  }
+
+  private doGenerateReception(lot: ProductionLotDetail): void {
     this.generatingDocument.set(true);
 
     const requests: SecondaryReceptionRecordRequest[] = this.sourceLots().map((s) => {
@@ -341,6 +358,23 @@ export class SecondaryLotDetailCompanyPage implements OnInit {
       return;
     }
 
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Generar guía de transporte?',
+        message:
+          'Una vez generado el documento ya no podrás editar la información de transporte. ¿Deseas continuar?',
+        confirmText: 'Generar documento',
+        type: 'warning',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) this.doSaveTransport(lot, fv);
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private doSaveTransport(lot: ProductionLotDetail, fv: any): void {
     const transportInfo: TransportInfoRequest = {
       transportType: fv.transportType as 'terrestre' | 'fluvial',
       transporterName: (fv.transporterName as string) || '',
@@ -394,7 +428,7 @@ export class SecondaryLotDetailCompanyPage implements OnInit {
     });
   }
 
-  // ─── Cambio de panel ──────────────────────────────────────────────────────────
+  // ─── Cambio de panel ─────────────────────────────────────────────────────────
   switchPanel(panel: 'reception' | 'transport'): void {
     this.activePanel.set(panel);
     const lot = this.lot();
