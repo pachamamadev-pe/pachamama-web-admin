@@ -11,29 +11,37 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 
 /**
- * Detecta si el navegador actual es Chromium-based (Chrome, Edge nuevo, Brave, Opera, Vivaldi).
- * Firefox, Safari, IE y Edge Legacy son considerados "no recomendados".
+ * Detecta si el navegador actual es Chromium-based.
+ * Cubre: Chrome desktop, Chrome para Android, Chrome iOS (CriOS),
+ * Edge nuevo (EdgA / EdgiOS), Brave, Opera, Vivaldi, Samsung Browser.
+ * NO cubre: Firefox, Safari, IE, Edge Legacy (EdgeHTML).
  */
 function detectChromiumBased(): boolean {
   if (typeof navigator === 'undefined') return true; // SSR: no mostrar
   const ua = navigator.userAgent;
-  // Chromium-based: tiene "Chrome/" en el UA pero no es Edge Legacy (EdgeHTML) ni IE (Trident)
-  const hasChrome = /Chrome\/\d+/.test(ua);
+
   const isEdgeLegacy = /Edge\/\d+/.test(ua); // Edge 12-18 (EdgeHTML)
   const isIE = /Trident\//.test(ua);
-  return hasChrome && !isEdgeLegacy && !isIE;
+
+  // Chrome en iOS usa "CriOS/", Edge en iOS/Android usa "EdgiOS/"/"EdgA/"
+  const isChromiumUA =
+    /Chrome\/\d+/.test(ua) || // Chrome desktop / Android / derivados
+    /CriOS\/\d+/.test(ua) || // Chrome para iOS
+    /EdgiOS\/\d+/.test(ua) || // Edge para iOS
+    /EdgA\/\d+/.test(ua); // Edge para Android
+
+  return isChromiumUA && !isEdgeLegacy && !isIE;
 }
 
 /**
- * Obtiene el nombre del navegador detectado para mostrar en el mensaje.
+ * Obtiene el nombre legible del navegador para mostrarlo en el mensaje.
  */
 function getBrowserName(): string {
   const ua = navigator.userAgent;
   if (/Firefox\//.test(ua)) return 'Firefox';
-  if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) return 'Safari';
   if (/Edge\/\d+/.test(ua)) return 'Microsoft Edge (legacy)';
   if (/Trident\//.test(ua)) return 'Internet Explorer';
-  if (/OPR\//.test(ua)) return 'Opera';
+  if (/Safari\//.test(ua) && !/Chrome\//.test(ua) && !/CriOS\//.test(ua)) return 'Safari';
   return 'tu navegador actual';
 }
 
@@ -162,13 +170,52 @@ function getBrowserName(): string {
         opacity: 1;
       }
 
-      /* Mobile: ocultar el subtítulo para ahorrar espacio */
-      @media (max-width: 600px) {
+      /* Mobile: versión compacta de una sola línea */
+      @media (max-width: 640px) {
+        .banner-inner {
+          padding: 8px 12px;
+          gap: 8px;
+        }
+
+        .banner-icon-wrapper {
+          width: 28px;
+          height: 28px;
+        }
+
+        .banner-icon-wrapper mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+
         .banner-subtitle {
           display: none;
         }
+
+        .banner-title {
+          font-size: 12px;
+        }
+
+        .banner-link {
+          padding: 4px 10px;
+          font-size: 11px;
+        }
+
+        .banner-link mat-icon {
+          font-size: 13px;
+          width: 13px;
+          height: 13px;
+        }
+      }
+
+      /* Muy pequeño (< 400px): ocultar texto del botón, solo ícono */
+      @media (max-width: 400px) {
         .banner-link span {
           display: none;
+        }
+        .banner-link {
+          padding: 4px 6px;
+          min-width: unset;
         }
       }
     `,
