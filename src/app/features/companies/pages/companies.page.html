@@ -75,7 +75,7 @@
         <p class="text-subtitle text-neutral-subheading">Intenta con otros términos de búsqueda</p>
         <button mat-stroked-button class="mt-4" (click)="clearSearch()">Limpiar búsqueda</button>
       </div>
-    } @else if (sidebarService.hasPermission(PERMISSIONS.PRODUCT.READ)) {
+    } @else if (sidebarService.hasPermission(PERMISSIONS.COMPANY.READ)) {
       <!-- Companies Table (Desktop only) -->
       <div class="companies-table">
         <div class="products-table hidden md:block">
