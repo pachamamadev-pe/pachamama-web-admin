@@ -334,7 +334,7 @@
                       @switch (getValidationType(validationKey)) {
                         @case ('string') {
                           <mat-form-field appearance="outline" class="validation-field">
-                            <mat-label>{{ validationKey }}</mat-label>
+                            <mat-label>{{ formatValidationKey(validationKey) }}</mat-label>
                             <input
                               matInput
                               type="text"
@@ -345,7 +345,7 @@
                         }
                         @case ('number') {
                           <mat-form-field appearance="outline" class="validation-field">
-                            <mat-label>{{ validationKey }}</mat-label>
+                            <mat-label>{{ formatValidationKey(validationKey) }}</mat-label>
                             <input
                               matInput
                               type="number"
@@ -359,12 +359,12 @@
                             [ngModel]="getValidationValue(validationKey)"
                             (ngModelChange)="updateValidation(validationKey, $event)"
                           >
-                            {{ validationKey }}
+                            {{ formatValidationKey(validationKey) }}
                           </mat-slide-toggle>
                         }
                         @case ('date') {
                           <mat-form-field appearance="outline" class="validation-field">
-                            <mat-label>{{ validationKey }}</mat-label>
+                            <mat-label>{{ formatValidationKey(validationKey) }}</mat-label>
                             <input
                               matInput
                               [matDatepicker]="picker"
@@ -380,7 +380,7 @@
                           @if (validationKey === 'options') {
                             <div class="array-validation">
                               <span class="array-label text-subtitle text-primary-black">{{
-                                validationKey
+                                formatValidationKey(validationKey)
                               }}</span>
 
                               <!-- Add option -->
@@ -422,7 +422,7 @@
                             <!-- Otros arrays -->
                             <div class="array-validation">
                               <span class="array-label text-subtitle text-primary-black">{{
-                                validationKey
+                                formatValidationKey(validationKey)
                               }}</span>
 
                               <div class="array-input-row">

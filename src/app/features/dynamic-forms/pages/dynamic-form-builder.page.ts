@@ -1009,7 +1009,26 @@ export class DynamicFormBuilderPage implements OnInit {
     const config = this.newField().validationConfig || {};
     return Object.keys(config);
   }
-
+  formatValidationKey(key: string): string {
+    const labels: Record<string, string> = {
+      min: 'Mínimo',
+      max: 'Máximo',
+      step: 'Incremento',
+      decimals: 'Decimales',
+      pattern: 'Patrón',
+      minLength: 'Longitud mínima',
+      maxLength: 'Longitud máxima',
+      min_length: 'Longitud mínima',
+      max_length: 'Longitud máxima',
+      max_files: 'Máx. archivos',
+      max_size_mb: 'Tamaño máx. (MB)',
+      allowed_formats: 'Formatos permitidos',
+      max_duration_seconds: 'Duración máx. (segundos)',
+    };
+    const sss = labels[key] || key;
+    console.log(`🔤 Formateando clave de validación "${key}" a "${sss}"`);
+    return sss;
+  }
   /**
    * Determina el tipo de validación basado en el valor
    */
