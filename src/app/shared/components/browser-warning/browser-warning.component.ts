@@ -224,17 +224,17 @@ function getBrowserName(): string {
     @if (showBanner()) {
       <div class="browser-banner" role="alert" aria-live="polite">
         <div class="banner-inner">
-          <!-- Ícono de advertencia -->
+          <!-- Ícono informativo -->
           <div class="banner-icon-wrapper">
-            <mat-icon>warning_amber</mat-icon>
+            <mat-icon>tips_and_updates</mat-icon>
           </div>
 
           <!-- Texto -->
           <div class="banner-text">
-            <p class="banner-title">Navegador no recomendado: {{ browserName() }}</p>
+            <p class="banner-title">Navegador recomendado: Google Chrome</p>
             <p class="banner-subtitle">
-              Para la mejor experiencia con Pachamama, te recomendamos usar Google Chrome o un
-              navegador basado en Chromium.
+              Estás usando {{ browserName() }}. Para la mejor experiencia con Pachamama usa Google
+              Chrome.
             </p>
           </div>
 
@@ -274,7 +274,7 @@ export class BrowserWarningComponent {
   browserName = computed(() => (isPlatformBrowser(this.platformId) ? getBrowserName() : ''));
 
   /** Muestra el banner solo si no es Chromium y no fue cerrado en esta sesión */
-  showBanner = computed(() => this._isNotChromium && !this.dismissed());
+  showBanner = computed(() => true);
 
   dismiss(): void {
     this.dismissed.set(true);
