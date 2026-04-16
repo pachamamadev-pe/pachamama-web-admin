@@ -274,7 +274,7 @@ export class BrowserWarningComponent {
   browserName = computed(() => (isPlatformBrowser(this.platformId) ? getBrowserName() : ''));
 
   /** Muestra el banner solo si no es Chromium y no fue cerrado en esta sesión */
-  showBanner = computed(() => this._isNotChromium);
+  showBanner = computed(() => this._isNotChromium && !this.dismissed());
 
   dismiss(): void {
     this.dismissed.set(true);
