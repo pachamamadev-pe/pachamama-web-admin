@@ -106,10 +106,20 @@ export class InventoryEvaluationComponent implements OnDestroy {
   showInventoryTab = computed(() => this.canReadInventory() || this.canReviewInventory());
   showCollectionTab = computed(() => this.canReadCollection() || this.canReviewCollection());
 
+  invertTabs = computed(() => {
+    const stage = this.projectStage().toLowerCase();
+    return ['collection', 'ctp_entry', 'primary_transformation'].includes(stage);
+  });
+
   // Índice seleccionado del mat-tab-group, calculado dinámicamente según tabs visibles
   selectedTabIndex = computed(() => {
-    if (this.activeTab() === 'inventory') return 0;
-    // harvest: si el tab de inventario está visible, harvest es el segundo (índice 1)
+    if (this.activeTab() === 'inventory') {
+      return this.invertTabs() && this.showCollectionTab() ? 1 : 0;
+    }
+    // harvest
+    if (this.invertTabs()) {
+      return 0;
+    }
     return this.showInventoryTab() ? 1 : 0;
   });
   refreshing = signal(false); // Indicador de refresh silencioso
@@ -120,7 +130,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
   // Search and pagination
   searchTerm = signal('');
   currentPage = signal(0);
-  pageSize = signal(20); // Tamaño de página del backend
+  pageSize = signal(10); // Tamaño de página del backend
 
   // Auto-refresh configuration
   private autoRefreshInterval: number | null = null;
@@ -224,7 +234,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
       if (activity.overallValidationStatus === 'pending' && stageAllowsApproval && canReview) {
         return 'Evaluar';
       }
-      return 'Ver Detalle';
+      return 'Detalle';
     }
 
     // harvest / recolección
@@ -232,7 +242,7 @@ export class InventoryEvaluationComponent implements OnDestroy {
     if (activity.overallValidationStatus === 'pending' && canReview) {
       return 'Evaluar';
     }
-    return 'Ver Detalle';
+    return 'Detalle';
   };
 
   // Filtrar actividades según el filtro seleccionado y término de búsqueda
@@ -302,9 +312,13 @@ export class InventoryEvaluationComponent implements OnDestroy {
     effect(() => {
       if (this.shouldLoad() && !this.hasLoaded()) {
         this.hasLoaded.set(true);
-        // Ajustar tab inicial según permisos disponibles
-        if (!this.showInventoryTab() && this.showCollectionTab()) {
+        // Ajustar tab inicial según permisos disponibles y config
+        if (this.invertTabs() && this.showCollectionTab()) {
           this.activeTab.set('harvest');
+        } else if (!this.showInventoryTab() && this.showCollectionTab()) {
+          this.activeTab.set('harvest');
+        } else if (this.showInventoryTab()) {
+          this.activeTab.set('inventory');
         }
         const projId = this.projectId();
         if (projId) {
@@ -464,7 +478,11 @@ export class InventoryEvaluationComponent implements OnDestroy {
   onTabChange(index: number): void {
     let tab: 'inventory' | 'harvest';
     if (this.showInventoryTab() && this.showCollectionTab()) {
-      tab = index === 0 ? 'inventory' : 'harvest';
+      if (this.invertTabs()) {
+        tab = index === 0 ? 'harvest' : 'inventory';
+      } else {
+        tab = index === 0 ? 'inventory' : 'harvest';
+      }
     } else if (this.showInventoryTab()) {
       tab = 'inventory';
     } else {

@@ -17,142 +17,135 @@
   overflow: visible;
 }
 
-/* Sidebar with Stages */
-.stages-sidebar {
-  width: 280px;
-  background-color: #f9fafb;
-  border-right: 1px solid #e5e5e5;
-  padding: 24px 16px;
-  overflow-y: visible;
-  flex-shrink: 0;
-  align-self: flex-start;
-  transition: width 0.2s ease;
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-}
-
-.stages-header {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.75rem;
-  margin-bottom: 20px;
-}
-
-.stages-toggle-button {
-  flex-shrink: 0;
+/* Horizontal Stages Timeline */
+.horizontal-stages-container {
+  margin-top: 24px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  display: block;
   width: 100%;
-  justify-content: flex-start;
-  border-radius: 10px;
-  border-color: #e5e5e5;
-  color: #218358;
-  font-weight: 600;
+  -webkit-overflow-scrolling: touch;
 
-  mat-icon {
-    margin-right: 0.35rem;
-    color: #218358;
+  /* Custom thin scrollbar */
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f4fbf6;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #c5e1d4;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #218358;
   }
 }
 
-.sidebar-title {
-  margin-bottom: 0;
-  padding-left: 0;
+.horizontal-stages-list {
+  display: inline-flex;
+  align-items: center;
+  min-width: max-content;
 }
 
-.stages-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.stage-item {
+.h-stage-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 30px;
   background-color: #ffffff;
   border: 1px solid #e5e5e5;
   transition: all 0.2s ease;
-  cursor: pointer;
+  cursor: default;
 
-  &:hover {
-    border-color: #218358;
-    background-color: #f4fbf6;
-  }
-
-  &.stage-active {
+  &.h-stage-active {
     background-color: #218358;
     border-color: #218358;
     color: #ffffff;
 
-    .stage-number {
+    .h-stage-number {
       background-color: #ffffff;
       color: #218358;
     }
 
-    .stage-name {
+    .h-stage-name {
       color: #ffffff;
       font-weight: 600;
     }
   }
+
+  &.h-stage-past {
+    background-color: #f4fbf6;
+    border-color: #218358;
+    color: #218358;
+
+    .h-stage-number {
+      background-color: #218358;
+      color: #ffffff;
+      border: none;
+    }
+
+    .h-stage-name {
+      color: #218358;
+      font-weight: 600;
+    }
+  }
+
+  &.h-stage-grouped {
+    cursor: pointer;
+    &:hover {
+      background-color: #e8f5ed;
+      border-color: #1e704b;
+    }
+  }
 }
 
-.stage-number {
-  width: 32px;
-  height: 32px;
+.h-stage-number {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background-color: #f4fbf6;
   color: #218358;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
-.stage-name {
+.h-stage-name {
   font-size: 13px;
   line-height: 1.4;
   color: #0a0a0a;
+  white-space: nowrap;
 }
 
-.stages-sidebar-collapsed {
-  width: 132px;
-  padding: 24px 8px;
+.h-stage-connector {
+  width: 24px;
+  height: 2px;
+  background-color: #e5e5e5;
+  margin: 0 4px;
+  flex-shrink: 0;
 
-  .stages-header {
-    align-items: center;
-    gap: 0.5rem;
+  &.h-connector-active {
+    background-color: #218358;
   }
 
-  .sidebar-title {
-    text-align: center;
-    font-size: 12px;
-    line-height: 1.2;
-  }
-
-  .stages-toggle-button {
-    width: 100%;
-    justify-content: center;
-
-    span {
-      font-size: 12px;
-    }
-  }
-
-  .stages-list {
-    align-items: center;
-  }
-
-  .stage-item {
-    justify-content: center;
-    padding: 10px 8px;
-    width: 100%;
-    gap: 0;
+  @media (min-width: 768px) {
+    width: 40px;
+    margin: 0 8px;
   }
 }
 
@@ -258,7 +251,6 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-size: 12px;
-  margin-left: 30px;
 }
 
 .project-title {

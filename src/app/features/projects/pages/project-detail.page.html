@@ -8,43 +8,6 @@
   } @else if (project()) {
     <!-- Main Content -->
     <div class="detail-layout">
-      <!-- Sidebar with Stages -->
-      <aside class="stages-sidebar" [class.stages-sidebar-collapsed]="stagesSidebarCollapsed()">
-        <div class="stages-header">
-          <h3 class="sidebar-title text-body font-bold text-accent-titles">Etapas del Proyecto</h3>
-          <button
-            mat-stroked-button
-            type="button"
-            class="stages-toggle-button"
-            (click)="toggleStagesSidebar()"
-            [matTooltip]="stagesSidebarCollapsed() ? 'Expandir etapas' : 'Minimizar etapas'"
-            [attr.aria-label]="
-              stagesSidebarCollapsed()
-                ? 'Expandir etapas del proyecto'
-                : 'Minimizar etapas del proyecto'
-            "
-          >
-            <mat-icon>{{ stagesSidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
-            <span>{{ stagesSidebarCollapsed() ? 'Expandir' : 'Minimizar' }}</span>
-          </button>
-        </div>
-        <nav class="stages-list">
-          @for (stage of stages; track stage.number) {
-            <div
-              class="stage-item"
-              [class.stage-active]="isStageActive()(stage.key)"
-              [matTooltip]="stage.name"
-              [matTooltipDisabled]="!stagesSidebarCollapsed()"
-            >
-              <div class="stage-number">{{ stage.number }}</div>
-              @if (!stagesSidebarCollapsed()) {
-                <div class="stage-name">{{ stage.name }}</div>
-              }
-            </div>
-          }
-        </nav>
-      </aside>
-
       <!-- Main Content Area -->
       <main class="main-content">
         <!-- Project Header -->
@@ -53,30 +16,30 @@
             <mat-icon>arrow_back</mat-icon>
           </button>
 
-          <!-- Botón: Avanzar a Siguiente Etapa (oculto en etapa final) -->
-          @if (project()?.stage !== 'primary_transformation') {
-            <div class="stage-action-button">
-              <button
-                *appPmHasPermission="PERMISSIONS.PROJECT.NEXT_STAGE"
-                mat-raised-button
-                class="btn-primary btn-lg"
-                [disabled]="!canAdvanceToNextStage()"
-                (click)="advanceToNextStage()"
-                [matTooltip]="stageAdvanceBlockerMessage()"
-                [matTooltipDisabled]="canAdvanceToNextStage()"
-                matTooltipClass="stage-blocker-tooltip"
-              >
-                <mat-icon>arrow_forward</mat-icon>
-                <span>{{
-                  nextStage() ? 'Avanzar a ' + nextStage()!.name : 'Siguiente Etapa'
-                }}</span>
-              </button>
-            </div>
-          }
-
           <div class="header-content-wrapper">
             <!-- Project Info -->
             <div class="project-info">
+              <!-- Botón: Avanzar a Siguiente Etapa (oculto en etapa final) -->
+              @if (project()?.stage !== 'primary_transformation') {
+                <div class="stage-action-button">
+                  <button
+                    *appPmHasPermission="PERMISSIONS.PROJECT.NEXT_STAGE"
+                    mat-raised-button
+                    class="btn-primary btn-lg"
+                    [disabled]="!canAdvanceToNextStage()"
+                    (click)="advanceToNextStage()"
+                    [matTooltip]="stageAdvanceBlockerMessage()"
+                    [matTooltipDisabled]="canAdvanceToNextStage()"
+                    matTooltipClass="stage-blocker-tooltip"
+                  >
+                    <mat-icon>arrow_forward</mat-icon>
+                    <span>{{
+                      nextStage() ? 'Avanzar a ' + nextStage()!.name : 'Siguiente Etapa'
+                    }}</span>
+                  </button>
+                </div>
+              }
+
               <span class="product-label text-subtitle text-neutral-subheading">
                 {{ project()?.productName || 'Producto' }}
               </span>
@@ -115,22 +78,79 @@
                   </div>
                 }
               </div>
+
+              <!-- Horizontal Stages Timeline inside Header -->
+              <div class="horizontal-stages-container">
+                <div class="horizontal-stages-list">
+                  <!-- Agrupación de etapas previas -->
+                  @if (pastStages().length > 0) {
+                    <div
+                      class="h-stage-item h-stage-past h-stage-grouped cursor-pointer"
+                      [matMenuTriggerFor]="pastStagesMenu"
+                    >
+                      <div class="h-stage-number">
+                        <mat-icon>done_all</mat-icon>
+                      </div>
+                      <div class="h-stage-name">{{ pastStages().length }} Etapas previas</div>
+                    </div>
+                    <div class="h-stage-connector h-connector-active"></div>
+
+                    <!-- Menú emergente (Popup) de etapas previas -->
+                    <mat-menu #pastStagesMenu="matMenu" class="past-stages-menu" xPosition="before">
+                      <div class="p-4 outline-none min-w-[250px]">
+                        <h4 class="text-subtitle font-bold text-accent-titles mb-3">
+                          Etapas completadas
+                        </h4>
+                        <ul class="space-y-3">
+                          @for (stage of pastStages(); track stage.number) {
+                            <li
+                              class="flex items-center gap-3 text-body text-neutral-subheading border-b border-neutral-border pb-2 last:border-0 last:pb-0"
+                            >
+                              <mat-icon class="text-secondary scale-75 origin-left"
+                                >check_circle</mat-icon
+                              >
+                              <span
+                                ><strong class="text-accent-titles mr-1"
+                                  >Etapa {{ stage.number }}:</strong
+                                >
+                                {{ stage.name }}</span
+                              >
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    </mat-menu>
+                  }
+
+                  <!-- Etapa Actual y Futuras -->
+                  @for (stage of remainingStages(); track stage.number) {
+                    <div
+                      class="h-stage-item"
+                      [class.h-stage-active]="isStageActive()(stage.key)"
+                      [matTooltip]="stage.name"
+                    >
+                      <div class="h-stage-number">
+                        {{ stage.number }}
+                      </div>
+                      <div class="h-stage-name">{{ stage.name }}</div>
+                    </div>
+                    @if (!$last) {
+                      <div
+                        class="h-stage-connector"
+                        [class.h-connector-active]="
+                          isStageActive()(stage.key) || isStagePast(stage.key)
+                        "
+                      ></div>
+                    }
+                  }
+                </div>
+              </div>
             </div>
 
             <!-- Project Image -->
-            <div class="project-image">
+            <!-- <div class="project-image">
               <img src="/images/illustrations/project.png" alt="Proyecto {{ project()!.name }}" />
-
-              <!-- Download button below image
-              <button
-                mat-raised-button
-                class="btn-primary download-button-header"
-                (click)="downloadReport()"
-              >
-                <mat-icon>download</mat-icon>
-                Descargar
-              </button>-->
-            </div>
+            </div> -->
           </div>
         </header>
 

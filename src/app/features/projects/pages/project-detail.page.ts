@@ -22,6 +22,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { forkJoin, Subject } from 'rxjs';
 import { ProjectsService } from '../services/projects.service';
@@ -98,6 +99,7 @@ interface ActivityValidationStatusChartItem {
     MatPaginatorModule,
     MatSelectModule,
     MatFormFieldModule,
+    MatMenuModule,
     InventoryEvaluationComponent,
     PmfGenerationComponent,
     CollectorsTabComponent,
@@ -142,7 +144,6 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   community = signal<Community | null>(null);
   loading = signal(true);
   selectedTabIndex = signal(0);
-  stagesSidebarCollapsed = signal(false);
   activityTypeKpis = signal<ProjectActivityTypeKpi[]>([]);
   loadingActivityTypeKpis = signal(false);
   collectorsGenderKpis = signal<CollectorsGenderKpi>({
@@ -318,9 +319,30 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     return (stageKey: string) => currentStage === stageKey;
   });
 
-  toggleStagesSidebar(): void {
-    this.stagesSidebarCollapsed.update((value) => !value);
+  // Method to check if a stage is past (already completed)
+  isStagePast(stageKey: string): boolean {
+    const currentStageKey = this.project()?.stage;
+    if (!currentStageKey) return false;
+    const currentIndex = this.stages.findIndex((s) => s.key === currentStageKey);
+    const stageIndex = this.stages.findIndex((s) => s.key === stageKey);
+    return stageIndex >= 0 && currentIndex >= 0 && stageIndex < currentIndex;
   }
+
+  // Computed para agrupar las etapas pasadas
+  pastStages = computed(() => {
+    const currentStageKey = this.project()?.stage;
+    if (!currentStageKey) return [];
+    const currentIndex = this.stages.findIndex((s) => s.key === currentStageKey);
+    return currentIndex > 0 ? this.stages.slice(0, currentIndex) : [];
+  });
+
+  // Computed para las etapas actuales y futuras
+  remainingStages = computed(() => {
+    const currentStageKey = this.project()?.stage;
+    if (!currentStageKey) return this.stages;
+    const currentIndex = this.stages.findIndex((s) => s.key === currentStageKey);
+    return currentIndex >= 0 ? this.stages.slice(currentIndex) : this.stages;
+  });
 
   // Computed para calcular el progreso basado en la etapa actual
   projectProgress = computed(() => {

@@ -96,11 +96,20 @@
         mat-stretch-tabs="false"
         animationDuration="0ms"
       >
-        @if (showInventoryTab()) {
-          <mat-tab label="Actividades de Inventario"></mat-tab>
-        }
-        @if (showCollectionTab()) {
-          <mat-tab label="Actividades de Recolección"></mat-tab>
+        @if (invertTabs()) {
+          @if (showCollectionTab()) {
+            <mat-tab label="Actividades de Recolección"></mat-tab>
+          }
+          @if (showInventoryTab()) {
+            <mat-tab label="Actividades de Inventario"></mat-tab>
+          }
+        } @else {
+          @if (showInventoryTab()) {
+            <mat-tab label="Actividades de Inventario"></mat-tab>
+          }
+          @if (showCollectionTab()) {
+            <mat-tab label="Actividades de Recolección"></mat-tab>
+          }
         }
       </mat-tab-group>
 
@@ -154,11 +163,17 @@
             <tbody class="table-body">
               @for (activity of filteredActivities(); track activity.id) {
                 <tr class="table-row">
-                  <td class="table-td">
-                    <span class="text-body font-bold text-accent-titles">{{
-                      activity.formSchemaName
-                    }}</span>
-                    <span class="text-subtitle text-neutral-subheading block">
+                  <td class="table-td max-w-[150px] sm:max-w-[200px] lg:max-w-[250px]">
+                    <span
+                      class="text-body font-bold text-accent-titles block truncate"
+                      [matTooltip]="activity.formSchemaName"
+                    >
+                      {{ activity.formSchemaName }}
+                    </span>
+                    <span
+                      class="text-subtitle text-neutral-subheading block truncate mt-1"
+                      [matTooltip]="activity.collectorName"
+                    >
                       {{ activity.collectorName }}
                     </span>
                   </td>
@@ -228,17 +243,25 @@
         <div class="mobile-cards md:hidden">
           @for (activity of filteredActivities(); track activity.id) {
             <div class="form-card bg-primary-white rounded-lg shadow p-4">
-              <div class="card-header">
-                <div class="card-title">
-                  <h3 class="text-body font-bold text-accent-titles">
+              <div class="card-header flex justify-between items-start">
+                <div class="card-title truncate max-w-[calc(100%-48px)]">
+                  <h3
+                    class="text-body font-bold text-accent-titles truncate"
+                    [matTooltip]="activity.formSchemaName"
+                  >
                     {{ activity.formSchemaName }}
                   </h3>
-                  <p class="text-subtitle text-neutral-subheading">{{ activity.collectorName }}</p>
+                  <p
+                    class="text-subtitle text-neutral-subheading truncate mt-1"
+                    [matTooltip]="activity.collectorName"
+                  >
+                    {{ activity.collectorName }}
+                  </p>
                   <mat-chip class="stage-chip mt-2">
                     {{ getActivityTypeLabel(activity.activityType) }}
                   </mat-chip>
                 </div>
-                <div class="card-actions">
+                <div class="card-actions shrink-0">
                   <button mat-icon-button [matMenuTriggerFor]="mobileMenu">
                     <mat-icon>more_vert</mat-icon>
                   </button>
