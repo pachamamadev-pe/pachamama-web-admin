@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '@environments/environment';
 import {
   ProductionLot,
+  ProductionLotClientCodesUpdateRequest,
   ProductionLotDetail,
   ProductionLotStatus,
   ProductionLotDocumentCode,
@@ -178,6 +179,13 @@ export class ProductionLotsService {
    */
   updateLotStatus(lotId: string, status: ProductionLotStatus): Observable<ProductionLot> {
     return this.http.patch<ProductionLot>(`${this.apiUrl}/${lotId}/status`, { status });
+  }
+
+  updateClientCodes(
+    lotId: string,
+    request: ProductionLotClientCodesUpdateRequest,
+  ): Observable<ProductionLotDetail> {
+    return this.http.patch<ProductionLotDetail>(`${this.apiUrl}/${lotId}/client-codes`, request);
   }
 
   /**
