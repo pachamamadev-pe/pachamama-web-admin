@@ -235,7 +235,6 @@ export class CompanyUsersPage implements OnInit {
       },
       error: (error) => {
         console.error('Error creating user:', error);
-        this.notification.error('Error al crear usuario');
       },
     });
   }
@@ -251,7 +250,6 @@ export class CompanyUsersPage implements OnInit {
       },
       error: (error) => {
         console.error('Error updating user:', error);
-        this.notification.error('Error al actualizar usuario');
       },
     });
   }
@@ -267,7 +265,6 @@ export class CompanyUsersPage implements OnInit {
       },
       error: (error) => {
         console.error('Error assigning role:', error);
-        this.notification.error('Error al asignar rol');
       },
     });
   }
@@ -283,7 +280,6 @@ export class CompanyUsersPage implements OnInit {
       },
       error: (error) => {
         console.error('Error deleting user:', error);
-        this.notification.error('Error al desactivar usuario');
       },
     });
   }

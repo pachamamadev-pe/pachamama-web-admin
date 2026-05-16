@@ -58,7 +58,13 @@
    ============================================ */
 
 .company-users-table {
-  @apply bg-primary-white border border-neutral-border rounded-lg overflow-hidden;
+  @apply bg-primary-white border border-neutral-border rounded-lg;
+  overflow-x: auto; // Permite scroll horizontal en laptops pequeñas
+  overflow-y: hidden;
+
+  table {
+    min-width: 700px; // Evita que las columnas se aplasten antes de activar el scroll
+  }
 
   // Forzar ocultación en mobile (sobrescribe Tailwind si hay conflictos)
   @media (max-width: 767px) {

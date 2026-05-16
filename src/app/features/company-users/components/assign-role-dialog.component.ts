@@ -168,7 +168,12 @@ export interface AssignRoleDialogData {
   styles: [
     `
       .assign-role-dialog {
-        @apply p-6 min-w-[500px] max-w-[600px];
+        @apply p-6 w-full max-w-[600px];
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-sizing: border-box;
       }
 
       .dialog-header {
@@ -285,10 +290,11 @@ export interface AssignRoleDialogData {
 
       @media (max-width: 640px) {
         .assign-role-dialog {
-          @apply p-4 min-w-0;
+          @apply p-4;
+          max-height: 95vh;
         }
         .dialog-header {
-          @apply flex-col gap-2;
+          @apply gap-2;
         }
         .user-info-card {
           @apply flex-col items-start;

@@ -71,7 +71,13 @@
 }
 
 .products-table {
-  @apply bg-primary-white border border-neutral-border rounded-lg overflow-hidden;
+  @apply bg-primary-white border border-neutral-border rounded-lg;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  table {
+    min-width: 700px;
+  }
 }
 
 .table-header {
