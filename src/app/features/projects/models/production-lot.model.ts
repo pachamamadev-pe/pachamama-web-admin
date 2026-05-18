@@ -178,6 +178,8 @@ export interface ProductionLotDetail {
   productionDate: string; // LocalDate → "YYYY-MM-DD"
   transformationStage: TransformationStage;
   status: ProductionLotStatus;
+  clientLotNumber?: string | null;
+  clientBottleCode?: string | null;
   quantity: number | null;
   unit: string | null;
   totalSacksCount: number | null;
@@ -238,6 +240,11 @@ export interface CreateSecondaryProductionLotRequest {
   totalJabasCount?: number | null;
   transformationNotes?: string | null;
   transportInfo: TransportInfoRequest;
+}
+
+export interface ProductionLotClientCodesUpdateRequest {
+  clientLotNumber: string;
+  clientBottleCode: string;
 }
 
 export type TransportType = TransportInfoRequest['transportType'];

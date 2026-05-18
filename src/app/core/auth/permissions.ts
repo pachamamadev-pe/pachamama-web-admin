@@ -166,6 +166,7 @@ export const PERMISSIONS = {
     CREATE: 'transformation_secondary:create',
     PROCESS: 'transformation_secondary:process',
     GENERATE_QR: 'transformation_secondary:generate_qr',
+    GENERATE_QR_CLIENT: 'transformation_secondary:generate_qr_client',
     VIEW_LOCATION: 'transformation_secondary:view_location',
   },
 } as const;

@@ -439,6 +439,11 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
         roles: r(true, false, false, false, true, false),
       },
       {
+        code: 'transformation_secondary:generate_qr_client',
+        label: 'Generar QR para cliente',
+        roles: r(true, false, false, false, true, false),
+      },
+      {
         code: 'transformation_secondary:view_location',
         label: 'Ver ubicación del lote',
         roles: r(true, false, false, false, true, false),
