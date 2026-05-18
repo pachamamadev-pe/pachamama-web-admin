@@ -1,9 +1,9 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   inject,
+  OnInit,
   signal,
   ViewChild,
 } from '@angular/core';
@@ -59,7 +59,7 @@ declare const google: any;
   styleUrl: './photo-detail-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PhotoDetailDialogComponent implements AfterViewInit {
+export class PhotoDetailDialogComponent implements OnInit {
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef<HTMLDivElement>;
 
   dialogRef = inject(MatDialogRef<PhotoDetailDialogComponent>);
@@ -69,10 +69,12 @@ export class PhotoDetailDialogComponent implements AfterViewInit {
   imageError = signal(false);
   mapLoaded = signal(false);
 
-  ngAfterViewInit(): void {
-    // Inicializar el mapa cuando esté listo
+  ngOnInit(): void {
+    // Esperar a que la animación de apertura del diálogo termine antes de inicializar
+    // el mapa. Esto evita el error de IntersectionObserver cuando Google Maps intenta
+    // observar el contenedor mientras el overlay aún está en estado de animación.
     if (this.data.location && typeof google !== 'undefined') {
-      this.initializeMap();
+      this.dialogRef.afterOpened().subscribe(() => this.initializeMap());
     }
   }
 
@@ -80,6 +82,8 @@ export class PhotoDetailDialogComponent implements AfterViewInit {
    * Inicializa el mapa interactivo de Google Maps
    */
   private initializeMap(): void {
+    if (!this.mapContainer?.nativeElement) return;
+
     const { latitude, longitude } = this.data.location!;
 
     const mapOptions = {

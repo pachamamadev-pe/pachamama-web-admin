@@ -1,9 +1,9 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   inject,
+  OnInit,
   signal,
   ViewChild,
 } from '@angular/core';
@@ -59,7 +59,7 @@ declare const google: any;
   styleUrl: './video-detail-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VideoDetailDialogComponent implements AfterViewInit {
+export class VideoDetailDialogComponent implements OnInit {
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('videoPlayer', { static: false }) videoPlayer!: ElementRef<HTMLVideoElement>;
 
@@ -71,10 +71,12 @@ export class VideoDetailDialogComponent implements AfterViewInit {
   mapLoaded = signal(false);
   isBuffering = signal(false);
 
-  ngAfterViewInit(): void {
-    // Inicializar el mapa cuando esté listo
+  ngOnInit(): void {
+    // Esperar a que la animación de apertura del diálogo termine antes de inicializar
+    // el mapa. Esto evita el error de IntersectionObserver cuando Google Maps intenta
+    // observar el contenedor mientras el overlay aún está en estado de animación.
     if (this.data.location && typeof google !== 'undefined') {
-      this.initializeMap();
+      this.dialogRef.afterOpened().subscribe(() => this.initializeMap());
     }
   }
 
@@ -82,6 +84,8 @@ export class VideoDetailDialogComponent implements AfterViewInit {
    * Inicializa el mapa interactivo de Google Maps
    */
   private initializeMap(): void {
+    if (!this.mapContainer?.nativeElement) return;
+
     const { latitude, longitude } = this.data.location!;
 
     const mapOptions = {
