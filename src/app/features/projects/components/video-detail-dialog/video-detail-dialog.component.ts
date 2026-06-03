@@ -4,6 +4,7 @@ import {
   ElementRef,
   inject,
   OnInit,
+  OnDestroy,
   signal,
   ViewChild,
 } from '@angular/core';
@@ -12,6 +13,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import * as L from 'leaflet';
 
 /**
  * Metadata del video
@@ -38,10 +40,6 @@ export interface VideoDetailDialogData {
   videoNumber: number; // Número del video (1, 2, 3...)
 }
 
-// Declarar la API de Google Maps
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const google: any;
-
 /**
  * Diálogo para mostrar detalle de video con mapa y metadata
  */
@@ -59,7 +57,7 @@ declare const google: any;
   styleUrl: './video-detail-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VideoDetailDialogComponent implements OnInit {
+export class VideoDetailDialogComponent implements OnInit, OnDestroy {
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('videoPlayer', { static: false }) videoPlayer!: ElementRef<HTMLVideoElement>;
 
@@ -71,42 +69,84 @@ export class VideoDetailDialogComponent implements OnInit {
   mapLoaded = signal(false);
   isBuffering = signal(false);
 
+  private map: L.Map | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+
   ngOnInit(): void {
-    // Esperar a que la animación de apertura del diálogo termine antes de inicializar
-    // el mapa. Esto evita el error de IntersectionObserver cuando Google Maps intenta
-    // observar el contenedor mientras el overlay aún está en estado de animación.
-    if (this.data.location && typeof google !== 'undefined') {
+    // Esperar a que la animación de apertura del diálogo termine antes de inicializar el mapa
+    if (this.data.location) {
       this.dialogRef.afterOpened().subscribe(() => this.initializeMap());
     }
   }
 
+  ngOnDestroy(): void {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+  }
+
   /**
-   * Inicializa el mapa interactivo de Google Maps
+   * Inicializa el mapa interactivo con OpenStreetMap usando Leaflet
    */
   private initializeMap(): void {
     if (!this.mapContainer?.nativeElement) return;
 
     const { latitude, longitude } = this.data.location!;
 
-    const mapOptions = {
-      center: { lat: latitude, lng: longitude },
-      zoom: 15,
-      mapTypeControl: true, // Selector de tipo de mapa (mapa/satélite)
-      streetViewControl: true, // Control de Street View
-      fullscreenControl: true, // Control de pantalla completa
-      zoomControl: true, // Controles de zoom (+/-)
-    };
+    try {
+      // Icono de punto personalizado similar al usado en company-map
+      const dotIcon = L.divIcon({
+        className: '',
+        html: '<div style="width:14px;height:14px;border-radius:50%;background:#218358;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
 
-    const map = new google.maps.Map(this.mapContainer.nativeElement, mapOptions);
+      this.map = L.map(this.mapContainer.nativeElement, {
+        zoomControl: true,
+        attributionControl: true,
+        scrollWheelZoom: false,
+        doubleClickZoom: true,
+        touchZoom: true,
+        dragging: true,
+      }).setView([latitude, longitude], 15);
 
-    // Agregar marcador en la ubicación del video
-    new google.maps.Marker({
-      position: { lat: latitude, lng: longitude },
-      map: map,
-      title: `Video ${this.data.videoNumber}`,
-    });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20,
+      }).addTo(this.map);
 
-    this.mapLoaded.set(true);
+      // Agregar marcador en la ubicación del video
+      L.marker([latitude, longitude], { icon: dotIcon })
+        .addTo(this.map)
+        .bindPopup(`Video ${this.data.videoNumber}`)
+        .openPopup();
+
+      // Forzar recálculo del tamaño del mapa tras renderizado
+      window.setTimeout(() => {
+        if (this.map) {
+          this.map.invalidateSize();
+        }
+      }, 100);
+
+      this.resizeObserver = new ResizeObserver(() => {
+        if (this.map) {
+          this.map.invalidateSize();
+        }
+      });
+      this.resizeObserver.observe(this.mapContainer.nativeElement);
+
+      this.mapLoaded.set(true);
+    } catch (error) {
+      console.error('Error al inicializar el mapa Leaflet:', error);
+    }
   }
 
   onVideoLoad(): void {
