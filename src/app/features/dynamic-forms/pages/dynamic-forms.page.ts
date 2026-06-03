@@ -118,9 +118,17 @@ export class DynamicFormsPage implements OnInit {
   searchTerm = signal('');
   selectedScope = signal<FormScope | 'all'>('all');
   selectedProjectId = signal<string | null>(null);
+  showFilters = signal(false);
 
   // Tab activo
   activeTab = signal<FormStatus | 'all'>('all');
+
+  /**
+   * Alterna la visibilidad de los filtros avanzados
+   */
+  toggleFilters(): void {
+    this.showFilters.update((v) => !v);
+  }
 
   // Computed: formularios filtrados (ahora solo para el tab local)
   filteredForms = computed(() => {
@@ -541,6 +549,27 @@ export class DynamicFormsPage implements OnInit {
       year: 'numeric',
     });
     return `${fromDate} - ${untilDate}`;
+  }
+
+  /**
+   * Obtiene el tooltip para las etapas restantes
+   */
+  getRemainingStagesTooltip(labels: string[]): string {
+    return labels.slice(2).join(', ');
+  }
+
+  /**
+   * Formatea una fecha individual en formato corto (DD/MM/YYYY)
+   */
+  formatSingleDate(dateStr: string | null): string {
+    if (!dateStr) return '-';
+    const parsed = parseDateValue(dateStr);
+    if (!parsed) return '-';
+    return parsed.toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   }
 
   /**

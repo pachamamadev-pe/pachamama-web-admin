@@ -3,8 +3,8 @@
   <header class="page-header">
     <div class="header-content">
       <div class="header-title">
-        <h1 class="text-title font-bold text-accent-titles">Formularios Dinámicos</h1>
-        <p class="text-subtitle text-neutral-subheading">
+        <h1 class="text-xl md:text-2xl font-bold text-accent-titles">Formularios Dinámicos</h1>
+        <p class="text-xs md:text-subtitle text-neutral-subheading hidden sm:block mt-0.5">
           Gestiona formularios personalizados para tus productos y proyectos
         </p>
       </div>
@@ -25,63 +25,9 @@
     <!-- Filtros -->
     @if (sidebarService.hasPermission(PERMISSIONS.FORM.READ)) {
       <div class="search-filters-container">
-        <div class="filters-grid">
-          <!-- Producto -->
-          <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Producto</mat-label>
-            <mat-select
-              [ngModel]="selectedProductId()"
-              (ngModelChange)="selectedProductId.set($event); onProductChange()"
-            >
-              <mat-option value="all">Todos los productos</mat-option>
-              @for (product of products(); track product.id) {
-                <mat-option [value]="product.id">{{ product.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <!-- Etapa -->
-          <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Etapa</mat-label>
-            <mat-select
-              [ngModel]="selectedStage()"
-              (ngModelChange)="selectedStage.set($event); onStageChange()"
-            >
-              <mat-option value="all">Todas las etapas</mat-option>
-              @for (stage of allStages; track stage) {
-                <mat-option [value]="stage">{{ stageLabels[stage] }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <!-- Ámbito -->
-          <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Ámbito</mat-label>
-            <mat-select [ngModel]="selectedScope()" (ngModelChange)="onScopeChange($event)">
-              <mat-option value="all">Todos</mat-option>
-              <mat-option value="company">Mi Empresa</mat-option>
-              <mat-option value="project">Por Proyecto</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <!-- Proyecto (solo si ámbito=proyecto) -->
-          @if (selectedScope() === 'project') {
-            <mat-form-field appearance="outline" class="filter-field">
-              <mat-label>Proyecto</mat-label>
-              <mat-select
-                [ngModel]="selectedProjectId()"
-                (ngModelChange)="selectedProjectId.set($event); onProjectChange()"
-              >
-                <mat-option [value]="null">Seleccionar proyecto</mat-option>
-                @for (project of projects(); track project.id) {
-                  <mat-option [value]="project.id">{{ project.name }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          }
-
-          <!-- Búsqueda -->
-          <mat-form-field appearance="outline" class="search-field">
+        <!-- Fila de Búsqueda y Botón de Toggle -->
+        <div class="flex flex-col sm:flex-row gap-3 items-center w-full">
+          <mat-form-field appearance="outline" class="search-field flex-1 mb-0">
             <mat-icon matPrefix class="text-neutral-subheading">search</mat-icon>
             <input
               matInput
@@ -100,7 +46,78 @@
               <mat-icon>search</mat-icon>
             </button>
           </mat-form-field>
+
+          <button
+            mat-stroked-button
+            class="filter-toggle-btn"
+            [class.active]="showFilters()"
+            (click)="toggleFilters()"
+          >
+            <mat-icon>{{ showFilters() ? 'filter_alt_off' : 'filter_alt' }}</mat-icon>
+            <span>{{ showFilters() ? 'Ocultar Filtros' : 'Filtros Avanzados' }}</span>
+          </button>
         </div>
+
+        <!-- Panel Desplegable de Filtros Dropdowns -->
+        @if (showFilters()) {
+          <div class="filters-dropdown-panel">
+            <div class="filters-grid">
+              <!-- Producto -->
+              <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Producto</mat-label>
+                <mat-select
+                  [ngModel]="selectedProductId()"
+                  (ngModelChange)="selectedProductId.set($event); onProductChange()"
+                >
+                  <mat-option value="all">Todos los productos</mat-option>
+                  @for (product of products(); track product.id) {
+                    <mat-option [value]="product.id">{{ product.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Etapa -->
+              <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Etapa</mat-label>
+                <mat-select
+                  [ngModel]="selectedStage()"
+                  (ngModelChange)="selectedStage.set($event); onStageChange()"
+                >
+                  <mat-option value="all">Todas las etapas</mat-option>
+                  @for (stage of allStages; track stage) {
+                    <mat-option [value]="stage">{{ stageLabels[stage] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Ámbito -->
+              <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Ámbito</mat-label>
+                <mat-select [ngModel]="selectedScope()" (ngModelChange)="onScopeChange($event)">
+                  <mat-option value="all">Todos</mat-option>
+                  <mat-option value="company">Mi Empresa</mat-option>
+                  <mat-option value="project">Por Proyecto</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Proyecto (solo si ámbito=proyecto) -->
+              @if (selectedScope() === 'project') {
+                <mat-form-field appearance="outline" class="filter-field">
+                  <mat-label>Proyecto</mat-label>
+                  <mat-select
+                    [ngModel]="selectedProjectId()"
+                    (ngModelChange)="selectedProjectId.set($event); onProjectChange()"
+                  >
+                    <mat-option [value]="null">Seleccionar proyecto</mat-option>
+                    @for (project of projects(); track project.id) {
+                      <mat-option [value]="project.id">{{ project.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+            </div>
+          </div>
+        }
       </div>
     }
   </header>
@@ -183,11 +200,21 @@
               <th mat-header-cell *matHeaderCellDef>Nombre</th>
               <td mat-cell *matCellDef="let form">
                 <div class="form-name">
-                  <span class="font-bold text-accent-titles">{{ form.name }}</span>
+                  <span
+                    class="font-bold text-accent-titles block truncate max-w-[240px]"
+                    [matTooltip]="form.name"
+                    matTooltipPosition="above"
+                    [matTooltipDisabled]="form.name.length < 28"
+                  >
+                    {{ form.name }}
+                  </span>
                   @if (form.description) {
-                    <span class="text-subtitle text-neutral-subheading block mt-1">{{
-                      form.description
-                    }}</span>
+                    <span
+                      class="form-description"
+                      [matTooltip]="form.description"
+                      matTooltipPosition="above"
+                      >{{ form.description }}</span
+                    >
                   }
                 </div>
               </td>
@@ -206,8 +233,17 @@
               <th mat-header-cell *matHeaderCellDef>Etapas Aplicables</th>
               <td mat-cell *matCellDef="let form">
                 <div class="stage-chips">
-                  @for (label of form.stageLabels; track label) {
+                  @for (label of form.stageLabels.slice(0, 2); track label) {
                     <mat-chip class="stage-chip">{{ label }}</mat-chip>
+                  }
+                  @if (form.stageLabels.length > 2) {
+                    <span
+                      class="stage-chip-more"
+                      [matTooltip]="getRemainingStagesTooltip(form.stageLabels)"
+                      matTooltipPosition="above"
+                    >
+                      +{{ form.stageLabels.length - 2 }} más
+                    </span>
                   }
                 </div>
               </td>
@@ -243,14 +279,16 @@
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef>Estado</th>
               <td mat-cell *matCellDef="let form">
-                <mat-chip [class]="getStatusChipClass(form.status)">
-                  {{ getStatusLabel(form.status) }}
-                </mat-chip>
-                @if (form.isVigent && form.status === 'published') {
-                  <mat-icon class="vigent-icon" matTooltip="Vigente actualmente"
-                    >check_circle</mat-icon
-                  >
-                }
+                <div class="flex items-center gap-1.5">
+                  <mat-chip [class]="getStatusChipClass(form.status)">
+                    {{ getStatusLabel(form.status) }}
+                  </mat-chip>
+                  @if (form.isVigent && form.status === 'published') {
+                    <mat-icon class="vigent-icon" matTooltip="Vigente actualmente"
+                      >check_circle</mat-icon
+                    >
+                  }
+                </div>
               </td>
             </ng-container>
 
@@ -258,9 +296,18 @@
             <ng-container matColumnDef="vigency">
               <th mat-header-cell *matHeaderCellDef>Vigencia</th>
               <td mat-cell *matCellDef="let form">
-                <span class="text-subtitle">{{
-                  formatDateRange(form.validFrom, form.validUntil)
-                }}</span>
+                @if (form.validFrom && form.validUntil) {
+                  <div class="vigency-container">
+                    <span class="text-body font-medium block">{{
+                      formatSingleDate(form.validFrom)
+                    }}</span>
+                    <span class="text-xs text-neutral-subheading block mt-0.5"
+                      >al {{ formatSingleDate(form.validUntil) }}</span
+                    >
+                  </div>
+                } @else {
+                  <span class="text-subtitle text-neutral-subheading">Sin definir</span>
+                }
               </td>
             </ng-container>
 
