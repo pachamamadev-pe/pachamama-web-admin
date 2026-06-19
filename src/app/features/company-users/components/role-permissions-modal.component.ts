@@ -407,6 +407,16 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
         roles: r(true, false, true, false, false, false),
       },
       {
+        code: 'transformation_primary:generate_qr_client',
+        label: 'Generar QR para cliente',
+        roles: r(true, false, true, false, false, false),
+      },
+      {
+        code: 'transformation_primary:sync_traceability',
+        label: 'Sincronizar con Landing Page',
+        roles: r(true, false, true, false, false, false),
+      },
+      {
         code: 'transformation_primary:view_location',
         label: 'Ver ubicación del lote',
         roles: r(true, false, true, false, false, false),
@@ -441,6 +451,11 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
       {
         code: 'transformation_secondary:generate_qr_client',
         label: 'Generar QR para cliente',
+        roles: r(true, false, false, false, true, false),
+      },
+      {
+        code: 'transformation_secondary:sync_traceability',
+        label: 'Sincronizar con Landing Page',
         roles: r(true, false, false, false, true, false),
       },
       {

@@ -547,6 +547,16 @@ export class ProductionLotsPage implements OnInit {
     });
   }
 
+  syncTraceabilityWithLandingPage(lot: ProductionLotRecord): void {
+    this.lotsService.syncTraceability(lot.id).subscribe({
+      next: () => this.notification.success('Sincronización con Landing Page iniciada'),
+      error: (err) => {
+        const msg = err?.error?.message;
+        this.notification.error(msg ?? 'No se pudo sincronizar con Landing Page');
+      },
+    });
+  }
+
   openLocationDialog(event: Event, lot: ProductionLotRecord): void {
     event.stopPropagation();
     if (!lot.location) return;

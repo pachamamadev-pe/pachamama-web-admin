@@ -244,6 +244,24 @@
                           <mat-icon>qr_code_2</mat-icon>
                           <span>Generar QR trazabilidad</span>
                         </button>
+                        <button
+                          *appPmHasPermission="
+                            PERMISSIONS.TRANSFORMATION_PRIMARY.GENERATE_QR_CLIENT
+                          "
+                          mat-menu-item
+                          (click)="generateFinalProductTraceabilityQr(lot)"
+                        >
+                          <mat-icon>qr_code_2</mat-icon>
+                          <span>Generar QR para cliente</span>
+                        </button>
+                        <button
+                          *appPmHasPermission="PERMISSIONS.TRANSFORMATION_PRIMARY.SYNC_TRACEABILITY"
+                          mat-menu-item
+                          (click)="syncTraceabilityWithLandingPage(lot)"
+                        >
+                          <mat-icon>sync</mat-icon>
+                          <span>Sincronizar con Landing Page</span>
+                        </button>
                       </mat-menu>
                     </div>
 
@@ -481,6 +499,16 @@
                         >
                           <mat-icon>qr_code_2</mat-icon>
                           <span>Generar QR para cliente</span>
+                        </button>
+                        <button
+                          *appPmHasPermission="
+                            PERMISSIONS.TRANSFORMATION_SECONDARY.SYNC_TRACEABILITY
+                          "
+                          mat-menu-item
+                          (click)="syncTraceabilityWithLandingPage(lot)"
+                        >
+                          <mat-icon>sync</mat-icon>
+                          <span>Sincronizar con Landing Page</span>
                         </button>
                       </mat-menu>
                     </div>

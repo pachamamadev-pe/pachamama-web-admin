@@ -156,6 +156,8 @@ export const PERMISSIONS = {
     CREATE: 'transformation_primary:create',
     PROCESS: 'transformation_primary:process',
     GENERATE_QR: 'transformation_primary:generate_qr',
+    GENERATE_QR_CLIENT: 'transformation_primary:generate_qr_client',
+    SYNC_TRACEABILITY: 'transformation_primary:sync_traceability',
     VIEW_LOCATION: 'transformation_primary:view_location',
     STORAGE: 'transformation_primary:storage',
   },
@@ -167,6 +169,7 @@ export const PERMISSIONS = {
     PROCESS: 'transformation_secondary:process',
     GENERATE_QR: 'transformation_secondary:generate_qr',
     GENERATE_QR_CLIENT: 'transformation_secondary:generate_qr_client',
+    SYNC_TRACEABILITY: 'transformation_secondary:sync_traceability',
     VIEW_LOCATION: 'transformation_secondary:view_location',
   },
 } as const;

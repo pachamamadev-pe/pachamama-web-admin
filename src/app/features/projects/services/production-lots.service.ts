@@ -189,6 +189,14 @@ export class ProductionLotsService {
   }
 
   /**
+   * Publica el evento para sincronizar la trazabilidad del lote con la landing page.
+   * POST /{id}/sync-traceability
+   */
+  syncTraceability(lotId: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${lotId}/sync-traceability`, null);
+  }
+
+  /**
    * Obtiene el registro de procesamiento para envasado o almacenamiento (single, legado)
    * GET /{id}/processing-record?processingStage=STORAGE_CONTROL_RECORD
    */
