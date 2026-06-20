@@ -308,21 +308,32 @@ export class CollectorHistoryDialogComponent {
   }
 
   getStatusLabel(status: string): string {
+    status = status.toLowerCase();
     if (status === 'active') {
       return 'Activo';
     }
     if (status === 'archived') {
       return 'Archivado';
     }
+    if (status === 'expired') {
+      return 'Expirado';
+    }
+    if (status === 'pending') {
+      return 'Pendiente';
+    }
     return 'Inactivo';
   }
 
   getStatusClass(status: string): string {
+    status = status.toLowerCase();
     if (status === 'active') {
       return 'status-active';
     }
     if (status === 'archived') {
       return 'status-archived';
+    }
+    if (status === 'expired' || status === 'pending') {
+      return 'status-inactive';
     }
     return 'status-inactive';
   }

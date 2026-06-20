@@ -888,6 +888,7 @@ export class CollectionRequestReviewDialogComponent {
       rejected: 'Rechazado',
       observed: 'Observado',
       cancelled: 'Cancelado',
+      expired: 'Expirado',
     };
     return labels[status] || status;
   }
@@ -899,6 +900,7 @@ export class CollectionRequestReviewDialogComponent {
       rejected: 'status-rejected',
       observed: 'status-observed',
       cancelled: 'status-cancelled',
+      expired: 'status-cancelled',
     };
     return classes[status] || '';
   }

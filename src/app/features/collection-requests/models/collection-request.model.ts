@@ -6,7 +6,8 @@ export type CollectionRequestStatus =
   | 'approved'
   | 'rejected'
   | 'observed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'expired';
 
 /**
  * Solicitud de recolección

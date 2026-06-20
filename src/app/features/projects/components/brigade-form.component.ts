@@ -891,11 +891,10 @@ export class BrigadeFormDialogComponent {
   }
 
   isCollectorBlocked(collector: Collector): boolean {
-    if (collector.status === 'inactive') {
-      return true;
-    }
+    console.log('Brigada de recolector:', collector.currentBrigadeId);
+    console.log('Brigada actual:', this.data.brigade?.id);
 
-    if (collector.currentBrigadeId && collector.currentBrigadeId !== this.data.brigade?.id) {
+    if (collector.currentBrigadeId) {
       return true;
     }
 

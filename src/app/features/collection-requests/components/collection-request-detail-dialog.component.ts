@@ -52,6 +52,7 @@ export class CollectionRequestDetailDialogComponent {
       rejected: 'Rechazado',
       observed: 'Observado',
       cancelled: 'Cancelado',
+      expired: 'Expirado',
     };
     return labels[status] || status;
   }
@@ -63,6 +64,7 @@ export class CollectionRequestDetailDialogComponent {
       rejected: 'status-rejected',
       observed: 'status-observed',
       cancelled: 'status-cancelled',
+      expired: 'status-cancelled',
     };
     return classes[status] || '';
   }
@@ -74,6 +76,7 @@ export class CollectionRequestDetailDialogComponent {
       rejected: 'cancel',
       observed: 'error',
       cancelled: 'block',
+      expired: 'block',
     };
     return icons[status] || 'help';
   }

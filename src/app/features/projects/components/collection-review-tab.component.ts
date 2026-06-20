@@ -382,6 +382,7 @@ export class CollectionReviewTabComponent implements OnInit {
   observedCount = computed(() => this.requests().filter((r) => r.status === 'observed').length);
   approvedCount = computed(() => this.requests().filter((r) => r.status === 'approved').length);
   rejectedCount = computed(() => this.requests().filter((r) => r.status === 'rejected').length);
+  expiredCount = computed(() => this.requests().filter((r) => r.status === 'expired').length);
 
   // Columnas de la tabla
   displayedColumns: string[] = [
@@ -451,6 +452,7 @@ export class CollectionReviewTabComponent implements OnInit {
       rejected: 'Rechazado',
       observed: 'Observado',
       cancelled: 'Cancelado',
+      expired: 'Expirado',
     };
     return labels[status] || status;
   }
@@ -462,6 +464,7 @@ export class CollectionReviewTabComponent implements OnInit {
       rejected: 'status-rejected',
       observed: 'status-observed',
       cancelled: 'status-cancelled',
+      expired: 'status-cancelled',
     };
     return classes[status] || '';
   }
@@ -473,6 +476,7 @@ export class CollectionReviewTabComponent implements OnInit {
       rejected: 'cancel',
       observed: 'info',
       cancelled: 'block',
+      expired: 'block',
     };
     return icons[status] || 'help';
   }
@@ -484,6 +488,7 @@ export class CollectionReviewTabComponent implements OnInit {
       rejected: 'icon-rejected',
       observed: 'icon-observed',
       cancelled: 'icon-cancelled',
+      expired: 'icon-cancelled',
     };
     return classes[status] || '';
   }

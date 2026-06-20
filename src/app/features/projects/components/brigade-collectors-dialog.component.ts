@@ -17,6 +17,7 @@ import { BrigadeCollector } from '../models/brigade-collector.model';
 import { BrigadesService } from '../services/brigades.service';
 import { BrigadeAssignmentsService } from '../services/brigade-assignments.service';
 import { NotificationService } from '@core/services/notification.service';
+import { parseDateValue } from '@app/shared/utils/date-helpers';
 
 export interface BrigadeCollectorsDialogData {
   brigadeId: string;
@@ -107,33 +108,20 @@ export interface BrigadeCollectorsDialogData {
                 </td>
               </ng-container>
 
-              <!-- Fecha de Inicio Column -->
+              <!-- Periodo Column -->
               <ng-container matColumnDef="startDate">
                 <th mat-header-cell *matHeaderCellDef class="table-th">
                   <div class="th-content">
                     <mat-icon class="th-icon">calendar_today</mat-icon>
-                    <span>Inicio</span>
+                    <span>Periodo de asignación</span>
                   </div>
                 </th>
                 <td mat-cell *matCellDef="let collector" class="table-td">
-                  <span class="text-subtitle">{{ collector.startDate }}</span>
+                  <span class="text-subtitle">{{ formatDateRange(collector) }}</span>
                 </td>
               </ng-container>
 
-              <!-- Fecha de Fin Column -->
-              <ng-container matColumnDef="endDate">
-                <th mat-header-cell *matHeaderCellDef class="table-th">
-                  <div class="th-content">
-                    <mat-icon class="th-icon">event_available</mat-icon>
-                    <span>Fin</span>
-                  </div>
-                </th>
-                <td mat-cell *matCellDef="let collector" class="table-td">
-                  <span class="text-subtitle">{{ collector.endDate || '-' }}</span>
-                </td>
-              </ng-container>
-
-              <!-- Estado de recolector Column -->
+              <!-- Estado de recolector Column 
               <ng-container matColumnDef="collectorStatus">
                 <th mat-header-cell *matHeaderCellDef class="table-th">Estado de recolector</th>
                 <td mat-cell *matCellDef="let collector" class="table-td">
@@ -141,13 +129,11 @@ export interface BrigadeCollectorsDialogData {
                     {{ getStatusLabel(collector.collectorStatus) }}
                   </span>
                 </td>
-              </ng-container>
+              </ng-container>-->
 
               <!-- Estado de asignación Column -->
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef class="table-th">
-                  Estado asignación brigada
-                </th>
+                <th mat-header-cell *matHeaderCellDef class="table-th">Estado</th>
                 <td mat-cell *matCellDef="let collector" class="table-td">
                   <span [class]="'status-badge status-' + collector.status.toLowerCase()">
                     {{ getStatusLabel(collector.status) }}
@@ -168,15 +154,19 @@ export interface BrigadeCollectorsDialogData {
                     >
                       <mat-icon>history</mat-icon>
                     </button>
-                    <button
-                      mat-icon-button
-                      class="btn-complete"
-                      (click)="openCompleteAssignment(collector)"
-                      [disabled]="collector.status.toLowerCase() !== 'active'"
-                      matTooltip="Finalizar asignacion"
+                    <span
+                      class="complete-action-wrapper"
+                      [matTooltip]="getCompleteAssignmentTooltip(collector.status)"
                     >
-                      <mat-icon>event_busy</mat-icon>
-                    </button>
+                      <button
+                        mat-icon-button
+                        class="btn-complete"
+                        (click)="openCompleteAssignment(collector)"
+                        [disabled]="!canCompleteAssignment(collector.status)"
+                      >
+                        <mat-icon>event_busy</mat-icon>
+                      </button>
+                    </span>
                     <!-- <mat-slide-toggle
                       [checked]="collector.status.toLowerCase() === 'active'"
                       (change)="toggleCollectorStatus(collector, $event.checked)"
@@ -217,7 +207,7 @@ export interface BrigadeCollectorsDialogData {
                 </div>
 
                 <div class="card-details">
-                  <div class="detail-row">
+                  <!--<div class="detail-row">
                     <mat-icon class="detail-icon">person_outline</mat-icon>
                     <span class="detail-label">Estado de recolector:</span>
                     <span
@@ -225,7 +215,7 @@ export interface BrigadeCollectorsDialogData {
                     >
                       {{ getStatusLabel(collector.collectorStatus) }}
                     </span>
-                  </div>
+                  </div>-->
                   <div class="detail-row">
                     <mat-icon class="detail-icon">phone</mat-icon>
                     <span class="detail-label">Teléfono:</span>
@@ -254,15 +244,20 @@ export interface BrigadeCollectorsDialogData {
                     <mat-icon>history</mat-icon>
                     <span>Historial</span>
                   </button>
-                  <button
-                    mat-stroked-button
-                    class="btn-complete-mobile"
-                    (click)="openCompleteAssignment(collector)"
-                    [disabled]="collector.status.toLowerCase() !== 'active'"
+                  <span
+                    class="complete-action-wrapper complete-action-wrapper--mobile"
+                    [matTooltip]="getCompleteAssignmentTooltip(collector.status)"
                   >
-                    <mat-icon>event_busy</mat-icon>
-                    <span>Finalizar</span>
-                  </button>
+                    <button
+                      mat-stroked-button
+                      class="btn-complete-mobile"
+                      (click)="openCompleteAssignment(collector)"
+                      [disabled]="!canCompleteAssignment(collector.status)"
+                    >
+                      <mat-icon>event_busy</mat-icon>
+                      <span>Finalizar asignación</span>
+                    </button>
+                  </span>
                 </div>
               </div>
             }
@@ -637,6 +632,24 @@ export interface BrigadeCollectorsDialogData {
       border: 1px solid #9ca3af;
     }
 
+    .status-expired {
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #ea580c;
+    }
+
+    .status-pending {
+      background: #fefce8;
+      color: #ca8a04;
+      border: 1px solid #ca8a04;
+    }
+
+    .status-unknown {
+      background: #f3f4f6;
+      color: #6b7280;
+      border: 1px solid #d1d5db;
+    }
+
     .actions-cell {
       display: inline-flex;
       align-items: center;
@@ -650,6 +663,19 @@ export interface BrigadeCollectorsDialogData {
 
     .btn-complete {
       color: #dc2626;
+    }
+
+    .btn-complete:disabled,
+    .btn-complete[disabled] {
+      color: #9ca3af;
+      background: #f3f4f6;
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    .complete-action-wrapper {
+      display: inline-flex;
+      align-items: center;
     }
 
     .card-actions {
@@ -667,6 +693,23 @@ export interface BrigadeCollectorsDialogData {
       color: #dc2626;
       border-color: #dc2626;
       flex: 1;
+    }
+
+    .btn-complete-mobile:disabled,
+    .btn-complete-mobile[disabled] {
+      color: #9ca3af;
+      border-color: #d1d5db;
+      background: #f3f4f6;
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    .complete-action-wrapper--mobile {
+      flex: 1;
+
+      .btn-complete-mobile {
+        width: 100%;
+      }
     }
 
     /* Summary Bar */
@@ -751,8 +794,7 @@ export class BrigadeCollectorsDialogComponent {
     'collectorName',
     'collectorPhone',
     'startDate',
-    'endDate',
-    'collectorStatus',
+    //'collectorStatus',
     'status',
     'actions',
   ];
@@ -816,7 +858,7 @@ export class BrigadeCollectorsDialogComponent {
   }
 
   openCompleteAssignment(collector: BrigadeCollector): void {
-    if (collector.status.toLowerCase() !== 'active') {
+    if (!this.canCompleteAssignment(collector.status)) {
       return;
     }
 
@@ -853,6 +895,18 @@ export class BrigadeCollectorsDialogComponent {
     });
   }
 
+  canCompleteAssignment(status: string): boolean {
+    const normalizedStatus = status.toLowerCase();
+    return normalizedStatus === 'pending' || normalizedStatus === 'active';
+  }
+
+  getCompleteAssignmentTooltip(status: string): string {
+    if (this.canCompleteAssignment(status)) {
+      return 'Finalizar asignación';
+    }
+    return 'Disponible solo para estados Pendiente o Activo';
+  }
+
   getStatusLabel(status: string): string {
     switch (status.toLowerCase()) {
       case 'active':
@@ -861,8 +915,30 @@ export class BrigadeCollectorsDialogComponent {
         return 'Inactivo';
       case 'archived':
         return 'Archivado';
+      case 'expired':
+        return 'Expirado';
+      case 'pending':
+        return 'Pendiente';
       default:
         return status;
     }
+  }
+
+  formatDateRange(request: BrigadeCollector): string {
+    const start = (parseDateValue(request.startDate) ?? new Date(NaN)).toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: 'short',
+    });
+
+    if (!request.endDate) {
+      return `Desde ${start}`;
+    }
+
+    const end = (parseDateValue(request.endDate) ?? new Date(NaN)).toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    return `${start} - ${end}`;
   }
 }

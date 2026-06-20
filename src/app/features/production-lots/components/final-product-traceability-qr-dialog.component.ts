@@ -49,7 +49,7 @@ export interface FinalProductTraceabilityQrDialogData {
             <mat-icon>qr_code_2</mat-icon>
           </div>
           <div>
-            <h2 mat-dialog-title>QR de trazabilidad producto final</h2>
+            <h2 mat-dialog-title>Código de producto final</h2>
             <p class="dialog-subtitle">Lote {{ data.lotNumber }}</p>
           </div>
         </div>
