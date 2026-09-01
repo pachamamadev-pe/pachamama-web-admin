@@ -1,5 +1,13 @@
 # 🌿 Pachamama - Web Admin
 
+> **📚 Documentación del proyecto**
+>
+> La especificación del dashboard empresarial, la guía del servicio de mapa GeoJSON y las
+> instrucciones de estado de asignación de recolector se movieron a
+> [`pachamama-docs`](../pachamama-docs/README.md).
+> Índice completo: [`00-contexto/indice-documental.md`](../pachamama-docs/00-contexto/indice-documental.md).
+
+
 [![Deploy to QA](https://github.com/pachamamadev-pe/pachamama-web-admin/actions/workflows/deploy-qa.yml/badge.svg)](https://github.com/pachamamadev-pe/pachamama-web-admin/actions/workflows/deploy-qa.yml)
 [![Vercel](https://img.shields.io/badge/Vercel-QA-black?logo=vercel)](https://pachamama-web-admin.vercel.app)
 
